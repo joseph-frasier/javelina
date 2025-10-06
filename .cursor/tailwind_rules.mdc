@@ -1,0 +1,231 @@
+---
+alwaysApply: true
+---
+
+## 2. Architecture Overview
+
+- **Tailwind Tokens:** Centralized in `tailwind.config.ts` for all colors, spacing, and fonts.
+- **UI Components:** Built using Javelina color palette, typography, and variants.
+- **Brand Consistency:** Components reflect the logo, color, and typography rules.
+- **Responsive Design:** Optimized for accessibility and adaptability.
+
+---
+
+## 3. Folder Structure
+
+```
+src/
+  styles/
+    globals.css        # Tailwind base, components, utilities
+    theme.css          # Layered CSS variables for Javelina branding
+  components/
+    ui/                # Reusable Tailwind components (Button, Card, Navbar)
+    layout/            # Structural components (Header, Footer, Sidebar)
+  lib/
+    theme/             # Tailwind tokens and variants (colors, typography)
+  app/ or pages/       # Next.js routes
+```
+
+---
+
+## 4. Tailwind Configuration — Brand Tokens
+
+```ts
+import { fontFamily } from 'tailwindcss/defaultTheme';
+
+export default {
+  darkMode: ['class'],
+  content: ['./src/**/*.{ts,tsx,mdx}'],
+  theme: {
+    extend: {
+      colors: {
+        // Brand Primary Palette
+        orange: {
+          DEFAULT: '#EF7215', // Vibrant Orange (Main)
+          light: '#F2F2F2', // Light Gray Accent
+          dark: '#0B0C0D', // Charcoal Black
+        },
+        gray: {
+          light: '#D9D9D9',
+          slate: '#456173',
+        },
+        blue: {
+          electric: '#00B0FF',
+          teal: '#00796B',
+        },
+      },
+      fontFamily: {
+        sans: ['Roboto', ...fontFamily.sans],
+        condensed: ['Roboto Condensed', 'sans-serif'],
+      },
+      fontWeight: {
+        light: 300,
+        regular: 400,
+        medium: 500,
+        bold: 700,
+        black: 900,
+      },
+      spacing: {
+        18: '4.5rem',
+      },
+      borderRadius: {
+        xl: '1rem',
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/aspect-ratio'),
+  ],
+};
+```
+
+**Rationale:** These values reflect Javelina’s official colors, typography, and spacing system. The theme ensures recognizable brand consistency across all applications.
+
+---
+
+## 5. Typography Rules
+
+Based on the **Javelina Brand Book**:
+
+| Usage       | Font                     | Weight | Purpose                         |
+| ----------- | ------------------------ | ------ | ------------------------------- |
+| Main Titles | Roboto Black             | 900    | Headings, hero sections         |
+| Subtitles   | Roboto Regular           | 400    | Supporting titles               |
+| Body Text   | Roboto Light             | 300    | Paragraphs, content areas       |
+| Logo        | Roboto Condensed         | 600    | Branded logotype consistency    |
+| Tagline     | Roboto Condensed Oblique | 400    | Emphasis under logos or headers |
+
+Example:
+
+```html
+<h1 class="font-black font-sans text-4xl text-orange">
+  Innovate. Connect. Empower.
+</h1>
+<p class="font-light text-gray-slate">Reliable DNS for global enterprises.</p>
+```
+
+---
+
+## 6. Color Usage Rules
+
+### Primary Palette
+
+| Color          | HEX       | Use                              |
+| -------------- | --------- | -------------------------------- |
+| Vibrant Orange | `#EF7215` | Calls-to-action, highlights      |
+| Charcoal Black | `#0B0C0D` | Text, contrast sections          |
+| Silver Gray    | `#D9D9D9` | Secondary backgrounds            |
+| Light Gray     | `#F2F2F2` | Base backgrounds                 |
+| Slate Gray     | `#456173` | UI elements, cards, neutral text |
+
+### Complementary Palette
+
+| Color         | HEX       | Use                   |
+| ------------- | --------- | --------------------- |
+| Electric Blue | `#00B0FF` | Buttons, icons, links |
+| Teal Blue     | `#00796B` | Accents, hover states |
+
+**Rules:**
+
+- Use orange (`#EF7215`) for CTA and brand highlights.
+- Use charcoal (`#0B0C0D`) for primary text.
+- Use complementary blues to emphasize interaction.
+- Maintain sufficient contrast for accessibility (WCAG AA+).
+
+---
+
+## 7. Component Standards
+
+Each reusable component must reflect brand hierarchy:
+
+### Example — Button Component
+
+```tsx
+import { cva } from 'class-variance-authority';
+
+export const button = cva(
+  'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
+  {
+    variants: {
+      variant: {
+        primary: 'bg-orange text-white hover:bg-orange-dark',
+        secondary: 'bg-blue-electric text-white hover:bg-blue-teal',
+        ghost: 'bg-transparent text-orange hover:underline',
+      },
+      size: {
+        sm: 'px-3 py-1 text-sm',
+        md: 'px-4 py-2 text-base',
+        lg: 'px-6 py-3 text-lg',
+      },
+    },
+    defaultVariants: {
+      variant: 'primary',
+      size: 'md',
+    },
+  }
+);
+```
+
+### Example — Card Component
+
+```tsx
+export function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl bg-white dark:bg-gray-slate p-6 shadow-md border border-gray-light">
+      <h3 className="font-bold text-orange mb-2">{title}</h3>
+      <div className="text-gray-slate font-light">{children}</div>
+    </div>
+  );
+}
+```
+
+---
+
+## 8. Tone & Voice Integration
+
+The brand voice in UI content and microcopy must reflect:
+
+- **Authoritative yet approachable** tone.
+- **Confident but not boastful** phrasing.
+- **Professional clarity**, emphasizing reliability and innovation.
+
+Example — Button labels, alerts, headings:
+
+- ✅ “Optimize your DNS performance.”
+- 🚫 “Fastest DNS guaranteed!”
+
+---
+
+## 9. Performance & Process
+
+- Use **JIT compilation** for fast builds.
+- Restrict class usage to defined `content` paths.
+- **No arbitrary values** unless tokenized.
+- **Prettier plugin for Tailwind** ensures class consistency.
+- Avoid deep custom CSS; use design tokens.
+
+---
+
+## 10. PR Review Checklist
+
+- [ ] Color and typography match Javelina’s brand palette.
+- [ ] Components use Tailwind tokens (no hardcoded HEX or px).
+- [ ] Typography hierarchy (Roboto family) is respected.
+- [ ] Accessible color contrast (WCAG compliant).
+- [ ] Voice/tone matches brand guidelines.
+- [ ] Storybook examples updated.
+- [ ] Prettier plugin ensures consistent Tailwind class order.
+
+---
+
+### Summary
+
+This Tailwind system brings **Javelina’s brand identity** into a modern, component-driven workflow that is **scalable**, **maintainable**, and **performance-optimized**. Every color, font, and tone reflects Javelina’s mission of _innovation, reliability, and seamless connectivity._

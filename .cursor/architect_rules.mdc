@@ -1,0 +1,249 @@
+# Cursor Rules for Javelina (Next.js)
+
+## Project Context
+
+- **Framework**: Next.js 14+ with App Router
+- **Language**: TypeScript
+- **Styling**: TailwindCSS / CSS Modules (specify your choice)
+- **State Management**: React Context / Zustand / Redux (specify if applicable)
+- **Database**: (specify: Prisma, MongoDB, Supabase, etc.)
+- **Deployment**: Vercel
+
+---
+
+## Code Style & Conventions
+
+### General
+
+- Use **TypeScript** for all new files
+- Prefer **named exports** over default exports (except for pages/layouts)
+- Use **functional components** with hooks
+- Follow **ESLint** and **Prettier** configurations
+- Keep functions **pure** and **testable** when possible
+
+### Naming Conventions
+
+- **Files**: `kebab-case.tsx` for components, `camelCase.ts` for utilities
+- **Components**: `PascalCase` (e.g., `UserProfile.tsx`)
+- **Hooks**: `use` prefix (e.g., `useAuth.ts`)
+- **Server Actions**: `action` suffix (e.g., `createUserAction.ts`)
+- **Types/Interfaces**: `PascalCase` with descriptive names (e.g., `UserProfile`, `ApiResponse`)
+
+### Component Structure
+
+```tsx
+// 1. Imports (React, Next.js, external libs, internal modules)
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+// 2. Types/Interfaces
+interface MyComponentProps {
+  title: string;
+  onSubmit: () => void;
+}
+
+// 3. Component
+export function MyComponent({ title, onSubmit }: MyComponentProps) {
+  // Hooks first
+  const [state, setState] = useState(false);
+
+  // Event handlers
+  const handleClick = () => {
+    // logic
+  };
+
+  // Render
+  return <div>{title}</div>;
+}
+```
+
+---
+
+## Next.js Specific Rules
+
+### App Router
+
+- Use **Server Components by default** unless client interactivity is needed
+- Add `"use client"` only when necessary (hooks, event handlers, browser APIs)
+- Use **Server Actions** for mutations instead of API routes when possible
+- Leverage `loading.tsx`, `error.tsx`, and `not-found.tsx` for UX
+
+### Data Fetching
+
+- **Server Components**: `async/await` directly in components
+- **Client Components**: Use React Query / SWR for caching
+- Avoid `useEffect` for data fetching; prefer server-side or React Query
+- Use `fetch` with Next.js cache options: `{ next: { revalidate: 60 } }`
+
+### Performance
+
+- Use `next/image` for all images
+- Use `next/font` for custom fonts
+- Lazy load heavy components with `dynamic(() => import(...))`
+- Avoid large client bundles; move logic to server when possible
+
+### Routing & Navigation
+
+- Use `<Link>` from `next/link` for internal navigation
+- Use `useRouter` from `next/navigation` (not `next/router`)
+- Organize routes in `app/` with meaningful folder names
+- Use route groups `(group)` to organize without affecting URLs
+
+---
+
+## TypeScript Guidelines
+
+### Type Safety
+
+- **No `any`** unless absolutely necessary; use `unknown` and type guards
+- Define **explicit return types** for functions
+- Use **interfaces** for object shapes, **types** for unions/intersections
+- Leverage **generics** for reusable utilities
+
+### Example
+
+```typescript
+// Good
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+async function fetchUser(id: string): Promise<User> {
+  const res = await fetch(`/api/users/${id}`);
+  return res.json();
+}
+
+// Bad
+async function fetchUser(id) {
+  const res = await fetch(`/api/users/${id}`);
+  return res.json();
+}
+```
+
+---
+
+## State Management
+
+### Local State
+
+- Use `useState` for component-level state
+- Use `useReducer` for complex state logic
+
+### Global State
+
+- Use **React Context** for theme, auth, or simple shared state
+- Use **Zustand/Redux** for complex app-wide state (if configured)
+
+### Server State
+
+- Use **React Query** or **SWR** for caching and synchronization
+- Avoid storing server data in global state
+
+---
+
+## Error Handling
+
+### Client
+
+- Use `error.tsx` boundary for route-level errors
+- Wrap risky logic in `try/catch` and show user-friendly messages
+- Log errors to monitoring service (Sentry, LogRocket, etc.)
+
+### Server
+
+- Return appropriate HTTP status codes
+- Use `NextResponse` in route handlers
+- Handle validation errors gracefully with Zod or similar
+
+---
+
+## Testing (if configured)
+
+### Unit Tests
+
+- Use **Jest** + **React Testing Library**
+- Test user interactions, not implementation details
+- Mock external dependencies (API calls, modules)
+
+### E2E Tests
+
+- Use **Playwright** for critical user flows
+- Run E2E tests in CI before deployment
+
+---
+
+## Git & Commits
+
+### Branch Naming
+
+- `feat/feature-name` for new features
+- `fix/bug-description` for bug fixes
+- `chore/task-name` for maintenance
+
+### Commit Messages
+
+- Follow **Conventional Commits**: `feat:`, `fix:`, `chore:`, `docs:`, etc.
+- Be descriptive: `feat: add user authentication with NextAuth`
+
+---
+
+## Security
+
+- **Never** commit secrets or API keys
+- Use `.env.local` for local secrets
+- Validate all user input on the server
+- Sanitize data before rendering (XSS prevention)
+- Use CSRF tokens for mutations (Next.js handles this in Server Actions)
+
+---
+
+## Accessibility
+
+- Use semantic HTML (`<button>`, `<nav>`, `<main>`)
+- Add `alt` text to images
+- Ensure keyboard navigation works
+- Test with screen readers when possible
+- Use ARIA labels for complex UI
+
+---
+
+## Comments & Documentation
+
+- **Write self-documenting code** with clear variable/function names
+- Add comments for complex logic or non-obvious decisions
+- Use JSDoc for public APIs and utilities
+- Keep README and docs up to date
+
+---
+
+## AI Assistant Preferences
+
+### When suggesting code:
+
+- Provide **complete, working examples**
+- Include necessary imports
+- Follow the conventions above
+- Explain trade-offs when multiple approaches exist
+
+### When refactoring:
+
+- Preserve existing functionality
+- Highlight breaking changes
+- Suggest tests if logic changes
+
+### When debugging:
+
+- Ask clarifying questions if context is unclear
+- Check TypeScript errors, linter warnings, and console logs
+- Propose solutions with rationale
+
+---
+
+## Additional Notes
+
+- Update these rules as the project evolves
+- Share new patterns/conventions with the team
+- Prioritize **readability** and **maintainability** over cleverness

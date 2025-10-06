@@ -1,0 +1,708 @@
+---
+alwaysApply: true
+---
+
+# Next.js + React — Component Architecture
+
+> Senior Next.js / React developer playbook: components first, reusable building blocks, modern architecture, scalable and performant state management.
+
+---
+
+## Table of Contents
+
+1. [Purpose & Goals](#purpose--goals)
+2. [Guiding Principles](#guiding-principles)
+3. [High-Level Architecture](#high-level-architecture)
+4. [Recommended Folder Structure](#recommended-folder-structure)
+5. [Component Design Patterns](#component-design-patterns)
+6. [Reusable Component Best Practices](#reusable-component-best-practices)
+7. [Hooks & State Management Strategy](#hooks--state-management-strategy)
+8. [Data Fetching & Caching Strategies](#data-fetching--caching-strategies)
+9. [Performance Patterns and Anti-Patterns](#performance-patterns-and-anti-patterns)
+10. [Styling Approaches](#styling-approaches)
+11. [Testing, Docs, and Developer Experience](#testing-docs-and-developer-experience)
+12. [CI/CD and Release Strategy](#cicd-and-release-strategy)
+13. [Monorepo & Component Library Considerations](#monorepo--component-library-considerations)
+14. [Example Snippets](#example-snippets)
+15. [PR Review Checklist](#pr-review-checklist)
+16. [Appendix: Useful Libraries & Resources](#appendix-useful-libraries--resources)
+
+---
+
+## 1. Purpose & Goals
+
+This file is a single-source reference for building **scalable**, **reusable**, and **performant** UI components in Next.js (React). The goal is to enable teams to ship consistent UI quickly while keeping components:
+
+- **Composable and testable** - Small, focused units that can be combined
+- **Accessible and documented** - Built with a11y in mind, documented in Storybook
+- **Small, focused, and reusable** - Single responsibility, reusable across apps
+- **Safe to refactor** - Well-typed with TypeScript, version independently
+
+---
+
+## 2. Guiding Principles
+
+- **Composition over inheritance** - Prefer small composable pieces that can be combined
+- **Single Responsibility** - Each component does one job well
+- **Public API stability** - Keep component props minimal and predictable
+- **Prefer declarative over imperative** - Let React manage DOM unless you need low-level control
+- **Performance-aware defaults** - Optimize where it matters; measure before optimizing
+- **Accessibility first** - Build with semantics and keyboard + screen reader support
+- **Types & tests** - TypeScript + unit tests catch regressions early
+
+---
+
+## 3. High-Level Architecture
+
+Separate concerns into clear layers:
+
+- **UI / Presentational components** (pure, layout + styles) — `components/ui`
+- **Domain / Feature components** (composed) — glue UI + logic for a specific feature
+- **Layout components** — structural pieces (Header, Footer, Sidebar) — `components/layout`
+- **Hooks & services** — data fetching hooks, local helpers, encapsulate side-effects
+- **API / data layer** — TanStack Query / fetch wrappers
+- **Pages & Routes** — composition of features; orchestrates SSR/SSG behaviors
+
+**Server vs Client components** (Next.js App Router):
+
+- Prefer **server components** for static data and large HTML generation
+- Use **client components** for interactive state
+- Keep client boundary small and intentional
+
+---
+
+## 4. Recommended Folder Structure
+
+### Small app (single repo)
+
+```
+javelina/
+  app/                  # Next.js App Router
+    layout.tsx         # Root layout
+    page.tsx           # Pages
+    providers.tsx      # Client-side providers
+  components/
+    ui/                # Reusable UI (Button, Input, Card)
+    layout/            # Layout components (Header, Footer)
+  hooks/               # Custom hooks (React Query)
+  stores/              # Zustand stores
+  lib/                 # Utilities, API clients
+  types/               # Shared TypeScript types
+  styles/              # Global styles, theme
+```
+
+### Monorepo (recommended for product teams)
+
+```
+/ (repo root)
+  packages/
+    ui/               # Component library published internally
+    design-tokens/    # Shared tokens, tailwind config
+    utils/            # Common helpers
+  apps/
+    web/              # Main Next.js app
+    admin/            # Admin dashboard
+  package.json
+  pnpm-workspace.yaml or turbo.json
+```
+
+**Why monorepo?** Easier versioning, local development of UI changes, consistent linting/testing pipeline.
+
+---
+
+## 5. Component Design Patterns
+
+- **Atomic Design** — atoms (Button, Icon), molecules (InputWithLabel), organisms (Header), templates (Page Layout)
+- **Presentational vs Container** — keep UI presentational; move data & effects to containers/hooks
+- **Compound components** — groups of related parts (Tabs, Accordion) that share state via context
+- **Polymorphic components** — `as` prop to render `<button>` or `<a>` while keeping API stable
+- **Controlled vs Uncontrolled** — expose controlled API for predictable behavior and uncontrolled internally for simple local cases
+- **Render props & HOCs** — use sparingly; prefer hooks + composition
+
+---
+
+## 6. Reusable Component Best Practices
+
+### API Design
+
+- Keep props minimal and intention-revealing
+- Prefer boolean flags meaningful to callers (e.g. `isLoading`) over generic `meta` objects
+- Defer styling decisions: accept `className` and `style` and always merge rather than overwrite
+- Support `ref` forwarding for DOM access
+- Provide clear typing (generic polymorphic types if necessary)
+- Provide a sensible default, opt into variants via `variant`/`size` props
+
+### Accessibility
+
+- Use semantic HTML (button, input, nav)
+- Manage focus for dialogs and dynamic UI
+- Expose `aria-*` props through the component when appropriate
+- Include keyboard interactions (space/enter on actionable items)
+- Ensure sufficient color contrast (WCAG AA+)
+
+### Stability & Extensibility
+
+- Avoid prop explosion — prefer composition (children) if many optional pieces exist
+- Keep internal state shallow and predictable
+- Export component variants using CVA (Class Variance Authority)
+
+### Styling
+
+- Prefer utility-first (Tailwind) or CSS Modules for predictable class scoping
+- Allow `className` to be merged by using a helper like `clsx` or `cn`
+- Use design tokens from `tailwind.config.ts`
+
+### Documentation
+
+- Write Storybook stories for every component (happy path + edge cases)
+- Include MDX docs for props and usage
+- Document accessibility features
+
+---
+
+## 7. Hooks & State Management Strategy
+
+### General Rules
+
+- **Local UI state:** `useState`, `useReducer`, `useRef` inside components or feature hooks
+- **Derived state:** compute with `useMemo` or selectors
+- **Cross-cutting client state:** small surface (auth, theme) — `Context` or `Zustand`
+- **Complex app state:** consider Redux Toolkit + RTK Query
+- **Server state:** TanStack Query (React Query) or SWR
+
+### When to Use What
+
+- **Server-cached data with caching + retries:** TanStack Query (query caching, invalidation)
+- **Global local-only state (UI toggles, small counters):** Zustand — minimal and fast
+- **Heavily normalized data + complex update flows:** Redux Toolkit
+- **Shared component library internal state:** keep minimal; prefer caller-managed state
+
+### Example: Small store with Zustand
+
+```typescript
+// stores/useCounterStore.ts
+import { create } from 'zustand';
+
+interface CounterState {
+  count: number;
+  increment: () => void;
+  decrement: () => void;
+  reset: () => void;
+}
+
+export const useCounterStore = create<CounterState>((set) => ({
+  count: 0,
+  increment: () => set((state) => ({ count: state.count + 1 })),
+  decrement: () => set((state) => ({ count: state.count - 1 })),
+  reset: () => set({ count: 0 }),
+}));
+```
+
+### Example: Server state with TanStack Query
+
+```typescript
+// hooks/useUser.ts
+import { useQuery } from '@tanstack/react-query';
+
+export function useUser(userId: string) {
+  return useQuery({
+    queryKey: ['user', userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch user');
+      return res.json();
+    },
+    staleTime: 60 * 1000, // 1 minute
+  });
+}
+```
+
+---
+
+## 8. Data Fetching & Caching Strategies (Next.js Flavor)
+
+- **Server Components**: fetch on the server and return HTML — great for SEO and reduced client JS
+- **Client Components**: for interactive pieces or components that rely on browser-only APIs
+- **Static Generation (SSG)**: pre-render at build time when data is stable
+- **ISR (Incremental Static Regeneration)**: rebuild pages on a schedule for mostly-static pages
+- **SSR**: for fully dynamic personalized pages
+- **Edge functions**: for low-latency global responses
+
+### Practical Rules
+
+- Start server-side for markup-heavy content. Only hydrate the interactive bits on the client
+- Use cached fetch patterns and rely on HTTP cache headers and CDN where appropriate
+- Use TanStack Query or SWR for client-side cache + background revalidation
+- Implement proper error boundaries for data fetching failures
+
+---
+
+## 9. Performance Patterns and Anti-Patterns
+
+### Patterns That Help
+
+- **Code splitting & lazy loading** (`next/dynamic`) for large components
+- **Memoize** expensive calculations with `useMemo` and stable event handlers with `useCallback`
+- **React.memo** to avoid unnecessary re-renders of pure components
+- **Virtualize** long lists with `react-window` or `@tanstack/react-virtual`
+- **Prefer server components** for non-interactive markup to reduce client JS
+- **Use next/image** for optimized images with lazy loading
+- **Tree-shakeable libraries** — pick libraries that support ES modules
+
+### Anti-Patterns
+
+- Passing new inline objects/functions as props every render
+- Over-using Context for frequently changing values (causes re-renders)
+- Rendering huge lists without virtualization
+- Large monolithic components that do too much
+- Not code-splitting heavy dependencies
+
+### Example: Dynamic Import
+
+```typescript
+import dynamic from 'next/dynamic';
+
+const HeavyChart = dynamic(() => import('../charts/HeavyChart'), {
+  ssr: false,
+  loading: () => <div className="h-64">Loading chart…</div>,
+});
+```
+
+---
+
+## 10. Styling Approaches
+
+- **Tailwind CSS** — pros: quick, consistent, utility classes. Combine with design tokens
+- **CSS Modules** — scoping by file; good for component-scoped styles
+- **CVA (Class Variance Authority)** — type-safe component variants with Tailwind
+- **CSS-in-JS** (Stitches / Emotion / styled-components) — theming support; runtime cost trade-offs
+
+### Recommendation for Javelina
+
+Use **Tailwind + CVA** for consistent component variants, plus small CSS Modules where necessary.
+
+### Example: Using CVA
+
+```typescript
+import { cva, type VariantProps } from 'class-variance-authority';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-md font-medium transition-colors',
+  {
+    variants: {
+      variant: {
+        primary: 'bg-orange text-white hover:bg-orange-dark',
+        secondary: 'bg-blue-electric text-white hover:bg-blue-teal',
+        ghost: 'bg-transparent text-orange hover:underline',
+      },
+      size: {
+        sm: 'px-3 py-1.5 text-sm',
+        md: 'px-4 py-2 text-base',
+        lg: 'px-6 py-3 text-lg',
+      },
+    },
+    defaultVariants: {
+      variant: 'primary',
+      size: 'md',
+    },
+  }
+);
+```
+
+---
+
+## 11. Testing, Docs, and Developer Experience
+
+- **Unit tests:** React Testing Library + Jest/Vitest (verify behavior, not implementation)
+- **Integration / E2E:** Playwright (recommended) or Cypress
+- **Visual regression & component docs:** Storybook + Chromatic
+- **Type checks & linting:** TypeScript + ESLint + Prettier
+- **DevDX:** fast local reload, standardized commit hooks (husky), reproducible env
+
+### Example Unit Test for Button
+
+```typescript
+// components/ui/Button.test.tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import Button from './Button';
+
+test('calls onClick when clicked', async () => {
+  const user = userEvent.setup();
+  const handleClick = jest.fn();
+
+  render(<Button onClick={handleClick}>Click me</Button>);
+
+  await user.click(screen.getByRole('button', { name: /click me/i }));
+
+  expect(handleClick).toHaveBeenCalledTimes(1);
+});
+```
+
+---
+
+## 12. CI/CD and Release Strategy
+
+- **Pre-merge checks:** lint, types, unit tests, Storybook build
+- **Post-merge:** run full test suite, publish Storybook to static host
+- **Releases:** semantic versioning (patch for bug fixes, minor for new features, major for breaking changes)
+- **Automation:** GitHub Actions or other CI for publishing packages on tags
+- **Preview deployments:** Vercel/Netlify for PR previews
+
+---
+
+## 13. Monorepo & Component Library Considerations
+
+- Use `pnpm` or `yarn` workspaces + `turborepo` or `Nx` to orchestrate builds
+- Keep `packages/ui` extremely lightweight; avoid direct app dependencies
+- Export both ESM and CJS builds (and types)
+- Provide a `docs` site (Storybook / MDX) so consumers know how to use components
+- Version components independently if needed
+
+---
+
+## 14. Example Snippets
+
+### 1) Reusable Button Component (TypeScript, forwardRef, CVA)
+
+```tsx
+// components/ui/Button.tsx
+import React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { clsx } from 'clsx';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+  {
+    variants: {
+      variant: {
+        primary: 'bg-orange text-white hover:bg-orange-dark focus:ring-orange',
+        secondary:
+          'bg-blue-electric text-white hover:bg-blue-teal focus:ring-blue-electric',
+        ghost: 'bg-transparent text-orange hover:underline',
+        outline:
+          'border-2 border-orange text-orange hover:bg-orange hover:text-white',
+      },
+      size: {
+        sm: 'px-3 py-1.5 text-sm',
+        md: 'px-4 py-2 text-base',
+        lg: 'px-6 py-3 text-lg',
+      },
+    },
+    defaultVariants: {
+      variant: 'primary',
+      size: 'md',
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={clsx(buttonVariants({ variant, size }), className)}
+        {...props}
+      />
+    );
+  }
+);
+
+Button.displayName = 'Button';
+
+export default Button;
+```
+
+**Notes:**
+
+- `forwardRef` allows parent components to control focus
+- `React.memo` can be added to prevent unnecessary re-renders
+- Keep the component purely presentational — move logic out to hooks/parent
+
+### 2) Small Hook: useToggle
+
+```typescript
+import { useCallback, useState } from 'react';
+
+export function useToggle(initial = false) {
+  const [value, setValue] = useState<boolean>(initial);
+  const toggle = useCallback(() => setValue((v) => !v), []);
+  const setTrue = useCallback(() => setValue(true), []);
+  const setFalse = useCallback(() => setValue(false), []);
+
+  return { value, setValue, toggle, setTrue, setFalse };
+}
+```
+
+### 3) Compound Tabs Component (Outline)
+
+```tsx
+// components/ui/Tabs.tsx
+import React, { createContext, useContext, useState } from 'react';
+
+interface TabsContextValue {
+  selectedIndex: number;
+  setSelectedIndex: (index: number) => void;
+}
+
+const TabsContext = createContext<TabsContextValue | null>(null);
+
+export const Tabs = ({
+  children,
+  defaultIndex = 0,
+}: {
+  children: React.ReactNode;
+  defaultIndex?: number;
+}) => {
+  const [selectedIndex, setSelectedIndex] = useState(defaultIndex);
+
+  return (
+    <TabsContext.Provider value={{ selectedIndex, setSelectedIndex }}>
+      {children}
+    </TabsContext.Provider>
+  );
+};
+
+export const TabList = ({ children }: { children: React.ReactNode }) => (
+  <div role="tablist" className="flex space-x-2 border-b border-gray-light">
+    {children}
+  </div>
+);
+
+export const Tab = ({
+  children,
+  index,
+}: {
+  children: React.ReactNode;
+  index: number;
+}) => {
+  const context = useContext(TabsContext);
+  if (!context) throw new Error('Tab must be used within Tabs');
+
+  const { selectedIndex, setSelectedIndex } = context;
+  const isSelected = selectedIndex === index;
+
+  return (
+    <button
+      role="tab"
+      aria-selected={isSelected}
+      onClick={() => setSelectedIndex(index)}
+      className={clsx(
+        'px-4 py-2 font-medium transition-colors',
+        isSelected
+          ? 'text-orange border-b-2 border-orange'
+          : 'text-gray-slate hover:text-orange'
+      )}
+    >
+      {children}
+    </button>
+  );
+};
+
+export const TabPanel = ({
+  children,
+  index,
+}: {
+  children: React.ReactNode;
+  index: number;
+}) => {
+  const context = useContext(TabsContext);
+  if (!context) throw new Error('TabPanel must be used within Tabs');
+
+  const { selectedIndex } = context;
+
+  return selectedIndex === index ? (
+    <div role="tabpanel" className="py-4">
+      {children}
+    </div>
+  ) : null;
+};
+```
+
+### 4) Data Fetching Hook with Error Handling
+
+```typescript
+// hooks/useProjects.ts
+import { useQuery } from '@tanstack/react-query';
+
+interface Project {
+  id: string;
+  name: string;
+  status: 'active' | 'archived';
+}
+
+export function useProjects() {
+  return useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const res = await fetch('/api/projects');
+      if (!res.ok) {
+        throw new Error(`Failed to fetch projects: ${res.statusText}`);
+      }
+      return res.json() as Promise<Project[]>;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+}
+```
+
+### 5) Card Component with Variants
+
+```tsx
+// components/ui/Card.tsx
+import React from 'react';
+import { clsx } from 'clsx';
+
+interface CardProps {
+  title?: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+  variant?: 'default' | 'highlighted';
+}
+
+export function Card({
+  title,
+  description,
+  children,
+  className,
+  variant = 'default',
+}: CardProps) {
+  return (
+    <div
+      className={clsx(
+        'rounded-xl p-6 shadow-md transition-all',
+        variant === 'default' &&
+          'bg-white dark:bg-gray-slate border border-gray-light hover:shadow-lg',
+        variant === 'highlighted' && 'bg-orange-light border-2 border-orange',
+        className
+      )}
+    >
+      {title && <h3 className="font-bold text-orange text-lg mb-1">{title}</h3>}
+      {description && (
+        <p className="text-gray-slate font-light text-sm mb-4">{description}</p>
+      )}
+      <div className="text-gray-slate font-light">{children}</div>
+    </div>
+  );
+}
+```
+
+---
+
+## 15. PR Review Checklist (Component PRs)
+
+- [ ] Does the component do one thing well?
+- [ ] Are props minimal and well-typed?
+- [ ] Are accessibility attributes correct (ARIA, semantic HTML)?
+- [ ] Is styling isolated (no global class leakage)?
+- [ ] Are there Storybook stories for all important states?
+- [ ] Are there unit tests for behavior and interaction?
+- [ ] Are performance considerations documented if necessary?
+- [ ] Are there no console errors or warnings in the browser?
+- [ ] Has the package versioning / changelog been updated if breaking?
+- [ ] Does it follow the brand guidelines (colors, typography)?
+- [ ] Is the component responsive and works on mobile?
+
+---
+
+## 16. Appendix: Useful Libraries & Resources
+
+### Utilities
+
+- `clsx` - Conditional className merging
+- `class-variance-authority (cva)` - Type-safe component variants
+- `tiny-invariant` - Runtime assertions
+- `lodash-es` - Pick small utility helpers
+
+### State Management
+
+- `zustand` - Lightweight state management
+- `@reduxjs/toolkit` - Redux with less boilerplate
+- `@tanstack/react-query` - Server state management
+- `jotai` - Atomic state management
+
+### UI Foundations
+
+- `@radix-ui/react-*` - Unstyled, accessible UI primitives
+- `@headlessui/react` - Tailwind-friendly headless components
+- `react-aria` - Adobe's accessibility-focused hooks
+- `cmdk` - Command menu component
+
+### Styling
+
+- `tailwindcss` - Utility-first CSS framework
+- `class-variance-authority` - Component variant API
+- `tailwind-merge` - Merge Tailwind classes intelligently
+- `@tailwindcss/typography` - Beautiful typographic defaults
+
+### Testing
+
+- `@testing-library/react` - Test React components
+- `@testing-library/user-event` - Simulate user interactions
+- `vitest` or `jest` - Test runners
+- `playwright` - E2E testing
+- `msw` - Mock API requests
+
+### Documentation & Visual Testing
+
+- `storybook` - Component documentation and development
+- `chromatic` - Visual regression testing
+- `@storybook/addon-a11y` - Accessibility testing in Storybook
+
+### Monorepo Tools
+
+- `turborepo` - High-performance build system
+- `pnpm` - Fast, disk space efficient package manager
+- `nx` - Smart monorepo tools
+- `changesets` - Manage versions and changelogs
+
+### Form Handling
+
+- `react-hook-form` - Performant form library
+- `zod` - TypeScript-first schema validation
+- `@hookform/resolvers` - Validation resolver for RHF
+
+### Icons & Assets
+
+- `lucide-react` - Beautiful, consistent icons
+- `react-icons` - Popular icon packs
+- `next/image` - Optimized image component
+
+---
+
+## Final Notes
+
+- Keep components **small, typed, and tested**. Use composition for complex features.
+- Prefer **server components** where possible in Next.js to reduce client JS.
+- Choose state tools that match the app complexity — **simple first, escalate** only when necessary.
+- Follow the **Javelina brand guidelines** for colors, typography, and tone.
+- **Document everything** — future you (and your teammates) will thank you.
+
+---
+
+## Quick Reference: Component Checklist
+
+When building a new component, ensure:
+
+1. ✅ TypeScript types defined
+2. ✅ Accessible (semantic HTML, ARIA when needed)
+3. ✅ Responsive (mobile-first)
+4. ✅ Brand-compliant (colors, fonts from design system)
+5. ✅ Props are minimal and intentional
+6. ✅ Supports `className` for style extension
+7. ✅ Has Storybook story
+8. ✅ Has unit tests for key interactions
+9. ✅ Performance optimized (memo, useCallback where needed)
+10. ✅ Documented with JSDoc or inline comments
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** October 2025  
+**Maintained by:** Javelina Development Team
