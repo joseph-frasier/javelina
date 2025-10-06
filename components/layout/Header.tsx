@@ -32,7 +32,7 @@ export function Header() {
 
   return (
     <header className="bg-white dark:bg-orange-dark border-b border-gray-light sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto pr-4 sm:pr-6 lg:pr-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
@@ -47,22 +47,21 @@ export function Header() {
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/"
-              className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/analytics"
-              className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
-            >
-              Analytics
-            </Link>
-          </nav>
-
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link
+                href="/"
+                className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/analytics"
+                className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
+              >
+                Analytics
+              </Link>
+            </nav>
             <button className="p-2 text-gray-slate hover:text-orange transition-colors">
               <svg
                 className="w-5 h-5"
