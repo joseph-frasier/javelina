@@ -41,17 +41,17 @@ const mockOrganizations: Organization[] = [
       },
     ],
   },
-  {
-    id: 'personal-projects',
-    name: 'Personal Projects',
-    projects: [
-      {
-        id: 'blog',
-        name: 'Blog',
-        zones: [{ id: 'blog-example-com', name: 'blog.example.com' }],
-      },
-    ],
-  },
+  // {
+  //   id: 'personal-projects',
+  //   name: 'Personal Projects',
+  //   projects: [
+  //     {
+  //       id: 'blog',
+  //       name: 'Blog',
+  //       zones: [{ id: 'blog-example-com', name: 'blog.example.com' }],
+  //     },
+  //   ],
+  // },
 ];
 
 export function Sidebar() {
