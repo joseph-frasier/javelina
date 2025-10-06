@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { clsx } from 'clsx';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -56,13 +57,14 @@ export default function LoginPage() {
     <div className="min-h-screen bg-orange-light flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-[420px]">
         {/* Logo/Brand Section */}
-        <div className="text-center mb-6">
-          <h1 className="font-black text-4xl text-orange-dark mb-2">
-            Javelina
-          </h1>
-          <p className="font-light text-gray-slate text-base">
-            Sign in to your account
-          </p>
+        <div className="flex flex-col items-center mb-0">
+          <Image
+            src="/JAVELINA LOGO TRANSPARENT BACKGROUND.png"
+            alt="Javelina Logo"
+            width={300}
+            height={120}
+            priority
+          />
         </div>
 
         {/* Login Card */}
