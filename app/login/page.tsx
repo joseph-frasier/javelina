@@ -303,6 +303,53 @@ export default function LoginPage() {
                 GitHub
               </Button>
             </div>
+
+            {/* Quick Login Buttons */}
+            <div className="pt-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-light"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-white text-gray-slate font-light">
+                    Quick Login
+                  </span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  className="w-full text-sm"
+                  onClick={() => {
+                    setEmail('sarah.chen@company.com');
+                    setPassword('password123');
+                  }}
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                  Regular User
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  className="w-full text-sm"
+                  onClick={() => {
+                    setEmail('marcus.rodriguez@company.com');
+                    setPassword('admin2024');
+                  }}
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  Super User
+                </Button>
+              </div>
+            </div>
           </form>
         </div>
 
