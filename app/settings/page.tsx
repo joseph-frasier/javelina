@@ -504,7 +504,7 @@ export default function SettingsPage() {
                                 ? 'bg-blue-100 text-blue-800'
                                 : log.category === 'Integrations'
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-orange-100 text-orange-800'
                             }`}>
                               {log.category}
                             </span>
