@@ -72,7 +72,7 @@ export default function ProfilePage() {
                   </p>
                 )}
                 {user.role === 'superuser' && (
-                  <p className="text-xs font-semibold text-orange mb-4">
+                  <p className="text-sm font-semibold text-orange mb-4">
                     SuperUser
                   </p>
                 )}
