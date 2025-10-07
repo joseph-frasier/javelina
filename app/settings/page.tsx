@@ -59,7 +59,7 @@ export default function SettingsPage() {
   const sections = [
     { id: 'general', name: 'General Settings', icon: '⚙️' },
     { id: 'security', name: 'Security Settings', icon: '🔒' },
-    { id: 'access', name: 'Access Management', icon: '👥' },
+    ...(user.role === 'superuser' ? [{ id: 'access', name: 'Access Management', icon: '👥' }] : []),
     { id: 'integrations', name: 'Integrations', icon: '🔗' },
     { id: 'audit', name: 'Audit & Compliance', icon: '📋' }
   ];
@@ -74,32 +74,20 @@ export default function SettingsPage() {
             {/* Sidebar Navigation */}
             <div className="w-64 flex-shrink-0">
               <nav className="space-y-2">
-                {sections.map((section) => {
-                  const isAccessible = 
-                    (section.id === 'general') ||
-                    (section.id === 'security') ||
-                    (section.id === 'access' && permissions.canManageUsers) ||
-                    (section.id === 'integrations') ||
-                    (section.id === 'audit');
-
-                  return (
-                    <button
-                      key={section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      disabled={!isAccessible}
-                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                        activeSection === section.id
-                          ? 'bg-orange text-white'
-                          : isAccessible
-                          ? 'text-gray-slate hover:bg-gray-light'
-                          : 'text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      <span className="mr-3">{section.icon}</span>
-                      {section.name}
-                    </button>
-                  );
-                })}
+                {sections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                      activeSection === section.id
+                        ? 'bg-orange text-white'
+                        : 'text-gray-slate hover:bg-gray-light'
+                    }`}
+                  >
+                    <span className="mr-3">{section.icon}</span>
+                    {section.name}
+                  </button>
+                ))}
               </nav>
             </div>
 
@@ -383,13 +371,7 @@ export default function SettingsPage() {
                               <p className="text-xs text-gray-slate">Last active: {formatDate(member.last_active)}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                member.role === 'Admin' 
-                                  ? 'bg-orange-100 text-orange-800' 
-                                  : member.role === 'Editor'
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
+                              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
                                 {member.role}
                               </span>
                               <Button variant="outline" size="sm">
@@ -412,7 +394,7 @@ export default function SettingsPage() {
                               <p className="text-sm text-gray-slate">Role override</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
                                 {override.role}
                               </span>
                               <Button variant="outline" size="sm">
