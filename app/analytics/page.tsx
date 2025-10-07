@@ -59,6 +59,12 @@ export default function AnalyticsPage() {
   const [startDate, setStartDate] = useState('2025-10-01');
   const [endDate, setEndDate] = useState('2025-10-06');
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set mounted state on client
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -153,7 +159,7 @@ export default function AnalyticsPage() {
 
           {/* Last Refresh */}
           <div className="mt-4 text-sm text-gray-slate font-light">
-            Last refreshed: {lastRefresh.toLocaleTimeString()}
+            Last refreshed: {isMounted ? lastRefresh.toLocaleTimeString() : '--'}
           </div>
         </Card>
 
