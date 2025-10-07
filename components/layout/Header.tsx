@@ -3,22 +3,24 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
+import { useAuthStore } from '@/lib/auth-store';
 
 export function Header() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user, logout } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Get user details from session
-  const userName = session?.user?.name || 'User';
-  const userEmail = session?.user?.email || '';
+  // Get user details from auth store
+  const userName = user?.name || 'User';
+  const userEmail = user?.email || '';
+  const userRole = user?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' });
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
     setIsDropdownOpen(false);
   };
 
@@ -115,6 +117,11 @@ export function Header() {
                         <p className="text-xs text-gray-slate truncate">
                           {userEmail}
                         </p>
+                        {userRole === 'superuser' && (
+                          <p className="text-xs font-semibold text-orange truncate">
+                            Super User
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

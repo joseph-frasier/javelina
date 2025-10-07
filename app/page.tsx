@@ -1,9 +1,11 @@
 import { StatCard, Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 export default function DashboardPage() {
   return (
-    <div className="p-8">
+    <ProtectedRoute>
+      <div className="p-8">
       {/* Hero Section */}
       <div className="mb-8">
         <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
@@ -229,6 +231,7 @@ export default function DashboardPage() {
           </p>
         </div>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

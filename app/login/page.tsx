@@ -1,22 +1,31 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { clsx } from 'clsx';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useAuthStore } from '@/lib/auth-store';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { login, isAuthenticated, isLoading } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {}
   );
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
 
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -44,19 +53,18 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log('Login submitted:', { email, password, rememberMe });
-      // Add your authentication logic here
-    }, 1500);
+    const result = await login(email, password);
+    
+    if (result.success) {
+      router.push('/');
+    } else {
+      setErrors({ 
+        email: result.error,
+        password: result.error 
+      });
+    }
   };
 
-  const handleGithubLogin = async () => {
-    await signIn('github', { callbackUrl: '/' });
-  };
 
   return (
     <div className="min-h-screen bg-orange-light flex items-center justify-center px-4 py-12">
@@ -283,7 +291,7 @@ export default function LoginPage() {
                 variant="outline"
                 size="md"
                 className="w-full text-sm"
-                onClick={handleGithubLogin}
+                onClick={() => console.log('GitHub login')}
               >
                 <svg
                   className="w-4 h-4 mr-2"
