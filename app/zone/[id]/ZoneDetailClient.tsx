@@ -313,7 +313,7 @@ export function ZoneDetailClient({ zone, zoneId }: { zone: any; zoneId: string }
                   type="number"
                   value={editedZone.ttl}
                   onChange={(e) => setEditedZone({ ...editedZone, ttl: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange"
+                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
                 />
               </div>
 
@@ -325,7 +325,7 @@ export function ZoneDetailClient({ zone, zoneId }: { zone: any; zoneId: string }
                   type="text"
                   value={editedZone.nameservers}
                   onChange={(e) => setEditedZone({ ...editedZone, nameservers: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange"
+                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
                   placeholder="ns1.example.com, ns2.example.com"
                 />
               </div>
@@ -338,7 +338,7 @@ export function ZoneDetailClient({ zone, zoneId }: { zone: any; zoneId: string }
                   type="email"
                   value={editedZone.adminEmail}
                   onChange={(e) => setEditedZone({ ...editedZone, adminEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange"
+                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
                   placeholder="admin@example.com"
                 />
               </div>
