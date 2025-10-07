@@ -2,21 +2,35 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
+import { useAuthStore } from '@/lib/auth-store';
 
 export function Header() {
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  // User details hard coded for now. update to handle state when login is implemented
-  const userName = 'John Doe';
-  const userEmail = 'john@acme.com';
+
+  // Get user details from auth store
+  const userName = user?.name || 'User';
+  const userEmail = user?.email || '';
+  const userRole = user?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+    setIsDropdownOpen(false);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     }
@@ -82,7 +96,9 @@ export function Header() {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-orange-dark transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2"
               >
-                <span className="text-white font-bold text-sm">{userInitial}</span>
+                <span className="text-white font-bold text-sm">
+                  {userInitial}
+                </span>
               </button>
 
               {isDropdownOpen && (
@@ -90,7 +106,9 @@ export function Header() {
                   <div className="p-4 border-b border-gray-light">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold">{userInitial}</span>
+                        <span className="text-white font-bold">
+                          {userInitial}
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-orange-dark dark:text-white truncate">
@@ -99,6 +117,11 @@ export function Header() {
                         <p className="text-xs text-gray-slate truncate">
                           {userEmail}
                         </p>
+                        {userRole === 'superuser' && (
+                          <p className="text-xs font-semibold text-orange truncate">
+                            Super User
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -119,10 +142,7 @@ export function Header() {
                     </Link>
                     <button
                       className="w-full text-left px-4 py-2 text-sm text-gray-slate hover:bg-gray-light hover:text-orange transition-colors"
-                      onClick={() => {
-                        setIsDropdownOpen(false);
-                        // Add logout logic here
-                      }}
+                      onClick={handleLogout}
                     >
                       Sign out
                     </button>

@@ -1,5 +1,6 @@
 import { StatCard, Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 export default function DashboardPage() {
   return (
@@ -229,6 +230,7 @@ export default function DashboardPage() {
           </p>
         </div>
       </Card>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
