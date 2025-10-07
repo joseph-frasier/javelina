@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Providers } from '@/app/providers';
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,15 +17,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <Providers>
-          <div className="flex flex-col h-screen">
-            <Header />
-            <div className="flex flex-1 overflow-hidden">
-              <Sidebar />
-              <main className="flex-1 overflow-y-auto bg-gray-light dark:bg-orange-dark">
-                {children}
-              </main>
-            </div>
-          </div>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
         </Providers>
       </body>
     </html>

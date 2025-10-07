@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { StatCard, Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import {
   LineChart,
   Line,
@@ -75,7 +76,8 @@ export default function AnalyticsPage() {
   }, []);
 
   return (
-    <>
+    <ProtectedRoute>
+      <>
       <style jsx global>{`
         svg, svg * {
           outline: none !important;
@@ -435,6 +437,7 @@ export default function AnalyticsPage() {
           </div>
         </Card>
       </div>
-    </>
+      </>
+    </ProtectedRoute>
   );
 }
