@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Header } from '@/components/layout/Header';
 import { StatCard, Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import {
@@ -76,10 +75,13 @@ export default function AnalyticsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-orange-light">
-      <Header />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <style jsx global>{`
+        svg, svg * {
+          outline: none !important;
+        }
+      `}</style>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="font-black text-4xl text-orange-dark mb-2">
@@ -344,16 +346,22 @@ export default function AnalyticsPage() {
             title="Query Types Distribution"
             description="DNS record types breakdown"
           >
-            <div className="mt-6 h-64">
+            <div 
+              className="mt-6 h-64" 
+              style={{ outline: 'none' }}
+              onMouseDown={(e) => e.preventDefault()}
+            >
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart 
+                  style={{ outline: 'none' }}
+                >
                   <Pie
                     data={queryTypes}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
+                      `${name}: ${((percent as number) * 100).toFixed(0)}%`
                     }
                     outerRadius={80}
                     fill="#8884d8"
@@ -426,7 +434,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </Card>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
