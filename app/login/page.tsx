@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { clsx } from 'clsx';
@@ -51,6 +52,10 @@ export default function LoginPage() {
       console.log('Login submitted:', { email, password, rememberMe });
       // Add your authentication logic here
     }, 1500);
+  };
+
+  const handleGithubLogin = async () => {
+    await signIn('github', { callbackUrl: '/' });
   };
 
   return (
@@ -278,7 +283,7 @@ export default function LoginPage() {
                 variant="outline"
                 size="md"
                 className="w-full text-sm"
-                onClick={() => console.log('GitHub login')}
+                onClick={handleGithubLogin}
               >
                 <svg
                   className="w-4 h-4 mr-2"
