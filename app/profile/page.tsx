@@ -25,7 +25,7 @@ export default function ProfilePage() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'Admin':
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'Editor':
@@ -34,6 +34,15 @@ export default function ProfilePage() {
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getRoleDisplayText = (role: string) => {
+    switch (role) {
+      case 'SuperAdmin':
+        return 'SuperUser';
+      default:
+        return role;
     }
   };
 
@@ -58,8 +67,13 @@ export default function ProfilePage() {
                   {user.email}
                 </p>
                 {user.title && (
-                  <p className="text-sm text-gray-slate mb-4">
+                  <p className="text-sm text-gray-slate mb-2">
                     {user.title}
+                  </p>
+                )}
+                {user.role === 'superuser' && (
+                  <p className="text-xs font-semibold text-orange mb-4">
+                    SuperUser
                   </p>
                 )}
                 <div className="flex gap-2">
@@ -80,40 +94,32 @@ export default function ProfilePage() {
               </div>
             </Card>
 
-            {/* Security Card */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-orange-dark mb-4">
-                Security
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate">MFA Status</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    user.mfa_enabled 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {user.mfa_enabled ? 'Enabled' : 'Disabled'}
-                  </span>
+            {/* Admin Controls Card */}
+            {(user.role === 'superuser' || user.organizations?.some(org => org.role === 'Admin' || org.role === 'SuperAdmin')) && (
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold text-orange-dark mb-4">
+                  Admin Controls
+                </h3>
+                <div className="space-y-3">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Manage Members
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Invite Users
+                  </Button>
+                  {user.role === 'superuser' && (
+                    <>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Set Primary Domain
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Resolve Conflicts
+                      </Button>
+                    </>
+                  )}
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate">SSO Status</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    user.sso_connected 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {user.sso_connected ? 'Connected' : 'Not Connected'}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-slate">
-                  Last login: {formatDate(user.last_login || '')}
-                </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  Manage Security
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            )}
 
             {/* Billing Card */}
             <Card className="p-6">
@@ -158,7 +164,7 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium text-orange-dark">{org.name}</h4>
                       <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)}`}>
-                        {org.role}
+                        {getRoleDisplayText(org.role)}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-slate mb-3">
@@ -264,32 +270,6 @@ export default function ProfilePage() {
               </div>
             </Card>
 
-            {/* Admin Quick Links */}
-            {(user.role === 'superuser' || user.organizations?.some(org => org.role === 'Admin' || org.role === 'SuperAdmin')) && (
-              <Card className="p-6">
-                <h3 className="text-xl font-semibold text-orange-dark mb-4">
-                  Admin Controls
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" size="sm">
-                    Manage Members
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Invite Users
-                  </Button>
-                  {user.role === 'superuser' && (
-                    <>
-                      <Button variant="outline" size="sm">
-                        Set Primary Domain
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Resolve Conflicts
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </Card>
-            )}
           </div>
         </div>
       </div>
