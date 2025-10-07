@@ -352,9 +352,22 @@ export default function AnalyticsPage() {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
+                    stroke="#fff"
+                    strokeWidth={1}
+                    activeShape={{
+                      stroke: '#EF7215',
+                      strokeWidth: 3,
+                    }}
                   >
                     {queryTypes.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color}
+                        style={{ 
+                          outline: 'none',
+                          cursor: 'pointer',
+                        }}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
