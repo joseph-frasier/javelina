@@ -11,7 +11,7 @@ export interface NotificationSettings {
 }
 
 export interface GeneralSettings {
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'system';
   language: string;
   timezone: string;
   notifications: NotificationSettings;
@@ -93,7 +93,7 @@ export interface SettingsState {
 
 // Mock data
 const mockGeneralSettings: GeneralSettings = {
-  theme: 'dark',
+  theme: 'system',
   language: 'English',
   timezone: 'America/New_York',
   notifications: {

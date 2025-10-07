@@ -5,6 +5,7 @@ import { useSettingsStore } from '@/lib/settings-store';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Dropdown from '@/components/ui/Dropdown';
 import { useState } from 'react';
 
 export default function SettingsPage() {
@@ -45,11 +46,11 @@ export default function SettingsPage() {
       case 'Admin':
         return { canEdit: true, canManageUsers: true, canViewAudit: true };
       case 'Editor':
-        return { canEdit: true, canManageUsers: false, canViewAudit: false };
+        return { canEdit: true, canManageUsers: false, canViewAudit: true };
       case 'Viewer':
-        return { canEdit: false, canManageUsers: false, canViewAudit: false };
+        return { canEdit: true, canManageUsers: false, canViewAudit: true };
       default:
-        return { canEdit: false, canManageUsers: false, canViewAudit: false };
+        return { canEdit: true, canManageUsers: false, canViewAudit: true };
     }
   };
 
@@ -76,10 +77,10 @@ export default function SettingsPage() {
                 {sections.map((section) => {
                   const isAccessible = 
                     (section.id === 'general') ||
-                    (section.id === 'security' && permissions.canEdit) ||
+                    (section.id === 'security') ||
                     (section.id === 'access' && permissions.canManageUsers) ||
-                    (section.id === 'integrations' && permissions.canEdit) ||
-                    (section.id === 'audit' && permissions.canViewAudit);
+                    (section.id === 'integrations') ||
+                    (section.id === 'audit');
 
                   return (
                     <button
@@ -120,7 +121,7 @@ export default function SettingsPage() {
                             name="theme"
                             value="light"
                             checked={general.theme === 'light'}
-                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' })}
+                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' | 'system' })}
                             className="mr-2"
                           />
                           Light
@@ -131,42 +132,55 @@ export default function SettingsPage() {
                             name="theme"
                             value="dark"
                             checked={general.theme === 'dark'}
-                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' })}
+                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' | 'system' })}
                             className="mr-2"
                           />
                           Dark
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="theme"
+                            value="system"
+                            checked={general.theme === 'system'}
+                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' | 'system' })}
+                            className="mr-2"
+                          />
+                          System
                         </label>
                       </div>
                     </div>
 
                     {/* Language */}
                     <div>
-                      <label className="block text-sm font-medium text-orange-dark mb-2">Language</label>
-                      <select
+                      <Dropdown
+                        label="Language"
                         value={general.language}
-                        onChange={(e) => updateGeneralSettings({ language: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-light rounded-md focus:ring-2 focus:ring-orange focus:border-orange"
-                      >
-                        <option value="English">English</option>
-                        <option value="Spanish">Spanish</option>
-                        <option value="French">French</option>
-                      </select>
+                        options={[
+                          { value: 'English', label: 'English' },
+                          { value: 'Spanish', label: 'Spanish' },
+                          { value: 'French', label: 'French' }
+                        ]}
+                        onChange={(value) => updateGeneralSettings({ language: value })}
+                        className="w-48"
+                      />
                     </div>
 
                     {/* Timezone */}
                     <div>
-                      <label className="block text-sm font-medium text-orange-dark mb-2">Timezone</label>
-                      <select
+                      <Dropdown
+                        label="Timezone"
                         value={general.timezone}
-                        onChange={(e) => updateGeneralSettings({ timezone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-light rounded-md focus:ring-2 focus:ring-orange focus:border-orange"
-                      >
-                        <option value="America/New_York">Eastern Time</option>
-                        <option value="America/Chicago">Central Time</option>
-                        <option value="America/Denver">Mountain Time</option>
-                        <option value="America/Los_Angeles">Pacific Time</option>
-                        <option value="UTC">UTC</option>
-                      </select>
+                        options={[
+                          { value: 'America/New_York', label: 'Eastern Time' },
+                          { value: 'America/Chicago', label: 'Central Time' },
+                          { value: 'America/Denver', label: 'Mountain Time' },
+                          { value: 'America/Los_Angeles', label: 'Pacific Time' },
+                          { value: 'UTC', label: 'UTC' }
+                        ]}
+                        onChange={(value) => updateGeneralSettings({ timezone: value })}
+                        className="w-48"
+                      />
                     </div>
 
                     {/* Notifications */}
