@@ -289,9 +289,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // Don't persist isAuthenticated - derive it from Supabase session on load
       partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
+        // Don't persist anything - let Supabase cookies handle it
       }),
     }
   )
