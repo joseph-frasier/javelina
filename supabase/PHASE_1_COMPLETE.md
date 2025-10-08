@@ -36,7 +36,10 @@ Create this file in your project root:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# NEXT_PUBLIC_SITE_URL is now OPTIONAL - auto-detected by default!
+# Only set this if you want to override auto-detection
+# NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 **To get these values:**
@@ -44,6 +47,12 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 2. Select your project
 3. Go to **Settings** → **API**
 4. Copy **Project URL**, **anon key**, and **service_role key**
+
+**Note:** We've created a dynamic URL utility (`lib/utils/get-url.ts`) that automatically:
+- Uses `localhost:3000` for local dev
+- Uses Vercel preview URL for preview deployments  
+- Uses your production domain for production
+- No manual configuration needed!
 
 ### 2. Run Database Schema
 
@@ -70,7 +79,9 @@ Since you've connected Supabase to Vercel, check that these variables are set in
 - ✅ `NEXT_PUBLIC_SUPABASE_URL`
 - ✅ `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - ✅ `SUPABASE_SERVICE_ROLE_KEY`
-- ✅ `NEXT_PUBLIC_SITE_URL` (set to your production domain for Production env)
+- ℹ️ `NEXT_PUBLIC_SITE_URL` (OPTIONAL - only set if you want to override auto-detection)
+
+**Note:** With dynamic URL detection, Vercel automatically provides `VERCEL_URL` which our utility uses for preview deployments. You only need to set `NEXT_PUBLIC_SITE_URL` if you want to explicitly override the auto-detection.
 
 ### 4. (Optional) Configure OAuth Providers
 

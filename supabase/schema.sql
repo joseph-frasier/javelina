@@ -54,20 +54,10 @@ create table if not exists public.organizations (
 -- Enable Row Level Security
 alter table public.organizations enable row level security;
 
--- RLS Policy: Users can view organizations they belong to
-create policy "Users can view their organizations"
-  on public.organizations for select
-  using (
-    exists (
-      select 1 from public.organization_members
-      where organization_members.organization_id = organizations.id
-      and organization_members.user_id = auth.uid()
-    )
-  );
-
 -- =====================================================
 -- 3. ORGANIZATION_MEMBERS TABLE
 -- Junction table for user-organization relationships
+-- NOTE: Created before RLS policies so policies can reference it
 -- =====================================================
 
 create table if not exists public.organization_members (
@@ -82,6 +72,21 @@ create table if not exists public.organization_members (
 
 -- Enable Row Level Security
 alter table public.organization_members enable row level security;
+
+-- =====================================================
+-- RLS POLICIES (Created after all tables exist)
+-- =====================================================
+
+-- RLS Policy: Users can view organizations they belong to
+create policy "Users can view their organizations"
+  on public.organizations for select
+  using (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = organizations.id
+      and organization_members.user_id = auth.uid()
+    )
+  );
 
 -- RLS Policy: Users can view their own memberships
 create policy "Users can view their memberships"
