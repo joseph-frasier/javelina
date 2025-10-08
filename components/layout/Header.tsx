@@ -12,10 +12,11 @@ export function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Get user details from auth store
-  const userName = user?.name || 'User';
+  // Get user details from Supabase auth user
+  // Type assertions needed since we're extending the User type with custom properties
+  const userName = (user as any)?.profile?.name || (user as any)?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
   const userEmail = user?.email || '';
-  const userRole = user?.role || 'user';
+  const userRole = (user as any)?.profile?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
 
   const handleLogout = () => {
