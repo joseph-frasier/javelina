@@ -2,12 +2,31 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type UserRole = 'user' | 'superuser';
+export type RBACRole = 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+
+export interface Organization {
+  id: string;
+  name: string;
+  role: RBACRole;
+  projects_count: number;
+  zones_count: number;
+}
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  display_name?: string;
+  title?: string;
+  phone?: string;
+  timezone?: string;
+  bio?: string;
+  avatar_url?: string;
+  mfa_enabled?: boolean;
+  sso_connected?: boolean;
+  last_login?: string;
+  organizations?: Organization[];
 }
 
 interface AuthState {
@@ -18,19 +37,62 @@ interface AuthState {
   isLoading: boolean;
 }
 
-// Mock users with real names
+// Mock users with real names and extended data
 const mockUsers: User[] = [
   {
     id: '1',
     name: 'Sarah Chen',
     email: 'sarah.chen@company.com',
-    role: 'user'
+    role: 'user',
+    display_name: 'Sarah',
+    title: 'DevOps Engineer',
+    phone: '+1-555-555-0101',
+    timezone: 'America/New_York',
+    bio: 'DNS enthusiast. I manage company domains.',
+    avatar_url: '',
+    mfa_enabled: true,
+    sso_connected: false,
+    last_login: '2025-10-06T18:12:30Z',
+    organizations: [
+      {
+        id: 'org_company',
+        name: 'Company Corp',
+        role: 'Editor',
+        projects_count: 5,
+        zones_count: 45
+      }
+    ]
   },
   {
     id: '2', 
     name: 'Marcus Rodriguez',
     email: 'marcus.rodriguez@company.com',
-    role: 'superuser'
+    role: 'superuser',
+    display_name: 'Marcus',
+    title: 'Senior DevOps Engineer',
+    phone: '+1-555-555-0102',
+    timezone: 'America/Los_Angeles',
+    bio: 'Senior engineer with full system access and domain expertise.',
+    avatar_url: '',
+    mfa_enabled: true,
+    sso_connected: true,
+    last_login: '2025-10-06T19:45:15Z',
+    organizations: [
+      {
+        id: 'org_company',
+        name: 'Company Corp',
+        role: 'SuperAdmin',
+        projects_count: 12,
+        zones_count: 234
+      },
+      {
+        id: 'org_personal',
+        name: 'Personal Projects',
+        role: 'Admin',
+        projects_count: 2,
+        zones_count: 8
+      }
+    ]
   }
 ];
 
