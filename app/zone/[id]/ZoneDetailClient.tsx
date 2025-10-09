@@ -29,14 +29,12 @@ export function ZoneDetailClient({ zone, zoneId }: { zone: any; zoneId: string }
 
   const handleSaveZone = () => {
     // Mock save - in real app, this would call an API
-    console.log('Saving zone changes:', editedZone);
     alert('Zone updated successfully! (Mock operation)');
     setShowEditModal(false);
   };
 
   const handleDeleteZone = () => {
     // Mock delete - in real app, this would call an API
-    console.log('Deleting zone:', zone.name);
     alert(`Zone ${zone.name} deleted successfully! (Mock operation)\nIn a real app, you would be redirected to the zones list.`);
     setShowDeleteModal(false);
   };
