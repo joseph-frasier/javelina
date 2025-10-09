@@ -27,10 +27,13 @@ export function Header() {
   };
 
   const cycleTheme = () => {
+    console.log('[DEBUG] cycleTheme called, current theme:', general.theme);
     const themes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
     const currentIndex = themes.indexOf(general.theme);
     const nextIndex = (currentIndex + 1) % themes.length;
-    setTheme(themes[nextIndex]);
+    const nextTheme = themes[nextIndex];
+    console.log('[DEBUG] Next theme will be:', nextTheme);
+    setTheme(nextTheme);
   };
 
   const getThemeIcon = () => {

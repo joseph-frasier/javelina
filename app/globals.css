@@ -39,6 +39,41 @@ body {
     'Helvetica Neue', Arial, sans-serif;
 }
 
+/* Dark theme overrides for common elements */
+.theme-dark {
+  color-scheme: dark;
+}
+
+.theme-dark .bg-white {
+  background-color: var(--bg-primary) !important;
+}
+
+.theme-dark .bg-gray-light,
+.theme-dark .bg-orange-light {
+  background-color: var(--bg-secondary) !important;
+}
+
+.theme-dark .text-orange-dark {
+  color: var(--orange-dark) !important;
+}
+
+.theme-dark .text-gray-slate {
+  color: var(--text-secondary) !important;
+}
+
+.theme-dark .border-gray-light {
+  border-color: var(--border-color) !important;
+}
+
+.theme-dark header {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.theme-dark main {
+  background-color: var(--bg-secondary) !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
