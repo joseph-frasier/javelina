@@ -62,7 +62,7 @@ export function PerformanceChart() {
   };
 
   return (
-    <div className="mt-6 h-64">
+    <div className="mt-6 h-64 [&_*:focus]:outline-none [&_*:focus-visible]:outline-none">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}
