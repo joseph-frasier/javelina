@@ -90,7 +90,7 @@ export function Sidebar() {
       )}
 
       {/* Tree View */}
-      <nav className="flex-1 overflow-y-auto p-4 min-h-0">
+      <nav className="flex-1 overflow-y-auto p-4 min-h-0" style={{ maxHeight: 'calc(100vh - 180px)' }}>
         {isCollapsed ? (
           // Collapsed view - show icons only
           <div className="flex flex-col space-y-2">
