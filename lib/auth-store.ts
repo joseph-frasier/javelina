@@ -188,8 +188,23 @@ export const useAuthStore = create<AuthState>()(
 
       // Initialize auth - check for existing session
       initializeAuth: async () => {
-        const supabase = createClient()
         set({ isLoading: true })
+        
+        // Check if we're using placeholder Supabase credentials (development mode with mock data)
+        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        if (isPlaceholderMode) {
+          // In mock mode, check if there's a persisted user from previous login
+          const currentUser = get().user
+          if (currentUser) {
+            set({ isAuthenticated: true })
+          }
+          set({ isLoading: false })
+          return
+        }
+
+        // Real Supabase authentication
+        const supabase = createClient()
 
         try {
           const {
@@ -284,8 +299,34 @@ export const useAuthStore = create<AuthState>()(
 
       // Email/password login
       login: async (email: string, password: string) => {
-        const supabase = createClient()
         set({ isLoading: true })
+        
+        // Check if we're using placeholder Supabase credentials (development mode with mock data)
+        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        if (isPlaceholderMode) {
+          // Use mock authentication
+          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
+          
+          const user = mockUsers.find(u => u.email === email)
+          const correctPassword = mockPasswords[email]
+          
+          if (!user || password !== correctPassword) {
+            set({ isLoading: false })
+            return { success: false, error: 'Invalid email or password' }
+          }
+          
+          set({ 
+            user, 
+            isAuthenticated: true, 
+            isLoading: false 
+          })
+          
+          return { success: true }
+        }
+        
+        // Real Supabase authentication
+        const supabase = createClient()
 
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
@@ -407,6 +448,19 @@ export const useAuthStore = create<AuthState>()(
 
       // Logout
       logout: async () => {
+        // Check if we're using placeholder Supabase credentials (development mode with mock data)
+        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        if (isPlaceholderMode) {
+          // Mock mode - just clear the state
+          set({
+            user: null,
+            isAuthenticated: false,
+          })
+          return
+        }
+        
+        // Real Supabase logout
         const supabase = createClient()
 
         try {
