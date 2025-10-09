@@ -283,27 +283,18 @@ export const useSettingsStore = create<SettingsState>()(
           general: { ...state.general, theme }
         }));
         
-        // Persist to localStorage
-        try {
-          localStorage.setItem('javelina:theme', theme);
-        } catch (e) {
-          console.error('Failed to save theme to localStorage:', e);
-        }
+      // Persist to localStorage
+      try {
+        localStorage.setItem('javelina:theme', theme);
+      } catch (e) {
+        // Silently fail if localStorage is not available
+      }
         
         // Apply to document
         if (typeof window !== 'undefined') {
           const resolved = get().getResolvedTheme();
           document.documentElement.classList.remove('theme-light', 'theme-dark');
           document.documentElement.classList.add(`theme-${resolved}`);
-          
-          // Analytics logging
-          console.log('[Analytics] theme_changed', {
-            from: oldTheme,
-            to: theme,
-            resolved: resolved,
-            method: 'header_toggle',
-            timestamp: new Date().toISOString()
-          });
         }
       },
 

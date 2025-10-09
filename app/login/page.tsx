@@ -264,7 +264,7 @@ export default function LoginPage() {
                 variant="outline"
                 size="md"
                 className="w-full text-sm"
-                onClick={() => console.log('Google login')}
+                onClick={() => {}}
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                   <path
@@ -291,7 +291,7 @@ export default function LoginPage() {
                 variant="outline"
                 size="md"
                 className="w-full text-sm"
-                onClick={() => console.log('GitHub login')}
+                onClick={() => {}}
               >
                 <svg
                   className="w-4 h-4 mr-2"
