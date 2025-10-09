@@ -125,8 +125,8 @@ export default function DashboardPage() {
           description="Common tasks and shortcuts"
           className="lg:col-span-1"
         >
-          <div className="space-y-4 mt-4">
-            <Link href="/organization/org_company">
+          <div className="space-y-6 mt-4">
+            <Link href="/organization/org_company" className="block">
               <Button variant="primary" className="w-full justify-start">
                 <svg
                   className="w-5 h-5 mr-2"
@@ -144,7 +144,7 @@ export default function DashboardPage() {
                 View Organizations
               </Button>
             </Link>
-            <Link href="/analytics">
+            <Link href="/analytics" className="block">
               <Button variant="secondary" className="w-full justify-start">
                 <svg
                   className="w-5 h-5 mr-2"
@@ -162,7 +162,7 @@ export default function DashboardPage() {
                 View Analytics
               </Button>
             </Link>
-            <Link href="/settings">
+            <Link href="/settings" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <svg
                   className="w-5 h-5 mr-2"
