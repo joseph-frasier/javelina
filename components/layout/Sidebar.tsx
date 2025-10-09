@@ -12,9 +12,13 @@ export function Sidebar() {
   const [expandedEnvironments, setExpandedEnvironments] = useState<Set<string>>(new Set(['env_prod']));
 
   // Filter organizations based on user's access
-  const userOrganizations = mockOrganizations.filter(org => 
-    user?.organizations?.some(userOrg => userOrg.id === org.id)
-  );
+  // When logged in with Supabase, show user's organizations
+  // When using mock auth (or not logged in), show all mock organizations for development
+  const userOrganizations = user?.organizations && user.organizations.length > 0
+    ? mockOrganizations.filter(org => 
+        user.organizations?.some(userOrg => userOrg.id === org.id)
+      )
+    : mockOrganizations; // Fallback to all organizations for development/demo
 
   const toggleOrg = (orgId: string) => {
     const newExpanded = new Set(expandedOrgs);
