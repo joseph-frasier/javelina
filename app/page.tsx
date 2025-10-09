@@ -1,6 +1,7 @@
 import { StatCard, Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 
 export default function DashboardPage() {
   return (
@@ -224,12 +225,7 @@ export default function DashboardPage() {
         title="System Performance"
         description="Monitor your application metrics"
       >
-        <div className="mt-6 h-64 bg-orange-light rounded-lg flex items-center justify-center">
-          <p className="text-gray-slate font-light">
-            Chart component placeholder - integrate your preferred charting
-            library
-          </p>
-        </div>
+        <PerformanceChart />
       </Card>
     </div>
     </ProtectedRoute>
