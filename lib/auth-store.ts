@@ -266,7 +266,7 @@ export const useAuthStore = create<AuthState>()(
             .select(
               `
               role,
-              projects_count,
+              environments_count,
               zones_count,
               organizations:organization_id (
                 id,
@@ -281,7 +281,7 @@ export const useAuthStore = create<AuthState>()(
               id: m.organizations.id,
               name: m.organizations.name,
               role: m.role,
-              projects_count: m.projects_count,
+              environments_count: m.environments_count || 0,
               zones_count: m.zones_count,
             })) || []
 
