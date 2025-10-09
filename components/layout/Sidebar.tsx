@@ -40,10 +40,10 @@ export function Sidebar() {
     <aside
       className={`bg-white dark:bg-orange-dark border-r border-gray-light transition-all duration-300 ${
         isCollapsed ? 'w-16' : 'w-64'
-      } h-screen sticky top-0 flex flex-col`}
+      } h-screen overflow-hidden sticky top-0 flex flex-col`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-light flex items-center justify-between">
+      <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
         {!isCollapsed && (
           <h2 className="font-bold text-orange-dark dark:text-white">Organizations</h2>
         )}
@@ -70,7 +70,7 @@ export function Sidebar() {
 
       {/* Add Organization Button */}
       {!isCollapsed && (
-        <div className="p-4 border-b border-gray-light">
+        <div className="flex-shrink-0 p-4 border-b border-gray-light">
           <button
             disabled
             className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-light text-gray-slate rounded-md cursor-not-allowed opacity-50"
