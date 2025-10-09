@@ -125,7 +125,7 @@ export default function DashboardPage() {
           description="Common tasks and shortcuts"
           className="lg:col-span-1"
         >
-          <div className="space-y-3 mt-4">
+          <div className="space-y-4 mt-4">
             <Link href="/organization/org_company">
               <Button variant="primary" className="w-full justify-start">
                 <svg
