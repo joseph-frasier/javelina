@@ -168,8 +168,8 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-slate mb-3">
-                      <span>{org.projects_count} projects</span>
-                      <span>{org.zones_count} zones</span>
+                      <span>{org.environments_count} environments</span>
+                      <span>{org.environments?.reduce((sum, env) => sum + env.zones_count, 0) || 0} zones</span>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">

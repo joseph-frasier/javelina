@@ -54,7 +54,7 @@ const errorData = [
 
 export default function AnalyticsPage() {
   const [selectedOrg, setSelectedOrg] = useState('all');
-  const [selectedProject, setSelectedProject] = useState('all');
+  const [selectedEnvironment, setSelectedEnvironment] = useState('all');
   const [selectedZone, setSelectedZone] = useState('all');
   const [startDate, setStartDate] = useState('2025-10-01');
   const [endDate, setEndDate] = useState('2025-10-06');
@@ -109,13 +109,13 @@ export default function AnalyticsPage() {
               ]}
             />
 
-            {/* Project Filter */}
+            {/* Environment Filter */}
             <Dropdown
-              label="Project"
-              value={selectedProject}
-              onChange={setSelectedProject}
+              label="Environment"
+              value={selectedEnvironment}
+              onChange={setSelectedEnvironment}
               options={[
-                { value: 'all', label: 'All Projects' },
+                { value: 'all', label: 'All Environments' },
                 { value: 'prod', label: 'Production' },
                 { value: 'staging', label: 'Staging' },
                 { value: 'dev', label: 'Development' },

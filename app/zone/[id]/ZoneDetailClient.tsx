@@ -3,8 +3,18 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { EnvironmentBadge } from '@/components/ui/EnvironmentBadge';
+import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
 
-export function ZoneDetailClient({ zone, zoneId }: { zone: any; zoneId: string }) {
+interface ZoneDetailClientProps {
+  zone: any;
+  zoneId: string;
+  organization?: OrganizationDetail | null;
+  environment?: EnvironmentDetail | null;
+}
+
+export function ZoneDetailClient({ zone, zoneId, organization, environment }: ZoneDetailClientProps) {
   const [queryType, setQueryType] = useState('A');
   const [queryName, setQueryName] = useState(zone.name);
   const [simulatorResult, setSimulatorResult] = useState<any>(null);
@@ -44,13 +54,34 @@ export function ZoneDetailClient({ zone, zoneId }: { zone: any; zoneId: string }
     return acc;
   }, {});
 
+  // Build breadcrumb items
+  const breadcrumbItems = [];
+  if (organization && environment) {
+    breadcrumbItems.push(
+      { label: organization.name, href: `/organization/${organization.id}` },
+      { label: environment.name, href: `/organization/${organization.id}/environment/${environment.id}` },
+      { label: zone.name }
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb */}
+      {breadcrumbItems.length > 0 && (
+        <Breadcrumb items={breadcrumbItems} className="mb-6" />
+      )}
+
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-orange-dark mb-2">{zone.name}</h1>
-          <p className="text-gray-slate">Zone management and analytics</p>
+          <div className="flex items-center space-x-3 mb-2">
+            <h1 className="text-3xl font-bold text-orange-dark">{zone.name}</h1>
+            {environment && <EnvironmentBadge type={environment.type} />}
+          </div>
+          <p className="text-gray-slate">
+            Zone management and analytics
+            {organization && environment && ` • ${organization.name} → ${environment.name}`}
+          </p>
         </div>
         <div className="flex items-center space-x-3">
           <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
