@@ -1,63 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-
-interface Zone {
-  id: string;
-  name: string;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  zones: Zone[];
-}
-
-interface Organization {
-  id: string;
-  name: string;
-  projects: Project[];
-}
-
-// Mock data
-const mockOrganizations: Organization[] = [
-  {
-    id: 'acme-corp',
-    name: 'Acme Corp',
-    projects: [
-      {
-        id: 'production',
-        name: 'Production',
-        zones: [
-          { id: 'acme-com', name: 'acme.com' },
-          { id: 'api-acme-com', name: 'api.acme.com' },
-        ],
-      },
-      {
-        id: 'staging',
-        name: 'Staging',
-        zones: [{ id: 'staging-acme-com', name: 'staging.acme.com' }],
-      },
-    ],
-  },
-  // {
-  //   id: 'personal-projects',
-  //   name: 'Personal Projects',
-  //   projects: [
-  //     {
-  //       id: 'blog',
-  //       name: 'Blog',
-  //       zones: [{ id: 'blog-example-com', name: 'blog.example.com' }],
-  //     },
-  //   ],
-  // },
-];
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/lib/auth-store';
+import { mockOrganizations, getZonesByEnvironment } from '@/lib/mock-hierarchy-data';
 
 export function Sidebar() {
+  const { user } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set(['acme-corp']));
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set(['production']));
+  const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set(['org_company']));
+  const [expandedEnvironments, setExpandedEnvironments] = useState<Set<string>>(new Set(['env_prod']));
+
+  // Filter organizations based on user's access
+  const userOrganizations = mockOrganizations.filter(org => 
+    user?.organizations?.some(userOrg => userOrg.id === org.id)
+  );
 
   const toggleOrg = (orgId: string) => {
     const newExpanded = new Set(expandedOrgs);
@@ -69,14 +26,14 @@ export function Sidebar() {
     setExpandedOrgs(newExpanded);
   };
 
-  const toggleProject = (projectId: string) => {
-    const newExpanded = new Set(expandedProjects);
-    if (newExpanded.has(projectId)) {
-      newExpanded.delete(projectId);
+  const toggleEnvironment = (envId: string) => {
+    const newExpanded = new Set(expandedEnvironments);
+    if (newExpanded.has(envId)) {
+      newExpanded.delete(envId);
     } else {
-      newExpanded.add(projectId);
+      newExpanded.add(envId);
     }
-    setExpandedProjects(newExpanded);
+    setExpandedEnvironments(newExpanded);
   };
 
   return (
@@ -137,7 +94,7 @@ export function Sidebar() {
         {isCollapsed ? (
           // Collapsed view - show icons only
           <div className="flex flex-col space-y-2">
-            {mockOrganizations.map((org) => (
+            {userOrganizations.map((org) => (
               <Link
                 key={org.id}
                 href={`/organization/${org.id}`}
@@ -163,7 +120,7 @@ export function Sidebar() {
         ) : (
           // Expanded view - show full tree
           <div className="space-y-1">
-            {mockOrganizations.map((org) => (
+            {userOrganizations.map((org) => (
               <div key={org.id}>
                 {/* Organization */}
                 <div className="flex items-center group">
@@ -211,20 +168,20 @@ export function Sidebar() {
                   </Link>
                 </div>
 
-                {/* Projects */}
+                {/* Environments */}
                 {expandedOrgs.has(org.id) && (
                   <div className="ml-4 mt-1 space-y-1">
-                    {org.projects.map((project) => (
-                      <div key={project.id}>
+                    {org.environments.map((environment) => (
+                      <div key={environment.id}>
                         <div className="flex items-center group">
                           <button
-                            onClick={() => toggleProject(project.id)}
+                            onClick={() => toggleEnvironment(environment.id)}
                             className="p-1 hover:bg-gray-light rounded transition-colors"
-                            aria-label={expandedProjects.has(project.id) ? 'Collapse' : 'Expand'}
+                            aria-label={expandedEnvironments.has(environment.id) ? 'Collapse' : 'Expand'}
                           >
                             <svg
                               className={`w-4 h-4 text-gray-slate transition-transform ${
-                                expandedProjects.has(project.id) ? 'rotate-90' : ''
+                                expandedEnvironments.has(environment.id) ? 'rotate-90' : ''
                               }`}
                               fill="none"
                               stroke="currentColor"
@@ -239,7 +196,7 @@ export function Sidebar() {
                             </svg>
                           </button>
                           <Link
-                            href={`/project/${project.id}`}
+                            href={`/organization/${org.id}/environment/${environment.id}`}
                             className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded flex-1 transition-colors group-hover:text-orange"
                           >
                             <svg
@@ -252,17 +209,17 @@ export function Sidebar() {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
                               />
                             </svg>
-                            <span className="text-sm text-gray-slate">{project.name}</span>
+                            <span className="text-sm text-gray-slate">{environment.name}</span>
                           </Link>
                         </div>
 
                         {/* Zones */}
-                        {expandedProjects.has(project.id) && (
+                        {expandedEnvironments.has(environment.id) && (
                           <div className="ml-4 mt-1 space-y-1">
-                            {project.zones.map((zone) => (
+                            {getZonesByEnvironment(environment.id).map((zone) => (
                               <Link
                                 key={zone.id}
                                 href={`/zone/${zone.id}`}
@@ -300,4 +257,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

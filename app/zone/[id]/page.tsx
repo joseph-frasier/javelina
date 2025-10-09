@@ -1,9 +1,10 @@
 import { ZoneDetailClient } from '@/app/zone/[id]/ZoneDetailClient';
+import { getZoneById, getOrganizationById, getEnvironmentById } from '@/lib/mock-hierarchy-data';
 
 // Mock DNS records data
 const mockZoneData: Record<string, any> = {
-  'acme-com': {
-    name: 'acme.com',
+  'zone_company_prod_1': {
+    name: 'company.com',
     serial: '2025100701',
     lastUpdated: '2025-10-07 14:23:15 UTC',
     ttl: 3600,
@@ -46,8 +47,8 @@ const mockZoneData: Record<string, any> = {
       { timestamp: '15:42:22', client: '198.51.100.67', type: 'TXT', name: 'acme.com', response: 'NOERROR', time: '11ms' },
     ],
   },
-  'api-acme-com': {
-    name: 'api.acme.com',
+  'zone_company_prod_2': {
+    name: 'api.company.com',
     serial: '2025100702',
     lastUpdated: '2025-10-07 13:45:20 UTC',
     ttl: 300,
@@ -86,8 +87,8 @@ const mockZoneData: Record<string, any> = {
       { timestamp: '15:42:29', client: '198.51.100.34', type: 'CNAME', name: 'v1.api.acme.com', response: 'NOERROR', time: '9ms' },
     ],
   },
-  'staging-acme-com': {
-    name: 'staging.acme.com',
+  'zone_company_staging_1': {
+    name: 'staging.company.com',
     serial: '2025100703',
     lastUpdated: '2025-10-07 12:10:05 UTC',
     ttl: 600,
@@ -123,7 +124,7 @@ const mockZoneData: Record<string, any> = {
       { timestamp: '15:40:12', client: '10.0.1.67', type: 'A', name: 'staging.acme.com', response: 'NOERROR', time: '13ms' },
     ],
   },
-  'blog-example-com': {
+  'zone_personal_prod_1': {
     name: 'blog.example.com',
     serial: '2025100704',
     lastUpdated: '2025-10-07 10:30:42 UTC',
@@ -170,6 +171,9 @@ export default async function ZonePage({
   params: Promise<{ id: string }> 
 }) {
   const { id } = await params;
+  
+  // Get zone metadata from hierarchy
+  const zoneMetadata = getZoneById(id);
   const zone = mockZoneData[id];
 
   // If zone not found, show error
@@ -182,5 +186,21 @@ export default async function ZonePage({
     );
   }
 
-  return <ZoneDetailClient zone={zone} zoneId={id} />;
+  // Get organization and environment context
+  let organization = null;
+  let environment = null;
+  
+  if (zoneMetadata) {
+    organization = getOrganizationById(zoneMetadata.org_id);
+    environment = getEnvironmentById(zoneMetadata.env_id);
+  }
+
+  return (
+    <ZoneDetailClient 
+      zone={zone} 
+      zoneId={id}
+      organization={organization}
+      environment={environment}
+    />
+  );
 }

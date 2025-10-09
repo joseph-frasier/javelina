@@ -3,13 +3,22 @@ import { persist } from 'zustand/middleware';
 
 export type UserRole = 'user' | 'superuser';
 export type RBACRole = 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+export type EnvironmentType = 'production' | 'staging' | 'development';
+
+export interface Environment {
+  id: string;
+  name: string;
+  type: EnvironmentType;
+  zones_count: number;
+  role?: RBACRole; // Optional: environment-level role override
+}
 
 export interface Organization {
   id: string;
   name: string;
   role: RBACRole;
-  projects_count: number;
-  zones_count: number;
+  environments_count: number;
+  environments?: Environment[];
 }
 
 export interface User {
@@ -58,8 +67,30 @@ const mockUsers: User[] = [
         id: 'org_company',
         name: 'Company Corp',
         role: 'Editor',
-        projects_count: 5,
-        zones_count: 45
+        environments_count: 3,
+        environments: [
+          {
+            id: 'env_prod',
+            name: 'Production',
+            type: 'production',
+            zones_count: 25,
+            role: 'Editor'
+          },
+          {
+            id: 'env_staging',
+            name: 'Staging',
+            type: 'staging',
+            zones_count: 15,
+            role: 'Editor'
+          },
+          {
+            id: 'env_dev',
+            name: 'Development',
+            type: 'development',
+            zones_count: 5,
+            role: 'Admin'
+          }
+        ]
       }
     ]
   },
@@ -82,15 +113,52 @@ const mockUsers: User[] = [
         id: 'org_company',
         name: 'Company Corp',
         role: 'SuperAdmin',
-        projects_count: 12,
-        zones_count: 234
+        environments_count: 3,
+        environments: [
+          {
+            id: 'env_prod',
+            name: 'Production',
+            type: 'production',
+            zones_count: 120,
+            role: 'SuperAdmin'
+          },
+          {
+            id: 'env_staging',
+            name: 'Staging',
+            type: 'staging',
+            zones_count: 80,
+            role: 'SuperAdmin'
+          },
+          {
+            id: 'env_dev',
+            name: 'Development',
+            type: 'development',
+            zones_count: 34,
+            role: 'SuperAdmin'
+          }
+        ]
       },
       {
         id: 'org_personal',
         name: 'Personal Projects',
         role: 'Admin',
-        projects_count: 2,
-        zones_count: 8
+        environments_count: 2,
+        environments: [
+          {
+            id: 'env_personal_prod',
+            name: 'Production',
+            type: 'production',
+            zones_count: 5,
+            role: 'Admin'
+          },
+          {
+            id: 'env_personal_dev',
+            name: 'Development',
+            type: 'development',
+            zones_count: 3,
+            role: 'Admin'
+          }
+        ]
       }
     ]
   }
