@@ -89,6 +89,10 @@ export interface SettingsState {
   updateAccessSettings: (settings: Partial<AccessSettings>) => void;
   updateIntegrationSettings: (settings: Partial<IntegrationSettings>) => void;
   addAuditLog: (entry: Omit<AuditLogEntry, 'timestamp'>) => void;
+  
+  // Theme-specific actions
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  getResolvedTheme: () => 'light' | 'dark';
 }
 
 // Mock data
@@ -268,6 +272,50 @@ export const useSettingsStore = create<SettingsState>()(
             ...state.auditLogs
           ]
         }));
+      },
+
+      setTheme: (theme) => {
+        const state = get();
+        const oldTheme = state.general.theme;
+        
+        // Update store
+        set((state) => ({
+          general: { ...state.general, theme }
+        }));
+        
+        // Persist to localStorage
+        try {
+          localStorage.setItem('javelina:theme', theme);
+        } catch (e) {
+          console.error('Failed to save theme to localStorage:', e);
+        }
+        
+        // Apply to document
+        if (typeof window !== 'undefined') {
+          const resolved = get().getResolvedTheme();
+          document.documentElement.classList.remove('theme-light', 'theme-dark');
+          document.documentElement.classList.add(`theme-${resolved}`);
+          
+          // Analytics logging
+          console.log('[Analytics] theme_changed', {
+            from: oldTheme,
+            to: theme,
+            resolved: resolved,
+            method: 'header_toggle',
+            timestamp: new Date().toISOString()
+          });
+        }
+      },
+
+      getResolvedTheme: () => {
+        const state = get();
+        if (state.general.theme === 'system') {
+          if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          return 'light'; // fallback
+        }
+        return state.general.theme;
       }
     }),
     {

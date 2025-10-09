@@ -15,6 +15,33 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const key = 'javelina:theme';
+                  const stored = localStorage.getItem(key);
+                  function apply(t) {
+                    document.documentElement.classList.remove('theme-light', 'theme-dark');
+                    if (t === 'dark') document.documentElement.classList.add('theme-dark');
+                    else document.documentElement.classList.add('theme-light');
+                  }
+                  if (stored === 'light' || stored === 'dark') {
+                    apply(stored);
+                  } else {
+                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    apply(prefersDark ? 'dark' : 'light');
+                  }
+                } catch(e) { 
+                  document.documentElement.classList.add('theme-light');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="antialiased">
         <Providers>
           <ConditionalLayout>
