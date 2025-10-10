@@ -53,7 +53,7 @@ export function Sidebar() {
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 hover:bg-gray-light rounded-md transition-colors"
+          className="p-2 rounded-md transition-colors"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg
@@ -102,7 +102,7 @@ export function Sidebar() {
               <Link
                 key={org.id}
                 href={`/organization/${org.id}`}
-                className="p-2 hover:bg-gray-light rounded-md transition-colors flex items-center justify-center"
+                className="p-2 rounded-md transition-colors flex items-center justify-center"
                 title={org.name}
               >
                 <svg
@@ -130,7 +130,7 @@ export function Sidebar() {
                 <div className="flex items-center group">
                   <button
                     onClick={() => toggleOrg(org.id)}
-                    className="p-1 hover:bg-gray-light rounded transition-colors"
+                    className="p-1 rounded transition-colors"
                     aria-label={expandedOrgs.has(org.id) ? 'Collapse' : 'Expand'}
                   >
                     <svg
@@ -151,7 +151,7 @@ export function Sidebar() {
                   </button>
                   <Link
                     href={`/organization/${org.id}`}
-                    className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded flex-1 transition-colors group-hover:text-orange"
+                    className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
                   >
                     <svg
                       className="w-4 h-4 text-orange"
@@ -180,7 +180,7 @@ export function Sidebar() {
                         <div className="flex items-center group">
                           <button
                             onClick={() => toggleEnvironment(environment.id)}
-                            className="p-1 hover:bg-gray-light rounded transition-colors"
+                            className="p-1 rounded transition-colors"
                             aria-label={expandedEnvironments.has(environment.id) ? 'Collapse' : 'Expand'}
                           >
                             <svg
@@ -201,7 +201,7 @@ export function Sidebar() {
                           </button>
                           <Link
                             href={`/organization/${org.id}/environment/${environment.id}`}
-                            className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded flex-1 transition-colors group-hover:text-orange"
+                            className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
                           >
                             <svg
                               className="w-4 h-4 text-blue-electric"
@@ -227,7 +227,7 @@ export function Sidebar() {
                               <Link
                                 key={zone.id}
                                 href={`/zone/${zone.id}`}
-                                className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded transition-colors group"
+                                className="flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
                               >
                                 <svg
                                   className="w-4 h-4 text-gray-slate group-hover:text-orange"

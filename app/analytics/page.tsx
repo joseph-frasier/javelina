@@ -324,7 +324,7 @@ export default function AnalyticsPage() {
                     {topDomains.map((item, index) => (
                       <tr
                         key={index}
-                        className="border-b border-gray-light last:border-0 hover:bg-orange-light transition-colors"
+                        className="border-b border-gray-light last:border-0"
                       >
                         <td className="py-3 px-2 font-regular text-orange-dark">
                           {item.domain}
@@ -418,7 +418,7 @@ export default function AnalyticsPage() {
                   {errorData.map((item, index) => (
                     <tr
                       key={index}
-                      className="border-b border-gray-light last:border-0 hover:bg-orange-light transition-colors"
+                      className="border-b border-gray-light last:border-0"
                     >
                       <td className="py-3 px-2 font-regular text-orange-dark">
                         {item.error_type}
