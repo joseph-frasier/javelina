@@ -38,34 +38,19 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
   });
 
   useEffect(() => {
-    // Check initial theme immediately and aggressively
-    const checkTheme = () => {
+    // Only watch for theme changes, don't override the initialization
+    const observer = new MutationObserver(() => {
       const htmlElement = document.documentElement;
       const hasDarkClass = htmlElement.classList.contains('theme-dark');
       setIsDark(hasDarkClass);
-    };
-
-    // Check immediately
-    checkTheme();
+    });
     
-    // Check multiple times to catch theme script execution
-    const timeoutId1 = setTimeout(checkTheme, 0);   // Next tick
-    const timeoutId2 = setTimeout(checkTheme, 10);  // 10ms
-    const timeoutId3 = setTimeout(checkTheme, 50);  // 50ms
-    const timeoutId4 = setTimeout(checkTheme, 100); // 100ms
-
-    // Watch for theme changes
-    const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
     });
 
     return () => {
-      clearTimeout(timeoutId1);
-      clearTimeout(timeoutId2);
-      clearTimeout(timeoutId3);
-      clearTimeout(timeoutId4);
       observer.disconnect();
     };
   }, []);
