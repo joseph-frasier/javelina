@@ -160,7 +160,7 @@ export function Header() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-white font-bold text-sm">
+                  <span className="text-white font-bold text-base">
                     {userInitial}
                   </span>
                 )}
@@ -178,7 +178,7 @@ export function Header() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-white font-bold">
+                          <span className="text-white font-bold text-base">
                             {userInitial}
                           </span>
                         )}
