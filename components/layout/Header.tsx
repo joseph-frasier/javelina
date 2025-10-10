@@ -178,7 +178,7 @@ export function Header() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-white font-bold text-base">
+                          <span className="text-white font-bold text-lg">
                             {userInitial}
                           </span>
                         )}

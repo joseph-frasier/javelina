@@ -207,7 +207,7 @@ export function AvatarUpload({
             />
           ) : (
             <div className="w-full h-full bg-orange flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">
+              <span className="text-white text-3xl font-bold">
                 {userInitial}
               </span>
             </div>
