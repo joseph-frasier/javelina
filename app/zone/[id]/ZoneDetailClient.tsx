@@ -343,7 +343,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
                   type="number"
                   value={editedZone.ttl}
                   onChange={(e) => setEditedZone({ ...editedZone, ttl: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
+                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
 
