@@ -128,6 +128,31 @@ create table if not exists public.zones (
 alter table public.zones enable row level security;
 
 -- =====================================================
+-- 6. AUDIT_LOGS TABLE
+-- Track all changes to organizations, environments, and zones
+-- =====================================================
+
+create table if not exists public.audit_logs (
+  id uuid default gen_random_uuid() primary key,
+  table_name text not null,
+  record_id uuid not null,
+  action text not null check (action in ('INSERT', 'UPDATE', 'DELETE')),
+  old_data jsonb,
+  new_data jsonb,
+  user_id uuid references auth.users on delete set null,
+  created_at timestamp with time zone default now()
+);
+
+-- Enable RLS
+alter table public.audit_logs enable row level security;
+
+-- Indexes for performance
+create index if not exists audit_logs_table_name_idx on public.audit_logs(table_name);
+create index if not exists audit_logs_record_id_idx on public.audit_logs(record_id);
+create index if not exists audit_logs_user_id_idx on public.audit_logs(user_id);
+create index if not exists audit_logs_created_at_idx on public.audit_logs(created_at);
+
+-- =====================================================
 -- RLS POLICIES (Created after all tables exist)
 -- =====================================================
 
@@ -168,6 +193,144 @@ create policy "Users can view zones in their organizations"
       where e.id = zones.environment_id
       and om.user_id = auth.uid()
     )
+  );
+
+-- =====================================================
+-- WRITE OPERATIONS RLS POLICIES
+-- =====================================================
+
+-- Organizations: INSERT
+create policy "Authenticated users can create organizations"
+  on public.organizations for insert
+  to authenticated
+  with check (true);
+
+-- Organizations: UPDATE
+create policy "SuperAdmin and Admin can update their organizations"
+  on public.organizations for update
+  using (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = organizations.id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role in ('SuperAdmin', 'Admin')
+    )
+  );
+
+-- Organizations: DELETE
+create policy "SuperAdmin can delete their organizations"
+  on public.organizations for delete
+  using (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = organizations.id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role = 'SuperAdmin'
+    )
+  );
+
+-- Environments: INSERT
+create policy "SuperAdmin and Admin can create environments"
+  on public.environments for insert
+  with check (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = environments.organization_id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role in ('SuperAdmin', 'Admin')
+    )
+  );
+
+-- Environments: UPDATE
+create policy "SuperAdmin, Admin, and Editor can update environments"
+  on public.environments for update
+  using (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = environments.organization_id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role in ('SuperAdmin', 'Admin', 'Editor')
+    )
+  );
+
+-- Environments: DELETE
+create policy "SuperAdmin and Admin can delete environments"
+  on public.environments for delete
+  using (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = environments.organization_id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role in ('SuperAdmin', 'Admin')
+    )
+  );
+
+-- Zones: INSERT
+create policy "SuperAdmin and Admin can create zones"
+  on public.zones for insert
+  with check (
+    exists (
+      select 1 from public.environments e
+      join public.organization_members om on om.organization_id = e.organization_id
+      where e.id = zones.environment_id
+      and om.user_id = auth.uid()
+      and om.role in ('SuperAdmin', 'Admin')
+    )
+  );
+
+-- Zones: UPDATE
+create policy "SuperAdmin, Admin, and Editor can update zones"
+  on public.zones for update
+  using (
+    exists (
+      select 1 from public.environments e
+      join public.organization_members om on om.organization_id = e.organization_id
+      where e.id = zones.environment_id
+      and om.user_id = auth.uid()
+      and om.role in ('SuperAdmin', 'Admin', 'Editor')
+    )
+  );
+
+-- Zones: DELETE
+create policy "SuperAdmin and Admin can delete zones"
+  on public.zones for delete
+  using (
+    exists (
+      select 1 from public.environments e
+      join public.organization_members om on om.organization_id = e.organization_id
+      where e.id = zones.environment_id
+      and om.user_id = auth.uid()
+      and om.role in ('SuperAdmin', 'Admin')
+    )
+  );
+
+-- Audit Logs: SELECT (read-only for organization members)
+create policy "Users can view audit logs for their organizations"
+  on public.audit_logs for select
+  using (
+    -- For organizations table
+    (table_name = 'organizations' and exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = record_id::uuid
+      and organization_members.user_id = auth.uid()
+    ))
+    or
+    -- For environments table
+    (table_name = 'environments' and exists (
+      select 1 from public.environments e
+      join public.organization_members om on om.organization_id = e.organization_id
+      where e.id = record_id::uuid
+      and om.user_id = auth.uid()
+    ))
+    or
+    -- For zones table
+    (table_name = 'zones' and exists (
+      select 1 from public.zones z
+      join public.environments e on e.id = z.environment_id
+      join public.organization_members om on om.organization_id = e.organization_id
+      where z.id = record_id::uuid
+      and om.user_id = auth.uid()
+    ))
   );
 
 -- =====================================================
@@ -239,7 +402,46 @@ create trigger zones_updated_at
   for each row execute procedure public.handle_updated_at();
 
 -- =====================================================
--- 8. INDEXES FOR PERFORMANCE
+-- 8. AUDIT LOG FUNCTION
+-- Automatically log all changes to tracked tables
+-- =====================================================
+
+create or replace function public.handle_audit_log()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.audit_logs (table_name, record_id, action, old_data, new_data, user_id)
+  values (
+    TG_TABLE_NAME,
+    coalesce(NEW.id, OLD.id),
+    TG_OP,
+    case when TG_OP = 'DELETE' then to_jsonb(OLD) else null end,
+    case when TG_OP in ('INSERT', 'UPDATE') then to_jsonb(NEW) else null end,
+    auth.uid()
+  );
+  return coalesce(NEW, OLD);
+end;
+$$;
+
+-- Apply audit triggers to organizations
+drop trigger if exists organizations_audit on public.organizations;
+create trigger organizations_audit after insert or update or delete on public.organizations
+  for each row execute function public.handle_audit_log();
+
+-- Apply audit triggers to environments
+drop trigger if exists environments_audit on public.environments;
+create trigger environments_audit after insert or update or delete on public.environments
+  for each row execute function public.handle_audit_log();
+
+-- Apply audit triggers to zones
+drop trigger if exists zones_audit on public.zones;
+create trigger zones_audit after insert or update or delete on public.zones
+  for each row execute function public.handle_audit_log();
+
+-- =====================================================
+-- 9. INDEXES FOR PERFORMANCE
 -- =====================================================
 
 create index if not exists profiles_email_idx on public.profiles(email);
