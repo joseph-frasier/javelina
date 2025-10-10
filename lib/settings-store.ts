@@ -50,7 +50,7 @@ export interface Member {
 
 export interface AccessSettings {
   members: Member[];
-  project_overrides: Record<string, { role: string }>;
+  environment_overrides: Record<string, { role: string }>;
 }
 
 export interface IntegrationSettings {
@@ -162,7 +162,7 @@ const mockAccessSettings: AccessSettings = {
       last_active: '2025-10-05T16:42:00Z'
     }
   ],
-  project_overrides: {
+  environment_overrides: {
     staging: {
       role: 'Editor'
     },

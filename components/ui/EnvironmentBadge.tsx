@@ -20,6 +20,7 @@ export function EnvironmentBadge({ type, className = '' }: EnvironmentBadgeProps
   };
 
   const getDisplayText = () => {
+    if (!type) return 'Unknown';
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 

@@ -1,27 +1,44 @@
 import { RBACRole, EnvironmentType } from './auth-store';
 
 export interface Zone {
+  // Database fields (match Supabase schema)
   id: string;
+  environment_id: string;
   name: string;
-  org_id: string;
-  env_id: string;
-  records: number;
-  queries_24h: number;
-  status: 'active' | 'paused' | 'error';
-  last_modified: string;
+  zone_type: 'primary' | 'secondary' | 'redirect';
+  description: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  
+  // UI-only fields (optional, not in database)
+  records?: number;
+  queries_24h?: number;
+  status?: 'active' | 'paused' | 'error';
+  last_modified?: string;
 }
 
 export interface EnvironmentDetail {
+  // Database fields (match Supabase schema)
   id: string;
+  organization_id: string;
   name: string;
-  type: EnvironmentType;
-  org_id: string;
-  zones_count: number;
-  total_records: number;
-  queries_24h: number;
-  success_rate: number;
-  avg_response_time: number;
-  role: RBACRole;
+  environment_type: EnvironmentType;
+  location: string | null;
+  status: 'active' | 'disabled' | 'archived';
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  
+  // UI-only fields (optional, not in database)
+  zones_count?: number;
+  total_records?: number;
+  queries_24h?: number;
+  success_rate?: number;
+  avg_response_time?: number;
+  role?: RBACRole;
 }
 
 export interface OrganizationDetail {
@@ -56,9 +73,15 @@ export const mockOrganizations: OrganizationDetail[] = [
     environments: [
       {
         id: 'env_prod',
+        organization_id: 'org_company',
         name: 'Production',
-        type: 'production',
-        org_id: 'org_company',
+        environment_type: 'production',
+        location: null,
+        status: 'active',
+        description: 'Live production environment',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        created_by: null,
         zones_count: 120,
         total_records: 1450,
         queries_24h: 2450000,
@@ -68,9 +91,15 @@ export const mockOrganizations: OrganizationDetail[] = [
       },
       {
         id: 'env_staging',
+        organization_id: 'org_company',
         name: 'Staging',
-        type: 'staging',
-        org_id: 'org_company',
+        environment_type: 'staging',
+        location: null,
+        status: 'active',
+        description: 'Pre-production testing environment',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        created_by: null,
         zones_count: 80,
         total_records: 950,
         queries_24h: 450000,
@@ -80,9 +109,15 @@ export const mockOrganizations: OrganizationDetail[] = [
       },
       {
         id: 'env_dev',
+        organization_id: 'org_company',
         name: 'Development',
-        type: 'development',
-        org_id: 'org_company',
+        environment_type: 'development',
+        location: null,
+        status: 'active',
+        description: 'Development environment',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        created_by: null,
         zones_count: 34,
         total_records: 380,
         queries_24h: 85000,
@@ -134,9 +169,15 @@ export const mockOrganizations: OrganizationDetail[] = [
     environments: [
       {
         id: 'env_personal_prod',
+        organization_id: 'org_personal',
         name: 'Production',
-        type: 'production',
-        org_id: 'org_personal',
+        environment_type: 'production',
+        location: null,
+        status: 'active',
+        description: 'Personal projects production environment',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        created_by: null,
         zones_count: 5,
         total_records: 45,
         queries_24h: 12000,
@@ -146,9 +187,15 @@ export const mockOrganizations: OrganizationDetail[] = [
       },
       {
         id: 'env_personal_dev',
+        organization_id: 'org_personal',
         name: 'Development',
-        type: 'development',
-        org_id: 'org_personal',
+        environment_type: 'development',
+        location: null,
+        status: 'active',
+        description: 'Personal projects development environment',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        created_by: null,
         zones_count: 3,
         total_records: 28,
         queries_24h: 3500,
@@ -188,8 +235,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_prod_1',
     name: 'company.com',
-    org_id: 'org_company',
-    env_id: 'env_prod',
+    environment_id: 'env_prod',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 24,
     queries_24h: 1250000,
     status: 'active',
@@ -198,8 +250,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_prod_2',
     name: 'api.company.com',
-    org_id: 'org_company',
-    env_id: 'env_prod',
+    environment_id: 'env_prod',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 18,
     queries_24h: 890000,
     status: 'active',
@@ -208,8 +265,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_prod_3',
     name: 'cdn.company.com',
-    org_id: 'org_company',
-    env_id: 'env_prod',
+    environment_id: 'env_prod',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 12,
     queries_24h: 310000,
     status: 'active',
@@ -219,8 +281,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_staging_1',
     name: 'staging.company.com',
-    org_id: 'org_company',
-    env_id: 'env_staging',
+    environment_id: 'env_staging',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 20,
     queries_24h: 180000,
     status: 'active',
@@ -229,8 +296,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_staging_2',
     name: 'api-staging.company.com',
-    org_id: 'org_company',
-    env_id: 'env_staging',
+    environment_id: 'env_staging',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 16,
     queries_24h: 145000,
     status: 'active',
@@ -239,8 +311,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_staging_3',
     name: 'test.company.com',
-    org_id: 'org_company',
-    env_id: 'env_staging',
+    environment_id: 'env_staging',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 8,
     queries_24h: 125000,
     status: 'active',
@@ -250,8 +327,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_dev_1',
     name: 'dev.company.com',
-    org_id: 'org_company',
-    env_id: 'env_dev',
+    environment_id: 'env_dev',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 15,
     queries_24h: 45000,
     status: 'active',
@@ -260,8 +342,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_dev_2',
     name: 'local.company.com',
-    org_id: 'org_company',
-    env_id: 'env_dev',
+    environment_id: 'env_dev',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 10,
     queries_24h: 28000,
     status: 'active',
@@ -270,8 +357,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_company_dev_3',
     name: 'sandbox.company.com',
-    org_id: 'org_company',
-    env_id: 'env_dev',
+    environment_id: 'env_dev',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 6,
     queries_24h: 12000,
     status: 'paused',
@@ -281,8 +373,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_personal_prod_1',
     name: 'blog.example.com',
-    org_id: 'org_personal',
-    env_id: 'env_personal_prod',
+    environment_id: 'env_personal_prod',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 12,
     queries_24h: 6500,
     status: 'active',
@@ -291,8 +388,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_personal_prod_2',
     name: 'portfolio.example.com',
-    org_id: 'org_personal',
-    env_id: 'env_personal_prod',
+    environment_id: 'env_personal_prod',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 8,
     queries_24h: 3200,
     status: 'active',
@@ -301,8 +403,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_personal_prod_3',
     name: 'projects.example.com',
-    org_id: 'org_personal',
-    env_id: 'env_personal_prod',
+    environment_id: 'env_personal_prod',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 5,
     queries_24h: 2300,
     status: 'active',
@@ -312,8 +419,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_personal_dev_1',
     name: 'dev.blog.example.com',
-    org_id: 'org_personal',
-    env_id: 'env_personal_dev',
+    environment_id: 'env_personal_dev',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 10,
     queries_24h: 2100,
     status: 'active',
@@ -322,8 +434,13 @@ export const mockZones: Zone[] = [
   {
     id: 'zone_personal_dev_2',
     name: 'test.portfolio.example.com',
-    org_id: 'org_personal',
-    env_id: 'env_personal_dev',
+    environment_id: 'env_personal_dev',
+    zone_type: 'primary',
+    description: null,
+    active: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    created_by: null,
     records: 6,
     queries_24h: 1400,
     status: 'active',
@@ -345,7 +462,7 @@ export function getEnvironmentById(envId: string): EnvironmentDetail | undefined
 }
 
 export function getZonesByEnvironment(envId: string): Zone[] {
-  return mockZones.filter(zone => zone.env_id === envId);
+  return mockZones.filter(zone => zone.environment_id === envId);
 }
 
 export function getZoneById(zoneId: string): Zone | undefined {

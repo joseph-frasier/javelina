@@ -103,7 +103,7 @@ export interface Database {
           organization_id: string
           user_id: string
           role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          projects_count: number
+          environments_count: number
           zones_count: number
           created_at: string
         }
@@ -111,7 +111,7 @@ export interface Database {
           organization_id: string
           user_id: string
           role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          projects_count?: number
+          environments_count?: number
           zones_count?: number
           created_at?: string
         }
@@ -119,7 +119,7 @@ export interface Database {
           organization_id?: string
           user_id?: string
           role?: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          projects_count?: number
+          environments_count?: number
           zones_count?: number
           created_at?: string
         }

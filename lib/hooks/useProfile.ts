@@ -11,7 +11,7 @@ export interface Organization {
   id: string
   name: string
   role: RBACRole
-  projects_count: number
+  environments_count: number
   zones_count: number
 }
 
@@ -78,7 +78,7 @@ export function useProfile() {
         .select(
           `
           role,
-          projects_count,
+          environments_count,
           zones_count,
           organizations:organization_id (
             id,
@@ -96,7 +96,7 @@ export function useProfile() {
           id: m.organizations.id,
           name: m.organizations.name,
           role: m.role,
-          projects_count: m.projects_count,
+          environments_count: m.environments_count,
           zones_count: m.zones_count,
         })) || []
 
