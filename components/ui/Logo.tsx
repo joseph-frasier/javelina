@@ -35,7 +35,7 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
 
   return (
     <Image
-      src={isDark ? '/JAVELINA WHITE BLACK BACKGROUND.png' : '/JAVELINA LOGO TRANSPARENT BACKGROUND.png'}
+      src={isDark ? '/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png' : '/JAVELINA LOGO TRANSPARENT BACKGROUND.png'}
       alt="Javelina - Take control of your DNS"
       width={width}
       height={height}
