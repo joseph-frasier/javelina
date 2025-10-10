@@ -38,12 +38,18 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
   });
 
   useEffect(() => {
-    // Only watch for theme changes, don't override the initialization
-    const observer = new MutationObserver(() => {
+    // Double-check theme immediately on mount (catches late theme script execution)
+    const checkTheme = () => {
       const htmlElement = document.documentElement;
       const hasDarkClass = htmlElement.classList.contains('theme-dark');
       setIsDark(hasDarkClass);
-    });
+    };
+    
+    // Check immediately
+    checkTheme();
+    
+    // Set up observer to watch for future changes
+    const observer = new MutationObserver(checkTheme);
     
     observer.observe(document.documentElement, {
       attributes: true,
