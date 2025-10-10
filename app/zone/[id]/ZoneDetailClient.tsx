@@ -211,7 +211,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             </thead>
             <tbody>
               {zone.records.map((record: any) => (
-                <tr key={record.id} className="border-b border-gray-light hover:bg-gray-light transition-colors">
+                <tr key={record.id} className="border-b border-gray-light">
                   <td className="py-3 px-4 text-sm font-medium text-orange-dark">{record.name}</td>
                   <td className="py-3 px-4">
                     <span className="px-2 py-1 bg-blue-electric/10 text-blue-electric rounded text-xs font-medium">
