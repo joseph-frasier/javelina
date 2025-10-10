@@ -10,9 +10,14 @@ interface ConditionalLayoutProps {
 
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
-  const isLoginPage = pathname === '/login';
+  
+  // Hide sidebar and header on authentication pages
+  const isAuthPage = pathname === '/login' || 
+                     pathname === '/signup' || 
+                     pathname === '/forgot-password' || 
+                     pathname === '/reset-password';
 
-  if (isLoginPage) {
+  if (isAuthPage) {
     return <>{children}</>;
   }
 
