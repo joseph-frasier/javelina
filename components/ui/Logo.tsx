@@ -47,6 +47,7 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
       height={height}
       className={className}
       priority={priority}
+      suppressHydrationWarning
     />
   );
 }
