@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useSettingsStore } from '@/lib/settings-store';
+import { Logo } from '@/components/ui/Logo';
 
 export function Header() {
   const router = useRouter();
@@ -96,9 +97,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Image
-                src="/JAVELINA LOGO TRANSPARENT BACKGROUND.png"
-                alt="Javelina - Take control of your DNS"
+              <Logo
                 width={325}
                 height={130}
                 priority
