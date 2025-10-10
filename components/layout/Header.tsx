@@ -184,20 +184,20 @@ export function Header() {
                   <div className="py-2">
                     <Link
                       href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-slate hover:bg-gray-light hover:text-orange transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
                       onClick={() => setIsDropdownOpen(false)}
                     >
                       Profile
                     </Link>
                     <Link
                       href="/settings"
-                      className="block px-4 py-2 text-sm text-gray-slate hover:bg-gray-light hover:text-orange transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
                       onClick={() => setIsDropdownOpen(false)}
                     >
                       Settings
                     </Link>
                     <button
-                      className="w-full text-left px-4 py-2 text-sm text-gray-slate hover:bg-gray-light hover:text-orange transition-colors"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
                       onClick={handleLogout}
                     >
                       Sign out
