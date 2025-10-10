@@ -11,7 +11,13 @@ interface LogoProps {
 }
 
 export function Logo({ className = '', width = 150, height = 40, priority = false }: LogoProps) {
-  const [isDark, setIsDark] = useState(false);
+  // Initialize with current theme state to prevent flash
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('theme-dark');
+    }
+    return false;
+  });
 
   useEffect(() => {
     // Check initial theme
@@ -20,7 +26,7 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
       setIsDark(htmlElement.classList.contains('theme-dark'));
     };
 
-    // Initial check
+    // Initial check (in case theme changed between initialization and mount)
     checkTheme();
 
     // Watch for theme changes
