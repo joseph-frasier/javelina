@@ -1,8 +1,8 @@
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { EnvironmentCard } from '@/components/hierarchy/EnvironmentCard';
-import { getOrganizationById } from '@/lib/mock-hierarchy-data';
 import { canCreateEnvironment } from '@/lib/permissions';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function OrganizationPage({ 
   params 
@@ -10,9 +10,19 @@ export default async function OrganizationPage({
   params: Promise<{ orgId: string }> 
 }) {
   const { orgId } = await params;
-  const org = getOrganizationById(orgId);
+  const supabase = await createClient();
 
-  if (!org) {
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch organization
+  const { data: org, error: orgError } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('id', orgId)
+    .single();
+
+  if (orgError || !org) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Organization Not Found</h1>
@@ -21,7 +31,40 @@ export default async function OrganizationPage({
     );
   }
 
-  const canAddEnvironment = canCreateEnvironment(org.role);
+  // Get user's role in this organization
+  const { data: member } = await supabase
+    .from('organization_members')
+    .select('role')
+    .eq('organization_id', orgId)
+    .eq('user_id', user?.id)
+    .single();
+
+  const userRole = member?.role || 'Viewer';
+
+  // Fetch environments for this organization
+  const { data: environments } = await supabase
+    .from('environments')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false });
+
+  // Fetch zones count for stats
+  const { data: zones } = await supabase
+    .from('zones')
+    .select('id, environment_id')
+    .in('environment_id', environments?.map(e => e.id) || []);
+
+  // Calculate stats
+  const stats = {
+    totalEnvironments: environments?.length || 0,
+    totalZones: zones?.length || 0,
+    totalRecords: 0, // TODO: Implement when records table exists
+    queries24h: 0, // TODO: Implement with analytics
+    successRate: 0, // TODO: Implement with analytics
+    avgResponseTime: 0, // TODO: Implement with analytics
+  };
+
+  const canAddEnvironment = canCreateEnvironment(userRole);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -52,19 +95,19 @@ export default async function OrganizationPage({
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card title="Total Environments" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.totalEnvironments}</p>
+          <p className="text-3xl font-bold text-orange">{stats.totalEnvironments}</p>
           <p className="text-sm text-gray-slate mt-1">Active environments</p>
         </Card>
         <Card title="Total Zones" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.totalZones}</p>
-          <p className="text-sm text-gray-slate mt-1">{org.stats.totalRecords} DNS records</p>
+          <p className="text-3xl font-bold text-orange">{stats.totalZones}</p>
+          <p className="text-sm text-gray-slate mt-1">{stats.totalRecords} DNS records</p>
         </Card>
         <Card title="Queries (24h)" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.queries24h.toLocaleString()}</p>
-          <p className="text-sm text-gray-slate mt-1">{org.stats.successRate}% success rate</p>
+          <p className="text-3xl font-bold text-orange">{stats.queries24h > 0 ? stats.queries24h.toLocaleString() : '—'}</p>
+          <p className="text-sm text-gray-slate mt-1">{stats.successRate > 0 ? `${stats.successRate}% success rate` : 'Coming soon'}</p>
         </Card>
         <Card title="Avg Response" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.avgResponseTime}ms</p>
+          <p className="text-3xl font-bold text-orange">{stats.avgResponseTime > 0 ? `${stats.avgResponseTime}ms` : '—'}</p>
           <p className="text-sm text-gray-slate mt-1">Response time</p>
         </Card>
       </div>
@@ -72,37 +115,34 @@ export default async function OrganizationPage({
       {/* Environments Grid */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-orange-dark mb-4">Environments</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {org.environments.map((environment) => (
-            <EnvironmentCard
-              key={environment.id}
-              environment={environment}
-              orgId={org.id}
-              showRole={true}
-            />
-          ))}
-        </div>
+        {environments && environments.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {environments.map((environment) => (
+              <EnvironmentCard
+                key={environment.id}
+                environment={{
+                  ...environment,
+                  type: environment.environment_type, // Map database field to component prop
+                  role: userRole,
+                  zones_count: zones?.filter(z => z.environment_id === environment.id).length || 0,
+                }}
+                orgId={org.id}
+                showRole={true}
+              />
+            ))}
+          </div>
+        ) : (
+          <Card className="p-8 text-center">
+            <p className="text-gray-slate">No environments yet. Create your first environment to get started.</p>
+          </Card>
+        )}
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity - Placeholder */}
       <Card title="Recent Activity" className="p-6">
-        <div className="space-y-4">
-          {org.recentActivity.map((activity, index) => (
-            <div key={index} className="flex items-start space-x-3 py-3 border-b border-gray-light last:border-0">
-              <div className="flex-shrink-0 w-2 h-2 bg-orange rounded-full mt-2"></div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-orange-dark">{activity.action}</span>
-                  <span className="text-xs text-gray-slate">{activity.timestamp}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-xs text-gray-slate">
-                  <span className="font-mono">{activity.target}</span>
-                  <span>•</span>
-                  <span>{activity.user}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="text-center py-8 text-gray-slate">
+          <p className="mb-2">Activity logging coming soon</p>
+          <p className="text-sm">Track changes, deployments, and updates to your DNS infrastructure</p>
         </div>
       </Card>
     </div>

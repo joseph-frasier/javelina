@@ -3,8 +3,8 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { EnvironmentBadge } from '@/components/ui/EnvironmentBadge';
-import { getEnvironmentById, getOrganizationById, getZonesByEnvironment } from '@/lib/mock-hierarchy-data';
 import { canCreateZone, getRoleBadgeColor, getRoleDisplayText } from '@/lib/permissions';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function EnvironmentPage({
   params
@@ -12,11 +12,26 @@ export default async function EnvironmentPage({
   params: Promise<{ orgId: string; envId: string }>
 }) {
   const { orgId, envId } = await params;
-  const environment = getEnvironmentById(envId);
-  const organization = getOrganizationById(orgId);
-  const zones = getZonesByEnvironment(envId);
+  const supabase = await createClient();
 
-  if (!environment || !organization) {
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch environment
+  const { data: environment, error: envError } = await supabase
+    .from('environments')
+    .select('*')
+    .eq('id', envId)
+    .single();
+
+  // Fetch organization
+  const { data: organization, error: orgError } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('id', orgId)
+    .single();
+
+  if (envError || orgError || !environment || !organization) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Environment Not Found</h1>
@@ -25,7 +40,24 @@ export default async function EnvironmentPage({
     );
   }
 
-  const canAddZone = canCreateZone(organization.role, environment.role);
+  // Get user's role in the organization
+  const { data: member } = await supabase
+    .from('organization_members')
+    .select('role')
+    .eq('organization_id', orgId)
+    .eq('user_id', user?.id)
+    .single();
+
+  const userRole = member?.role || 'Viewer';
+
+  // Fetch zones for this environment
+  const { data: zones } = await supabase
+    .from('zones')
+    .select('*')
+    .eq('environment_id', envId)
+    .order('created_at', { ascending: false});
+
+  const canAddZone = canCreateZone(userRole, userRole);
 
   const breadcrumbItems = [
     { label: organization.name, href: `/organization/${orgId}` },
@@ -43,12 +75,12 @@ export default async function EnvironmentPage({
           <div>
             <div className="flex items-center space-x-3 mb-2">
               <h1 className="text-3xl font-bold text-orange-dark">{environment.name}</h1>
-              <EnvironmentBadge type={environment.type} />
+              <EnvironmentBadge type={environment.environment_type} />
             </div>
             <div className="flex items-center space-x-3">
               <p className="text-gray-slate">Environment for {organization.name}</p>
-              <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(environment.role)}`}>
-                {getRoleDisplayText(environment.role)}
+              <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(userRole)}`}>
+                {getRoleDisplayText(userRole)}
               </span>
             </div>
           </div>
@@ -74,26 +106,26 @@ export default async function EnvironmentPage({
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card title="Total Zones" className="p-6">
-          <p className="text-3xl font-bold text-orange">{environment.zones_count}</p>
+          <p className="text-3xl font-bold text-orange">{zones?.length || 0}</p>
           <p className="text-sm text-gray-slate mt-1">Active zones</p>
         </Card>
         <Card title="Total Records" className="p-6">
-          <p className="text-3xl font-bold text-orange">{environment.total_records}</p>
-          <p className="text-sm text-gray-slate mt-1">DNS records</p>
+          <p className="text-3xl font-bold text-orange">—</p>
+          <p className="text-sm text-gray-slate mt-1">Coming soon</p>
         </Card>
         <Card title="Queries (24h)" className="p-6">
-          <p className="text-3xl font-bold text-orange">{environment.queries_24h.toLocaleString()}</p>
-          <p className="text-sm text-gray-slate mt-1">{environment.success_rate}% success</p>
+          <p className="text-3xl font-bold text-orange">—</p>
+          <p className="text-sm text-gray-slate mt-1">Coming soon</p>
         </Card>
         <Card title="Avg Response" className="p-6">
-          <p className="text-3xl font-bold text-orange">{environment.avg_response_time}ms</p>
-          <p className="text-sm text-gray-slate mt-1">Response time</p>
+          <p className="text-3xl font-bold text-orange">—</p>
+          <p className="text-sm text-gray-slate mt-1">Coming soon</p>
         </Card>
       </div>
 
       {/* Zones Table */}
       <Card title="DNS Zones" className="p-6">
-        {zones.length === 0 ? (
+        {!zones || zones.length === 0 ? (
           <div className="text-center py-12">
             <svg
               className="mx-auto h-12 w-12 text-gray-slate"
@@ -160,26 +192,24 @@ export default async function EnvironmentPage({
                       </Link>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate">
-                      {zone.records}
+                      —
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate">
-                      {zone.queries_24h.toLocaleString()}
+                      —
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          zone.status === 'active'
+                          zone.active
                             ? 'bg-green-100 text-green-800'
-                            : zone.status === 'paused'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {zone.status.charAt(0).toUpperCase() + zone.status.slice(1)}
+                        {zone.active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate">
-                      {new Date(zone.last_modified).toLocaleDateString()}
+                      {new Date(zone.updated_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
                       <Link
