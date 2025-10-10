@@ -4,6 +4,18 @@
 -- =====================================================
 
 -- =====================================================
+-- DROP EXISTING TABLES (Clean Slate)
+-- Warning: This will delete all data!
+-- =====================================================
+
+-- Drop tables in reverse dependency order
+drop table if exists public.zones cascade;
+drop table if exists public.environments cascade;
+drop table if exists public.organization_members cascade;
+drop table if exists public.organizations cascade;
+drop table if exists public.profiles cascade;
+
+-- =====================================================
 -- 1. PROFILES TABLE
 -- Stores extended user information beyond auth.users
 -- =====================================================
