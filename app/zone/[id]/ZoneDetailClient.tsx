@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { EnvironmentBadge } from '@/components/ui/EnvironmentBadge';
+import Dropdown from '@/components/ui/Dropdown';
 import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
 
 interface ZoneDetailClientProps {
@@ -245,18 +246,18 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-slate mb-2">Record Type</label>
-              <select
+              <Dropdown
+                label="Record Type"
                 value={queryType}
-                onChange={(e) => setQueryType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                <option value="A">A</option>
-                <option value="AAAA">AAAA</option>
-                <option value="CNAME">CNAME</option>
-                <option value="MX">MX</option>
-                <option value="TXT">TXT</option>
-              </select>
+                onChange={setQueryType}
+                options={[
+                  { value: 'A', label: 'A' },
+                  { value: 'AAAA', label: 'AAAA' },
+                  { value: 'CNAME', label: 'CNAME' },
+                  { value: 'MX', label: 'MX' },
+                  { value: 'TXT', label: 'TXT' },
+                ]}
+              />
             </div>
             <Button variant="primary" className="w-full" onClick={handleRunQuery}>
               Run Query
