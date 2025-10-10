@@ -42,7 +42,13 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
     const checkTheme = () => {
       const htmlElement = document.documentElement;
       const hasDarkClass = htmlElement.classList.contains('theme-dark');
-      setIsDark(hasDarkClass);
+      setIsDark(prevIsDark => {
+        // Only update if actually changed to prevent unnecessary re-renders
+        if (prevIsDark !== hasDarkClass) {
+          return hasDarkClass;
+        }
+        return prevIsDark;
+      });
     };
     
     // Check immediately
@@ -55,9 +61,13 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
       attributes: true,
       attributeFilter: ['class'],
     });
+    
+    // Fallback: Also check periodically in case observer fails (especially after OAuth)
+    const intervalId = setInterval(checkTheme, 500);
 
     return () => {
       observer.disconnect();
+      clearInterval(intervalId);
     };
   }, []);
 
