@@ -81,7 +81,7 @@ export default function SettingsPage() {
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                       activeSection === section.id
                         ? 'bg-orange text-white'
-                        : 'text-gray-slate hover:bg-gray-light'
+                        : 'text-gray-slate hover:bg-gray-light/30'
                     }`}
                   >
                     <span className="mr-3">{section.icon}</span>
