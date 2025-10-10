@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { clsx } from 'clsx';
 import Button from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
+import { Logo } from '@/components/ui/Logo';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -103,9 +104,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-[420px]">
         {/* Logo/Brand Section */}
         <div className="flex flex-col items-center mb-0">
-          <Image
-            src="/JAVELINA LOGO TRANSPARENT BACKGROUND.png"
-            alt="Javelina Logo"
+          <Logo
             width={300}
             height={120}
             priority

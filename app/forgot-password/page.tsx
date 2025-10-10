@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
+import { Logo } from '@/components/ui/Logo';
 
 export default function ForgotPasswordPage() {
   const { resetPassword } = useAuthStore();
@@ -56,9 +57,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-[420px]">
         {/* Logo/Brand Section */}
         <div className="flex flex-col items-center mb-0">
-          <Image
-            src="/JAVELINA LOGO TRANSPARENT BACKGROUND.png"
-            alt="Javelina Logo"
+          <Logo
             width={300}
             height={120}
             priority
