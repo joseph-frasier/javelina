@@ -76,7 +76,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         <div>
           <div className="flex items-center space-x-3 mb-2">
             <h1 className="text-3xl font-bold text-orange-dark">{zone.name}</h1>
-            {environment && <EnvironmentBadge type={environment.type} />}
+            {environment && <EnvironmentBadge type={environment.environment_type} />}
           </div>
           <p className="text-gray-slate">
             Zone management and analytics
