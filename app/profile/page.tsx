@@ -4,13 +4,18 @@ import { useAuthStore } from '@/lib/auth-store';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { AvatarUpload } from '@/components/ui/AvatarUpload';
 import { useState } from 'react';
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user, updateProfile } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
 
   if (!user) return null;
+
+  const handleAvatarUpdate = (avatarUrl: string | null) => {
+    updateProfile({ avatar_url: avatarUrl });
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -55,10 +60,13 @@ export default function ProfilePage() {
             {/* Profile Card */}
             <Card className="p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-orange rounded-full flex items-center justify-center mb-4">
-                  <span className="text-white text-2xl font-bold">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
+                <div className="mb-4">
+                  <AvatarUpload
+                    currentAvatarUrl={user.avatar_url}
+                    userInitial={user.name.charAt(0).toUpperCase()}
+                    userId={user.id}
+                    onAvatarUpdate={handleAvatarUpdate}
+                  />
                 </div>
                 <h2 className="text-xl font-bold text-orange-dark mb-1">
                   {user.name}

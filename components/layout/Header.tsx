@@ -21,6 +21,7 @@ export function Header() {
   const userEmail = user?.email || '';
   const userRole = (user as any)?.profile?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
+  const userAvatarUrl = (user as any)?.profile?.avatar_url || (user as any)?.avatar_url;
 
   const handleLogout = () => {
     logout();
@@ -150,21 +151,37 @@ export function Header() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-orange-dark transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2"
+                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-orange-dark transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 overflow-hidden"
               >
-                <span className="text-white font-bold text-sm">
-                  {userInitial}
-                </span>
+                {userAvatarUrl ? (
+                  <img
+                    src={userAvatarUrl}
+                    alt="User avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-bold text-sm">
+                    {userInitial}
+                  </span>
+                )}
               </button>
 
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden">
                   <div className="p-4 border-b border-gray-light">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold">
-                          {userInitial}
-                        </span>
+                      <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center overflow-hidden">
+                        {userAvatarUrl ? (
+                          <img
+                            src={userAvatarUrl}
+                            alt="User avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white font-bold">
+                            {userInitial}
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-orange-dark dark:text-white truncate">
