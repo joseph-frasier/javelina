@@ -2,42 +2,46 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useAuthStore } from '@/lib/auth-store';
-import { mockOrganizations, getZonesByEnvironment } from '@/lib/mock-hierarchy-data';
+import { useHierarchyStore } from '@/lib/hierarchy-store';
+import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
+import { useEnvironments } from '@/lib/hooks/useEnvironments';
+import { useZones } from '@/lib/hooks/useZones';
 
 export function Sidebar() {
+  const router = useRouter();
   const { user } = useAuthStore();
+  const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set(['org_company']));
-  const [expandedEnvironments, setExpandedEnvironments] = useState<Set<string>>(new Set(['env_prod']));
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   
   // Refs for GSAP animations
   const envContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const zoneContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   
   // Track previous state to detect newly expanded items
-  const prevExpandedOrgs = useRef<Set<string>>(new Set(['org_company']));
-  const prevExpandedEnvironments = useRef<Set<string>>(new Set(['env_prod']));
+  const prevExpandedOrgs = useRef<Set<string>>(new Set());
+  const prevExpandedEnvironments = useRef<Set<string>>(new Set());
 
-  // Filter organizations based on user's access
-  // When logged in with Supabase, show user's organizations
-  // When using mock auth (or not logged in), show all mock organizations for development
-  const userOrganizations = user?.organizations && user.organizations.length > 0
-    ? mockOrganizations.filter(org => 
-        user.organizations?.some(userOrg => userOrg.id === org.id)
-      )
-    : mockOrganizations; // Fallback to all organizations for development/demo
+  // Get organizations from authenticated user (already from Supabase)
+  const userOrganizations = user?.organizations || [];
 
-  const toggleOrg = (orgId: string) => {
-    const newExpanded = new Set(expandedOrgs);
-    const isExpanding = !newExpanded.has(orgId);
+  const handleOrganizationSuccess = (organizationId: string) => {
+    // Auto-expand and select the new organization
+    selectAndExpand(organizationId);
+    // Navigate to the new organization page
+    router.push(`/organization/${organizationId}`);
+  };
+
+  const handleToggleOrg = (orgId: string) => {
+    const isExpanding = !expandedOrgs.has(orgId);
     
     if (isExpanding) {
-      // Expanding - add immediately
-      newExpanded.add(orgId);
-      setExpandedOrgs(newExpanded);
+      // Expanding - toggle immediately
+      toggleOrg(orgId);
     } else {
       // Collapsing - animate out first
       const container = envContainerRefs.current[orgId];
@@ -62,28 +66,24 @@ export function Sidebar() {
           delay: 0.15,
           ease: 'power2.inOut',
           onComplete: () => {
-            newExpanded.delete(orgId);
-            setExpandedOrgs(newExpanded);
+            toggleOrg(orgId);
             // Reset transform for next expansion
             gsap.set(container, { scaleY: 1, marginTop: '' });
           }
         });
       } else {
         // Fallback if no container
-        newExpanded.delete(orgId);
-        setExpandedOrgs(newExpanded);
+        toggleOrg(orgId);
       }
     }
   };
 
-  const toggleEnvironment = (envId: string) => {
-    const newExpanded = new Set(expandedEnvironments);
-    const isExpanding = !newExpanded.has(envId);
+  const handleToggleEnvironment = (envId: string) => {
+    const isExpanding = !expandedEnvironments.has(envId);
     
     if (isExpanding) {
-      // Expanding - add immediately
-      newExpanded.add(envId);
-      setExpandedEnvironments(newExpanded);
+      // Expanding - toggle immediately
+      toggleEnvironment(envId);
     } else {
       // Collapsing - animate out first
       const container = zoneContainerRefs.current[envId];
@@ -108,16 +108,14 @@ export function Sidebar() {
           delay: 0.15,
           ease: 'power2.inOut',
           onComplete: () => {
-            newExpanded.delete(envId);
-            setExpandedEnvironments(newExpanded);
+            toggleEnvironment(envId);
             // Reset transform for next expansion
             gsap.set(container, { scaleY: 1, marginTop: '' });
           }
         });
       } else {
         // Fallback if no container
-        newExpanded.delete(envId);
-        setExpandedEnvironments(newExpanded);
+        toggleEnvironment(envId);
       }
     }
   };
@@ -222,9 +220,9 @@ export function Sidebar() {
       {!isCollapsed && (
         <div className="flex-shrink-0 p-4 border-b border-gray-light">
           <button
-            disabled
-            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-light text-gray-slate rounded-md cursor-not-allowed opacity-50"
-            title="Add Organization (Coming Soon)"
+            onClick={() => setIsAddOrgModalOpen(true)}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-orange hover:bg-orange-dark text-white rounded-md transition-colors"
+            title="Add Organization"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -275,7 +273,7 @@ export function Sidebar() {
                 {/* Organization */}
                 <div className="flex items-center group">
                   <button
-                    onClick={() => toggleOrg(org.id)}
+                    onClick={() => handleToggleOrg(org.id)}
                     className="p-1 rounded transition-colors"
                     aria-label={expandedOrgs.has(org.id) ? 'Collapse' : 'Expand'}
                   >
@@ -320,100 +318,184 @@ export function Sidebar() {
 
                 {/* Environments */}
                 {expandedOrgs.has(org.id) && (
-                  <div 
-                    className="ml-4 mt-1 space-y-1 overflow-hidden"
-                    ref={(el) => {
-                      envContainerRefs.current[org.id] = el;
-                    }}
-                  >
-                    {org.environments.map((environment) => (
-                      <div key={environment.id} className="environment-item">
-                        <div className="flex items-center group">
-                          <button
-                            onClick={() => toggleEnvironment(environment.id)}
-                            className="p-1 rounded transition-colors"
-                            aria-label={expandedEnvironments.has(environment.id) ? 'Collapse' : 'Expand'}
-                          >
-                            <svg
-                              className={`w-4 h-4 text-gray-slate transition-transform ${
-                                expandedEnvironments.has(environment.id) ? 'rotate-90' : ''
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-                          </button>
-                          <Link
-                            href={`/organization/${org.id}/environment/${environment.id}`}
-                            className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
-                          >
-                            <svg
-                              className="w-4 h-4 text-blue-electric"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                              />
-                            </svg>
-                            <span className="text-sm text-gray-slate">{environment.name}</span>
-                          </Link>
-                        </div>
-
-                        {/* Zones */}
-                        {expandedEnvironments.has(environment.id) && (
-                          <div 
-                            className="ml-4 mt-1 space-y-1 overflow-hidden"
-                            ref={(el) => {
-                              zoneContainerRefs.current[environment.id] = el;
-                            }}
-                          >
-                            {getZonesByEnvironment(environment.id).map((zone) => (
-                              <Link
-                                key={zone.id}
-                                href={`/zone/${zone.id}`}
-                                className="zone-item flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
-                              >
-                                <svg
-                                  className="w-4 h-4 flex-shrink-0 text-gray-slate group-hover:text-orange"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
-                                <span className="text-sm text-gray-slate group-hover:text-orange break-all">
-                                  {zone.name}
-                                </span>
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <EnvironmentsList
+                    orgId={org.id}
+                    expandedEnvironments={expandedEnvironments}
+                    handleToggleEnvironment={handleToggleEnvironment}
+                    envContainerRefs={envContainerRefs}
+                    zoneContainerRefs={zoneContainerRefs}
+                  />
                 )}
               </div>
             ))}
           </div>
         )}
       </nav>
+
+      {/* Add Organization Modal */}
+      <AddOrganizationModal
+        isOpen={isAddOrgModalOpen}
+        onClose={() => setIsAddOrgModalOpen(false)}
+        onSuccess={handleOrganizationSuccess}
+      />
     </aside>
+  );
+}
+
+// Sub-component to fetch and display environments for an organization
+function EnvironmentsList({
+  orgId,
+  expandedEnvironments,
+  handleToggleEnvironment,
+  envContainerRefs,
+  zoneContainerRefs,
+}: {
+  orgId: string;
+  expandedEnvironments: Set<string>;
+  handleToggleEnvironment: (envId: string) => void;
+  envContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+  zoneContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+}) {
+  const { data: environments, isLoading } = useEnvironments(orgId);
+
+  if (isLoading) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-sm text-gray-slate">Loading...</span>
+      </div>
+    );
+  }
+
+  if (!environments || environments.length === 0) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-sm text-gray-slate italic">No environments</span>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="ml-4 mt-1 space-y-1 overflow-hidden"
+      ref={(el) => {
+        envContainerRefs.current[orgId] = el;
+      }}
+    >
+      {environments.map((environment) => (
+        <div key={environment.id} className="environment-item">
+          <div className="flex items-center group">
+            <button
+              onClick={() => handleToggleEnvironment(environment.id)}
+              className="p-1 rounded transition-colors"
+              aria-label={expandedEnvironments.has(environment.id) ? 'Collapse' : 'Expand'}
+            >
+              <svg
+                className={`w-4 h-4 text-gray-slate transition-transform ${
+                  expandedEnvironments.has(environment.id) ? 'rotate-90' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+            <Link
+              href={`/organization/${orgId}/environment/${environment.id}`}
+              className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
+            >
+              <svg
+                className="w-4 h-4 text-blue-electric"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+                />
+              </svg>
+              <span className="text-sm text-gray-slate">{environment.name}</span>
+            </Link>
+          </div>
+
+          {/* Zones */}
+          {expandedEnvironments.has(environment.id) && (
+            <ZonesList 
+              environmentId={environment.id} 
+              zoneContainerRefs={zoneContainerRefs}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Sub-component to fetch and display zones for an environment
+function ZonesList({ 
+  environmentId, 
+  zoneContainerRefs 
+}: { 
+  environmentId: string;
+  zoneContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+}) {
+  const { data: zones, isLoading } = useZones(environmentId);
+
+  if (isLoading) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-xs text-gray-slate">Loading zones...</span>
+      </div>
+    );
+  }
+
+  if (!zones || zones.length === 0) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-xs text-gray-slate italic">No zones</span>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="ml-4 mt-1 space-y-1 overflow-hidden"
+      ref={(el) => {
+        zoneContainerRefs.current[environmentId] = el;
+      }}
+    >
+      {zones.map((zone) => (
+        <Link
+          key={zone.id}
+          href={`/zone/${zone.id}`}
+          className="zone-item flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
+        >
+          <svg
+            className="w-4 h-4 text-gray-slate group-hover:text-orange"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span className="text-sm text-gray-slate group-hover:text-orange">
+            {zone.name}
+          </span>
+        </Link>
+      ))}
+    </div>
   );
 }
