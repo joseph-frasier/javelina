@@ -88,7 +88,7 @@ export function isRoleDowngrade(orgRole: RBACRole, envRole: RBACRole): boolean {
 export function getRoleDisplayText(role: RBACRole): string {
   const roleMap: Record<RBACRole, string> = {
     'SuperAdmin': 'SuperUser',
-    'Admin': 'Admin',
+    'Admin': 'SuperUser',
     'Editor': 'Editor',
     'Viewer': 'Viewer'
   };
