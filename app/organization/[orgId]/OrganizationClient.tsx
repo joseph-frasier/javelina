@@ -132,10 +132,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               {org.environments.map((environment) => (
                 <EnvironmentCard
                   key={environment.id}
-                  environment={{
-                    ...environment,
-                    type: environment.environment_type,
-                  }}
+                  environment={environment}
                   orgId={org.id}
                   showRole={false}
                 />
