@@ -14,6 +14,12 @@ export interface GeneralSettings {
   theme: 'light' | 'dark' | 'system';
   language: string;
   timezone: string;
+  dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
+  timeFormat: '12h' | '24h';
+  defaultLandingPage: string;
+  itemsPerPage: number;
+  autoRefreshInterval: number; // in seconds, 0 = off
+  defaultDnsTtl: number; // in seconds
   notifications: NotificationSettings;
 }
 
@@ -100,6 +106,12 @@ const mockGeneralSettings: GeneralSettings = {
   theme: 'system',
   language: 'English',
   timezone: 'America/New_York',
+  dateFormat: 'MM/DD/YYYY',
+  timeFormat: '12h',
+  defaultLandingPage: 'dashboard',
+  itemsPerPage: 25,
+  autoRefreshInterval: 60, // 1 minute
+  defaultDnsTtl: 3600, // 1 hour
   notifications: {
     email: {
       dns_updates: true,

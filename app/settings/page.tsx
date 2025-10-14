@@ -139,36 +139,126 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    {/* Language */}
-                    <div>
-                      <Dropdown
-                        label="Language"
-                        value={general.language}
-                        options={[
-                          { value: 'English', label: 'English' },
-                          { value: 'Spanish', label: 'Spanish' },
-                          { value: 'French', label: 'French' }
-                        ]}
-                        onChange={(value) => updateGeneralSettings({ language: value })}
-                        className="w-48"
-                      />
-                    </div>
+                    {/* Two Column Layout for Compact Settings */}
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Language */}
+                      <div>
+                        <Dropdown
+                          label="Language"
+                          value={general.language}
+                          options={[
+                            { value: 'English', label: 'English' },
+                            { value: 'Spanish', label: 'Spanish' },
+                            { value: 'French', label: 'French' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ language: value })}
+                        />
+                      </div>
 
-                    {/* Timezone */}
-                    <div>
-                      <Dropdown
-                        label="Timezone"
-                        value={general.timezone}
-                        options={[
-                          { value: 'America/New_York', label: 'Eastern Time' },
-                          { value: 'America/Chicago', label: 'Central Time' },
-                          { value: 'America/Denver', label: 'Mountain Time' },
-                          { value: 'America/Los_Angeles', label: 'Pacific Time' },
-                          { value: 'UTC', label: 'UTC' }
-                        ]}
-                        onChange={(value) => updateGeneralSettings({ timezone: value })}
-                        className="w-48"
-                      />
+                      {/* Timezone */}
+                      <div>
+                        <Dropdown
+                          label="Timezone"
+                          value={general.timezone}
+                          options={[
+                            { value: 'America/New_York', label: 'Eastern Time' },
+                            { value: 'America/Chicago', label: 'Central Time' },
+                            { value: 'America/Denver', label: 'Mountain Time' },
+                            { value: 'America/Los_Angeles', label: 'Pacific Time' },
+                            { value: 'UTC', label: 'UTC' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ timezone: value })}
+                        />
+                      </div>
+
+                      {/* Date Format */}
+                      <div>
+                        <Dropdown
+                          label="Date Format"
+                          value={general.dateFormat}
+                          options={[
+                            { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+                            { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+                            { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ dateFormat: value as 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD' })}
+                        />
+                      </div>
+
+                      {/* Time Format */}
+                      <div>
+                        <Dropdown
+                          label="Time Format"
+                          value={general.timeFormat}
+                          options={[
+                            { value: '12h', label: '12-hour (2:30 PM)' },
+                            { value: '24h', label: '24-hour (14:30)' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ timeFormat: value as '12h' | '24h' })}
+                        />
+                      </div>
+
+                      {/* Default Landing Page */}
+                      <div>
+                        <Dropdown
+                          label="Default Landing Page"
+                          value={general.defaultLandingPage}
+                          options={[
+                            { value: 'dashboard', label: 'Dashboard' },
+                            { value: 'organizations', label: 'Organizations' },
+                            { value: 'analytics', label: 'Analytics' },
+                            { value: 'settings', label: 'Settings' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ defaultLandingPage: value })}
+                        />
+                      </div>
+
+                      {/* Items Per Page */}
+                      <div>
+                        <Dropdown
+                          label="Items Per Page"
+                          value={general.itemsPerPage.toString()}
+                          options={[
+                            { value: '10', label: '10 items' },
+                            { value: '25', label: '25 items' },
+                            { value: '50', label: '50 items' },
+                            { value: '100', label: '100 items' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ itemsPerPage: parseInt(value) })}
+                        />
+                      </div>
+
+                      {/* Auto-Refresh Interval */}
+                      <div>
+                        <Dropdown
+                          label="Auto-Refresh Interval"
+                          value={general.autoRefreshInterval.toString()}
+                          options={[
+                            { value: '0', label: 'Off' },
+                            { value: '30', label: '30 seconds' },
+                            { value: '60', label: '1 minute' },
+                            { value: '300', label: '5 minutes' },
+                            { value: '600', label: '10 minutes' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ autoRefreshInterval: parseInt(value) })}
+                        />
+                      </div>
+
+                      {/* Default DNS TTL */}
+                      <div>
+                        <Dropdown
+                          label="Default DNS Record TTL"
+                          value={general.defaultDnsTtl.toString()}
+                          options={[
+                            { value: '300', label: '5 minutes' },
+                            { value: '1800', label: '30 minutes' },
+                            { value: '3600', label: '1 hour' },
+                            { value: '14400', label: '4 hours' },
+                            { value: '86400', label: '24 hours' }
+                          ]}
+                          onChange={(value) => updateGeneralSettings({ defaultDnsTtl: parseInt(value) })}
+                        />
+                      </div>
                     </div>
 
                     {/* Notifications */}
