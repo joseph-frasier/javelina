@@ -180,6 +180,109 @@ on conflict (organization_id, user_id) do nothing;
 */
 
 -- =====================================================
+-- 8. ENVIRONMENTS TABLE
+-- Stores environment information (Production, Staging, Development)
+-- =====================================================
+
+create table if not exists public.environments (
+  id uuid default gen_random_uuid() primary key,
+  name text not null check (name in ('Production', 'Staging', 'Development')),
+  description text,
+  organization_id uuid references public.organizations on delete cascade not null,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now(),
+  unique(organization_id, name)
+);
+
+-- Enable Row Level Security
+alter table public.environments enable row level security;
+
+-- RLS Policy: Users can view environments in their organizations
+create policy "Users can view environments in their organizations"
+  on public.environments for select
+  using (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = environments.organization_id
+      and organization_members.user_id = auth.uid()
+    )
+  );
+
+-- RLS Policy: Admins can create environments
+create policy "Admins can create environments"
+  on public.environments for insert
+  with check (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = environments.organization_id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role in ('SuperAdmin', 'Admin')
+    )
+  );
+
+-- Apply updated_at trigger to environments table
+drop trigger if exists environments_updated_at on public.environments;
+create trigger environments_updated_at
+  before update on public.environments
+  for each row execute procedure public.handle_updated_at();
+
+-- =====================================================
+-- 9. ZONES TABLE
+-- Stores DNS zone information
+-- =====================================================
+
+create table if not exists public.zones (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  environment_id uuid references public.environments on delete cascade not null,
+  organization_id uuid references public.organizations on delete cascade not null,
+  data_configuration text,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now(),
+  unique(environment_id, name)
+);
+
+-- Enable Row Level Security
+alter table public.zones enable row level security;
+
+-- RLS Policy: Users can view zones in their organizations
+create policy "Users can view zones in their organizations"
+  on public.zones for select
+  using (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = zones.organization_id
+      and organization_members.user_id = auth.uid()
+    )
+  );
+
+-- RLS Policy: Editors and above can create zones
+create policy "Editors can create zones"
+  on public.zones for insert
+  with check (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = zones.organization_id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role in ('SuperAdmin', 'Admin', 'Editor')
+    )
+  );
+
+-- Apply updated_at trigger to zones table
+drop trigger if exists zones_updated_at on public.zones;
+create trigger zones_updated_at
+  before update on public.zones
+  for each row execute procedure public.handle_updated_at();
+
+-- =====================================================
+-- 10. INDEXES FOR PERFORMANCE
+-- =====================================================
+
+create index if not exists environments_organization_id_idx on public.environments(organization_id);
+create index if not exists zones_environment_id_idx on public.zones(environment_id);
+create index if not exists zones_organization_id_idx on public.zones(organization_id);
+
+-- =====================================================
 -- SETUP COMPLETE
 -- =====================================================
 
@@ -189,6 +292,6 @@ select
   (select count(*) from information_schema.columns where columns.table_name = tables.table_name) as column_count
 from information_schema.tables
 where table_schema = 'public'
-  and table_name in ('profiles', 'organizations', 'organization_members')
+  and table_name in ('profiles', 'organizations', 'organization_members', 'environments', 'zones')
 order by table_name;
 

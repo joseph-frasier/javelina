@@ -2,14 +2,18 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
+import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { mockOrganizations, getZonesByEnvironment } from '@/lib/mock-hierarchy-data';
+import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 
 export function Sidebar() {
+  const router = useRouter();
   const { user } = useAuthStore();
+  const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set(['org_company']));
-  const [expandedEnvironments, setExpandedEnvironments] = useState<Set<string>>(new Set(['env_prod']));
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
 
   // Filter organizations based on user's access
   // When logged in with Supabase, show user's organizations
@@ -20,24 +24,11 @@ export function Sidebar() {
       )
     : mockOrganizations; // Fallback to all organizations for development/demo
 
-  const toggleOrg = (orgId: string) => {
-    const newExpanded = new Set(expandedOrgs);
-    if (newExpanded.has(orgId)) {
-      newExpanded.delete(orgId);
-    } else {
-      newExpanded.add(orgId);
-    }
-    setExpandedOrgs(newExpanded);
-  };
-
-  const toggleEnvironment = (envId: string) => {
-    const newExpanded = new Set(expandedEnvironments);
-    if (newExpanded.has(envId)) {
-      newExpanded.delete(envId);
-    } else {
-      newExpanded.add(envId);
-    }
-    setExpandedEnvironments(newExpanded);
+  const handleOrganizationSuccess = (organizationId: string) => {
+    // Auto-expand and select the new organization
+    selectAndExpand(organizationId);
+    // Navigate to the new organization page
+    router.push(`/organization/${organizationId}`);
   };
 
   return (
@@ -76,9 +67,9 @@ export function Sidebar() {
       {!isCollapsed && (
         <div className="flex-shrink-0 p-4 border-b border-gray-light">
           <button
-            disabled
-            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-light text-gray-slate rounded-md cursor-not-allowed opacity-50"
-            title="Add Organization (Coming Soon)"
+            onClick={() => setIsAddOrgModalOpen(true)}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-orange hover:bg-orange-dark text-white rounded-md transition-colors"
+            title="Add Organization"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -258,6 +249,13 @@ export function Sidebar() {
           </div>
         )}
       </nav>
+
+      {/* Add Organization Modal */}
+      <AddOrganizationModal
+        isOpen={isAddOrgModalOpen}
+        onClose={() => setIsAddOrgModalOpen(false)}
+        onSuccess={handleOrganizationSuccess}
+      />
     </aside>
   );
 }
