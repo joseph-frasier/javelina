@@ -1,23 +1,10 @@
 -- =====================================================
--- Javelina DNS Management - Database Schema
+-- Javelina DNS Management - Database Schema (Fixed)
 -- Run this in Supabase SQL Editor
 -- =====================================================
 
 -- =====================================================
--- DROP EXISTING TABLES (Clean Slate)
--- Warning: This will delete all data!
--- =====================================================
-
--- Drop tables in reverse dependency order
-drop table if exists public.zones cascade;
-drop table if exists public.environments cascade;
-drop table if exists public.organization_members cascade;
-drop table if exists public.organizations cascade;
-drop table if exists public.profiles cascade;
-
--- =====================================================
 -- 1. PROFILES TABLE
--- Stores extended user information beyond auth.users
 -- =====================================================
 
 create table if not exists public.profiles (
@@ -41,6 +28,10 @@ create table if not exists public.profiles (
 -- Enable Row Level Security
 alter table public.profiles enable row level security;
 
+-- Drop existing policies if they exist, then recreate
+drop policy if exists "Users can view own profile" on public.profiles;
+drop policy if exists "Users can update own profile" on public.profiles;
+
 -- RLS Policies for profiles
 create policy "Users can view own profile"
   on public.profiles for select
@@ -52,7 +43,6 @@ create policy "Users can update own profile"
 
 -- =====================================================
 -- 2. ORGANIZATIONS TABLE
--- Stores organization/company information
 -- =====================================================
 
 create table if not exists public.organizations (
@@ -68,8 +58,6 @@ alter table public.organizations enable row level security;
 
 -- =====================================================
 -- 3. ORGANIZATION_MEMBERS TABLE
--- Junction table for user-organization relationships
--- NOTE: Created before RLS policies so policies can reference it
 -- =====================================================
 
 create table if not exists public.organization_members (
@@ -87,8 +75,6 @@ alter table public.organization_members enable row level security;
 
 -- =====================================================
 -- 4. ENVIRONMENTS TABLE
--- Represents logical/physical contexts within an organization
--- (e.g., Production, Staging, Development)
 -- =====================================================
 
 create table if not exists public.environments (
@@ -109,7 +95,6 @@ alter table public.environments enable row level security;
 
 -- =====================================================
 -- 5. ZONES TABLE
--- Represents DNS zones managed within an environment
 -- =====================================================
 
 create table if not exists public.zones (
@@ -129,7 +114,6 @@ alter table public.zones enable row level security;
 
 -- =====================================================
 -- 6. AUDIT_LOGS TABLE
--- Track all changes to organizations, environments, and zones
 -- =====================================================
 
 create table if not exists public.audit_logs (
@@ -153,8 +137,24 @@ create index if not exists audit_logs_user_id_idx on public.audit_logs(user_id);
 create index if not exists audit_logs_created_at_idx on public.audit_logs(created_at);
 
 -- =====================================================
--- RLS POLICIES (Created after all tables exist)
+-- RLS POLICIES (Drop existing first, then recreate)
 -- =====================================================
+
+-- Drop all existing policies
+drop policy if exists "Users can view their organizations" on public.organizations;
+drop policy if exists "Users can view their memberships" on public.organization_members;
+drop policy if exists "Users can view environments in their organizations" on public.environments;
+drop policy if exists "Users can view zones in their organizations" on public.zones;
+drop policy if exists "Authenticated users can create organizations" on public.organizations;
+drop policy if exists "SuperAdmin and Admin can update their organizations" on public.organizations;
+drop policy if exists "SuperAdmin can delete their organizations" on public.organizations;
+drop policy if exists "SuperAdmin and Admin can create environments" on public.environments;
+drop policy if exists "SuperAdmin, Admin, and Editor can update environments" on public.environments;
+drop policy if exists "SuperAdmin and Admin can delete environments" on public.environments;
+drop policy if exists "SuperAdmin and Admin can create zones" on public.zones;
+drop policy if exists "SuperAdmin, Admin, and Editor can update zones" on public.zones;
+drop policy if exists "SuperAdmin and Admin can delete zones" on public.zones;
+drop policy if exists "Users can view audit logs for their organizations" on public.audit_logs;
 
 -- RLS Policy: Users can view organizations they belong to
 create policy "Users can view their organizations"
@@ -334,8 +334,7 @@ create policy "Users can view audit logs for their organizations"
   );
 
 -- =====================================================
--- 6. AUTOMATIC PROFILE CREATION TRIGGER
--- Creates a profile entry when a new user signs up
+-- 7. AUTOMATIC PROFILE CREATION TRIGGER
 -- =====================================================
 
 -- Function to handle new user creation
@@ -363,8 +362,7 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- =====================================================
--- 7. UPDATE TIMESTAMP FUNCTION
--- Automatically updates the updated_at column
+-- 8. UPDATE TIMESTAMP FUNCTION
 -- =====================================================
 
 create or replace function public.handle_updated_at()
@@ -402,8 +400,7 @@ create trigger zones_updated_at
   for each row execute procedure public.handle_updated_at();
 
 -- =====================================================
--- 8. AUDIT LOG FUNCTION
--- Automatically log all changes to tracked tables
+-- 9. AUDIT LOG FUNCTION
 -- =====================================================
 
 create or replace function public.handle_audit_log()
@@ -441,7 +438,7 @@ create trigger zones_audit after insert or update or delete on public.zones
   for each row execute function public.handle_audit_log();
 
 -- =====================================================
--- 9. INDEXES FOR PERFORMANCE
+-- 10. INDEXES FOR PERFORMANCE
 -- =====================================================
 
 create index if not exists profiles_email_idx on public.profiles(email);
@@ -453,150 +450,6 @@ create index if not exists zones_environment_id_idx on public.zones(environment_
 create index if not exists zones_created_by_idx on public.zones(created_by);
 
 -- =====================================================
--- 9. SEED DATA (Optional - for testing)
--- Create test organizations and memberships
--- =====================================================
-
--- Uncomment below to add seed data after your first user signs up
--- Replace 'YOUR_USER_ID' with actual user ID from auth.users table
-
-/*
--- Insert test organizations
-insert into public.organizations (id, name, description) values
-  ('550e8400-e29b-41d4-a716-446655440000', 'Acme Corp', 'Production and staging environments for Acme Corporation'),
-  ('550e8400-e29b-41d4-a716-446655440001', 'Personal Projects', 'Personal domains and side projects')
-on conflict (id) do nothing;
-
--- Add user to organizations (replace YOUR_USER_ID with actual ID)
-insert into public.organization_members (organization_id, user_id, role, environments_count, zones_count) values
-  ('550e8400-e29b-41d4-a716-446655440000', 'YOUR_USER_ID', 'SuperAdmin', 3, 5),
-  ('550e8400-e29b-41d4-a716-446655440001', 'YOUR_USER_ID', 'Admin', 1, 2)
-on conflict (organization_id, user_id) do nothing;
-
--- Insert test environments
-insert into public.environments (id, organization_id, name, environment_type, description, created_by) values
-  ('660e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440000', 'Production', 'production', 'Live production environment', 'YOUR_USER_ID'),
-  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440000', 'Staging', 'staging', 'Pre-production testing environment', 'YOUR_USER_ID'),
-  ('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440000', 'Development', 'development', 'Development environment', 'YOUR_USER_ID'),
-  ('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', 'Production', 'production', 'Personal projects production', 'YOUR_USER_ID')
-on conflict (id) do nothing;
-
--- Insert test zones
-insert into public.zones (id, environment_id, name, zone_type, description, created_by) values
-  ('770e8400-e29b-41d4-a716-446655440000', '660e8400-e29b-41d4-a716-446655440000', 'acme.com', 'primary', 'Main company domain', 'YOUR_USER_ID'),
-  ('770e8400-e29b-41d4-a716-446655440001', '660e8400-e29b-41d4-a716-446655440000', 'api.acme.com', 'primary', 'API endpoint domain', 'YOUR_USER_ID'),
-  ('770e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440000', 'cdn.acme.com', 'primary', 'CDN domain', 'YOUR_USER_ID'),
-  ('770e8400-e29b-41d4-a716-446655440003', '660e8400-e29b-41d4-a716-446655440001', 'staging.acme.com', 'primary', 'Staging environment domain', 'YOUR_USER_ID'),
-  ('770e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440002', 'dev.acme.com', 'primary', 'Development environment domain', 'YOUR_USER_ID'),
-  ('770e8400-e29b-41d4-a716-446655440005', '660e8400-e29b-41d4-a716-446655440003', 'myblog.com', 'primary', 'Personal blog domain', 'YOUR_USER_ID'),
-  ('770e8400-e29b-41d4-a716-446655440006', '660e8400-e29b-41d4-a716-446655440003', 'portfolio.dev', 'primary', 'Portfolio website', 'YOUR_USER_ID')
-on conflict (id) do nothing;
-*/
-
--- =====================================================
--- 8. ENVIRONMENTS TABLE
--- Stores environment information (Production, Staging, Development)
--- =====================================================
-
-create table if not exists public.environments (
-  id uuid default gen_random_uuid() primary key,
-  name text not null check (name in ('Production', 'Staging', 'Development')),
-  description text,
-  organization_id uuid references public.organizations on delete cascade not null,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now(),
-  unique(organization_id, name)
-);
-
--- Enable Row Level Security
-alter table public.environments enable row level security;
-
--- RLS Policy: Users can view environments in their organizations
-create policy "Users can view environments in their organizations"
-  on public.environments for select
-  using (
-    exists (
-      select 1 from public.organization_members
-      where organization_members.organization_id = environments.organization_id
-      and organization_members.user_id = auth.uid()
-    )
-  );
-
--- RLS Policy: Admins can create environments
-create policy "Admins can create environments"
-  on public.environments for insert
-  with check (
-    exists (
-      select 1 from public.organization_members
-      where organization_members.organization_id = environments.organization_id
-      and organization_members.user_id = auth.uid()
-      and organization_members.role in ('SuperAdmin', 'Admin')
-    )
-  );
-
--- Apply updated_at trigger to environments table
-drop trigger if exists environments_updated_at on public.environments;
-create trigger environments_updated_at
-  before update on public.environments
-  for each row execute procedure public.handle_updated_at();
-
--- =====================================================
--- 9. ZONES TABLE
--- Stores DNS zone information
--- =====================================================
-
-create table if not exists public.zones (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  environment_id uuid references public.environments on delete cascade not null,
-  organization_id uuid references public.organizations on delete cascade not null,
-  data_configuration text,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now(),
-  unique(environment_id, name)
-);
-
--- Enable Row Level Security
-alter table public.zones enable row level security;
-
--- RLS Policy: Users can view zones in their organizations
-create policy "Users can view zones in their organizations"
-  on public.zones for select
-  using (
-    exists (
-      select 1 from public.organization_members
-      where organization_members.organization_id = zones.organization_id
-      and organization_members.user_id = auth.uid()
-    )
-  );
-
--- RLS Policy: Editors and above can create zones
-create policy "Editors can create zones"
-  on public.zones for insert
-  with check (
-    exists (
-      select 1 from public.organization_members
-      where organization_members.organization_id = zones.organization_id
-      and organization_members.user_id = auth.uid()
-      and organization_members.role in ('SuperAdmin', 'Admin', 'Editor')
-    )
-  );
-
--- Apply updated_at trigger to zones table
-drop trigger if exists zones_updated_at on public.zones;
-create trigger zones_updated_at
-  before update on public.zones
-  for each row execute procedure public.handle_updated_at();
-
--- =====================================================
--- 10. INDEXES FOR PERFORMANCE
--- =====================================================
-
-create index if not exists environments_organization_id_idx on public.environments(organization_id);
-create index if not exists zones_environment_id_idx on public.zones(environment_id);
-create index if not exists zones_organization_id_idx on public.zones(organization_id);
-
--- =====================================================
 -- SETUP COMPLETE
 -- =====================================================
 
@@ -606,6 +459,5 @@ select
   (select count(*) from information_schema.columns where columns.table_name = tables.table_name) as column_count
 from information_schema.tables
 where table_schema = 'public'
-  and table_name in ('profiles', 'organizations', 'organization_members', 'environments', 'zones')
+  and table_name in ('profiles', 'organizations', 'organization_members', 'environments', 'zones', 'audit_logs')
 order by table_name;
-
