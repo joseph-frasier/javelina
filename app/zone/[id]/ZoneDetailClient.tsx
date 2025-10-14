@@ -74,16 +74,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-3 mb-2">
+          <div className="flex items-center space-x-3">
             <h1 className="text-3xl font-bold text-orange-dark">{zone.name}</h1>
             <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
               Active
             </span>
           </div>
-          <p className="text-gray-slate">
-            Zone management and analytics
-            {organization && environment && ` • ${organization.name} → ${environment.name}`}
-          </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="secondary" onClick={() => setShowEditModal(true)}>
