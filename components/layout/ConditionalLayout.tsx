@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
+import { PageTransition } from './PageTransition';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -26,9 +27,9 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-gray-light dark:bg-orange-dark">
+        <PageTransition>
           {children}
-        </main>
+        </PageTransition>
       </div>
     </div>
   );
