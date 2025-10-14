@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -14,6 +16,8 @@ interface AddOrganizationModalProps {
 }
 
 export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganizationModalProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +55,12 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
         name: name.trim(),
         description: description.trim() || undefined
       });
+
+      // Invalidate React Query cache for organizations
+      await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      
+      // Refresh the page data
+      router.refresh();
 
       addToast('success', `Organization "${organization.name}" created successfully!`);
       

@@ -7,14 +7,45 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { EnvironmentBadge } from '@/components/ui/EnvironmentBadge';
-import { EnvironmentDetail, OrganizationDetail, Zone } from '@/lib/mock-hierarchy-data';
 import { canCreateZone, getRoleBadgeColor, getRoleDisplayText } from '@/lib/permissions';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 
+interface Environment {
+  id: string;
+  name: string;
+  type: 'production' | 'staging' | 'development';
+  status: 'active' | 'disabled' | 'archived';
+  description: string;
+  location: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+}
+
+interface Organization {
+  id: string;
+  name: string;
+  description: string;
+  role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+}
+
+interface Zone {
+  id: string;
+  name: string;
+  environment_id: string;
+  zone_type: 'primary' | 'secondary' | 'redirect';
+  description?: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+}
+
 interface EnvironmentClientProps {
-  environment: EnvironmentDetail;
-  organization: OrganizationDetail;
+  environment: Environment;
+  organization: Organization;
   zones: Zone[];
   orgId: string;
   envId: string;
@@ -30,7 +61,7 @@ export function EnvironmentClient({
   const router = useRouter();
   const { selectAndExpand } = useHierarchyStore();
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
-  const canAddZone = canCreateZone(organization.role, environment.role);
+  const canAddZone = canCreateZone(organization.role, organization.role);
 
   const breadcrumbItems = [
     { label: organization.name, href: `/organization/${orgId}` },
@@ -60,8 +91,8 @@ export function EnvironmentClient({
               </div>
               <div className="flex items-center space-x-3">
                 <p className="text-gray-slate">Environment for {organization.name}</p>
-                <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(environment.role)}`}>
-                  {getRoleDisplayText(environment.role)}
+                <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(organization.role)}`}>
+                  {getRoleDisplayText(organization.role)}
                 </span>
               </div>
             </div>
@@ -85,22 +116,18 @@ export function EnvironmentClient({
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card title="Total Zones" className="p-6">
-            <p className="text-3xl font-bold text-orange">{environment.zones_count}</p>
-            <p className="text-sm text-gray-slate mt-1">Active zones</p>
+            <p className="text-3xl font-bold text-orange">{zones.length}</p>
+            <p className="text-sm text-gray-slate mt-1">
+              {zones.filter(z => z.active).length} active
+            </p>
           </Card>
-          <Card title="Total Records" className="p-6">
-            <p className="text-3xl font-bold text-orange">{environment.total_records}</p>
-            <p className="text-sm text-gray-slate mt-1">DNS records</p>
-          </Card>
-          <Card title="Queries (24h)" className="p-6">
-            <p className="text-3xl font-bold text-orange">{environment.queries_24h.toLocaleString()}</p>
-            <p className="text-sm text-gray-slate mt-1">{environment.success_rate}% success</p>
-          </Card>
-          <Card title="Avg Response" className="p-6">
-            <p className="text-3xl font-bold text-orange">{environment.avg_response_time}ms</p>
-            <p className="text-sm text-gray-slate mt-1">Response time</p>
+          <Card title="Environment Status" className="p-6">
+            <p className="text-3xl font-bold text-orange capitalize">{environment.status}</p>
+            <p className="text-sm text-gray-slate mt-1">
+              {environment.location || 'No location set'}
+            </p>
           </Card>
         </div>
 
@@ -145,10 +172,7 @@ export function EnvironmentClient({
                       Zone Name
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-slate uppercase tracking-wider">
-                      Records
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-slate uppercase tracking-wider">
-                      Queries (24h)
+                      Type
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-slate uppercase tracking-wider">
                       Status
@@ -172,27 +196,22 @@ export function EnvironmentClient({
                           {zone.name}
                         </Link>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate">
-                        {zone.records}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate">
-                        {zone.queries_24h.toLocaleString()}
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate capitalize">
+                        {zone.zone_type}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            zone.status === 'active'
+                            zone.active
                               ? 'bg-green-100 text-green-800'
-                              : zone.status === 'paused'
-                              ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-red-100 text-red-800'
                           }`}
                         >
-                          {zone.status.charAt(0).toUpperCase() + zone.status.slice(1)}
+                          {zone.active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate">
-                        {new Date(zone.last_modified).toLocaleDateString()}
+                        {new Date(zone.updated_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
                         <Link

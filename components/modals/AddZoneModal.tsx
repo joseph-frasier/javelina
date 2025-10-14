@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { createZone } from '@/lib/api/hierarchy';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -16,6 +19,14 @@ interface AddZoneModalProps {
   onSuccess?: (zoneId: string) => void;
 }
 
+type ZoneType = 'primary' | 'secondary' | 'redirect';
+
+const zoneTypeOptions = [
+  { value: 'primary', label: 'Primary' },
+  { value: 'secondary', label: 'Secondary' },
+  { value: 'redirect', label: 'Redirect' }
+];
+
 export function AddZoneModal({ 
   isOpen, 
   onClose, 
@@ -24,8 +35,11 @@ export function AddZoneModal({
   organizationId,
   onSuccess 
 }: AddZoneModalProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [name, setName] = useState('');
-  const [dataConfiguration, setDataConfiguration] = useState('');
+  const [zoneType, setZoneType] = useState<ZoneType>('primary');
+  const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
 
@@ -59,16 +73,23 @@ export function AddZoneModal({
     try {
       const zone = await createZone({
         name: name.trim().toLowerCase(), // Domains are case-insensitive
-        data_configuration: dataConfiguration.trim() || undefined,
-        environment_id: environmentId,
-        organization_id: organizationId
+        zone_type: zoneType,
+        description: description.trim() || undefined,
+        environment_id: environmentId
       });
+
+      // Invalidate React Query cache for zones
+      await queryClient.invalidateQueries({ queryKey: ['zones', environmentId] });
+      
+      // Refresh the page data
+      router.refresh();
 
       addToast('success', `Zone "${zone.name}" created successfully!`);
       
       // Reset form
       setName('');
-      setDataConfiguration('');
+      setZoneType('primary');
+      setDescription('');
       
       // Call success callback
       if (onSuccess) {
@@ -89,7 +110,8 @@ export function AddZoneModal({
   const handleClose = () => {
     if (!isSubmitting) {
       setName('');
-      setDataConfiguration('');
+      setZoneType('primary');
+      setDescription('');
       setErrors({});
       onClose();
     }
@@ -133,21 +155,32 @@ export function AddZoneModal({
         </div>
 
         <div>
-          <label htmlFor="zone-config" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-            Data Configuration
+          <label htmlFor="zone-type" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+            Zone Type <span className="text-red-500">*</span>
+          </label>
+          <Dropdown
+            options={zoneTypeOptions}
+            value={zoneType}
+            onChange={(value) => setZoneType(value as ZoneType)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="zone-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+            Description
           </label>
           <textarea
-            id="zone-config"
-            value={dataConfiguration}
-            onChange={(e) => setDataConfiguration(e.target.value)}
-            placeholder="Optional data configuration details"
+            id="zone-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Optional description or notes"
             disabled={isSubmitting}
-            rows={4}
-            maxLength={1000}
-            className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed font-mono text-sm"
+            rows={3}
+            maxLength={500}
+            className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
           />
           <p className="mt-1 text-xs text-gray-slate">
-            {dataConfiguration.length}/1000 characters
+            {description.length}/500 characters
           </p>
         </div>
 
