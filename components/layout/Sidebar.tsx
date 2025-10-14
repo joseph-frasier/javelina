@@ -32,22 +32,66 @@ export function Sidebar() {
 
   const toggleOrg = (orgId: string) => {
     const newExpanded = new Set(expandedOrgs);
-    if (newExpanded.has(orgId)) {
-      newExpanded.delete(orgId);
-    } else {
+    const isExpanding = !newExpanded.has(orgId);
+    
+    if (isExpanding) {
+      // Expanding - add immediately
       newExpanded.add(orgId);
+      setExpandedOrgs(newExpanded);
+    } else {
+      // Collapsing - animate out first
+      const container = envContainerRefs.current[orgId];
+      if (container) {
+        const environments = container.querySelectorAll('.environment-item');
+        gsap.to(environments, {
+          opacity: 0,
+          x: -20,
+          duration: 0.3,
+          stagger: 0.03,
+          ease: 'power2.in',
+          onComplete: () => {
+            newExpanded.delete(orgId);
+            setExpandedOrgs(newExpanded);
+          }
+        });
+      } else {
+        // Fallback if no container
+        newExpanded.delete(orgId);
+        setExpandedOrgs(newExpanded);
+      }
     }
-    setExpandedOrgs(newExpanded);
   };
 
   const toggleEnvironment = (envId: string) => {
     const newExpanded = new Set(expandedEnvironments);
-    if (newExpanded.has(envId)) {
-      newExpanded.delete(envId);
-    } else {
+    const isExpanding = !newExpanded.has(envId);
+    
+    if (isExpanding) {
+      // Expanding - add immediately
       newExpanded.add(envId);
+      setExpandedEnvironments(newExpanded);
+    } else {
+      // Collapsing - animate out first
+      const container = zoneContainerRefs.current[envId];
+      if (container) {
+        const zones = container.querySelectorAll('.zone-item');
+        gsap.to(zones, {
+          opacity: 0,
+          x: -20,
+          duration: 0.3,
+          stagger: 0.03,
+          ease: 'power2.in',
+          onComplete: () => {
+            newExpanded.delete(envId);
+            setExpandedEnvironments(newExpanded);
+          }
+        });
+      } else {
+        // Fallback if no container
+        newExpanded.delete(envId);
+        setExpandedEnvironments(newExpanded);
+      }
     }
-    setExpandedEnvironments(newExpanded);
   };
 
   // Animate environments when organizations are expanded
