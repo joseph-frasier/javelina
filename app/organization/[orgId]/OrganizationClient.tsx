@@ -20,6 +20,8 @@ interface Environment {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  zones_count?: number;
+  total_records?: number;
 }
 
 interface ActivityLog {
