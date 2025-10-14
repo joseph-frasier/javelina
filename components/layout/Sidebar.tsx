@@ -44,6 +44,9 @@ export function Sidebar() {
       if (container) {
         const environments = container.querySelectorAll('.environment-item');
         
+        // Set overflow hidden to prevent afterimage
+        gsap.set(container, { overflow: 'hidden' });
+        
         // Animate environments opacity and position
         gsap.to(environments, {
           opacity: 0,
@@ -63,8 +66,8 @@ export function Sidebar() {
           onComplete: () => {
             newExpanded.delete(orgId);
             setExpandedOrgs(newExpanded);
-            // Reset height for next expansion
-            gsap.set(container, { height: 'auto', marginTop: '' });
+            // Reset height and overflow for next expansion
+            gsap.set(container, { height: 'auto', marginTop: '', overflow: '' });
           }
         });
       } else {
@@ -88,7 +91,9 @@ export function Sidebar() {
       const container = zoneContainerRefs.current[envId];
       if (container) {
         const zones = container.querySelectorAll('.zone-item');
-        const currentHeight = container.offsetHeight;
+        
+        // Set overflow hidden to prevent afterimage
+        gsap.set(container, { overflow: 'hidden' });
         
         // Animate zones opacity and position
         gsap.to(zones, {
@@ -109,8 +114,8 @@ export function Sidebar() {
           onComplete: () => {
             newExpanded.delete(envId);
             setExpandedEnvironments(newExpanded);
-            // Reset height for next expansion
-            gsap.set(container, { height: 'auto', marginTop: '' });
+            // Reset height and overflow for next expansion
+            gsap.set(container, { height: 'auto', marginTop: '', overflow: '' });
           }
         });
       } else {
@@ -320,7 +325,7 @@ export function Sidebar() {
                 {/* Environments */}
                 {expandedOrgs.has(org.id) && (
                   <div 
-                    className="ml-4 mt-1 space-y-1"
+                    className="ml-4 mt-1 space-y-1 overflow-hidden"
                     ref={(el) => {
                       envContainerRefs.current[org.id] = el;
                     }}
@@ -373,7 +378,7 @@ export function Sidebar() {
                         {/* Zones */}
                         {expandedEnvironments.has(environment.id) && (
                           <div 
-                            className="ml-4 mt-1 space-y-1"
+                            className="ml-4 mt-1 space-y-1 overflow-hidden"
                             ref={(el) => {
                               zoneContainerRefs.current[environment.id] = el;
                             }}
@@ -385,7 +390,7 @@ export function Sidebar() {
                                 className="zone-item flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
                               >
                                 <svg
-                                  className="w-4 h-4 text-gray-slate group-hover:text-orange"
+                                  className="w-4 h-4 flex-shrink-0 text-gray-slate group-hover:text-orange"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -397,7 +402,7 @@ export function Sidebar() {
                                     d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                   />
                                 </svg>
-                                <span className="text-sm text-gray-slate group-hover:text-orange">
+                                <span className="text-sm text-gray-slate group-hover:text-orange break-all">
                                   {zone.name}
                                 </span>
                               </Link>
