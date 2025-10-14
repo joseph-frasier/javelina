@@ -44,9 +44,6 @@ export function Sidebar() {
       if (container) {
         const environments = container.querySelectorAll('.environment-item');
         
-        // Set overflow hidden to prevent afterimage
-        gsap.set(container, { overflow: 'hidden' });
-        
         // Animate environments opacity and position
         gsap.to(environments, {
           opacity: 0,
@@ -56,9 +53,10 @@ export function Sidebar() {
           ease: 'power2.in',
         });
         
-        // Animate container height to create smooth collapse
+        // Animate container using scaleY for smooth collapse without reflow
         gsap.to(container, {
-          height: 0,
+          scaleY: 0,
+          transformOrigin: 'top',
           marginTop: 0,
           duration: 0.3,
           delay: 0.15,
@@ -66,8 +64,8 @@ export function Sidebar() {
           onComplete: () => {
             newExpanded.delete(orgId);
             setExpandedOrgs(newExpanded);
-            // Reset height and overflow for next expansion
-            gsap.set(container, { height: 'auto', marginTop: '', overflow: '' });
+            // Reset transform for next expansion
+            gsap.set(container, { scaleY: 1, marginTop: '' });
           }
         });
       } else {
@@ -92,9 +90,6 @@ export function Sidebar() {
       if (container) {
         const zones = container.querySelectorAll('.zone-item');
         
-        // Set overflow hidden to prevent afterimage
-        gsap.set(container, { overflow: 'hidden' });
-        
         // Animate zones opacity and position
         gsap.to(zones, {
           opacity: 0,
@@ -104,9 +99,10 @@ export function Sidebar() {
           ease: 'power2.in',
         });
         
-        // Animate container height to create smooth collapse
+        // Animate container using scaleY for smooth collapse without reflow
         gsap.to(container, {
-          height: 0,
+          scaleY: 0,
+          transformOrigin: 'top',
           marginTop: 0,
           duration: 0.3,
           delay: 0.15,
@@ -114,8 +110,8 @@ export function Sidebar() {
           onComplete: () => {
             newExpanded.delete(envId);
             setExpandedEnvironments(newExpanded);
-            // Reset height and overflow for next expansion
-            gsap.set(container, { height: 'auto', marginTop: '', overflow: '' });
+            // Reset transform for next expansion
+            gsap.set(container, { scaleY: 1, marginTop: '' });
           }
         });
       } else {
