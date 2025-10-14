@@ -58,11 +58,27 @@ export default async function OrganizationPage({
     .eq('organization_id', orgId)
     .order('created_at', { ascending: false });
 
-  // Fetch zones count for this organization
+  // Fetch zones count for each environment
+  const environmentsWithCounts = await Promise.all(
+    (environments || []).map(async (env) => {
+      const { count: zonesCount } = await supabase
+        .from('zones')
+        .select('id', { count: 'exact', head: true })
+        .eq('environment_id', env.id);
+      
+      return {
+        ...env,
+        zones_count: zonesCount || 0,
+        total_records: 0 // Placeholder for future DNS records
+      };
+    })
+  );
+
+  // Fetch total zones count for this organization (through environments)
   const { count: zonesCount } = await supabase
     .from('zones')
-    .select('*', { count: 'exact', head: true })
-    .eq('organization_id', orgId);
+    .select('id', { count: 'exact', head: true })
+    .in('environment_id', environments?.map(e => e.id) || []);
 
   // Fetch recent activity from audit logs
   const auditLogs = await getOrganizationAuditLogs(orgId, 10);
@@ -74,8 +90,8 @@ export default async function OrganizationPage({
     name: org.name,
     description: org.description || '',
     role: userRole,
-    environments: environments || [],
-    environmentsCount: environments?.length || 0,
+    environments: environmentsWithCounts,
+    environmentsCount: environmentsWithCounts.length,
     zonesCount: zonesCount || 0,
     recentActivity: recentActivity,
     created_at: org.created_at,
