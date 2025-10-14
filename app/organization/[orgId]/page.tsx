@@ -1,8 +1,7 @@
-import { Card } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import { EnvironmentCard } from '@/components/hierarchy/EnvironmentCard';
-import { getOrganizationById } from '@/lib/mock-hierarchy-data';
-import { canCreateEnvironment } from '@/lib/permissions';
+import { OrganizationClient } from './OrganizationClient';
+import { createClient } from '@/lib/supabase/server';
+import { getUserRoleInOrganization } from '@/lib/api/roles';
+import { getOrganizationAuditLogs, formatAuditLog } from '@/lib/api/audit';
 
 export default async function OrganizationPage({ 
   params 
@@ -10,101 +9,94 @@ export default async function OrganizationPage({
   params: Promise<{ orgId: string }> 
 }) {
   const { orgId } = await params;
-  const org = getOrganizationById(orgId);
+  const supabase = await createClient();
 
-  if (!org) {
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-orange-dark mb-4">Organization Not Found</h1>
-        <p className="text-gray-slate">The organization &quot;{orgId}&quot; does not exist.</p>
+        <h1 className="text-3xl font-bold text-orange-dark mb-4">Not Authenticated</h1>
+        <p className="text-gray-slate">Please log in to view this organization.</p>
       </div>
     );
   }
 
-  const canAddEnvironment = canCreateEnvironment(org.role);
+  // Fetch organization
+  const { data: org, error: orgError } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('id', orgId)
+    .single();
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-orange-dark mb-2">{org.name}</h1>
-          <p className="text-gray-slate">{org.description}</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          {canAddEnvironment && (
-            <Button variant="secondary">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Environment
-            </Button>
-          )}
-          <Button variant="primary">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Analytics
-          </Button>
-        </div>
+  if (orgError || !org) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-orange-dark mb-4">Organization Not Found</h1>
+        <p className="text-gray-slate">The organization does not exist or you don&apos;t have access to it.</p>
       </div>
+    );
+  }
 
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card title="Total Environments" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.totalEnvironments}</p>
-          <p className="text-sm text-gray-slate mt-1">Active environments</p>
-        </Card>
-        <Card title="Total Zones" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.totalZones}</p>
-          <p className="text-sm text-gray-slate mt-1">{org.stats.totalRecords} DNS records</p>
-        </Card>
-        <Card title="Queries (24h)" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.queries24h.toLocaleString()}</p>
-          <p className="text-sm text-gray-slate mt-1">{org.stats.successRate}% success rate</p>
-        </Card>
-        <Card title="Avg Response" className="p-6">
-          <p className="text-3xl font-bold text-orange">{org.stats.avgResponseTime}ms</p>
-          <p className="text-sm text-gray-slate mt-1">Response time</p>
-        </Card>
+  // Fetch user's role in this organization
+  const userRole = await getUserRoleInOrganization(orgId);
+  
+  if (!userRole) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-orange-dark mb-4">Access Denied</h1>
+        <p className="text-gray-slate">You don&apos;t have access to this organization.</p>
       </div>
+    );
+  }
 
-      {/* Environments Grid */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-orange-dark mb-4">Environments</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {org.environments.map((environment) => (
-            <EnvironmentCard
-              key={environment.id}
-              environment={environment}
-              orgId={org.id}
-              showRole={true}
-            />
-          ))}
-        </div>
-      </div>
+  // Fetch environments for this organization
+  const { data: environments, error: envError } = await supabase
+    .from('environments')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false });
 
-      {/* Recent Activity */}
-      <Card title="Recent Activity" className="p-6">
-        <div className="space-y-4">
-          {org.recentActivity.map((activity, index) => (
-            <div key={index} className="flex items-start space-x-3 py-3 border-b border-gray-light last:border-0">
-              <div className="flex-shrink-0 w-2 h-2 bg-orange rounded-full mt-2"></div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-orange-dark">{activity.action}</span>
-                  <span className="text-xs text-gray-slate">{activity.timestamp}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-xs text-gray-slate">
-                  <span className="font-mono">{activity.target}</span>
-                  <span>•</span>
-                  <span>{activity.user}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
+  // Fetch zones count for each environment
+  const environmentsWithCounts = await Promise.all(
+    (environments || []).map(async (env) => {
+      const { count: zonesCount } = await supabase
+        .from('zones')
+        .select('id', { count: 'exact', head: true })
+        .eq('environment_id', env.id);
+      
+      return {
+        ...env,
+        zones_count: zonesCount || 0,
+        total_records: 0 // Placeholder for future DNS records
+      };
+    })
   );
+
+  // Fetch total zones count for this organization (through environments)
+  const { count: zonesCount } = await supabase
+    .from('zones')
+    .select('id', { count: 'exact', head: true })
+    .in('environment_id', environments?.map(e => e.id) || []);
+
+  // Fetch recent activity from audit logs
+  const auditLogs = await getOrganizationAuditLogs(orgId, 10);
+  const recentActivity = await Promise.all(auditLogs.map(log => formatAuditLog(log)));
+
+  // Prepare organization data for client component
+  const orgData = {
+    id: org.id,
+    name: org.name,
+    description: org.description || '',
+    role: userRole,
+    environments: environmentsWithCounts,
+    environmentsCount: environmentsWithCounts.length,
+    zonesCount: zonesCount || 0,
+    recentActivity: recentActivity,
+    created_at: org.created_at,
+    updated_at: org.updated_at,
+  };
+
+  return <OrganizationClient org={orgData} />;
 }

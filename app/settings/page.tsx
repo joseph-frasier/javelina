@@ -297,7 +297,7 @@ export default function SettingsPage() {
                             })}
                             className="mr-3"
                           />
-                          Email alerts for project changes
+                          Email alerts for environment changes
                         </label>
                         <label className="flex items-center">
                           <input
@@ -473,14 +473,14 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    {/* Project Overrides */}
+                    {/* Environment Overrides */}
                     <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Project-Level Overrides</h3>
+                      <h3 className="text-lg font-medium text-orange-dark mb-4">Environment-Level Overrides</h3>
                       <div className="space-y-3">
-                        {Object.entries(access.project_overrides).map(([project, override]) => (
-                          <div key={project} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                        {Object.entries(access.environment_overrides).map(([environment, override]) => (
+                          <div key={environment} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
                             <div>
-                              <p className="font-medium capitalize">{project}</p>
+                              <p className="font-medium capitalize">{environment}</p>
                               <p className="text-sm text-gray-slate">Role override</p>
                             </div>
                             <div className="flex items-center gap-2">

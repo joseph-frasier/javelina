@@ -1,5 +1,5 @@
 import { ZoneDetailClient } from '@/app/zone/[id]/ZoneDetailClient';
-import { getZoneById, getOrganizationById, getEnvironmentById } from '@/lib/mock-hierarchy-data';
+import { createClient } from '@/lib/supabase/server';
 
 // Mock DNS records data
 const mockZoneData: Record<string, any> = {
@@ -171,13 +171,23 @@ export default async function ZonePage({
   params: Promise<{ id: string }> 
 }) {
   const { id } = await params;
+  const supabase = await createClient();
   
-  // Get zone metadata from hierarchy
-  const zoneMetadata = getZoneById(id);
-  const zone = mockZoneData[id];
+  // Fetch zone with environment and organization data
+  const { data: zoneData, error } = await supabase
+    .from('zones')
+    .select(`
+      *,
+      environments (
+        *,
+        organizations (*)
+      )
+    `)
+    .eq('id', id)
+    .single();
 
   // If zone not found, show error
-  if (!zone) {
+  if (error || !zoneData) {
     return (
       <div className="p-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Zone Not Found</h1>
@@ -186,18 +196,49 @@ export default async function ZonePage({
     );
   }
 
-  // Get organization and environment context
-  let organization = null;
-  let environment = null;
-  
-  if (zoneMetadata) {
-    organization = getOrganizationById(zoneMetadata.org_id);
-    environment = getEnvironmentById(zoneMetadata.env_id);
-  }
+  // Extract environment and organization from nested data
+  const environment = zoneData.environments;
+  const organization = environment?.organizations || null;
+
+  // Merge zone data with mock DNS records for now
+  // TODO: Replace with real records from database when records table is implemented
+  const defaultMockData = {
+    name: zoneData.name,
+    serial: '2025100701',
+    lastUpdated: new Date(zoneData.updated_at).toLocaleString() + ' UTC',
+    ttl: 3600,
+    nameservers: ['ns1.example.com', 'ns2.example.com'],
+    soa: {
+      primary: 'ns1.example.com',
+      email: 'admin@example.com',
+      serial: '2025100701',
+      refresh: 3600,
+      retry: 600,
+      expire: 604800,
+      minimum: 86400,
+    },
+    records: [],
+    queryStats: {
+      last24h: 0,
+      last7d: 0,
+      last30d: 0,
+      successRate: 0,
+      qps: 0,
+    },
+    queryTypes: [
+      { type: 'A', count: 0, percentage: 0 },
+      { type: 'AAAA', count: 0, percentage: 0 },
+    ],
+    topQueries: [],
+    recentQueries: [],
+  };
+
+  // Check if we have specific mock data for this zone ID, otherwise use defaults
+  const zone = mockZoneData[id] ? { ...defaultMockData, ...mockZoneData[id] } : defaultMockData;
 
   return (
     <ZoneDetailClient 
-      zone={zone} 
+      zone={{...zone, ...zoneData}} 
       zoneId={id}
       organization={organization}
       environment={environment}

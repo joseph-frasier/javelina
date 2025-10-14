@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # Cursor Rules for Javelina (Next.js)
 
 ## Project Context
@@ -219,6 +222,42 @@ async function fetchUser(id) {
 
 ---
 
+## Plan Mode Guidelines
+
+### Code Philosophy
+
+When operating in **plan mode** or generating initial implementations:
+
+- **Prioritize conciseness** - Write tight, efficient code without unnecessary verbosity
+- **Focus on performance** - Choose algorithms and patterns that scale well
+- **Build for scalability** - Design components and functions that can grow with requirements
+- **Avoid premature complexity** - Only add abstractions and layers when truly needed
+- **Keep functions small** - Each function should do one thing well (aim for < 30 lines)
+- **Minimize dependencies** - Reduce external package usage unless significantly beneficial
+- **Large code when justified** - Only write extensive code for:
+  - Complex business logic that cannot be simplified
+  - Comprehensive error handling and validation
+  - Feature-complete implementations (e.g., complete CRUD systems)
+  - Well-documented utility libraries
+
+### Anti-Patterns to Avoid
+
+- ❌ Over-engineering simple features
+- ❌ Duplicating code that could be abstracted
+- ❌ Writing 200+ line components that should be split
+- ❌ Creating unnecessary wrapper functions
+- ❌ Adding libraries for simple tasks (lodash for one function)
+
+### Good Practices
+
+- ✅ Use TypeScript utility types (`Pick`, `Omit`, `Partial`) over manual type definitions
+- ✅ Leverage existing Next.js/React patterns instead of custom solutions
+- ✅ Compose small, reusable functions
+- ✅ Write clear, self-documenting code over verbose comments
+- ✅ Default to built-in methods (`Array.map`, `Object.keys`) over libraries
+
+---
+
 ## AI Assistant Preferences
 
 ### When suggesting code:
@@ -227,18 +266,21 @@ async function fetchUser(id) {
 - Include necessary imports
 - Follow the conventions above
 - Explain trade-offs when multiple approaches exist
+- **Be concise** - Favor elegant, minimal solutions over verbose implementations
 
 ### When refactoring:
 
 - Preserve existing functionality
 - Highlight breaking changes
 - Suggest tests if logic changes
+- **Simplify where possible** - Remove unnecessary complexity
 
 ### When debugging:
 
 - Ask clarifying questions if context is unclear
 - Check TypeScript errors, linter warnings, and console logs
 - Propose solutions with rationale
+- **Fix root causes** - Don't just patch symptoms
 
 ---
 
