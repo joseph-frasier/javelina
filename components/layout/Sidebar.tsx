@@ -16,6 +16,10 @@ export function Sidebar() {
   // Refs for GSAP animations
   const envContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const zoneContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  
+  // Track previous state to detect newly expanded items
+  const prevExpandedOrgs = useRef<Set<string>>(new Set(['org_company']));
+  const prevExpandedEnvironments = useRef<Set<string>>(new Set(['env_prod']));
 
   // Filter organizations based on user's access
   // When logged in with Supabase, show user's organizations
@@ -48,8 +52,13 @@ export function Sidebar() {
 
   // Animate environments when organizations are expanded
   useGSAP(() => {
-    expandedOrgs.forEach((orgId) => {
-      const container = envContainerRefs.current[orgId];
+    // Find newly expanded org (present in current but not in previous)
+    const newlyExpandedOrg = Array.from(expandedOrgs).find(
+      orgId => !prevExpandedOrgs.current.has(orgId)
+    );
+    
+    if (newlyExpandedOrg) {
+      const container = envContainerRefs.current[newlyExpandedOrg];
       if (container) {
         const environments = container.querySelectorAll('.environment-item');
         gsap.fromTo(
@@ -67,13 +76,21 @@ export function Sidebar() {
           }
         );
       }
-    });
+    }
+    
+    // Update previous state
+    prevExpandedOrgs.current = new Set(expandedOrgs);
   }, [expandedOrgs]);
 
   // Animate zones when environments are expanded
   useGSAP(() => {
-    expandedEnvironments.forEach((envId) => {
-      const container = zoneContainerRefs.current[envId];
+    // Find newly expanded environment (present in current but not in previous)
+    const newlyExpandedEnv = Array.from(expandedEnvironments).find(
+      envId => !prevExpandedEnvironments.current.has(envId)
+    );
+    
+    if (newlyExpandedEnv) {
+      const container = zoneContainerRefs.current[newlyExpandedEnv];
       if (container) {
         const zones = container.querySelectorAll('.zone-item');
         gsap.fromTo(
@@ -91,7 +108,10 @@ export function Sidebar() {
           }
         );
       }
-    });
+    }
+    
+    // Update previous state
+    prevExpandedEnvironments.current = new Set(expandedEnvironments);
   }, [expandedEnvironments]);
 
   return (
