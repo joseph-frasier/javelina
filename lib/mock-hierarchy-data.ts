@@ -130,7 +130,7 @@ export const mockOrganizations: OrganizationDetail[] = [
     id: 'org_personal',
     name: 'Personal Projects',
     description: 'Personal domains and side projects',
-    role: 'Admin',
+    role: 'SuperAdmin',
     environments: [
       {
         id: 'env_personal_prod',
@@ -142,7 +142,7 @@ export const mockOrganizations: OrganizationDetail[] = [
         queries_24h: 12000,
         success_rate: 99.2,
         avg_response_time: 22,
-        role: 'Admin'
+        role: 'SuperAdmin'
       },
       {
         id: 'env_personal_dev',
@@ -154,7 +154,7 @@ export const mockOrganizations: OrganizationDetail[] = [
         queries_24h: 3500,
         success_rate: 98.5,
         avg_response_time: 25,
-        role: 'Admin'
+        role: 'SuperAdmin'
       }
     ],
     stats: {
