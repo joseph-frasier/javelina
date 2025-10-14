@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { EnvironmentBadge } from '@/components/ui/EnvironmentBadge';
 import { canCreateZone, getRoleBadgeColor, getRoleDisplayText } from '@/lib/permissions';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
@@ -87,7 +86,6 @@ export function EnvironmentClient({
             <div>
               <div className="flex items-center space-x-3 mb-2">
                 <h1 className="text-3xl font-bold text-orange-dark">{environment.name}</h1>
-                <EnvironmentBadge type={environment.type} />
               </div>
               <div className="flex items-center space-x-3">
                 <p className="text-gray-slate">Environment for {organization.name}</p>
