@@ -14,12 +14,12 @@ interface Environment {
   name: string;
   organization_id: string;
   environment_type: 'production' | 'staging' | 'development';
-  location?: string;
+  location: string | null;
   status: 'active' | 'disabled' | 'archived';
-  description?: string;
+  description: string | null;
   created_at: string;
   updated_at: string;
-  created_by?: string;
+  created_by: string | null;
 }
 
 interface ActivityLog {
