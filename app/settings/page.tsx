@@ -175,7 +175,7 @@ export default function SettingsPage() {
                       <div>
                         <Dropdown
                           label="Date Format"
-                          value={general.dateFormat}
+                          value={general.dateFormat || 'MM/DD/YYYY'}
                           options={[
                             { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
                             { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                       <div>
                         <Dropdown
                           label="Time Format"
-                          value={general.timeFormat}
+                          value={general.timeFormat || '12h'}
                           options={[
                             { value: '12h', label: '12-hour (2:30 PM)' },
                             { value: '24h', label: '24-hour (14:30)' }
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                       <div>
                         <Dropdown
                           label="Default Landing Page"
-                          value={general.defaultLandingPage}
+                          value={general.defaultLandingPage || 'dashboard'}
                           options={[
                             { value: 'dashboard', label: 'Dashboard' },
                             { value: 'organizations', label: 'Organizations' },
@@ -217,7 +217,7 @@ export default function SettingsPage() {
                       <div>
                         <Dropdown
                           label="Items Per Page"
-                          value={general.itemsPerPage.toString()}
+                          value={(general.itemsPerPage || 25).toString()}
                           options={[
                             { value: '10', label: '10 items' },
                             { value: '25', label: '25 items' },
@@ -232,7 +232,7 @@ export default function SettingsPage() {
                       <div>
                         <Dropdown
                           label="Auto-Refresh Interval"
-                          value={general.autoRefreshInterval.toString()}
+                          value={(general.autoRefreshInterval ?? 60).toString()}
                           options={[
                             { value: '0', label: 'Off' },
                             { value: '30', label: '30 seconds' },
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                       <div>
                         <Dropdown
                           label="Default DNS Record TTL"
-                          value={general.defaultDnsTtl.toString()}
+                          value={(general.defaultDnsTtl || 3600).toString()}
                           options={[
                             { value: '300', label: '5 minutes' },
                             { value: '1800', label: '30 minutes' },

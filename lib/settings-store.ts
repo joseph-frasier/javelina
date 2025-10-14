@@ -329,6 +329,17 @@ export const useSettingsStore = create<SettingsState>()(
         access: state.access,
         integrations: state.integrations
       }),
+      merge: (persistedState: any, currentState: SettingsState) => {
+        // Merge persisted state with current state, ensuring new fields have defaults
+        return {
+          ...currentState,
+          ...persistedState,
+          general: {
+            ...mockGeneralSettings, // Start with defaults
+            ...persistedState?.general, // Merge with persisted values
+          },
+        };
+      },
     }
   )
 );
