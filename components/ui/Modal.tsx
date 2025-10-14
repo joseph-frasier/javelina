@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,6 +13,13 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, title, children, size = 'medium' }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure we're on the client side
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // Handle escape key
   useEffect(() => {
@@ -38,7 +46,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const sizeClasses = {
     small: 'max-w-md',
@@ -46,22 +54,24 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
     large: 'max-w-2xl'
   };
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-[9999] overflow-y-auto"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
+      style={{ zIndex: 9999 }}
     >
       {/* Overlay with fade-in animation */}
       <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 ease-out"
         onClick={onClose}
         aria-hidden="true"
+        style={{ zIndex: 9999 }}
       />
 
       {/* Modal content */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-4 relative" style={{ zIndex: 10000 }}>
         <div
           ref={modalRef}
           className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl transform transition-all duration-300 ease-out`}
@@ -103,5 +113,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
       </div>
     </div>
   );
+
+  // Render modal at document.body level using portal
+  return createPortal(modalContent, document.body);
 }
 
