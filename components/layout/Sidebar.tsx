@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 import { useAuthStore } from '@/lib/auth-store';
 import { mockOrganizations, getZonesByEnvironment } from '@/lib/mock-hierarchy-data';
 
@@ -10,6 +12,10 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set(['org_company']));
   const [expandedEnvironments, setExpandedEnvironments] = useState<Set<string>>(new Set(['env_prod']));
+  
+  // Refs for GSAP animations
+  const envContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const zoneContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Filter organizations based on user's access
   // When logged in with Supabase, show user's organizations
@@ -39,6 +45,54 @@ export function Sidebar() {
     }
     setExpandedEnvironments(newExpanded);
   };
+
+  // Animate environments when organizations are expanded
+  useGSAP(() => {
+    expandedOrgs.forEach((orgId) => {
+      const container = envContainerRefs.current[orgId];
+      if (container) {
+        const environments = container.querySelectorAll('.environment-item');
+        gsap.fromTo(
+          environments,
+          {
+            opacity: 0,
+            x: -20,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.45,
+            stagger: 0.05,
+            ease: 'power2.out',
+          }
+        );
+      }
+    });
+  }, [expandedOrgs]);
+
+  // Animate zones when environments are expanded
+  useGSAP(() => {
+    expandedEnvironments.forEach((envId) => {
+      const container = zoneContainerRefs.current[envId];
+      if (container) {
+        const zones = container.querySelectorAll('.zone-item');
+        gsap.fromTo(
+          zones,
+          {
+            opacity: 0,
+            x: -20,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.45,
+            stagger: 0.05,
+            ease: 'power2.out',
+          }
+        );
+      }
+    });
+  }, [expandedEnvironments]);
 
   return (
     <aside
@@ -174,9 +228,14 @@ export function Sidebar() {
 
                 {/* Environments */}
                 {expandedOrgs.has(org.id) && (
-                  <div className="ml-4 mt-1 space-y-1">
+                  <div 
+                    className="ml-4 mt-1 space-y-1"
+                    ref={(el) => {
+                      envContainerRefs.current[org.id] = el;
+                    }}
+                  >
                     {org.environments.map((environment) => (
-                      <div key={environment.id}>
+                      <div key={environment.id} className="environment-item">
                         <div className="flex items-center group">
                           <button
                             onClick={() => toggleEnvironment(environment.id)}
@@ -222,12 +281,17 @@ export function Sidebar() {
 
                         {/* Zones */}
                         {expandedEnvironments.has(environment.id) && (
-                          <div className="ml-4 mt-1 space-y-1">
+                          <div 
+                            className="ml-4 mt-1 space-y-1"
+                            ref={(el) => {
+                              zoneContainerRefs.current[environment.id] = el;
+                            }}
+                          >
                             {getZonesByEnvironment(environment.id).map((zone) => (
                               <Link
                                 key={zone.id}
                                 href={`/zone/${zone.id}`}
-                                className="flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
+                                className="zone-item flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
                               >
                                 <svg
                                   className="w-4 h-4 text-gray-slate group-hover:text-orange"
