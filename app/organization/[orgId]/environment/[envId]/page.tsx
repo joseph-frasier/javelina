@@ -15,7 +15,7 @@ export default async function EnvironmentPage({
 
   if (!user) {
     return (
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Not Authenticated</h1>
         <p className="text-gray-slate">Please log in to view this environment.</p>
       </div>
@@ -39,7 +39,7 @@ export default async function EnvironmentPage({
 
   if (envError || orgError || !environment || !organization) {
     return (
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Environment Not Found</h1>
         <p className="text-gray-slate">The requested environment does not exist or you don&apos;t have access to it.</p>
       </div>
@@ -51,7 +51,7 @@ export default async function EnvironmentPage({
 
   if (!userRole) {
     return (
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Access Denied</h1>
         <p className="text-gray-slate">You don&apos;t have access to this organization.</p>
       </div>
