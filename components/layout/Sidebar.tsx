@@ -43,15 +43,28 @@ export function Sidebar() {
       const container = envContainerRefs.current[orgId];
       if (container) {
         const environments = container.querySelectorAll('.environment-item');
+        
+        // Animate environments opacity and position
         gsap.to(environments, {
           opacity: 0,
           x: -20,
-          duration: 0.3,
-          stagger: 0.03,
+          duration: 0.25,
+          stagger: 0.02,
           ease: 'power2.in',
+        });
+        
+        // Animate container height to create smooth collapse
+        gsap.to(container, {
+          height: 0,
+          marginTop: 0,
+          duration: 0.3,
+          delay: 0.15,
+          ease: 'power2.inOut',
           onComplete: () => {
             newExpanded.delete(orgId);
             setExpandedOrgs(newExpanded);
+            // Reset height for next expansion
+            gsap.set(container, { height: 'auto', marginTop: '' });
           }
         });
       } else {
@@ -75,15 +88,29 @@ export function Sidebar() {
       const container = zoneContainerRefs.current[envId];
       if (container) {
         const zones = container.querySelectorAll('.zone-item');
+        const currentHeight = container.offsetHeight;
+        
+        // Animate zones opacity and position
         gsap.to(zones, {
           opacity: 0,
           x: -20,
-          duration: 0.3,
-          stagger: 0.03,
+          duration: 0.25,
+          stagger: 0.02,
           ease: 'power2.in',
+        });
+        
+        // Animate container height to create smooth collapse
+        gsap.to(container, {
+          height: 0,
+          marginTop: 0,
+          duration: 0.3,
+          delay: 0.15,
+          ease: 'power2.inOut',
           onComplete: () => {
             newExpanded.delete(envId);
             setExpandedEnvironments(newExpanded);
+            // Reset height for next expansion
+            gsap.set(container, { height: 'auto', marginTop: '' });
           }
         });
       } else {
