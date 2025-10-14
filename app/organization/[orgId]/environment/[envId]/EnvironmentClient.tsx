@@ -185,7 +185,7 @@ export function EnvironmentClient({
                 </thead>
                 <tbody className="divide-y divide-gray-light">
                   {zones.map((zone) => (
-                    <tr key={zone.id} className="hover:bg-gray-light transition-colors">
+                    <tr key={zone.id} className="hover:bg-gray-light/30 transition-colors">
                       <td className="px-4 py-4 whitespace-nowrap">
                         <Link
                           href={`/zone/${zone.id}`}
