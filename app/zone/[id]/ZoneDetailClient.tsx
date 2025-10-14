@@ -76,6 +76,9 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         <div>
           <div className="flex items-center space-x-3 mb-2">
             <h1 className="text-3xl font-bold text-orange-dark">{zone.name}</h1>
+            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+              Active
+            </span>
           </div>
           <p className="text-gray-slate">
             Zone management and analytics
@@ -83,9 +86,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-            Active
-          </span>
           <Button variant="secondary" onClick={() => setShowEditModal(true)}>
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
