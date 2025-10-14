@@ -7,6 +7,8 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { mockOrganizations, getZonesByEnvironment } from '@/lib/mock-hierarchy-data';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
+import { useEnvironments } from '@/lib/hooks/useEnvironments';
+import { useZones } from '@/lib/hooks/useZones';
 
 export function Sidebar() {
   const router = useRouter();
@@ -15,14 +17,8 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
 
-  // Filter organizations based on user's access
-  // When logged in with Supabase, show user's organizations
-  // When using mock auth (or not logged in), show all mock organizations for development
-  const userOrganizations = user?.organizations && user.organizations.length > 0
-    ? mockOrganizations.filter(org => 
-        user.organizations?.some(userOrg => userOrg.id === org.id)
-      )
-    : mockOrganizations; // Fallback to all organizations for development/demo
+  // Get organizations from authenticated user (already from Supabase)
+  const userOrganizations = user?.organizations || [];
 
   const handleOrganizationSuccess = (organizationId: string) => {
     // Auto-expand and select the new organization
@@ -165,84 +161,11 @@ export function Sidebar() {
 
                 {/* Environments */}
                 {expandedOrgs.has(org.id) && (
-                  <div className="ml-4 mt-1 space-y-1">
-                    {org.environments.map((environment) => (
-                      <div key={environment.id}>
-                        <div className="flex items-center group">
-                          <button
-                            onClick={() => toggleEnvironment(environment.id)}
-                            className="p-1 hover:bg-gray-light rounded transition-colors"
-                            aria-label={expandedEnvironments.has(environment.id) ? 'Collapse' : 'Expand'}
-                          >
-                            <svg
-                              className={`w-4 h-4 text-gray-slate transition-transform ${
-                                expandedEnvironments.has(environment.id) ? 'rotate-90' : ''
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-                          </button>
-                          <Link
-                            href={`/organization/${org.id}/environment/${environment.id}`}
-                            className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded flex-1 transition-colors group-hover:text-orange"
-                          >
-                            <svg
-                              className="w-4 h-4 text-blue-electric"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                              />
-                            </svg>
-                            <span className="text-sm text-gray-slate">{environment.name}</span>
-                          </Link>
-                        </div>
-
-                        {/* Zones */}
-                        {expandedEnvironments.has(environment.id) && (
-                          <div className="ml-4 mt-1 space-y-1">
-                            {getZonesByEnvironment(environment.id).map((zone) => (
-                              <Link
-                                key={zone.id}
-                                href={`/zone/${zone.id}`}
-                                className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded transition-colors group"
-                              >
-                                <svg
-                                  className="w-4 h-4 text-gray-slate group-hover:text-orange"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
-                                <span className="text-sm text-gray-slate group-hover:text-orange">
-                                  {zone.name}
-                                </span>
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <EnvironmentsList
+                    orgId={org.id}
+                    expandedEnvironments={expandedEnvironments}
+                    toggleEnvironment={toggleEnvironment}
+                  />
                 )}
               </div>
             ))}
@@ -257,5 +180,140 @@ export function Sidebar() {
         onSuccess={handleOrganizationSuccess}
       />
     </aside>
+  );
+}
+
+// Sub-component to fetch and display environments for an organization
+function EnvironmentsList({
+  orgId,
+  expandedEnvironments,
+  toggleEnvironment,
+}: {
+  orgId: string;
+  expandedEnvironments: Set<string>;
+  toggleEnvironment: (envId: string) => void;
+}) {
+  const { data: environments, isLoading } = useEnvironments(orgId);
+
+  if (isLoading) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-sm text-gray-slate">Loading...</span>
+      </div>
+    );
+  }
+
+  if (!environments || environments.length === 0) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-sm text-gray-slate italic">No environments</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ml-4 mt-1 space-y-1">
+      {environments.map((environment) => (
+        <div key={environment.id}>
+          <div className="flex items-center group">
+            <button
+              onClick={() => toggleEnvironment(environment.id)}
+              className="p-1 hover:bg-gray-light rounded transition-colors"
+              aria-label={expandedEnvironments.has(environment.id) ? 'Collapse' : 'Expand'}
+            >
+              <svg
+                className={`w-4 h-4 text-gray-slate transition-transform ${
+                  expandedEnvironments.has(environment.id) ? 'rotate-90' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+            <Link
+              href={`/organization/${orgId}/environment/${environment.id}`}
+              className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded flex-1 transition-colors group-hover:text-orange"
+            >
+              <svg
+                className="w-4 h-4 text-blue-electric"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+                />
+              </svg>
+              <span className="text-sm text-gray-slate">{environment.name}</span>
+            </Link>
+          </div>
+
+          {/* Zones */}
+          {expandedEnvironments.has(environment.id) && (
+            <ZonesList environmentId={environment.id} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Sub-component to fetch and display zones for an environment
+function ZonesList({ environmentId }: { environmentId: string }) {
+  const { data: zones, isLoading } = useZones(environmentId);
+
+  if (isLoading) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-xs text-gray-slate">Loading zones...</span>
+      </div>
+    );
+  }
+
+  if (!zones || zones.length === 0) {
+    return (
+      <div className="ml-4 mt-1 px-2 py-1">
+        <span className="text-xs text-gray-slate italic">No zones</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ml-4 mt-1 space-y-1">
+      {zones.map((zone) => (
+        <Link
+          key={zone.id}
+          href={`/zone/${zone.id}`}
+          className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-light rounded transition-colors group"
+        >
+          <svg
+            className="w-4 h-4 text-gray-slate group-hover:text-orange"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span className="text-sm text-gray-slate group-hover:text-orange">
+            {zone.name}
+          </span>
+        </Link>
+      ))}
+    </div>
   );
 }

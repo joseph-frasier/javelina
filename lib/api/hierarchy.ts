@@ -6,16 +6,18 @@ export interface CreateOrganizationData {
 }
 
 export interface CreateEnvironmentData {
-  name: 'Production' | 'Staging' | 'Development';
+  name: string;
+  environment_type: 'production' | 'staging' | 'development';
+  location?: string;
   description?: string;
   organization_id: string;
 }
 
 export interface CreateZoneData {
   name: string;
-  data_configuration?: string;
+  zone_type: 'primary' | 'secondary' | 'redirect';
+  description?: string;
   environment_id: string;
-  organization_id: string;
 }
 
 /**
@@ -91,11 +93,17 @@ export async function createOrganization(data: CreateOrganizationData) {
  */
 export async function createEnvironment(data: CreateEnvironmentData) {
   const supabase = createClient();
+  
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User not authenticated');
+  }
 
-  // Validate name is one of the allowed values
-  const validNames = ['Production', 'Staging', 'Development'];
-  if (!validNames.includes(data.name)) {
-    throw new Error('Environment name must be Production, Staging, or Development');
+  // Validate environment_type
+  const validTypes = ['production', 'staging', 'development'];
+  if (!validTypes.includes(data.environment_type)) {
+    throw new Error('Environment type must be production, staging, or development');
   }
 
   // Check if environment with same name already exists in this org
@@ -111,7 +119,7 @@ export async function createEnvironment(data: CreateEnvironmentData) {
   }
 
   if (existingEnv && existingEnv.length > 0) {
-    throw new Error(`${data.name} environment already exists in this organization`);
+    throw new Error(`An environment with the name "${data.name}" already exists in this organization`);
   }
 
   // Create environment
@@ -119,8 +127,12 @@ export async function createEnvironment(data: CreateEnvironmentData) {
     .from('environments')
     .insert({
       name: data.name,
+      environment_type: data.environment_type,
+      location: data.location || null,
       description: data.description || null,
-      organization_id: data.organization_id
+      organization_id: data.organization_id,
+      status: 'active',
+      created_by: user.id
     })
     .select()
     .single();
@@ -137,11 +149,34 @@ export async function createEnvironment(data: CreateEnvironmentData) {
  */
 export async function createZone(data: CreateZoneData) {
   const supabase = createClient();
+  
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User not authenticated');
+  }
 
   // Validate zone name (domain-like format, max 253 chars)
   const zoneNameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   if (!zoneNameRegex.test(data.name) || data.name.length > 253) {
     throw new Error('Zone name must be a valid domain name (max 253 characters)');
+  }
+
+  // Validate zone_type
+  const validTypes = ['primary', 'secondary', 'redirect'];
+  if (!validTypes.includes(data.zone_type)) {
+    throw new Error('Zone type must be primary, secondary, or redirect');
+  }
+
+  // Get environment to find organization_id
+  const { data: environment, error: envError } = await supabase
+    .from('environments')
+    .select('organization_id')
+    .eq('id', data.environment_id)
+    .single();
+
+  if (envError || !environment) {
+    throw new Error('Environment not found');
   }
 
   // Check if zone with same name already exists in this environment
@@ -165,9 +200,11 @@ export async function createZone(data: CreateZoneData) {
     .from('zones')
     .insert({
       name: data.name,
-      data_configuration: data.data_configuration || null,
+      zone_type: data.zone_type,
+      description: data.description || null,
       environment_id: data.environment_id,
-      organization_id: data.organization_id
+      active: true,
+      created_by: user.id
     })
     .select()
     .single();

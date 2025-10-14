@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
+import Input from '@/components/ui/Input';
 import { createEnvironment } from '@/lib/api/hierarchy';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -15,12 +18,12 @@ interface AddEnvironmentModalProps {
   onSuccess?: (environmentId: string) => void;
 }
 
-type EnvironmentType = 'Production' | 'Staging' | 'Development';
+type EnvironmentType = 'production' | 'staging' | 'development';
 
 const environmentOptions = [
-  { value: 'Production', label: 'Production' },
-  { value: 'Staging', label: 'Staging' },
-  { value: 'Development', label: 'Development' }
+  { value: 'production', label: 'Production' },
+  { value: 'staging', label: 'Staging' },
+  { value: 'development', label: 'Development' }
 ];
 
 export function AddEnvironmentModal({ 
@@ -30,30 +33,61 @@ export function AddEnvironmentModal({
   organizationName,
   onSuccess 
 }: AddEnvironmentModalProps) {
-  const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentType>('Production');
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [name, setName] = useState('');
+  const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentType>('production');
+  const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ general?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
 
   const { addToast } = useToastStore();
+
+  const validateForm = (): boolean => {
+    const newErrors: { name?: string } = {};
+
+    if (!name.trim()) {
+      newErrors.name = 'Environment name is required';
+    } else if (name.length > 100) {
+      newErrors.name = 'Environment name must be 100 characters or less';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
     setErrors({});
 
     try {
       const environment = await createEnvironment({
-        name: selectedEnvironment,
+        name: name.trim(),
+        environment_type: selectedEnvironment,
+        location: location.trim() || undefined,
         description: description.trim() || undefined,
         organization_id: organizationId
       });
 
-      addToast('success', `${environment.name} environment created successfully!`);
+      // Invalidate React Query cache
+      await queryClient.invalidateQueries({ queryKey: ['environments', organizationId] });
+      
+      // Refresh the page data
+      router.refresh();
+
+      addToast('success', `Environment "${environment.name}" created successfully!`);
       
       // Reset form
-      setSelectedEnvironment('Production');
+      setName('');
+      setSelectedEnvironment('production');
+      setLocation('');
       setDescription('');
       
       // Call success callback
@@ -74,7 +108,9 @@ export function AddEnvironmentModal({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setSelectedEnvironment('Production');
+      setName('');
+      setSelectedEnvironment('production');
+      setLocation('');
       setDescription('');
       setErrors({});
       onClose();
@@ -97,6 +133,25 @@ export function AddEnvironmentModal({
         </div>
 
         <div>
+          <label htmlFor="env-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+            Environment Name <span className="text-red-500">*</span>
+          </label>
+          <Input
+            id="env-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Production US-East"
+            disabled={isSubmitting}
+            className={errors.name ? 'border-red-500' : ''}
+            maxLength={100}
+          />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+          )}
+        </div>
+
+        <div>
           <label htmlFor="env-type" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
             Environment Type <span className="text-red-500">*</span>
           </label>
@@ -104,6 +159,21 @@ export function AddEnvironmentModal({
             options={environmentOptions}
             value={selectedEnvironment}
             onChange={(value) => setSelectedEnvironment(value as EnvironmentType)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="env-location" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+            Location
+          </label>
+          <Input
+            id="env-location"
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g., US East (N. Virginia)"
+            disabled={isSubmitting}
+            maxLength={100}
           />
         </div>
 
@@ -138,7 +208,7 @@ export function AddEnvironmentModal({
           <Button
             type="submit"
             variant="primary"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !name.trim()}
           >
             {isSubmitting ? (
               <>

@@ -35,32 +35,32 @@ export function EnvironmentCard({ environment, orgId, showRole = false }: Enviro
               <h3 className="text-lg font-semibold text-orange-dark dark:text-white">
                 {environment.name}
               </h3>
-              {showRole && (
+              {showRole && environment.role && (
                 <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(environment.role)}`}>
                   {getRoleDisplayText(environment.role)}
                 </span>
               )}
             </div>
           </div>
-          <EnvironmentBadge type={environment.type} />
+          <EnvironmentBadge type={environment.environment_type} />
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-sm text-gray-slate">Zones</p>
-            <p className="text-2xl font-bold text-orange">{environment.zones_count}</p>
+            <p className="text-2xl font-bold text-orange">{environment.zones_count || 0}</p>
           </div>
           <div>
             <p className="text-sm text-gray-slate">Records</p>
-            <p className="text-2xl font-bold text-orange">{environment.total_records}</p>
+            <p className="text-2xl font-bold text-orange">{environment.total_records || 0}</p>
           </div>
         </div>
 
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-4 text-gray-slate">
-            <span>{environment.queries_24h.toLocaleString()} queries/day</span>
+            <span>{environment.queries_24h ? environment.queries_24h.toLocaleString() : '—'} queries/day</span>
             <span>•</span>
-            <span>{environment.success_rate}% uptime</span>
+            <span>{environment.success_rate !== undefined ? `${environment.success_rate}% uptime` : 'Coming soon'}</span>
           </div>
           <div className="text-orange hover:text-orange-dark flex items-center">
             <span className="mr-1">View</span>
