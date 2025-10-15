@@ -33,12 +33,12 @@ export function EnvironmentCard({ environment, orgId, showRole = false }: Enviro
             <h3 className="text-lg font-semibold text-orange-dark dark:text-white">
               {environment.name}
             </h3>
-          </div>
-          {showRole && (
-            <span className={`px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(environment.role)}`}>
-              {getRoleDisplayText(environment.role)}
-            </span>
-          )}
+        </div>
+        {showRole && environment.role && (
+          <span className={`px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(environment.role)}`}>
+            {getRoleDisplayText(environment.role)}
+          </span>
+        )}
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
