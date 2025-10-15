@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
       {/* Hero Section */}
       <div className="mb-8">
         <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">

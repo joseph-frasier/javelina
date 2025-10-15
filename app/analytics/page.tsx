@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
           outline: none !important;
         }
       `}</style>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="font-black text-4xl text-orange-dark mb-2">
@@ -324,7 +324,7 @@ export default function AnalyticsPage() {
                     {topDomains.map((item, index) => (
                       <tr
                         key={index}
-                        className="border-b border-gray-light last:border-0 hover:bg-orange-light transition-colors"
+                        className="border-b border-gray-light last:border-0"
                       >
                         <td className="py-3 px-2 font-regular text-orange-dark">
                           {item.domain}
@@ -418,7 +418,7 @@ export default function AnalyticsPage() {
                   {errorData.map((item, index) => (
                     <tr
                       key={index}
-                      className="border-b border-gray-light last:border-0 hover:bg-orange-light transition-colors"
+                      className="border-b border-gray-light last:border-0"
                     >
                       <td className="py-3 px-2 font-regular text-orange-dark">
                         {item.error_type}

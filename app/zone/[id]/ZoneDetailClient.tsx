@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { EnvironmentBadge } from '@/components/ui/EnvironmentBadge';
 import Dropdown from '@/components/ui/Dropdown';
 import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
 
@@ -66,7 +65,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
       {/* Breadcrumb */}
       {breadcrumbItems.length > 0 && (
         <Breadcrumb items={breadcrumbItems} className="mb-6" />
@@ -75,19 +74,14 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-3 mb-2">
+          <div className="flex items-center space-x-3">
             <h1 className="text-3xl font-bold text-orange-dark">{zone.name}</h1>
-            {environment && <EnvironmentBadge type={environment.environment_type} />}
+            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+              Active
+            </span>
           </div>
-          <p className="text-gray-slate">
-            Zone management and analytics
-            {organization && environment && ` • ${organization.name} → ${environment.name}`}
-          </p>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-            Active
-          </span>
           <Button variant="secondary" onClick={() => setShowEditModal(true)}>
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -211,7 +205,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             </thead>
             <tbody>
               {zone.records.map((record: any) => (
-                <tr key={record.id} className="border-b border-gray-light hover:bg-gray-light transition-colors">
+                <tr key={record.id} className="border-b border-gray-light">
                   <td className="py-3 px-4 text-sm font-medium text-orange-dark">{record.name}</td>
                   <td className="py-3 px-4">
                     <span className="px-2 py-1 bg-blue-electric/10 text-blue-electric rounded text-xs font-medium">
@@ -305,8 +299,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
       {/* Edit Zone Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto pt-12 pb-12">
+          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-2xl w-full mx-4 my-8">
             <div className="p-6 border-b border-gray-light">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-orange-dark">Edit Zone: {zone.name}</h2>
@@ -343,7 +337,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
                   type="number"
                   value={editedZone.ttl}
                   onChange={(e) => setEditedZone({ ...editedZone, ttl: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
+                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
 
@@ -402,8 +396,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
       {/* Delete Zone Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto pt-12 pb-12">
+          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-md w-full mx-4 my-8">
             <div className="p-6">
               <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

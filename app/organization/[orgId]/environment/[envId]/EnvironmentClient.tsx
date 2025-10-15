@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { EnvironmentBadge } from '@/components/ui/EnvironmentBadge';
 import { canCreateZone, getRoleBadgeColor, getRoleDisplayText } from '@/lib/permissions';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
@@ -77,7 +76,7 @@ export function EnvironmentClient({
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
         {/* Breadcrumb */}
         <Breadcrumb items={breadcrumbItems} className="mb-6" />
 
@@ -87,7 +86,6 @@ export function EnvironmentClient({
             <div>
               <div className="flex items-center space-x-3 mb-2">
                 <h1 className="text-3xl font-bold text-orange-dark">{environment.name}</h1>
-                <EnvironmentBadge type={environment.type} />
               </div>
               <div className="flex items-center space-x-3">
                 <p className="text-gray-slate">Environment for {organization.name}</p>
@@ -187,7 +185,7 @@ export function EnvironmentClient({
                 </thead>
                 <tbody className="divide-y divide-gray-light">
                   {zones.map((zone) => (
-                    <tr key={zone.id} className="hover:bg-gray-light transition-colors">
+                    <tr key={zone.id} className="hover:bg-gray-light/30 transition-colors">
                       <td className="px-4 py-4 whitespace-nowrap">
                         <Link
                           href={`/zone/${zone.id}`}

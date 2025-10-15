@@ -31,8 +31,8 @@ export default function RootLayout({
                   if (stored === 'light' || stored === 'dark') {
                     apply(stored);
                   } else {
-                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    apply(prefersDark ? 'dark' : 'light');
+                    // Default to light mode for first-time visitors
+                    apply('light');
                   }
                 } catch(e) { 
                   document.documentElement.classList.add('theme-light');

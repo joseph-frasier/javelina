@@ -90,7 +90,7 @@ export default function Dropdown({
               type="button"
               onClick={() => handleSelect(option.value)}
               className={clsx(
-                'w-full px-3 py-2 text-left hover:bg-orange-light transition-colors',
+                'w-full px-3 py-2 text-left hover:bg-orange-light/30 transition-colors',
                 option.value === value
                   ? 'bg-orange-light text-orange font-medium'
                   : 'text-orange-dark'
