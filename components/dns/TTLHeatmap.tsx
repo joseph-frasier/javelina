@@ -18,14 +18,13 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
   };
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-80 [&_svg]:outline-none [&_svg]:focus:outline-none">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+          margin={{ top: 5, right: 30, left: 80, bottom: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis
             type="number"
             domain={[0, 100]}
@@ -39,6 +38,7 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
             width={75}
           />
           <Tooltip
+            cursor={false}
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 const data = payload[0].payload as TTLBucket;
@@ -66,7 +66,7 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
       </ResponsiveContainer>
       
       {/* Legend */}
-      <div className="mt-4 flex justify-center items-center space-x-6 text-xs">
+      <div className="-mt-2 flex justify-center items-center space-x-6 text-xs">
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: '#A8DADC' }} />
           <span className="text-gray-slate">Low (&lt;10%)</span>
