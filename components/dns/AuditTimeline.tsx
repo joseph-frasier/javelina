@@ -111,7 +111,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
           filteredLogs.map((log, index) => (
             <div
               key={log.id}
-              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-light hover:bg-gray-light/30 transition-colors group"
+              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-light group"
             >
               {/* Icon */}
               <div className="flex-shrink-0 mt-0.5">
