@@ -14,7 +14,7 @@ export default function ProfilePage() {
   if (!user) return null;
 
   const handleAvatarUpdate = (avatarUrl: string | null) => {
-    updateProfile({ avatar_url: avatarUrl });
+    updateProfile({ avatar_url: avatarUrl ?? undefined });
   };
 
   const formatDate = (dateString: string) => {
