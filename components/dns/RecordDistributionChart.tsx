@@ -31,6 +31,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
             ))}
           </Pie>
           <Tooltip
+            wrapperStyle={{ zIndex: 50 }}
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 const data = payload[0].payload as RecordTypeCount;
