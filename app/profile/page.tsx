@@ -105,7 +105,7 @@ export default function ProfilePage() {
             {/* Admin Controls Card */}
             {(user.role === 'superuser' || user.organizations?.some(org => org.role === 'Admin' || org.role === 'SuperAdmin')) && (
               <Card className="p-6">
-                <h3 className="text-lg font-semibold text-orange-dark mb-4">
+                <h3 className="text-lg font-semibold text-orange-dark mb-4 text-center">
                   Admin Controls
                 </h3>
                 <div className="space-y-3">
@@ -131,7 +131,7 @@ export default function ProfilePage() {
 
             {/* Billing Card */}
             <Card className="p-6">
-              <h3 className="text-lg font-semibold text-orange-dark mb-4">
+              <h3 className="text-lg font-semibold text-orange-dark mb-4 text-center">
                 Billing
               </h3>
               <div className="space-y-3">
