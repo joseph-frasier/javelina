@@ -19,7 +19,8 @@ export async function createOrganization(formData: {
     .from('organizations')
     .insert({ 
       name: formData.name, 
-      description: formData.description 
+      description: formData.description,
+      owner_id: user.id
     })
     .select()
     .single()

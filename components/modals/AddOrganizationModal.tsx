@@ -6,8 +6,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { createOrganization } from '@/lib/api/hierarchy';
+import { createOrganization } from '@/lib/actions/organizations';
 import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/auth-store';
 
 interface AddOrganizationModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface AddOrganizationModalProps {
 export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganizationModalProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { fetchProfile } = useAuthStore();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,38 +52,47 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
     setIsSubmitting(true);
     setErrors({});
 
-    try {
-      const organization = await createOrganization({
-        name: name.trim(),
-        description: description.trim() || undefined
-      });
+    // Call the server action
+    const result = await createOrganization({
+      name: name.trim(),
+      description: description.trim() || undefined
+    });
 
-      // Invalidate React Query cache for organizations
-      await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-      
-      // Refresh the page data
-      router.refresh();
-
-      addToast('success', `Organization "${organization.name}" created successfully!`);
-      
-      // Reset form
-      setName('');
-      setDescription('');
-      
-      // Call success callback
-      if (onSuccess) {
-        onSuccess(organization.id);
-      }
-      
-      // Close modal
-      onClose();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create organization';
-      setErrors({ general: errorMessage });
-      addToast('error', errorMessage);
-    } finally {
+    // Check for errors from server action
+    if (result.error) {
+      setErrors({ general: result.error });
+      addToast('error', result.error);
       setIsSubmitting(false);
+      return;
     }
+
+    // Success - organization created
+    const organization = result.data!;
+
+    // Invalidate React Query cache for organizations
+    await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+    
+    // Refresh user profile to update organizations list in auth store
+    await fetchProfile();
+    
+    // Refresh the page data
+    router.refresh();
+
+    addToast('success', `Organization "${organization.name}" created successfully!`);
+    
+    // Reset form
+    setName('');
+    setDescription('');
+    
+    // Call success callback
+    if (onSuccess) {
+      onSuccess(organization.id);
+    }
+    
+    // Close modal
+    onClose();
+    
+    setIsSubmitting(false);
   };
 
   const handleClose = () => {

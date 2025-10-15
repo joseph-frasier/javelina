@@ -143,6 +143,7 @@ create index if not exists audit_logs_created_at_idx on public.audit_logs(create
 -- Drop all existing policies
 drop policy if exists "Users can view their organizations" on public.organizations;
 drop policy if exists "Users can view their memberships" on public.organization_members;
+drop policy if exists "Authenticated users can create organization memberships" on public.organization_members;
 drop policy if exists "Users can view environments in their organizations" on public.environments;
 drop policy if exists "Users can view zones in their organizations" on public.zones;
 drop policy if exists "Authenticated users can create organizations" on public.organizations;
@@ -171,6 +172,12 @@ create policy "Users can view their organizations"
 create policy "Users can view their memberships"
   on public.organization_members for select
   using (user_id = auth.uid());
+
+-- RLS Policy: Authenticated users can create organization memberships
+create policy "Authenticated users can create organization memberships"
+  on public.organization_members for insert
+  to authenticated
+  with check (true);
 
 -- RLS Policy: Users can view environments in their organizations
 create policy "Users can view environments in their organizations"
