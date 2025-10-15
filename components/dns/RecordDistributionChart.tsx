@@ -11,7 +11,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-80 relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
