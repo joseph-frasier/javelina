@@ -3,6 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserRoleInOrganization } from '@/lib/api/roles';
 import { getOrganizationAuditLogs, formatAuditLog } from '@/lib/api/audit';
 
+// Force dynamic rendering - don't cache this page
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function OrganizationPage({ 
   params 
 }: { 
@@ -88,7 +92,7 @@ export default async function OrganizationPage({
   const orgData = {
     id: org.id,
     name: org.name,
-    description: org.description || '',
+    description: org.description,
     role: userRole,
     environments: environmentsWithCounts,
     environmentsCount: environmentsWithCounts.length,
