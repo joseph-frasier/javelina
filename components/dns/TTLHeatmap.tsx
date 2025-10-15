@@ -18,12 +18,12 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
   };
 
   return (
-    <div className="w-full h-80 [&_svg]:outline-none [&_svg]:focus:outline-none">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-80 [&_svg]:outline-none [&_svg]:focus:outline-none flex justify-center">
+      <ResponsiveContainer width="95%" height="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 5, right: 100, left: 100, bottom: 20 }}
+          margin={{ top: 5, right: 30, left: 80, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis
