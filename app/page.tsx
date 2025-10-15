@@ -6,29 +6,24 @@ import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { useAuthStore } from '@/lib/auth-store';
-import { useEnvironments } from '@/lib/hierarchy-store';
-import { useZones } from '@/lib/hierarchy-store';
 import { useMemo } from 'react';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const organizations = user?.organizations || [];
   
-  // Get all environments across all organizations
-  const orgIds = organizations.map(org => org.id);
-  const allEnvironments = useEnvironments(orgIds);
-  
-  // Get all zones across all environments
-  const envIds = allEnvironments.map(env => env.id);
-  const allZones = useZones(envIds);
-  
   // Calculate aggregate stats from real data
-  const aggregateStats = useMemo(() => ({
-    totalOrgs: organizations.length,
-    totalEnvironments: allEnvironments.length,
-    totalZones: allZones.length,
-    totalQueries24h: 3000500 // Mock data - this field won't be populated
-  }), [organizations.length, allEnvironments.length, allZones.length]);
+  const aggregateStats = useMemo(() => {
+    const totalEnvironments = organizations.reduce((sum, org) => sum + (org.environments_count || 0), 0);
+    const totalZones = organizations.reduce((sum, org) => sum + (org.zones_count || 0), 0);
+    
+    return {
+      totalOrgs: organizations.length,
+      totalEnvironments,
+      totalZones,
+      totalQueries24h: 3000500 // Mock data - this field won't be populated
+    };
+  }, [organizations]);
 
   return (
     <ProtectedRoute>
