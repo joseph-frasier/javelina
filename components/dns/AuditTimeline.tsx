@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AuditLog, formatRelativeTime } from '@/lib/mock-dns-data';
+import Dropdown from '@/components/ui/Dropdown';
 
 interface AuditTimelineProps {
   auditLogs: AuditLog[];
@@ -60,35 +61,37 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
     }
   };
 
+  const actionOptions = [
+    { value: 'all', label: 'All Actions' },
+    { value: 'INSERT', label: 'Create' },
+    { value: 'UPDATE', label: 'Update' },
+    { value: 'DELETE', label: 'Delete' },
+  ];
+
+  const userOptions = [
+    { value: 'all', label: 'All Users' },
+    ...uniqueUsers.map(email => ({ value: email, label: email })),
+  ];
+
   return (
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex items-center space-x-4 pb-4 border-b border-gray-light">
         <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-slate mb-1">Filter by Action</label>
-          <select
+          <Dropdown
+            label="Filter by Action"
             value={filterAction}
-            onChange={(e) => setFilterAction(e.target.value)}
-            className="w-full px-3 py-1.5 text-sm border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
-          >
-            <option value="all">All Actions</option>
-            <option value="INSERT">Create</option>
-            <option value="UPDATE">Update</option>
-            <option value="DELETE">Delete</option>
-          </select>
+            onChange={setFilterAction}
+            options={actionOptions}
+          />
         </div>
         <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-slate mb-1">Filter by User</label>
-          <select
+          <Dropdown
+            label="Filter by User"
             value={filterUser}
-            onChange={(e) => setFilterUser(e.target.value)}
-            className="w-full px-3 py-1.5 text-sm border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
-          >
-            <option value="all">All Users</option>
-            {uniqueUsers.map(email => (
-              <option key={email} value={email}>{email}</option>
-            ))}
-          </select>
+            onChange={setFilterUser}
+            options={userOptions}
+          />
         </div>
       </div>
 
