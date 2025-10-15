@@ -16,9 +16,10 @@ import {
   getZoneAuditLogs, 
   verifyZoneNameservers, 
   exportZoneJSON,
-  getZoneDNSRecords
+  getZoneDNSRecords,
+  ZoneSummary
 } from '@/lib/api/dns';
-import { ZoneSummary, AuditLog, DNSRecord } from '@/lib/mock-dns-data';
+import { AuditLog, DNSRecord } from '@/lib/mock-dns-data';
 
 interface ZoneDetailClientProps {
   zone: any;
