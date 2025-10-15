@@ -19,11 +19,11 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
 
   return (
     <div className="w-full h-80 [&_svg]:outline-none [&_svg]:focus:outline-none">
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={300}>
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 5, right: 80, left: 80, bottom: 20 }}
+          margin={{ top: 10, right: 80, left: 80, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis
@@ -67,7 +67,7 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
       </ResponsiveContainer>
       
       {/* Legend */}
-      <div className="-mt-2 flex justify-center items-center space-x-6 text-xs">
+      <div className="mt-1 flex justify-center items-center space-x-6 text-xs">
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: '#A8DADC' }} />
           <span className="text-gray-slate">Low (&lt;10%)</span>
