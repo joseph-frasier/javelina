@@ -173,7 +173,6 @@ export function EditEnvironmentModal({ isOpen, onClose, environment }: EditEnvir
             options={environmentTypeOptions}
             value={selectedType}
             onChange={(value) => setSelectedType(value as EnvironmentType)}
-            disabled={isSubmitting}
           />
         </div>
 
@@ -185,7 +184,6 @@ export function EditEnvironmentModal({ isOpen, onClose, environment }: EditEnvir
             options={statusOptions}
             value={selectedStatus}
             onChange={(value) => setSelectedStatus(value as EnvironmentStatus)}
-            disabled={isSubmitting}
           />
         </div>
 
