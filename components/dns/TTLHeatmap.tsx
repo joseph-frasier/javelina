@@ -19,7 +19,8 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
 
   return (
     <div className="w-full h-80 [&_svg]:outline-none [&_svg]:focus:outline-none">
-      <ResponsiveContainer width="100%" height={300}>
+      <div className="-ml-8">
+        <ResponsiveContainer width="100%" height={300}>
         <BarChart
           data={data}
           layout="vertical"
@@ -64,7 +65,8 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
             ))}
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </div>
       
       {/* Legend */}
       <div className="mt-1 flex justify-center items-center space-x-6 text-xs">
