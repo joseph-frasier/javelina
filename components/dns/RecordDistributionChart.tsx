@@ -74,7 +74,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
       </ResponsiveContainer>
       
       {/* Center label */}
-      <div className="relative -mt-48 pointer-events-none -z-10">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
         <div className="text-center">
           <p className="text-3xl font-bold text-orange-dark">{total}</p>
           <p className="text-sm text-gray-slate">Total Records</p>
