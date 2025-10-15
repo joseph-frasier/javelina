@@ -19,7 +19,7 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
 
   return (
     <div className="w-full h-80 [&_svg]:outline-none [&_svg]:focus:outline-none">
-      <div className="-ml-8">
+      <div className="-ml-12">
         <ResponsiveContainer width="100%" height={300}>
         <BarChart
           data={data}
