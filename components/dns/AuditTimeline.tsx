@@ -156,7 +156,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
 
                 {/* Quick preview of changes */}
                 {log.action === 'UPDATE' && log.old_data && log.new_data && (
-                  <div className="mt-2 text-xs font-mono text-gray-slate bg-gray-50 p-2 rounded">
+                  <div className="mt-2 text-xs font-mono text-gray-slate p-2 rounded">
                     {Object.keys(log.new_data).filter(key => 
                       JSON.stringify(log.old_data[key]) !== JSON.stringify(log.new_data[key])
                     ).map(key => (
