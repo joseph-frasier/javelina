@@ -161,9 +161,9 @@ export function DiffViewer({ oldData, newData, onClose }: DiffViewerProps) {
                         ({change.type})
                       </span>
                     </div>
-                    <div className="p-3 bg-gray-50">
+                    <div className="p-3">
                       {change.type !== 'added' && oldData && (
-                        <div className="mb-2">
+                        <div className="mb-1">
                           <span className="text-xs text-red-600 font-medium">- </span>
                           <span className="text-xs font-mono text-red-800">
                             {JSON.stringify(oldData[change.key])}
