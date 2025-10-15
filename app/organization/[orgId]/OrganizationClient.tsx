@@ -8,6 +8,8 @@ import { EnvironmentCard } from '@/components/hierarchy/EnvironmentCard';
 import { canCreateEnvironment } from '@/lib/permissions';
 import { AddEnvironmentModal } from '@/components/modals/AddEnvironmentModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
+import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
+import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
 
 interface Environment {
   id: string;
@@ -34,7 +36,7 @@ interface ActivityLog {
 interface OrganizationData {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
   environments: Environment[];
   environmentsCount: number;
@@ -52,7 +54,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
   const { selectAndExpand } = useHierarchyStore();
   const [isAddEnvModalOpen, setIsAddEnvModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const canAddEnvironment = canCreateEnvironment(org.role);
+  const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
+  const canDeleteOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
 
   const handleEnvironmentSuccess = (environmentId: string) => {
     // Auto-expand and select the new environment
@@ -68,7 +74,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-orange-dark mb-2">{org.name}</h1>
-            <p className="text-gray-slate">{org.description}</p>
+            {org.description && <p className="text-gray-slate">{org.description}</p>}
           </div>
           <div className="flex items-center space-x-3">
             {canAddEnvironment && (
@@ -77,6 +83,22 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Add Environment
+              </Button>
+            )}
+            {canEditOrg && (
+              <Button variant="secondary" onClick={() => setIsEditModalOpen(true)}>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </Button>
+            )}
+            {canDeleteOrg && (
+              <Button variant="secondary" onClick={() => setIsDeleteModalOpen(true)} className="!bg-red-600 hover:!bg-red-700 !text-white">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete
               </Button>
             )}
           </div>
@@ -175,6 +197,20 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         organizationId={org.id}
         organizationName={org.name}
         onSuccess={handleEnvironmentSuccess}
+      />
+
+      {/* Edit Organization Modal */}
+      <EditOrganizationModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        organization={org}
+      />
+
+      {/* Delete Organization Modal */}
+      <DeleteOrganizationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        organization={org}
       />
     </>
   );

@@ -1,22 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { createOrganization } from '@/lib/actions/organizations';
+import { updateOrganization } from '@/lib/actions/organizations';
 import { useToastStore } from '@/lib/toast-store';
 import { useAuthStore } from '@/lib/auth-store';
 
-interface AddOrganizationModalProps {
+interface EditOrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (organizationId: string) => void;
+  organization: {
+    id: string;
+    name: string;
+    description: string | null;
+  };
 }
 
-export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganizationModalProps) {
+export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrganizationModalProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { fetchProfile } = useAuthStore();
@@ -26,6 +30,15 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
   const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
 
   const { addToast } = useToastStore();
+
+  // Pre-populate form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setName(organization.name);
+      setDescription(organization.description || '');
+      setErrors({});
+    }
+  }, [isOpen, organization.name, organization.description]);
 
   const validateForm = (): boolean => {
     const newErrors: { name?: string } = {};
@@ -53,7 +66,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
     setErrors({});
 
     // Call the server action
-    const result = await createOrganization({
+    const result = await updateOrganization(organization.id, {
       name: name.trim(),
       description: description.trim() || undefined
     });
@@ -66,46 +79,41 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
       return;
     }
 
-    // Success - organization created
-    const organization = result.data!;
+    // Success - organization updated
+    const updatedOrganization = result.data!;
 
+    // Show success toast
+    addToast('success', `Organization "${updatedOrganization.name}" updated successfully!`);
+    
+    // Close modal
+    onClose();
+    
     // Invalidate React Query cache for organizations
     await queryClient.invalidateQueries({ queryKey: ['organizations'] });
     
     // Refresh user profile to update organizations list in auth store
     await fetchProfile();
     
-    // Refresh the page data
+    // Force a hard refresh of the current page
     router.refresh();
-
-    addToast('success', `Organization "${organization.name}" created successfully!`);
     
-    // Reset form
-    setName('');
-    setDescription('');
-    
-    // Call success callback
-    if (onSuccess) {
-      onSuccess(organization.id);
-    }
-    
-    // Close modal
-    onClose();
+    // Small delay to ensure server-side cache is cleared
+    setTimeout(() => {
+      router.refresh();
+    }, 100);
     
     setIsSubmitting(false);
   };
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setName('');
-      setDescription('');
       setErrors({});
       onClose();
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add Organization" size="medium">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Organization" size="medium">
       <form onSubmit={handleSubmit} className="space-y-4">
         {errors.general && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -114,11 +122,11 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
         )}
 
         <div>
-          <label htmlFor="org-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label htmlFor="edit-org-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
             Organization Name <span className="text-red-500">*</span>
           </label>
           <Input
-            id="org-name"
+            id="edit-org-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -136,11 +144,11 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
         </div>
 
         <div>
-          <label htmlFor="org-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label htmlFor="edit-org-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
             Description
           </label>
           <textarea
-            id="org-description"
+            id="edit-org-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional description or notes"
@@ -174,10 +182,10 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Creating...
+                Updating...
               </>
             ) : (
-              'Save Organization'
+              'Save Changes'
             )}
           </Button>
         </div>

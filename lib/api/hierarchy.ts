@@ -75,7 +75,7 @@ export async function createOrganization(data: CreateOrganizationData) {
       organization_id: org.id,
       user_id: user.id,
       role: 'SuperAdmin',
-      projects_count: 0,
+      environments_count: 0,
       zones_count: 0
     });
 

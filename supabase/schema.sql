@@ -143,11 +143,13 @@ create index if not exists audit_logs_created_at_idx on public.audit_logs(create
 -- Drop all existing policies
 drop policy if exists "Users can view their organizations" on public.organizations;
 drop policy if exists "Users can view their memberships" on public.organization_members;
+drop policy if exists "Authenticated users can create organization memberships" on public.organization_members;
 drop policy if exists "Users can view environments in their organizations" on public.environments;
 drop policy if exists "Users can view zones in their organizations" on public.zones;
 drop policy if exists "Authenticated users can create organizations" on public.organizations;
 drop policy if exists "SuperAdmin and Admin can update their organizations" on public.organizations;
 drop policy if exists "SuperAdmin can delete their organizations" on public.organizations;
+drop policy if exists "SuperAdmin and Admin can delete their organizations" on public.organizations;
 drop policy if exists "SuperAdmin and Admin can create environments" on public.environments;
 drop policy if exists "SuperAdmin, Admin, and Editor can update environments" on public.environments;
 drop policy if exists "SuperAdmin and Admin can delete environments" on public.environments;
@@ -171,6 +173,12 @@ create policy "Users can view their organizations"
 create policy "Users can view their memberships"
   on public.organization_members for select
   using (user_id = auth.uid());
+
+-- RLS Policy: Authenticated users can create organization memberships
+create policy "Authenticated users can create organization memberships"
+  on public.organization_members for insert
+  to authenticated
+  with check (true);
 
 -- RLS Policy: Users can view environments in their organizations
 create policy "Users can view environments in their organizations"
@@ -215,17 +223,25 @@ create policy "SuperAdmin and Admin can update their organizations"
       and organization_members.user_id = auth.uid()
       and organization_members.role in ('SuperAdmin', 'Admin')
     )
+  )
+  with check (
+    exists (
+      select 1 from public.organization_members
+      where organization_members.organization_id = organizations.id
+      and organization_members.user_id = auth.uid()
+      and organization_members.role in ('SuperAdmin', 'Admin')
+    )
   );
 
 -- Organizations: DELETE
-create policy "SuperAdmin can delete their organizations"
+create policy "SuperAdmin and Admin can delete their organizations"
   on public.organizations for delete
   using (
     exists (
       select 1 from public.organization_members
       where organization_members.organization_id = organizations.id
       and organization_members.user_id = auth.uid()
-      and organization_members.role = 'SuperAdmin'
+      and organization_members.role in ('SuperAdmin', 'Admin')
     )
   );
 
