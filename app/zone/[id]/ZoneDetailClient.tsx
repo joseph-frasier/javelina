@@ -1,11 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import Dropdown from '@/components/ui/Dropdown';
 import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
+import { RecordDistributionChart } from '@/components/dns/RecordDistributionChart';
+import { TTLHeatmap } from '@/components/dns/TTLHeatmap';
+import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
+import { AuditTimeline } from '@/components/dns/AuditTimeline';
+import { DiffViewer } from '@/components/dns/DiffViewer';
+import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';
+import { 
+  getZoneSummary, 
+  getZoneAuditLogs, 
+  verifyZoneNameservers, 
+  exportZoneJSON,
+  getZoneDNSRecords
+} from '@/lib/api/dns';
+import { ZoneSummary, AuditLog, DNSRecord } from '@/lib/mock-dns-data';
 
 interface ZoneDetailClientProps {
   zone: any;
@@ -15,44 +28,49 @@ interface ZoneDetailClientProps {
 }
 
 export function ZoneDetailClient({ zone, zoneId, organization, environment }: ZoneDetailClientProps) {
-  const [queryType, setQueryType] = useState('A');
-  const [queryName, setQueryName] = useState(zone.name);
-  const [simulatorResult, setSimulatorResult] = useState<any>(null);
+  const [zoneSummary, setZoneSummary] = useState<ZoneSummary | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [dnsRecords, setDnsRecords] = useState<DNSRecord[]>([]);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editedZone, setEditedZone] = useState({
-    ttl: zone.ttl,
-    nameservers: zone.nameservers.join(', '),
-    adminEmail: zone.soa.email,
-  });
 
-  const handleRunQuery = () => {
-    // Simulate DNS query
-    setSimulatorResult({
-      query: `${queryName} ${queryType}`,
-      status: 'NOERROR',
-      answers: queryType === 'A' ? ['192.0.2.1'] : queryType === 'AAAA' ? ['2001:db8::1'] : ['acme.com'],
-      time: Math.floor(Math.random() * 20 + 5),
-      timestamp: new Date().toLocaleTimeString(),
-    });
+  // Load data
+  useEffect(() => {
+    const loadData = async () => {
+      const [summary, logs, records] = await Promise.all([
+        getZoneSummary(zoneId, zone.name, zone.records_count || 50),
+        getZoneAuditLogs(zoneId, zone.name),
+        getZoneDNSRecords(zoneId, zone.name),
+      ]);
+      setZoneSummary(summary);
+      setAuditLogs(logs);
+      setDnsRecords(records);
+    };
+    loadData();
+  }, [zoneId, zone.name, zone.records_count]);
+
+  const handleVerify = async () => {
+    setIsVerifying(true);
+    const result = await verifyZoneNameservers(zoneId);
+    
+    // Reload summary after verification
+    const newSummary = await getZoneSummary(zoneId, zone.name, zone.records_count || 50);
+    setZoneSummary(newSummary);
+    setIsVerifying(false);
+    
+    alert(result.message);
   };
 
-  const handleSaveZone = () => {
-    // Mock save - in real app, this would call an API
-    alert('Zone updated successfully! (Mock operation)');
-    setShowEditModal(false);
+  const handleExport = async () => {
+    await exportZoneJSON(zoneId, zone.name);
   };
 
   const handleDeleteZone = () => {
-    // Mock delete - in real app, this would call an API
     alert(`Zone ${zone.name} deleted successfully! (Mock operation)\nIn a real app, you would be redirected to the zones list.`);
     setShowDeleteModal(false);
   };
-
-  const recordsByType = zone.records.reduce((acc: any, record: any) => {
-    acc[record.type] = (acc[record.type] || 0) + 1;
-    return acc;
-  }, {});
 
   // Build breadcrumb items
   const breadcrumbItems = [];
@@ -64,6 +82,22 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     );
   }
 
+  if (!zoneSummary) {
+    return (
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <svg className="animate-spin h-8 w-8 text-orange mx-auto" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <p className="mt-4 text-gray-slate">Loading zone data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
       {/* Breadcrumb */}
@@ -71,123 +105,89 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         <Breadcrumb items={breadcrumbItems} className="mb-6" />
       )}
 
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <div className="flex items-center space-x-3">
-            <h1 className="text-3xl font-bold text-orange-dark">{zone.name}</h1>
-            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-              Active
-            </span>
+      {/* Header with Status Badges */}
+      <div className="mb-8">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-orange-dark mb-3">{zone.name}</h1>
+            <div className="flex items-center space-x-3">
+              <VerificationStatusBadge status={zoneSummary.verificationStatus} />
+              <HealthStatusBadge status={zoneSummary.healthStatus} />
+              <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} />
+            </div>
           </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="secondary" onClick={() => setShowEditModal(true)}>
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit
-          </Button>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(true)} className="!bg-red-600 hover:!bg-red-700 !text-white">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete
-          </Button>
-          <Button variant="primary">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Reload
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button variant="secondary" onClick={() => setShowEditModal(true)}>
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
+            </Button>
+            <Button variant="secondary" onClick={() => setShowDeleteModal(true)} className="!bg-red-600 hover:!bg-red-700 !text-white">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </Button>
+            <Button variant="primary" onClick={() => window.location.reload()}>
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Reload
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card title="Queries (24h)" className="p-6">
-          <p className="text-3xl font-bold text-orange">{zone.queryStats.last24h.toLocaleString()}</p>
-          <p className="text-sm text-gray-slate mt-1">{zone.queryStats.qps} QPS average</p>
-        </Card>
-        <Card title="Success Rate" className="p-6">
-          <p className="text-3xl font-bold text-orange">{zone.queryStats.successRate}%</p>
-          <p className="text-sm text-gray-slate mt-1">Last 24 hours</p>
-        </Card>
-        <Card title="Avg Response" className="p-6">
-          <p className="text-3xl font-bold text-orange">{zone.queryStats.avgResponseTime}ms</p>
-          <p className="text-sm text-gray-slate mt-1">Response time</p>
-        </Card>
         <Card title="Total Records" className="p-6">
-          <p className="text-3xl font-bold text-orange">{zone.records.length}</p>
-          <p className="text-sm text-gray-slate mt-1">{Object.keys(recordsByType).length} record types</p>
+          <p className="text-3xl font-bold text-orange">{zoneSummary.totalRecords}</p>
+          <p className="text-sm text-gray-slate mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
+        </Card>
+        <Card title="Verification" className="p-6">
+          <p className="text-3xl font-bold text-orange capitalize">{zoneSummary.verificationStatus}</p>
+          <p className="text-sm text-gray-slate mt-1">
+            {zoneSummary.lastVerifiedAt ? new Date(zoneSummary.lastVerifiedAt).toLocaleDateString() : 'Never verified'}
+          </p>
+        </Card>
+        <Card title="Health Status" className="p-6">
+          <p className="text-3xl font-bold text-orange capitalize">{zoneSummary.healthStatus}</p>
+          <p className="text-sm text-gray-slate mt-1">Current status</p>
+        </Card>
+        <Card title="Last Deployed" className="p-6">
+          <p className="text-3xl font-bold text-orange">
+            {zoneSummary.lastDeployedAt ? new Date(zoneSummary.lastDeployedAt).toLocaleDateString() : 'Never'}
+          </p>
+          <p className="text-sm text-gray-slate mt-1">Deployment date</p>
         </Card>
       </div>
 
-      {/* Zone Information */}
+      {/* Record Distribution and TTL Heatmap */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card title="Zone Information" className="p-6">
-          <div className="space-y-3">
-            <div className="flex justify-between py-2 border-b border-gray-light">
-              <span className="text-gray-slate">Serial Number</span>
-              <span className="font-medium text-orange-dark">{zone.serial}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-light">
-              <span className="text-gray-slate">Last Updated</span>
-              <span className="font-medium text-orange-dark">{zone.lastUpdated}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-light">
-              <span className="text-gray-slate">Default TTL</span>
-              <span className="font-medium text-orange-dark">{zone.ttl}s</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-gray-slate">Nameservers</span>
-              <span className="font-medium text-orange-dark">{zone.nameservers.join(', ')}</span>
-            </div>
-          </div>
+        <Card title="Record Type Distribution" className="p-6">
+          <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
         </Card>
-
-        <Card title="SOA Record" className="p-6">
-          <div className="space-y-3">
-            <div className="flex justify-between py-2 border-b border-gray-light">
-              <span className="text-gray-slate">Primary NS</span>
-              <span className="font-medium text-orange-dark">{zone.soa.primary}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-light">
-              <span className="text-gray-slate">Admin Email</span>
-              <span className="font-medium text-orange-dark">{zone.soa.email}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-light">
-              <span className="text-gray-slate">Refresh</span>
-              <span className="font-medium text-orange-dark">{zone.soa.refresh}s</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-gray-slate">Retry / Expire</span>
-              <span className="font-medium text-orange-dark">{zone.soa.retry}s / {zone.soa.expire}s</span>
-            </div>
-          </div>
+        <Card title="TTL Distribution" className="p-6">
+          <TTLHeatmap data={zoneSummary.ttlDistribution} />
         </Card>
       </div>
 
-      {/* Query Type Breakdown */}
-      <Card title="Query Type Distribution" className="p-6 mb-8">
-        <div className="space-y-3">
-          {zone.queryTypes.map((item: any) => (
-            <div key={item.type} className="flex items-center">
-              <span className="w-16 text-sm font-medium text-gray-slate">{item.type}</span>
-              <div className="flex-1 mx-4">
-                <div className="bg-gray-light rounded-full h-6 overflow-hidden">
-                  <div
-                    className="bg-orange h-full flex items-center justify-end px-2"
-                    style={{ width: `${item.percentage}%` }}
-                  >
-                    <span className="text-xs text-white font-medium">{item.percentage}%</span>
-                  </div>
-                </div>
-              </div>
-              <span className="w-24 text-sm text-gray-slate text-right">{item.count.toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
+      {/* Verification Checklist */}
+      <Card title="Nameserver Verification" className="p-6 mb-8">
+        <VerificationChecklist
+          nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
+          verificationStatus={zoneSummary.verificationStatus}
+          lastVerifiedAt={zoneSummary.lastVerifiedAt}
+        />
+      </Card>
+
+      {/* Audit Timeline */}
+      <Card title="Change History" className="p-6 mb-8">
+        <AuditTimeline
+          auditLogs={auditLogs}
+          onDiffClick={setSelectedLog}
+        />
       </Card>
 
       {/* DNS Records Table */}
@@ -204,18 +204,20 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               </tr>
             </thead>
             <tbody>
-              {zone.records.map((record: any) => (
-                <tr key={record.id} className="border-b border-gray-light">
+              {dnsRecords.slice(0, 10).map((record) => (
+                <tr key={record.id} className="border-b border-gray-light hover:bg-gray-light/30 transition-colors">
                   <td className="py-3 px-4 text-sm font-medium text-orange-dark">{record.name}</td>
                   <td className="py-3 px-4">
                     <span className="px-2 py-1 bg-blue-electric/10 text-blue-electric rounded text-xs font-medium">
                       {record.type}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-slate font-mono">{record.value}</td>
+                  <td className="py-3 px-4 text-sm text-gray-slate font-mono truncate max-w-md">{record.value}</td>
                   <td className="py-3 px-4 text-sm text-gray-slate">{record.ttl}s</td>
                   <td className="py-3 px-4">
-                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      record.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
                       {record.status}
                     </span>
                   </td>
@@ -223,78 +225,51 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               ))}
             </tbody>
           </table>
+          {dnsRecords.length > 10 && (
+            <div className="mt-4 text-center text-sm text-gray-slate">
+              Showing 10 of {dnsRecords.length} records
+            </div>
+          )}
         </div>
       </Card>
 
-      {/* Query Simulator */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card title="DNS Query Simulator" className="p-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-slate mb-2">Query Name</label>
-              <input
-                type="text"
-                value={queryName}
-                onChange={(e) => setQueryName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange"
-              />
-            </div>
-            <div>
-              <Dropdown
-                label="Record Type"
-                value={queryType}
-                onChange={setQueryType}
-                options={[
-                  { value: 'A', label: 'A' },
-                  { value: 'AAAA', label: 'AAAA' },
-                  { value: 'CNAME', label: 'CNAME' },
-                  { value: 'MX', label: 'MX' },
-                  { value: 'TXT', label: 'TXT' },
-                ]}
-              />
-            </div>
-            <Button variant="primary" className="w-full" onClick={handleRunQuery}>
-              Run Query
-            </Button>
-
-            {simulatorResult && (
-              <div className="mt-4 p-4 bg-orange-dark/5 rounded-md border border-orange/20">
-                <p className="text-sm font-medium text-orange-dark mb-2">Query Result:</p>
-                <div className="space-y-1 text-sm font-mono">
-                  <p className="text-gray-slate">;; QUERY: {simulatorResult.query}</p>
-                  <p className="text-gray-slate">;; STATUS: {simulatorResult.status}</p>
-                  <p className="text-gray-slate">;; ANSWERS:</p>
-                  {simulatorResult.answers.map((answer: string, i: number) => (
-                    <p key={i} className="text-orange-dark ml-4">{answer}</p>
-                  ))}
-                  <p className="text-gray-slate mt-2">;; Query time: {simulatorResult.time}ms</p>
-                  <p className="text-gray-slate">;; SERVER: ns1.{zone.name}</p>
-                  <p className="text-gray-slate">;; WHEN: {simulatorResult.timestamp}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        <Card title="Recent Queries" className="p-6">
-          <div className="space-y-2">
-            {zone.recentQueries.map((query: any, index: number) => (
-              <div key={index} className="flex items-center justify-between py-2 border-b border-gray-light last:border-0">
-                <div className="flex items-center space-x-3">
-                  <span className="text-xs font-mono text-gray-slate">{query.timestamp}</span>
-                  <span className="px-2 py-1 bg-blue-electric/10 text-blue-electric rounded text-xs font-medium">
-                    {query.type}
-                  </span>
-                  <span className="text-sm text-orange-dark font-medium">{query.name}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <span className="text-xs text-green-600 font-medium">{query.response}</span>
-                  <span className="text-xs text-gray-slate">{query.time}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+      {/* Action Buttons */}
+      <div className="flex items-center justify-center space-x-4 pb-8">
+        <Button variant="outline" disabled>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          Save Draft
+        </Button>
+        <Button variant="outline" disabled>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          Deploy Now
+        </Button>
+        <Button 
+          variant="secondary" 
+          onClick={handleVerify}
+          disabled={isVerifying}
+        >
+          {isVerifying ? (
+            <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+          {isVerifying ? 'Verifying...' : 'Re-verify'}
+        </Button>
+        <Button variant="secondary" onClick={handleExport}>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export Zone JSON
+        </Button>
       </div>
 
       {/* Edit Zone Modal */}
@@ -314,80 +289,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
                 </button>
               </div>
             </div>
-
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-slate mb-2">
-                  Zone Name
-                </label>
-                <input
-                  type="text"
-                  value={zone.name}
-                  disabled
-                  className="w-full px-3 py-2 border border-gray-light rounded-md bg-gray-light/50 text-gray-slate cursor-not-allowed"
-                />
-                <p className="text-xs text-gray-slate mt-1">Zone name cannot be changed</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-slate mb-2">
-                  Default TTL (seconds)
-                </label>
-                <input
-                  type="number"
-                  value={editedZone.ttl}
-                  onChange={(e) => setEditedZone({ ...editedZone, ttl: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-slate mb-2">
-                  Nameservers (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={editedZone.nameservers}
-                  onChange={(e) => setEditedZone({ ...editedZone, nameservers: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
-                  placeholder="ns1.example.com, ns2.example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-slate mb-2">
-                  Admin Email
-                </label>
-                <input
-                  type="email"
-                  value={editedZone.adminEmail}
-                  onChange={(e) => setEditedZone({ ...editedZone, adminEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate"
-                  placeholder="admin@example.com"
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                <div className="flex">
-                  <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="text-sm text-blue-800 font-medium">Note:</p>
-                    <p className="text-sm text-blue-700 mt-1">
-                      This is a mock operation. In a production environment, changes would be validated and applied to your DNS infrastructure.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="p-6">
+              <p className="text-gray-slate">Zone editing interface will be implemented in Beta phase.</p>
             </div>
-
             <div className="p-6 border-t border-gray-light flex justify-end space-x-3">
               <Button variant="outline" onClick={() => setShowEditModal(false)}>
                 Cancel
-              </Button>
-              <Button variant="primary" onClick={handleSaveZone}>
-                Save Changes
               </Button>
             </div>
           </div>
@@ -404,31 +311,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-
-              <h2 className="text-xl font-bold text-orange-dark text-center mb-2">
-                Delete Zone
-              </h2>
+              <h2 className="text-xl font-bold text-orange-dark text-center mb-2">Delete Zone</h2>
               <p className="text-gray-slate text-center mb-6">
                 Are you sure you want to delete <span className="font-bold text-orange-dark">{zone.name}</span>?
-                This action cannot be undone and will delete all {zone.records.length} DNS records.
+                This action cannot be undone and will delete all {zoneSummary.totalRecords} DNS records.
               </p>
-
-              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-                <div className="flex">
-                  <svg className="w-5 h-5 text-red-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="text-sm text-red-800 font-medium">Warning</p>
-                    <ul className="text-sm text-red-700 mt-1 list-disc list-inside">
-                      <li>All DNS records will be permanently deleted</li>
-                      <li>Zone cannot be recovered after deletion</li>
-                      <li>This is a mock operation for demonstration</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex space-x-3">
                 <Button variant="outline" className="flex-1" onClick={() => setShowDeleteModal(false)}>
                   Cancel
@@ -444,6 +331,15 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             </div>
           </div>
         </div>
+      )}
+
+      {/* Diff Viewer Modal */}
+      {selectedLog && (
+        <DiffViewer
+          oldData={selectedLog.old_data}
+          newData={selectedLog.new_data}
+          onClose={() => setSelectedLog(null)}
+        />
       )}
     </div>
   );
