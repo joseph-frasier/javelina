@@ -6,23 +6,55 @@ import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { useAuthStore } from '@/lib/auth-store';
-import { useMemo } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const organizations = user?.organizations || [];
+  const [aggregateStats, setAggregateStats] = useState({
+    totalOrgs: organizations.length,
+    totalEnvironments: 0,
+    totalZones: 0,
+    totalQueries24h: 3000500
+  });
   
-  // Calculate aggregate stats from real data
-  const aggregateStats = useMemo(() => {
-    const totalEnvironments = organizations.reduce((sum, org) => sum + (org.environments_count || 0), 0);
-    const totalZones = organizations.reduce((sum, org) => sum + (org.zones_count || 0), 0);
-    
-    return {
-      totalOrgs: organizations.length,
-      totalEnvironments,
-      totalZones,
-      totalQueries24h: 3000500 // Mock data - this field won't be populated
+  useEffect(() => {
+    const fetchCounts = async () => {
+      if (organizations.length === 0) return;
+      
+      const supabase = createClient();
+      const orgIds = organizations.map(org => org.id);
+      
+      // Count environments
+      const { count: envCount } = await supabase
+        .from('environments')
+        .select('*', { count: 'exact', head: true })
+        .in('organization_id', orgIds);
+      
+      // Get environment IDs to count zones
+      const { data: environments } = await supabase
+        .from('environments')
+        .select('id')
+        .in('organization_id', orgIds);
+      
+      const envIds = environments?.map(env => env.id) || [];
+      
+      // Count zones
+      const { count: zoneCount } = await supabase
+        .from('zones')
+        .select('*', { count: 'exact', head: true })
+        .in('environment_id', envIds);
+      
+      setAggregateStats({
+        totalOrgs: organizations.length,
+        totalEnvironments: envCount || 0,
+        totalZones: zoneCount || 0,
+        totalQueries24h: 3000500
+      });
     };
+    
+    fetchCounts();
   }, [organizations]);
 
   return (
