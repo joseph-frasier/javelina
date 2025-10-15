@@ -1,18 +1,34 @@
+'use client';
+
 import Link from 'next/link';
 import { StatCard, Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
+import { useAuthStore } from '@/lib/auth-store';
+import { useEnvironments } from '@/lib/hierarchy-store';
+import { useZones } from '@/lib/hierarchy-store';
+import { useMemo } from 'react';
 
 export default function DashboardPage() {
-  // Aggregate stats from all organizations
-  // In production, this would come from API based on user's orgs
-  const aggregateStats = {
-    totalOrgs: 2,
-    totalEnvironments: 5,
-    totalZones: 242,
-    totalQueries24h: 3000500
-  };
+  const { user } = useAuthStore();
+  const organizations = user?.organizations || [];
+  
+  // Get all environments across all organizations
+  const orgIds = organizations.map(org => org.id);
+  const allEnvironments = useEnvironments(orgIds);
+  
+  // Get all zones across all environments
+  const envIds = allEnvironments.map(env => env.id);
+  const allZones = useZones(envIds);
+  
+  // Calculate aggregate stats from real data
+  const aggregateStats = useMemo(() => ({
+    totalOrgs: organizations.length,
+    totalEnvironments: allEnvironments.length,
+    totalZones: allZones.length,
+    totalQueries24h: 3000500 // Mock data - this field won't be populated
+  }), [organizations.length, allEnvironments.length, allZones.length]);
 
   return (
     <ProtectedRoute>
