@@ -25,6 +25,7 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
           layout="vertical"
           margin={{ top: 5, right: 30, left: 80, bottom: 20 }}
         >
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis
             type="number"
             domain={[0, 100]}
