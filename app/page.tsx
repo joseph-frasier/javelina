@@ -1,18 +1,61 @@
+'use client';
+
 import Link from 'next/link';
 import { StatCard, Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
+import { useAuthStore } from '@/lib/auth-store';
+import { createClient } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
-  // Aggregate stats from all organizations
-  // In production, this would come from API based on user's orgs
-  const aggregateStats = {
-    totalOrgs: 2,
-    totalEnvironments: 5,
-    totalZones: 242,
+  const { user } = useAuthStore();
+  const organizations = user?.organizations || [];
+  const [aggregateStats, setAggregateStats] = useState({
+    totalOrgs: organizations.length,
+    totalEnvironments: 0,
+    totalZones: 0,
     totalQueries24h: 3000500
-  };
+  });
+  
+  useEffect(() => {
+    const fetchCounts = async () => {
+      if (organizations.length === 0) return;
+      
+      const supabase = createClient();
+      const orgIds = organizations.map(org => org.id);
+      
+      // Count environments
+      const { count: envCount } = await supabase
+        .from('environments')
+        .select('*', { count: 'exact', head: true })
+        .in('organization_id', orgIds);
+      
+      // Get environment IDs to count zones
+      const { data: environments } = await supabase
+        .from('environments')
+        .select('id')
+        .in('organization_id', orgIds);
+      
+      const envIds = environments?.map(env => env.id) || [];
+      
+      // Count zones
+      const { count: zoneCount } = await supabase
+        .from('zones')
+        .select('*', { count: 'exact', head: true })
+        .in('environment_id', envIds);
+      
+      setAggregateStats({
+        totalOrgs: organizations.length,
+        totalEnvironments: envCount || 0,
+        totalZones: zoneCount || 0,
+        totalQueries24h: 3000500
+      });
+    };
+    
+    fetchCounts();
+  }, [organizations]);
 
   return (
     <ProtectedRoute>

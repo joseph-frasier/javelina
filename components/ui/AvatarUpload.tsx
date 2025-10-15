@@ -35,6 +35,7 @@ export function AvatarUpload({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showEnlargedView, setShowEnlargedView] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
@@ -182,6 +183,7 @@ export function AvatarUpload({
       // await supabase.storage.from('avatars').remove([fileName]);
 
       onAvatarUpdate(null);
+      setShowEnlargedView(false); // Close the enlarged view
     } catch (error) {
       console.error('Error removing avatar:', error);
       alert('Failed to remove avatar');
@@ -198,7 +200,10 @@ export function AvatarUpload({
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Avatar Display */}
-        <div className="w-20 h-20 rounded-full overflow-hidden relative">
+        <div 
+          className={`w-20 h-20 rounded-full overflow-hidden relative ${currentAvatarUrl ? 'cursor-pointer' : ''}`}
+          onClick={() => currentAvatarUrl && setShowEnlargedView(true)}
+        >
           {currentAvatarUrl ? (
             <img
               src={currentAvatarUrl}
@@ -212,22 +217,15 @@ export function AvatarUpload({
               </span>
             </div>
           )}
-
-          {/* Hover Overlay - Remove Option (only if avatar exists) */}
-          {isHovered && currentAvatarUrl && (
-            <div
-              className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer transition-opacity"
-              onClick={handleRemove}
-            >
-              <span className="text-white text-sm font-medium">Remove</span>
-            </div>
-          )}
         </div>
 
         {/* Upload Button (only if no avatar) */}
         {!currentAvatarUrl && (
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
             className="absolute bottom-0 right-0 w-8 h-8 bg-orange rounded-full flex items-center justify-center border-2 border-white hover:bg-orange-dark transition-colors"
             disabled={isUploading}
           >
@@ -250,7 +248,10 @@ export function AvatarUpload({
         {/* Upload Button (if avatar exists, show on hover) */}
         {currentAvatarUrl && isHovered && (
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
             className="absolute bottom-0 right-0 w-8 h-8 bg-orange rounded-full flex items-center justify-center border-2 border-white hover:bg-orange-dark transition-colors"
             disabled={isUploading}
           >
@@ -279,6 +280,47 @@ export function AvatarUpload({
           className="hidden"
         />
       </div>
+
+      {/* Enlarged View Modal */}
+      {showEnlargedView && currentAvatarUrl && (
+        <div 
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+          onClick={() => setShowEnlargedView(false)}
+        >
+          <div 
+            className="relative max-w-2xl max-h-[90vh] p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowEnlargedView(false)}
+              className="absolute top-6 right-6 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors z-10"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Enlarged Avatar */}
+            <img
+              src={currentAvatarUrl}
+              alt="Profile picture"
+              className="max-w-full max-h-[70vh] rounded-lg object-contain"
+            />
+
+            {/* Remove Button */}
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={handleRemove}
+                disabled={isUploading}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploading ? 'Removing...' : 'Remove Profile Picture'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Crop Modal */}
       {imageSrc && (
