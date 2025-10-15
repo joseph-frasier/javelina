@@ -23,7 +23,7 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 10, right: 80, left: 80, bottom: 10 }}
+          margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis
