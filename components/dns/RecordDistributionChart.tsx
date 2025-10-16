@@ -11,9 +11,9 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="w-full h-80 relative [&_svg]:outline-none [&_svg]:focus:outline-none">
+    <div className="w-full h-80 relative [&_svg]:outline-none [&_svg]:focus:outline-none [&_svg]:focus:box-shadow-none [&_svg_*]:outline-none [&_svg_*]:focus:outline-none">
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+        <PieChart style={{ outline: 'none' }}>
           <Pie
             data={data as any}
             cx="50%"
@@ -25,6 +25,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
             fill="#8884d8"
             dataKey="count"
             paddingAngle={2}
+            isAnimationActive={false}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
