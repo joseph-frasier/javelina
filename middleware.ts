@@ -73,11 +73,11 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password']
+  const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/admin/login']
   const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
-  // If user is not authenticated and trying to access a protected route
-  if (!user && !isPublicRoute) {
+  // If user is not authenticated and trying to access a protected route (but allow /admin/* routes)
+  if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin')) {
     const redirectUrl = new URL('/login', request.url)
     // Add the current URL as a redirect parameter so we can send them back after login
     redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
