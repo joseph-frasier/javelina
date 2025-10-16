@@ -99,7 +99,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               // Collapsed view - icons only
               <div className="flex flex-col space-y-2">
                 {navigationItems.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  // For /admin route, only highlight if exactly on /admin
+                  // For other routes, highlight if exact match or nested
+                  const isActive = item.href === '/admin' 
+                    ? pathname === '/admin'
+                    : pathname === item.href || pathname.startsWith(item.href + '/');
                   return (
                     <Link
                       key={item.href}
@@ -118,7 +122,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             ) : (
               // Expanded view - full menu
               navigationItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                // For /admin route, only highlight if exactly on /admin
+                // For other routes, highlight if exact match or nested
+                const isActive = item.href === '/admin' 
+                  ? pathname === '/admin'
+                  : pathname === item.href || pathname.startsWith(item.href + '/');
                 return (
                   <Link key={item.href} href={item.href}>
                     <div
