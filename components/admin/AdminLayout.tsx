@@ -56,24 +56,33 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
-  const prevPathnameRef = useRef<string | null>(null);
-  const isFirstRenderRef = useRef(true);
+  const [isInitialMount, setIsInitialMount] = useState(true);
   
-  // Animate on route change only (not on initial mount)
+  // Animate on initial mount
+  useGSAP(() => {
+    if (contentRef.current && isInitialMount) {
+      gsap.fromTo(
+        contentRef.current,
+        {
+          opacity: 0,
+          x: 30,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          onComplete: () => {
+            setIsInitialMount(false);
+          }
+        }
+      );
+    }
+  }, [isInitialMount]);
+
+  // Animate on route change
   useEffect(() => {
-    // Skip animation on very first render
-    if (isFirstRenderRef.current) {
-      isFirstRenderRef.current = false;
-      prevPathnameRef.current = pathname;
-      return;
-    }
-    
-    // Only animate if pathname actually changed
-    if (prevPathnameRef.current === pathname) {
-      return;
-    }
-    
-    if (contentRef.current) {
+    if (!isInitialMount && contentRef.current) {
       // Scroll to top immediately
       if (containerRef.current) {
         containerRef.current.scrollTop = 0;
@@ -103,9 +112,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           }
         );
     }
-    
-    prevPathnameRef.current = pathname;
-  }, [pathname]);
+  }, [pathname, isInitialMount]);
 
   return (
     <div className="flex flex-col h-screen">
