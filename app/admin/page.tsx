@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
 
 interface KPIData {
   totalUsers: number;
@@ -35,49 +34,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const client = createServiceRoleClient();
-
-        // Fetch total users
-        const { count: userCount } = await client
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-
-        // Fetch total organizations
-        const { count: orgCount } = await client
-          .from('organizations')
-          .select('*', { count: 'exact', head: true })
-          .is('deleted_at', null);
-
-        // Fetch soft-deleted organizations (last 30 days)
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const { count: deletedOrgCount } = await client
-          .from('organizations')
-          .select('*', { count: 'exact', head: true })
-          .not('deleted_at', 'is', null)
-          .gte('deleted_at', thirtyDaysAgo);
-
-        // Fetch active members (last 7 days)
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { data: activeMembersData } = await client
-          .from('organization_members')
-          .select('user_id')
-          .gte('created_at', sevenDaysAgo);
-
-        // Fetch recent audit entries
-        const { data: auditData } = await client
-          .from('admin_audit_logs')
-          .select('*, admin_users(name, email)')
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        setKpis({
-          totalUsers: userCount || 0,
-          totalOrganizations: orgCount || 0,
-          deletedOrganizations: deletedOrgCount || 0,
-          activeMembers: new Set(activeMembersData?.map((m: any) => m.user_id)).size || 0
-        });
-
-        setRecentAudit((auditData || []) as AuditEntry[]);
+        const response = await fetch('/api/admin/dashboard');
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+        const data = await response.json();
+        setKpis(data.kpis);
+        setRecentAudit(data.recentAudit);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
