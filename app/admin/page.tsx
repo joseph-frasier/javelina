@@ -34,10 +34,18 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/admin/dashboard');
+        const response = await fetch('/api/admin/dashboard', {
+          credentials: 'include', // Ensure cookies are sent
+        });
+        
+        console.log('Dashboard API response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch dashboard data');
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('Dashboard API error:', errorData);
+          throw new Error(`Failed to fetch dashboard data: ${response.status}`);
         }
+        
         const data = await response.json();
         setKpis(data.kpis);
         setRecentAudit(data.recentAudit);
