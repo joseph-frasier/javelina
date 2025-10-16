@@ -53,8 +53,8 @@ export function AdminHeader() {
   const adminInitial = adminName.charAt(0).toUpperCase();
 
   return (
-    <header className="bg-white border-b border-gray-light sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto pr-4 sm:pr-6 lg:pr-8">
+    <header className="bg-white border-b border-gray-light">
+      <div className="max-w-full mx-auto pr-4 sm:pr-6 lg:pr-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link href="/admin" className="flex items-center">
