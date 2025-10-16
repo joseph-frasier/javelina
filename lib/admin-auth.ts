@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Use __Host- prefix only in production (requires HTTPS)
 // In development, use regular cookie name
@@ -86,7 +87,10 @@ export async function logoutAdmin() {
   cookieStore.delete(ADMIN_COOKIE_NAME);
 }
 
-export async function verifyAdminAndGetClient() {
+export async function verifyAdminAndGetClient(): Promise<{ 
+  client: SupabaseClient | null; 
+  admin: { id: string; email: string } 
+}> {
   const session = await getAdminSession();
   if (!session) {
     throw new Error('Not authenticated as admin');

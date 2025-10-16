@@ -12,7 +12,7 @@ export async function disableUser(userId: string) {
     }
 
     // Disable the user
-    const { error } = await client
+    const { error } = await client!
       .from('profiles')
       .update({ status: 'disabled' })
       .eq('id', userId);
@@ -46,7 +46,7 @@ export async function enableUser(userId: string) {
     }
 
     // Enable the user
-    const { error } = await client
+    const { error } = await client!
       .from('profiles')
       .update({ status: 'active' })
       .eq('id', userId);
@@ -84,8 +84,11 @@ export async function sendPasswordResetEmail(email: string) {
       return { error: 'Admin backend functionality not yet available in development mode' };
     }
 
-    // Use Supabase admin API to trigger password reset
-    const { error } = await client.auth.admin.resetPasswordForEmail(email);
+    // Use Supabase admin API to generate password reset link
+    const { data, error } = await client!.auth.admin.generateLink({
+      type: 'recovery',
+      email: email
+    });
 
     if (error) {
       return { error: error.message };

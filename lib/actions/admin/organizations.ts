@@ -16,7 +16,7 @@ export async function createOrganization(name: string, description?: string) {
     }
 
     // Create the organization
-    const { data, error } = await client
+    const { data, error } = await client!
       .from('organizations')
       .insert({
         name: name.trim(),
@@ -54,7 +54,7 @@ export async function softDeleteOrganization(orgId: string) {
     }
 
     // Soft delete the organization
-    const { error } = await client
+    const { error } = await client!
       .from('organizations')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', orgId);
@@ -92,7 +92,7 @@ export async function addMemberToOrganization(orgId: string, userId: string, rol
     }
 
     // Add member to organization
-    const { error } = await client
+    const { error } = await client!
       .from('organization_members')
       .insert({
         organization_id: orgId,
@@ -128,7 +128,7 @@ export async function removeMemberFromOrganization(orgId: string, userId: string
     }
 
     // Remove member from organization
-    const { error } = await client
+    const { error } = await client!
       .from('organization_members')
       .delete()
       .eq('organization_id', orgId)
@@ -166,7 +166,7 @@ export async function changeMemberRole(orgId: string, userId: string, newRole: s
     }
 
     // Update member role
-    const { error } = await client
+    const { error } = await client!
       .from('organization_members')
       .update({ role: newRole })
       .eq('organization_id', orgId)
