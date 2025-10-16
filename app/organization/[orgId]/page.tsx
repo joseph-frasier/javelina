@@ -20,7 +20,7 @@ export default async function OrganizationPage({
   
   if (!user) {
     return (
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
+      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Not Authenticated</h1>
         <p className="text-gray-slate">Please log in to view this organization.</p>
       </div>
@@ -36,7 +36,7 @@ export default async function OrganizationPage({
 
   if (orgError || !org) {
     return (
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
+      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Organization Not Found</h1>
         <p className="text-gray-slate">The organization does not exist or you don&apos;t have access to it.</p>
       </div>
@@ -48,7 +48,7 @@ export default async function OrganizationPage({
   
   if (!userRole) {
     return (
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
+      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Access Denied</h1>
         <p className="text-gray-slate">You don&apos;t have access to this organization.</p>
       </div>

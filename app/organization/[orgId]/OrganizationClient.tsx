@@ -69,7 +69,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   return (
     <>
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
+      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
