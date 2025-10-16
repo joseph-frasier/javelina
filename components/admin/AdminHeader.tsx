@@ -4,14 +4,18 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getAdminUser, logoutAdmin } from '@/lib/admin-auth';
+import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
 
 export function AdminHeader() {
   const router = useRouter();
+  const { general, setTheme } = useSettingsStore();
   const [admin, setAdmin] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchAdmin = async () => {
@@ -28,6 +32,49 @@ export function AdminHeader() {
     setIsDropdownOpen(false);
   };
 
+  const cycleTheme = () => {
+    const themes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
+    const currentIndex = themes.indexOf(general.theme);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    const nextTheme = themes[nextIndex];
+    setTheme(nextTheme);
+  };
+
+  const getThemeIcon = () => {
+    switch (general.theme) {
+      case 'light':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        );
+      case 'dark':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        );
+      case 'system':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        );
+    }
+  };
+
+  // Apply theme on mount and when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const resolved = general.theme === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : general.theme;
+      
+      document.documentElement.classList.remove('theme-light', 'theme-dark');
+      document.documentElement.classList.add(`theme-${resolved}`);
+    }
+  }, [general.theme]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -37,16 +84,22 @@ export function AdminHeader() {
       ) {
         setIsDropdownOpen(false);
       }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setIsNotificationOpen(false);
+      }
     }
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || isNotificationOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isNotificationOpen]);
 
   const adminName = admin?.name || 'Admin User';
   const adminEmail = admin?.email || '';
@@ -89,6 +142,53 @@ export function AdminHeader() {
               </Link>
             </nav>
 
+            {/* Notifications */}
+            <div className="relative" ref={notificationRef}>
+              <button 
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+              </button>
+
+              {isNotificationOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
+                  <div className="p-4 border-b border-gray-light flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-orange-dark">Notifications</h3>
+                    <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="p-8 text-center">
+                    <p className="text-sm text-gray-slate">No new notifications</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={cycleTheme}
+              className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 rounded-md"
+              aria-label={`Theme: ${general.theme} (press to change)`}
+              title={`Current theme: ${general.theme}`}
+            >
+              {getThemeIcon()}
+            </button>
+
+            {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
