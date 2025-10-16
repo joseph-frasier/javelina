@@ -56,13 +56,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
-  const prevPathnameRef = useRef(pathname);
+  const prevPathnameRef = useRef<string | null>(null);
+  const isFirstRenderRef = useRef(true);
   
   // Animate on route change only (not on initial mount)
   useEffect(() => {
-    // Skip animation on initial mount
-    if (prevPathnameRef.current === pathname) {
+    // Skip animation on very first render
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
       prevPathnameRef.current = pathname;
+      return;
+    }
+    
+    // Only animate if pathname actually changed
+    if (prevPathnameRef.current === pathname) {
       return;
     }
     
