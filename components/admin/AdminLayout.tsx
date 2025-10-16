@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { clsx } from 'clsx';
 import { AdminHeader } from './AdminHeader';
 
@@ -50,43 +51,95 @@ const navigationItems = [
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-light flex flex-col">
-        {/* Logo/Title */}
-        <div className="p-6 border-b border-gray-light">
-          <h1 className="text-xl font-bold text-orange-dark">Admin Panel</h1>
+      <aside
+        className={clsx(
+          'bg-white border-r border-gray-light transition-all duration-300 h-screen overflow-hidden sticky top-0 flex flex-col',
+          isCollapsed ? 'w-16' : 'w-64'
+        )}
+      >
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
+          {!isCollapsed && (
+            <h2 className="font-bold text-orange-dark">Admin Panel</h2>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-2 rounded-md transition-colors"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <svg
+              className="w-5 h-5 text-gray-slate"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d={isCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'}
+              />
+            </svg>
+          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          {navigationItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            return (
-              <Link key={item.href} href={item.href}>
-                <div
-                  className={clsx(
-                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                    isActive
-                      ? 'bg-orange-light text-orange-dark font-medium'
-                      : 'text-gray-slate hover:bg-gray-50'
-                  )}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </div>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+          {isCollapsed ? (
+            // Collapsed view - icons only
+            <div className="flex flex-col space-y-2">
+              {navigationItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={clsx(
+                      'p-2 rounded-md transition-colors flex items-center justify-center',
+                      isActive ? 'text-orange-dark bg-orange-light' : 'text-gray-slate hover:bg-gray-50'
+                    )}
+                    title={item.label}
+                  >
+                    {item.icon}
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            // Expanded view - full menu
+            navigationItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    className={clsx(
+                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                      isActive
+                        ? 'bg-orange-light text-orange-dark font-medium'
+                        : 'text-gray-slate hover:bg-gray-50'
+                    )}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                </Link>
+              );
+            })
+          )}
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-light text-xs text-gray-slate">
-          <p>Irongrove Admin v1.0</p>
-        </div>
-      </div>
+        {!isCollapsed && (
+          <div className="p-4 border-t border-gray-light text-xs text-gray-slate">
+            <p>Irongrove Admin v1.0</p>
+          </div>
+        )}
+      </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
