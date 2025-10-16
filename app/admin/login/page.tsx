@@ -211,6 +211,25 @@ export default function AdminLoginPage() {
               'Sign In'
             )}
           </Button>
+
+          {/* Quick Login for Development */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mt-3"
+            disabled={isLoading || rateLimited}
+            onClick={() => {
+              setEmail('admin@irongrove.com');
+              setPassword('admin123');
+              // Trigger submit after state updates
+              setTimeout(() => {
+                const form = document.querySelector('form');
+                if (form) form.requestSubmit();
+              }, 100);
+            }}
+          >
+            ⚡ Quick Login (Dev)
+          </Button>
         </form>
 
         <div className="mt-8 pt-8" style={{
