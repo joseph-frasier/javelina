@@ -91,6 +91,6 @@ export async function getAdminUser() {
 }
 
 // Helper function to check if a token is valid (for API routes)
-export function isValidAdminToken(token: string): boolean {
+export async function isValidAdminToken(token: string): Promise<boolean> {
   return validAdminSessions.has(token);
 }

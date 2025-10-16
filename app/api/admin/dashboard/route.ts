@@ -19,7 +19,8 @@ export async function GET(request: Request) {
     }
 
     // Validate token against in-memory store
-    if (!isValidAdminToken(token)) {
+    const isValid = await isValidAdminToken(token);
+    if (!isValid) {
       console.log('[Dashboard API] Token invalid, returning 401');
       return NextResponse.json(
         { error: 'Unauthorized - Invalid token' },
