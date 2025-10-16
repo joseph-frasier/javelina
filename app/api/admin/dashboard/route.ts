@@ -3,7 +3,21 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role';
 
 export async function GET() {
   try {
-    const client = createServiceRoleClient();
+    let client;
+    try {
+      client = createServiceRoleClient();
+    } catch (error) {
+      console.error('Failed to create service role client:', error);
+      return NextResponse.json({
+        kpis: {
+          totalUsers: 0,
+          totalOrganizations: 0,
+          deletedOrganizations: 0,
+          activeMembers: 0
+        },
+        recentAudit: []
+      });
+    }
 
     let userCount = 0;
     let orgCount = 0;
