@@ -1,12 +1,16 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+const ADMIN_COOKIE_NAME = process.env.NODE_ENV === 'production' 
+  ? '__Host-admin_session' 
+  : 'admin_session';
+
 export async function POST(request: Request) {
   try {
     const { token, expiresAt } = await request.json();
 
     const cookieStore = await cookies();
-    cookieStore.set('__Host-admin_session', token, {
+    cookieStore.set(ADMIN_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

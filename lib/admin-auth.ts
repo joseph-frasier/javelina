@@ -2,13 +2,23 @@
 
 import { cookies } from 'next/headers';
 
-const ADMIN_COOKIE_NAME = '__Host-admin_session';
+// Use __Host- prefix only in production (requires HTTPS)
+// In development, use regular cookie name
+const ADMIN_COOKIE_NAME = process.env.NODE_ENV === 'production' 
+  ? '__Host-admin_session' 
+  : 'admin_session';
 const SESSION_DURATION = 3600; // 1 hour
 const ADMIN_EMAIL = 'admin@irongrove.com';
 const ADMIN_PASSWORD = 'admin123';
 
 // In-memory store for valid admin sessions (development use only)
-const validAdminSessions = new Set<string>();
+// Use global to persist across module reloads in development
+declare global {
+  var __adminSessions: Set<string> | undefined;
+}
+
+const validAdminSessions = global.__adminSessions || new Set<string>();
+global.__adminSessions = validAdminSessions;
 
 // Debug logging
 console.log('[admin-auth] Module loaded. Session store size:', validAdminSessions.size);

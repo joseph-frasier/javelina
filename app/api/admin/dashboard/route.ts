@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { isValidAdminToken } from '@/lib/admin-auth';
 
+const ADMIN_COOKIE_NAME = process.env.NODE_ENV === 'production' 
+  ? '__Host-admin_session' 
+  : 'admin_session';
+
 export async function GET(request: Request) {
   try {
     // Check admin session cookie
     const cookieStore = await cookies();
-    const token = cookieStore.get('__Host-admin_session')?.value;
+    const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
     
     console.log('[Dashboard API] Cookie token:', token ? 'present' : 'missing');
     
