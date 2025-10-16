@@ -12,13 +12,15 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   
-  // Hide sidebar and header on authentication pages
+  // Hide sidebar and header on authentication pages and admin routes
   const isAuthPage = pathname === '/login' || 
                      pathname === '/signup' || 
                      pathname === '/forgot-password' || 
                      pathname === '/reset-password';
 
-  if (isAuthPage) {
+  const isAdminRoute = pathname.startsWith('/admin');
+
+  if (isAuthPage || isAdminRoute) {
     return <>{children}</>;
   }
 
