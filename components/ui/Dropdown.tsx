@@ -60,9 +60,9 @@ export default function Dropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2 rounded-md border border-gray-light bg-white text-left focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark flex items-center justify-between"
+        className="w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark dark:text-gray-100 flex items-center justify-between transition-colors hover:border-orange/50"
       >
-        <span>{selectedOption?.label || 'Select...'}</span>
+        <span className="font-regular">{selectedOption?.label || 'Select...'}</span>
         <svg
           className={clsx(
             'w-5 h-5 text-gray-slate transition-transform',
@@ -83,17 +83,17 @@ export default function Dropdown({
 
       {/* Dropdown Menu - Positioned Below */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-light rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
           {options.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => handleSelect(option.value)}
               className={clsx(
-                'w-full px-3 py-2 text-left hover:bg-orange-light/30 transition-colors',
+                'w-full px-3 py-2 text-left hover:bg-orange-light/30 dark:hover:bg-orange-light/10 transition-colors',
                 option.value === value
                   ? 'bg-orange-light text-orange font-medium'
-                  : 'text-orange-dark'
+                  : 'text-orange-dark dark:text-gray-100'
               )}
             >
               {option.label}
