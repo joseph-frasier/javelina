@@ -12,6 +12,8 @@ import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
 import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';
 import Dropdown from '@/components/ui/Dropdown';
+import { updateZone } from '@/lib/actions/zones';
+import { useToastStore } from '@/lib/toast-store';
 import { 
   getZoneSummary, 
   getZoneAuditLogs, 
@@ -98,35 +100,38 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
   const handleSaveZone = async () => {
     setIsEditSaving(true);
+    const { addToast } = useToastStore.getState();
+    
     try {
-      // Parse nameservers from newline-separated text
-      const nameservers = editFormData.nameservers
-        .split('\n')
-        .map(ns => ns.trim())
-        .filter(ns => ns.length > 0);
+      // Validate required fields
+      if (!editFormData.name.trim()) {
+        addToast('Zone name is required', 'error');
+        setIsEditSaving(false);
+        return;
+      }
 
-      // Here you would call the API to update the zone
-      // For now, we'll just show a mock success
-      console.log('Saving zone with data:', { ...editFormData, nameservers });
-      
-      // Mock success toast
-      alert(`Zone "${editFormData.name}" updated successfully!`);
-      
-      // Reset form and close modal
-      setEditFormData({
-        name: zone.name || '',
-        zone_type: zone.zone_type || 'primary',
-        description: zone.description || '',
-        active: zone.active ?? true,
-        nameservers: zone.nameservers ? zone.nameservers.join('\n') : '',
+      // Call the server action to update the zone
+      const result = await updateZone(zoneId, {
+        name: editFormData.name,
+        zone_type: editFormData.zone_type as 'primary' | 'secondary' | 'redirect',
+        description: editFormData.description,
+        active: editFormData.active,
       });
+
+      if (result.error) {
+        addToast(result.error, 'error');
+        setIsEditSaving(false);
+        return;
+      }
+
+      // Success
+      addToast(`Zone "${editFormData.name}" updated successfully!`, 'success');
       setShowEditModal(false);
       
-      // Auto-refresh the page
+      // Auto-refresh the page to show updated data
       window.location.reload();
     } catch (error) {
-      alert(`Error saving zone: ${error}`);
-    } finally {
+      addToast(`Error saving zone: ${error}`, 'error');
       setIsEditSaving(false);
     }
   };
