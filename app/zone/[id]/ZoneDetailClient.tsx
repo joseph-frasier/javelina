@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
@@ -32,6 +33,8 @@ interface ZoneDetailClientProps {
 }
 
 export function ZoneDetailClient({ zone, zoneId, organization, environment }: ZoneDetailClientProps) {
+  const router = useRouter();
+  const { addToast } = useToastStore();
   const [zoneSummary, setZoneSummary] = useState<ZoneSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [dnsRecords, setDnsRecords] = useState<DNSRecord[]>([]);
@@ -100,12 +103,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
   const handleSaveZone = async () => {
     setIsEditSaving(true);
-    const { addToast } = useToastStore.getState();
     
     try {
       // Validate required fields
       if (!editFormData.name.trim()) {
-        addToast('Zone name is required', 'error');
+        addToast('error', 'Zone name is required');
         setIsEditSaving(false);
         return;
       }
@@ -119,19 +121,20 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       });
 
       if (result.error) {
-        addToast(result.error, 'error');
+        addToast('error', result.error);
         setIsEditSaving(false);
         return;
       }
 
       // Success
-      addToast(`Zone "${editFormData.name}" updated successfully!`, 'success');
+      addToast('success', `Zone "${editFormData.name}" updated successfully!`);
       setShowEditModal(false);
+      setIsEditSaving(false);
       
-      // Auto-refresh the page to show updated data
-      window.location.reload();
+      // Soft refresh to update data without losing toast
+      router.refresh();
     } catch (error) {
-      addToast(`Error saving zone: ${error}`, 'error');
+      addToast('error', `Error saving zone: ${error}`);
       setIsEditSaving(false);
     }
   };
