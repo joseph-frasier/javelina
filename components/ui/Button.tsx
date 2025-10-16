@@ -7,12 +7,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-orange text-white hover:bg-orange-dark focus:ring-orange',
+        primary: 'bg-orange text-white hover:bg-orange-dark dark:hover:bg-orange/80 focus:ring-orange',
         secondary:
           'bg-blue-electric text-white hover:bg-blue-teal focus:ring-blue-electric',
         ghost: 'bg-transparent text-orange hover:underline',
         outline:
-          'border-2 border-orange text-orange hover:bg-orange hover:text-white',
+          'border-2 border-orange text-orange hover:bg-orange hover:text-white dark:hover:bg-orange/90',
       },
       size: {
         sm: 'px-3 py-1.5 text-sm',
