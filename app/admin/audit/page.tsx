@@ -138,7 +138,6 @@ export default function AdminAuditPage() {
                 onChange={(e) => setSearchResource(e.target.value)}
               />
               <Dropdown
-                label="Date Range"
                 value={dateRange}
                 onChange={setDateRange}
                 options={[

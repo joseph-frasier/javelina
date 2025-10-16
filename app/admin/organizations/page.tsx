@@ -202,7 +202,6 @@ export default function AdminOrganizationsPage() {
                 onChange={(e) => setSearchName(e.target.value)}
               />
               <Dropdown
-                label="Status Filter"
                 value={statusFilter}
                 onChange={(value) => setStatusFilter(value as any)}
                 options={[

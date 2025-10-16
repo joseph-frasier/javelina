@@ -153,7 +153,6 @@ export default function AdminUsersPage() {
                 onChange={(e) => setSearchEmail(e.target.value)}
               />
               <Dropdown
-                label="Status Filter"
                 value={statusFilter}
                 onChange={(value) => setStatusFilter(value as any)}
                 options={[
