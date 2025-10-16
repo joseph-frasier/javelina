@@ -11,6 +11,7 @@ import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
 import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
 import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';
+import Dropdown from '@/components/ui/Dropdown';
 import { 
   getZoneSummary, 
   getZoneAuditLogs, 
@@ -394,15 +395,15 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               {/* Zone Type */}
               <div>
                 <label className="block text-sm font-medium text-orange-dark mb-2">Zone Type <span className="text-red-600">*</span></label>
-                <select
+                <Dropdown
+                  options={[
+                    { value: 'primary', label: 'Primary' },
+                    { value: 'secondary', label: 'Secondary' },
+                    { value: 'redirect', label: 'Redirect' },
+                  ]}
                   value={editFormData.zone_type}
-                  onChange={(e) => handleZoneTypeChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light"
-                >
-                  <option value="primary">Primary</option>
-                  <option value="secondary">Secondary</option>
-                  <option value="redirect">Redirect</option>
-                </select>
+                  onChange={(value) => handleZoneTypeChange(value)}
+                />
               </div>
 
               {/* Description */}
