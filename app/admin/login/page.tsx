@@ -65,22 +65,9 @@ export default function AdminLoginPage() {
     setErrors({});
 
     try {
-      // Hardcoded admin credentials for testing
-      const ADMIN_EMAIL = 'admin@irongrove.com';
-      const ADMIN_PASSWORD = 'admin123';
-
-      if (email.toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        // Create admin session
-        const token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
-        
-        // Set cookie
-        await fetch('/api/admin/set-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, expiresAt })
-        });
-
+      const result = await loginAdmin(email, password);
+      
+      if (result.success) {
         addToast('success', 'Admin login successful!');
         router.push('/admin');
       } else {

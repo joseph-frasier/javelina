@@ -7,6 +7,10 @@ export async function disableUser(userId: string) {
   try {
     const { client, admin } = await verifyAdminAndGetClient();
 
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
+
     // Disable the user
     const { error } = await client
       .from('profiles')
@@ -36,6 +40,10 @@ export async function disableUser(userId: string) {
 export async function enableUser(userId: string) {
   try {
     const { client, admin } = await verifyAdminAndGetClient();
+
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
 
     // Enable the user
     const { error } = await client
@@ -71,6 +79,10 @@ export async function sendPasswordResetEmail(email: string) {
     }
 
     const { client, admin } = await verifyAdminAndGetClient();
+
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
 
     // Use Supabase admin API to trigger password reset
     const { error } = await client.auth.admin.resetPasswordForEmail(email);

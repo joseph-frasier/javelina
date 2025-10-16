@@ -1,10 +1,14 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { createServiceRoleClient } from './supabase/service-role';
 
 const ADMIN_COOKIE_NAME = '__Host-admin_session';
 const SESSION_DURATION = 3600; // 1 hour
+const ADMIN_EMAIL = 'admin@irongrove.com';
+const ADMIN_PASSWORD = 'admin123';
+
+// In-memory store for valid admin sessions (development use only)
+const validAdminSessions = new Set<string>();
 
 export async function loginAdmin(
   email: string,
@@ -12,26 +16,8 @@ export async function loginAdmin(
   ip?: string,
   userAgent?: string
 ) {
-  const serviceClient = createServiceRoleClient();
-
-  // Find admin user
-  const { data: admin, error } = await serviceClient
-    .from('admin_users')
-    .select('*')
-    .eq('email', email)
-    .single();
-
-  if (error || !admin) {
-    return { error: 'Invalid credentials' };
-  }
-
-  // Verify password using Supabase auth
-  const { data: authData, error: authError } = await serviceClient.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (authError || !authData.session) {
+  // Hardcoded admin credentials check
+  if (email.toLowerCase() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
     return { error: 'Invalid credentials' };
   }
 
@@ -39,21 +25,8 @@ export async function loginAdmin(
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + SESSION_DURATION * 1000);
 
-  await serviceClient.from('admin_sessions').insert({
-    admin_user_id: admin.id,
-    token,
-    expires_at: expiresAt.toISOString(),
-    ip_address: ip,
-    user_agent: userAgent
-  });
-
-  // Update last login
-  await serviceClient
-    .from('admin_users')
-    .update({
-      last_login: new Date().toISOString()
-    })
-    .eq('id', admin.id);
+  // Store token in memory
+  validAdminSessions.add(token);
 
   // Set cookie
   const cookieStore = await cookies();
@@ -67,7 +40,7 @@ export async function loginAdmin(
 
   return {
     success: true,
-    admin: { id: admin.id, email: admin.email, name: admin.name }
+    admin: { id: 'admin-user', email: ADMIN_EMAIL, name: 'Admin User' }
   };
 }
 
@@ -76,17 +49,19 @@ export async function getAdminSession() {
   const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
   if (!token) return null;
 
-  const serviceClient = createServiceRoleClient();
-  const { data: session, error } = await serviceClient
-    .from('admin_sessions')
-    .select('*, admin_users(*)')
-    .eq('token', token)
-    .gt('expires_at', new Date().toISOString())
-    .single();
+  // Check if token exists in memory
+  if (validAdminSessions.has(token)) {
+    return {
+      token,
+      admin_users: {
+        id: 'admin-user',
+        email: ADMIN_EMAIL,
+        name: 'Admin User'
+      }
+    };
+  }
 
-  if (error || !session) return null;
-
-  return session;
+  return null;
 }
 
 export async function logoutAdmin() {
@@ -94,8 +69,8 @@ export async function logoutAdmin() {
   const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
   
   if (token) {
-    const serviceClient = createServiceRoleClient();
-    await serviceClient.from('admin_sessions').delete().eq('token', token);
+    // Remove token from memory
+    validAdminSessions.delete(token);
   }
   
   cookieStore.delete(ADMIN_COOKIE_NAME);
@@ -106,7 +81,7 @@ export async function verifyAdminAndGetClient() {
   if (!session) {
     throw new Error('Not authenticated as admin');
   }
-  return { client: createServiceRoleClient(), admin: session.admin_users };
+  return { client: null, admin: session.admin_users };
 }
 
 export async function getAdminUser() {

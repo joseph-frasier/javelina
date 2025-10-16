@@ -11,6 +11,10 @@ export async function createOrganization(name: string, description?: string) {
 
     const { client, admin } = await verifyAdminAndGetClient();
 
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
+
     // Create the organization
     const { data, error } = await client
       .from('organizations')
@@ -44,6 +48,10 @@ export async function createOrganization(name: string, description?: string) {
 export async function softDeleteOrganization(orgId: string) {
   try {
     const { client, admin } = await verifyAdminAndGetClient();
+
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
 
     // Soft delete the organization
     const { error } = await client
@@ -79,6 +87,10 @@ export async function addMemberToOrganization(orgId: string, userId: string, rol
 
     const { client, admin } = await verifyAdminAndGetClient();
 
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
+
     // Add member to organization
     const { error } = await client
       .from('organization_members')
@@ -110,6 +122,10 @@ export async function addMemberToOrganization(orgId: string, userId: string, rol
 export async function removeMemberFromOrganization(orgId: string, userId: string) {
   try {
     const { client, admin } = await verifyAdminAndGetClient();
+
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
 
     // Remove member from organization
     const { error } = await client
@@ -144,6 +160,10 @@ export async function changeMemberRole(orgId: string, userId: string, newRole: s
     }
 
     const { client, admin } = await verifyAdminAndGetClient();
+
+    if (!client) {
+      return { error: 'Admin backend functionality not yet available in development mode' };
+    }
 
     // Update member role
     const { error } = await client
