@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { clsx } from 'clsx';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { AdminHeader } from './AdminHeader';
 
 interface AdminLayoutProps {
@@ -52,6 +54,65 @@ const navigationItems = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLElement>(null);
+  const [isInitialMount, setIsInitialMount] = useState(true);
+  
+  // Animate on initial mount
+  useGSAP(() => {
+    if (contentRef.current && isInitialMount) {
+      gsap.fromTo(
+        contentRef.current,
+        {
+          opacity: 0,
+          x: 30,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          onComplete: () => {
+            setIsInitialMount(false);
+          }
+        }
+      );
+    }
+  }, [isInitialMount]);
+
+  // Animate on route change
+  useEffect(() => {
+    if (!isInitialMount && contentRef.current) {
+      // Scroll to top immediately
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+      }
+      
+      // Slide out to left + fade out, then slide in from right + fade in
+      const timeline = gsap.timeline();
+      
+      timeline
+        .to(contentRef.current, {
+          opacity: 0,
+          x: -30,
+          duration: 0.3,
+          ease: 'power2.in',
+        })
+        .fromTo(
+          contentRef.current,
+          {
+            opacity: 0,
+            x: 30,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.5,
+            ease: 'power2.out',
+          }
+        );
+    }
+  }, [pathname, isInitialMount]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -155,8 +216,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto bg-gray-50">
-          <div className="p-8 max-w-7xl mx-auto w-full">
+        <main ref={containerRef} className="flex-1 overflow-auto bg-gray-50 dark:bg-orange-dark">
+          <div ref={contentRef} className="p-8 max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>
