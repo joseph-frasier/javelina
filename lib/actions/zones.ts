@@ -49,10 +49,27 @@ export async function updateZone(
   }
 ) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   
+  if (!user) {
+    return { error: 'Not authenticated' }
+  }
+  
+  // Validate zone name
+  if (!formData.name.trim()) {
+    return { error: 'Zone name is required' }
+  }
+  
+  // Update zone
   const { data, error } = await supabase
     .from('zones')
-    .update(formData)
+    .update({
+      name: formData.name.trim(),
+      zone_type: formData.zone_type,
+      description: formData.description?.trim() || null,
+      active: formData.active ?? true,
+      updated_at: new Date().toISOString()
+    })
     .eq('id', id)
     .select('*, environments(organization_id)')
     .single()
@@ -65,6 +82,7 @@ export async function updateZone(
   revalidatePath(`/organization/${orgId}`)
   revalidatePath(`/organization/${orgId}/environment/${data.environment_id}`)
   revalidatePath(`/zone/${id}`)
+  revalidatePath('/')
   return { data }
 }
 

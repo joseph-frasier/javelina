@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
@@ -11,6 +13,9 @@ import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
 import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
 import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';
+import Dropdown from '@/components/ui/Dropdown';
+import { updateZone } from '@/lib/actions/zones';
+import { useToastStore } from '@/lib/toast-store';
 import { 
   getZoneSummary, 
   getZoneAuditLogs, 
@@ -29,6 +34,9 @@ interface ZoneDetailClientProps {
 }
 
 export function ZoneDetailClient({ zone, zoneId, organization, environment }: ZoneDetailClientProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
   const [zoneSummary, setZoneSummary] = useState<ZoneSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [dnsRecords, setDnsRecords] = useState<DNSRecord[]>([]);
@@ -36,6 +44,18 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [isVerifying, setIsVerifying] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({
+    name: zone.name || '',
+    zone_type: zone.zone_type || 'primary',
+    description: zone.description || '',
+    active: zone.active ?? true,
+    nameservers: zone.nameservers ? zone.nameservers.join('\n') : '',
+  });
+  const [isEditSaving, setIsEditSaving] = useState(false);
+  const [showTypeChangeConfirm, setShowTypeChangeConfirm] = useState(false);
+  const [newZoneType, setNewZoneType] = useState<string | null>(null);
 
   // Load data
   useEffect(() => {
@@ -66,6 +86,64 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
   const handleExport = async () => {
     await exportZoneJSON(zoneId, zone.name);
+  };
+
+  const handleZoneTypeChange = (newType: string) => {
+    if (newType !== editFormData.zone_type) {
+      setNewZoneType(newType);
+      setShowTypeChangeConfirm(true);
+    }
+  };
+
+  const confirmTypeChange = () => {
+    if (newZoneType) {
+      setEditFormData({ ...editFormData, zone_type: newZoneType });
+    }
+    setShowTypeChangeConfirm(false);
+    setNewZoneType(null);
+  };
+
+  const handleSaveZone = async () => {
+    setIsEditSaving(true);
+    
+    try {
+      // Validate required fields
+      if (!editFormData.name.trim()) {
+        addToast('error', 'Zone name is required');
+        setIsEditSaving(false);
+        return;
+      }
+
+      // Call the server action to update the zone
+      const result = await updateZone(zoneId, {
+        name: editFormData.name,
+        zone_type: editFormData.zone_type as 'primary' | 'secondary' | 'redirect',
+        description: editFormData.description,
+        active: editFormData.active,
+      });
+
+      if (result.error) {
+        addToast('error', result.error);
+        setIsEditSaving(false);
+        return;
+      }
+
+      // Success
+      addToast('success', `Zone "${editFormData.name}" updated successfully!`);
+      setShowEditModal(false);
+      setIsEditSaving(false);
+      
+      // Invalidate React Query cache to update sidebar
+      if (zone.environment_id) {
+        await queryClient.invalidateQueries({ queryKey: ['zones', zone.environment_id] });
+      }
+      
+      // Soft refresh to update data without losing toast
+      router.refresh();
+    } catch (error) {
+      addToast('error', `Error saving zone: ${error}`);
+      setIsEditSaving(false);
+    }
   };
 
   const handleDeleteZone = () => {
@@ -100,7 +178,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
+    <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
       {/* Breadcrumb */}
       {breadcrumbItems.length > 0 && (
         <Breadcrumb items={breadcrumbItems} className="mb-6" />
@@ -274,6 +352,32 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </div>
 
       {/* Edit Zone Modal */}
+      {/* Type Change Confirmation Modal */}
+      {showTypeChangeConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-orange-dark mb-4">Confirm Zone Type Change</h3>
+              <p className="text-gray-slate mb-6">
+                Changing the zone type from <span className="font-semibold">{editFormData.zone_type}</span> to <span className="font-semibold">{newZoneType}</span> may affect DNS resolution. Are you sure?
+              </p>
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  variant="secondary"
+                  onClick={() => { setShowTypeChangeConfirm(false); setNewZoneType(null); }}
+                >
+                  Cancel
+                </Button>
+                <Button variant="primary" onClick={confirmTypeChange}>
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Zone Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto pt-12 pb-12">
           <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-2xl w-full mx-4 my-8">
@@ -290,12 +394,84 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
                 </button>
               </div>
             </div>
-            <div className="p-6">
-              <p className="text-gray-slate">Zone editing interface will be implemented in Beta phase.</p>
+            <div className="p-6 space-y-6">
+              {/* Zone Name */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Name <span className="text-red-600">*</span></label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  placeholder="e.g., example.com"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light"
+                />
+              </div>
+
+              {/* Zone Type */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Type <span className="text-red-600">*</span></label>
+                <Dropdown
+                  options={[
+                    { value: 'primary', label: 'Primary' },
+                    { value: 'secondary', label: 'Secondary' },
+                    { value: 'redirect', label: 'Redirect' },
+                  ]}
+                  value={editFormData.zone_type}
+                  onChange={(value) => handleZoneTypeChange(value)}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark mb-2">Description</label>
+                <textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  placeholder="Zone description (optional)"
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light"
+                />
+              </div>
+
+              {/* Nameservers */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark mb-2">Nameservers</label>
+                <textarea
+                  value={editFormData.nameservers}
+                  onChange={(e) => setEditFormData({ ...editFormData, nameservers: e.target.value })}
+                  placeholder="One nameserver per line (e.g., ns1.example.com)"
+                  rows={4}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light font-mono text-xs"
+                />
+              </div>
+
+              {/* Active Status Toggle */}
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-orange-dark">Active Status <span className="text-red-600">*</span></label>
+                <button
+                  onClick={() => setEditFormData({ ...editFormData, active: !editFormData.active })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    editFormData.active ? 'bg-orange' : 'bg-gray-light'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      editFormData.active ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
             <div className="p-6 border-t border-gray-light flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowEditModal(false)}>
+              <Button 
+                variant="secondary"
+                onClick={() => setShowEditModal(false)} 
+                disabled={isEditSaving}
+              >
                 Cancel
+              </Button>
+              <Button variant="primary" onClick={handleSaveZone} disabled={isEditSaving}>
+                {isEditSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </div>

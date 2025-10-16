@@ -11,9 +11,9 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="w-full h-80 relative [&_svg]:outline-none [&_svg]:focus:outline-none">
+    <div className="w-full h-80 relative [&_svg]:outline-none [&_svg]:focus:outline-none [&_svg]:focus:box-shadow-none [&_svg_*]:outline-none [&_svg_*]:focus:outline-none">
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+        <PieChart style={{ outline: 'none' }}>
           <Pie
             data={data as any}
             cx="50%"
@@ -25,6 +25,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
             fill="#8884d8"
             dataKey="count"
             paddingAngle={2}
+            isAnimationActive={false}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -57,17 +58,20 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
             height={36}
             content={({ payload }) => (
               <div className="flex flex-wrap justify-center gap-4 mt-4">
-                {payload?.map((entry, index) => (
-                  <div key={`legend-${index}`} className="flex items-center space-x-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="text-xs text-gray-slate font-medium">
-                      {entry.value}: {data[index].count}
-                    </span>
-                  </div>
-                ))}
+                {payload?.map((entry, index) => {
+                  const dataItem = data.find(d => d.type === entry.value);
+                  return (
+                    <div key={`legend-${index}`} className="flex items-center space-x-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span className="text-xs text-gray-slate font-medium">
+                        {entry.value}: {dataItem?.count || 0}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           />
