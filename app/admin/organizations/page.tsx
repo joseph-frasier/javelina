@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
@@ -200,22 +201,16 @@ export default function AdminOrganizationsPage() {
                 value={searchName}
                 onChange={(e) => setSearchName(e.target.value)}
               />
-              <div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="w-full px-3 py-2 pr-8 border border-gray-light rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent transition-all duration-150 appearance-none cursor-pointer hover:border-gray-300"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23456173' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 8px center'
-                  }}
-                >
-                  <option value="all">All Organizations</option>
-                  <option value="active">Active Only</option>
-                  <option value="deleted">Deleted Only</option>
-                </select>
-              </div>
+              <Dropdown
+                label="Status Filter"
+                value={statusFilter}
+                onChange={(value) => setStatusFilter(value as any)}
+                options={[
+                  { value: 'all', label: 'All Organizations' },
+                  { value: 'active', label: 'Active Only' },
+                  { value: 'deleted', label: 'Deleted Only' }
+                ]}
+              />
             </div>
           </Card>
 
