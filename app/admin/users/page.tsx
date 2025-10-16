@@ -271,7 +271,7 @@ export default function AdminUsersPage() {
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Users List</h2>
-              <Tooltip content="List of all registered users in the system. Active users can log in, disabled users cannot.">
+              <Tooltip content="All registered users">
                 <InfoIcon />
               </Tooltip>
             </div>
@@ -306,7 +306,7 @@ export default function AdminUsersPage() {
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
                         <div className="flex items-center justify-center gap-1">
                           Status
-                          <Tooltip content="Active users can log in. Disabled users are blocked from accessing the system.">
+                          <Tooltip content="User access status">
                             <InfoIcon />
                           </Tooltip>
                         </div>
@@ -314,7 +314,7 @@ export default function AdminUsersPage() {
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
                         <div className="flex items-center justify-center gap-1">
                           Orgs
-                          <Tooltip content="Number of organizations this user belongs to.">
+                          <Tooltip content="Organization count">
                             <InfoIcon />
                           </Tooltip>
                         </div>

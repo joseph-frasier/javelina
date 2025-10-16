@@ -295,7 +295,7 @@ export default function AdminOrganizationsPage() {
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Organizations List</h2>
-              <Tooltip content="Organizations are groups that users can belong to. Deleted organizations can be restored by administrators.">
+              <Tooltip content="User groups">
                 <InfoIcon />
               </Tooltip>
             </div>
@@ -329,7 +329,7 @@ export default function AdminOrganizationsPage() {
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
                         <div className="flex items-center justify-center gap-1">
                           Members
-                          <Tooltip content="Number of users who belong to this organization.">
+                          <Tooltip content="Member count">
                             <InfoIcon />
                           </Tooltip>
                         </div>
@@ -337,7 +337,7 @@ export default function AdminOrganizationsPage() {
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
                         <div className="flex items-center justify-center gap-1">
                           Status
-                          <Tooltip content="Active organizations are accessible to members. Deleted organizations are hidden but can be restored.">
+                          <Tooltip content="Organization status">
                             <InfoIcon />
                           </Tooltip>
                         </div>
