@@ -26,7 +26,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className={clsx(
             'w-full px-4 py-2.5 rounded-md border transition-colors',
             'font-regular text-orange-dark dark:text-gray-100',
-            'placeholder:text-orange-dark dark:placeholder:text-gray-100',
+            'placeholder:text-orange-dark/60 dark:placeholder:text-gray-100/60',
             'bg-white dark:bg-gray-800',
             'focus:outline-none focus:ring-2 focus:ring-offset-1',
             error
