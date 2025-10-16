@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
@@ -34,6 +35,7 @@ interface ZoneDetailClientProps {
 
 export function ZoneDetailClient({ zone, zoneId, organization, environment }: ZoneDetailClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { addToast } = useToastStore();
   const [zoneSummary, setZoneSummary] = useState<ZoneSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -130,6 +132,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       addToast('success', `Zone "${editFormData.name}" updated successfully!`);
       setShowEditModal(false);
       setIsEditSaving(false);
+      
+      // Invalidate React Query cache to update sidebar
+      if (zone.environment_id) {
+        await queryClient.invalidateQueries({ queryKey: ['zones', zone.environment_id] });
+      }
       
       // Soft refresh to update data without losing toast
       router.refresh();
