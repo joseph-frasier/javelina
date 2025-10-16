@@ -378,7 +378,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             <div className="p-6 space-y-6">
               {/* Zone Name */}
               <div>
-                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Name</label>
+                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Name <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   value={editFormData.name}
@@ -390,7 +390,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
               {/* Zone Type */}
               <div>
-                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Type</label>
+                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Type <span className="text-red-600">*</span></label>
                 <select
                   value={editFormData.zone_type}
                   onChange={(e) => handleZoneTypeChange(e.target.value)}
