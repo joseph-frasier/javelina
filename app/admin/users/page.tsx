@@ -59,6 +59,14 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       const client = createServiceRoleClient();
+      
+      // If no client (development mode without backend), just show empty data
+      if (!client) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await client
         .from('profiles')
         .select('*, organization_members(organization_id)')

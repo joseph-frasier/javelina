@@ -45,6 +45,14 @@ export default function AdminAuditPage() {
   const fetchAuditLogs = async () => {
     try {
       const client = createServiceRoleClient();
+      
+      // If no client (development mode without backend), just show empty data
+      if (!client) {
+        setLogs([]);
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await client
         .from('admin_audit_logs')
         .select('*, admin_users(name, email)')

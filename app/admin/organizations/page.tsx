@@ -64,6 +64,14 @@ export default function AdminOrganizationsPage() {
   const fetchOrganizations = async () => {
     try {
       const client = createServiceRoleClient();
+      
+      // If no client (development mode without backend), just show empty data
+      if (!client) {
+        setOrgs([]);
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await client
         .from('organizations')
         .select('*, organization_members(organization_id)')
