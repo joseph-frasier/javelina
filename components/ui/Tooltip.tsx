@@ -32,7 +32,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
       {isVisible && (
         <div
           ref={tooltipRef}
-          className={`absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg whitespace-nowrap animate-in fade-in zoom-in-95 duration-100 ${positionClasses[position]}`}
+          className={`absolute z-[9999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg whitespace-nowrap animate-in fade-in zoom-in-95 duration-100 ${positionClasses[position]}`}
         >
           {content}
           {/* Arrow */}
