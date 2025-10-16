@@ -58,17 +58,20 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
             height={36}
             content={({ payload }) => (
               <div className="flex flex-wrap justify-center gap-4 mt-4">
-                {payload?.map((entry, index) => (
-                  <div key={`legend-${index}`} className="flex items-center space-x-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="text-xs text-gray-slate font-medium">
-                      {entry.value}: {data[index].count}
-                    </span>
-                  </div>
-                ))}
+                {payload?.map((entry, index) => {
+                  const dataItem = data.find(d => d.type === entry.value);
+                  return (
+                    <div key={`legend-${index}`} className="flex items-center space-x-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span className="text-xs text-gray-slate font-medium">
+                        {entry.value}: {dataItem?.count || 0}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           />
