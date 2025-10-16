@@ -346,12 +346,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
                 Changing the zone type from <span className="font-semibold">{editFormData.zone_type}</span> to <span className="font-semibold">{newZoneType}</span> may affect DNS resolution. Are you sure?
               </p>
               <div className="flex justify-end space-x-3">
-                <button 
+                <Button 
+                  variant="secondary"
                   onClick={() => { setShowTypeChangeConfirm(false); setNewZoneType(null); }}
-                  className="px-6 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors"
                 >
                   Cancel
-                </button>
+                </Button>
                 <Button variant="primary" onClick={confirmTypeChange}>
                   Confirm
                 </Button>
@@ -447,13 +447,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               </div>
             </div>
             <div className="p-6 border-t border-gray-light flex justify-end space-x-3">
-              <button 
+              <Button 
+                variant="secondary"
                 onClick={() => setShowEditModal(false)} 
                 disabled={isEditSaving}
-                className="px-6 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
-              </button>
+              </Button>
               <Button variant="primary" onClick={handleSaveZone} disabled={isEditSaving}>
                 {isEditSaving ? 'Saving...' : 'Save Changes'}
               </Button>
