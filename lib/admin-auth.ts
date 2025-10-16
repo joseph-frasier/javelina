@@ -10,6 +10,9 @@ const ADMIN_PASSWORD = 'admin123';
 // In-memory store for valid admin sessions (development use only)
 const validAdminSessions = new Set<string>();
 
+// Debug logging
+console.log('[admin-auth] Module loaded. Session store size:', validAdminSessions.size);
+
 export async function loginAdmin(
   email: string,
   password: string,
@@ -27,6 +30,9 @@ export async function loginAdmin(
 
   // Store token in memory
   validAdminSessions.add(token);
+  console.log('[loginAdmin] Token created:', token.substring(0, 8) + '...');
+  console.log('[loginAdmin] Session store now has', validAdminSessions.size, 'tokens');
+  console.log('[loginAdmin] All tokens:', Array.from(validAdminSessions).map(t => t.substring(0, 8) + '...'));
 
   // Set cookie
   const cookieStore = await cookies();
@@ -92,5 +98,10 @@ export async function getAdminUser() {
 
 // Helper function to check if a token is valid (for API routes)
 export async function isValidAdminToken(token: string): Promise<boolean> {
-  return validAdminSessions.has(token);
+  console.log('[isValidAdminToken] Checking token:', token.substring(0, 8) + '...');
+  console.log('[isValidAdminToken] Session store has', validAdminSessions.size, 'tokens');
+  console.log('[isValidAdminToken] All tokens:', Array.from(validAdminSessions).map(t => t.substring(0, 8) + '...'));
+  const isValid = validAdminSessions.has(token);
+  console.log('[isValidAdminToken] Token is valid?', isValid);
+  return isValid;
 }
