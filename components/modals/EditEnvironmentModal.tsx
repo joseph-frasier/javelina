@@ -210,7 +210,7 @@ export function EditEnvironmentModal({ isOpen, onClose, environment }: EditEnvir
           </p>
         </div>
 
-        <div className="flex items-center justify-between border-t border-gray-light pt-4">
+        <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-orange-dark dark:text-white">
             Active Status <span className="text-red-500">*</span>
           </label>
@@ -229,7 +229,7 @@ export function EditEnvironmentModal({ isOpen, onClose, environment }: EditEnvir
           </button>
         </div>
 
-        <div className="flex items-center justify-end space-x-3 pt-4">
+        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-light">
           <Button
             type="button"
             variant="secondary"
