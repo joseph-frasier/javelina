@@ -229,7 +229,7 @@ export function EditEnvironmentModal({ isOpen, onClose, environment }: EditEnvir
           </button>
         </div>
 
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-light">
+        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-light -mx-6 px-6">
           <Button
             type="button"
             variant="secondary"
