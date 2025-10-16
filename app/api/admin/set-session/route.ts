@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       expires: new Date(expiresAt),
-      path: '/admin'
+      path: '/' // Allow cookie to be sent to all routes including /api
     });
 
     return NextResponse.json({ success: true });

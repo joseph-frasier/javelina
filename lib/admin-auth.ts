@@ -35,7 +35,7 @@ export async function loginAdmin(
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     expires: expiresAt,
-    path: '/admin'
+    path: '/' // Allow cookie to be sent to all routes including /api
   });
 
   return {
