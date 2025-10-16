@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface TooltipProps {
   content: string;
@@ -10,78 +10,43 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isVisible && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const tooltipWidth = tooltipRef.current?.offsetWidth || 0;
-      const tooltipHeight = tooltipRef.current?.offsetHeight || 0;
-
-      let top = 0;
-      let left = 0;
-
-      switch (position) {
-        case 'top':
-          top = rect.top - tooltipHeight - 8;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
-          break;
-        case 'bottom':
-          top = rect.bottom + 8;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
-          break;
-        case 'left':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.left - tooltipWidth - 8;
-          break;
-        case 'right':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.right + 8;
-          break;
-      }
-
-      setTooltipPosition({ top, left });
-    }
-  }, [isVisible, position]);
+  const positionClasses = {
+    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+  };
 
   const arrowClasses = {
-    top: 'bottom-[-4px] left-1/2 -translate-x-1/2',
-    bottom: 'top-[-4px] left-1/2 -translate-x-1/2',
-    left: 'right-[-4px] top-1/2 -translate-y-1/2',
-    right: 'left-[-4px] top-1/2 -translate-y-1/2',
+    top: 'top-full left-1/2 -translate-x-1/2 -mt-1',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 -mb-1',
+    left: 'left-full top-1/2 -translate-y-1/2 -ml-1',
+    right: 'right-full top-1/2 -translate-y-1/2 -mr-1',
   };
 
   return (
-    <div className="relative inline-block">
-      <div
-        ref={triggerRef}
+    <span className="relative inline-flex">
+      <span
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
-        className="cursor-help"
+        className="cursor-help inline-flex"
       >
         {children}
-      </div>
+      </span>
 
       {isVisible && (
-        <div
-          ref={tooltipRef}
-          style={{
-            position: 'fixed',
-            top: `${tooltipPosition.top}px`,
-            left: `${tooltipPosition.left}px`,
-          }}
-          className="z-[9999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg max-w-xs animate-in fade-in zoom-in-95 duration-100"
+        <span
+          className={`absolute z-[9999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-100 ${positionClasses[position]}`}
         >
           {content}
           {/* Arrow */}
-          <div
+          <span
             className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${arrowClasses[position]}`}
           />
-        </div>
+        </span>
       )}
-    </div>
+    </span>
   );
 }
 
