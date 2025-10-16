@@ -164,7 +164,7 @@ export function AdminHeader() {
               </button>
 
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
                   <div className="p-4 border-b border-gray-light flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-orange-dark">Notifications</h3>
                     <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
@@ -200,7 +200,7 @@ export function AdminHeader() {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-light overflow-hidden">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
                   <div className="p-4 border-b border-gray-light">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center">
