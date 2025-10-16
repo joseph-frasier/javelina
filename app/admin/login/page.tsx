@@ -93,8 +93,8 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-gray-50 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-8">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="w-16 h-16 bg-orange rounded-lg flex items-center justify-center">
@@ -111,15 +111,15 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {rateLimited && resetSeconds && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-800 dark:text-red-200">
                 Too many login attempts. Please try again in {resetSeconds} seconds.
               </p>
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-orange-dark mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-orange-dark dark:text-orange mb-2">
               Email Address
             </label>
             <Input
@@ -132,19 +132,19 @@ export default function AdminLoginPage() {
               className={errors.email ? 'border-red-500' : ''}
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
             )}
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="password" className="block text-sm font-medium text-orange-dark">
+              <label htmlFor="password" className="block text-sm font-medium text-orange-dark dark:text-orange">
                 Password
               </label>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-xs text-orange hover:text-orange-dark transition"
+                className="text-xs text-orange hover:text-orange-dark transition dark:text-orange dark:hover:text-orange-light"
               >
                 {showPassword ? 'Hide' : 'Show'}
               </button>
@@ -159,7 +159,7 @@ export default function AdminLoginPage() {
               className={errors.password ? 'border-red-500' : ''}
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
             )}
           </div>
 
@@ -183,8 +183,8 @@ export default function AdminLoginPage() {
           </Button>
         </form>
 
-        <div className="mt-8 pt-8 border-t border-gray-light">
-          <p className="text-xs text-center text-gray-slate">
+        <div className="mt-8 pt-8 border-t border-gray-light dark:border-gray-700">
+          <p className="text-xs text-center text-gray-slate dark:text-gray-400">
             Authorized personnel only. All access is logged.
           </p>
         </div>
