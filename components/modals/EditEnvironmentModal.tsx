@@ -176,26 +176,7 @@ export function EditEnvironmentModal({ isOpen, onClose, environment }: EditEnvir
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-orange-dark dark:text-white">
-            Active Status <span className="text-red-500">*</span>
-          </label>
-          <button
-            type="button"
-            onClick={() => setSelectedStatus(selectedStatus === 'active' ? 'disabled' : 'active')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              selectedStatus === 'active' ? 'bg-orange' : 'bg-gray-light'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                selectedStatus === 'active' ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-
-        <div>
+<div>
           <label htmlFor="edit-env-location" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
             Location
           </label>
@@ -227,6 +208,25 @@ export function EditEnvironmentModal({ isOpen, onClose, environment }: EditEnvir
           <p className="mt-1 text-xs text-gray-slate">
             {description.length}/500 characters
           </p>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-orange-dark dark:text-white">
+            Active Status <span className="text-red-500">*</span>
+          </label>
+          <button
+            type="button"
+            onClick={() => setSelectedStatus(selectedStatus === 'active' ? 'disabled' : 'active')}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              selectedStatus === 'active' ? 'bg-orange' : 'bg-gray-light'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                selectedStatus === 'active' ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
 
         <div className="flex items-center justify-end space-x-3 pt-4">
