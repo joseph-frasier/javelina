@@ -431,7 +431,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
               {/* Active Status Toggle */}
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-orange-dark">Active Status</label>
+                <label className="text-sm font-medium text-orange-dark">Active Status <span className="text-red-600">*</span></label>
                 <button
                   onClick={() => setEditFormData({ ...editFormData, active: !editFormData.active })}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
