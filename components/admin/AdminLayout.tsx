@@ -56,40 +56,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
-  const hasAnimatedRef = useRef(false);
-  const prevPathnameRef = useRef(pathname);
+  const prevPathnameRef = useRef<string | null>(null);
 
-  // Animate on route change only
+  // Animate on every pathname change (including first load)
   useEffect(() => {
-    // Skip on first render
-    if (!hasAnimatedRef.current) {
-      hasAnimatedRef.current = true;
-      prevPathnameRef.current = pathname;
-      return;
-    }
-
-    // Skip if pathname hasn't changed
-    if (prevPathnameRef.current === pathname) {
-      return;
-    }
-
     if (contentRef.current) {
-      // Scroll to top immediately
-      if (containerRef.current) {
-        containerRef.current.scrollTop = 0;
-      }
-      
-      // Slide out to left + fade out, then slide in from right + fade in
-      const timeline = gsap.timeline();
-      
-      timeline
-        .to(contentRef.current, {
-          opacity: 0,
-          x: -30,
-          duration: 0.3,
-          ease: 'power2.in',
-        })
-        .fromTo(
+      // If this is the first render, just do a simple fade in from right
+      if (prevPathnameRef.current === null) {
+        gsap.fromTo(
           contentRef.current,
           {
             opacity: 0,
@@ -102,6 +76,36 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             ease: 'power2.out',
           }
         );
+      } else if (prevPathnameRef.current !== pathname) {
+        // On route change, do the full slide out/in animation
+        // Scroll to top immediately
+        if (containerRef.current) {
+          containerRef.current.scrollTop = 0;
+        }
+        
+        const timeline = gsap.timeline();
+        
+        timeline
+          .to(contentRef.current, {
+            opacity: 0,
+            x: -30,
+            duration: 0.3,
+            ease: 'power2.in',
+          })
+          .fromTo(
+            contentRef.current,
+            {
+              opacity: 0,
+              x: 30,
+            },
+            {
+              opacity: 1,
+              x: 0,
+              duration: 0.5,
+              ease: 'power2.out',
+            }
+          );
+      }
     }
 
     prevPathnameRef.current = pathname;
