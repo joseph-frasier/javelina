@@ -60,7 +60,7 @@ export default function AdminDashboard() {
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const { data: activeMembersData } = await client
           .from('organization_members')
-          .select('user_id', { distinct: true })
+          .select('user_id')
           .gte('created_at', sevenDaysAgo);
 
         // Fetch recent audit entries
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
           totalUsers: userCount || 0,
           totalOrganizations: orgCount || 0,
           deletedOrganizations: deletedOrgCount || 0,
-          activeMembers: new Set(activeMembersData?.map(m => m.user_id)).size || 0
+          activeMembers: new Set(activeMembersData?.map((m: any) => m.user_id)).size || 0
         });
 
         setRecentAudit((auditData || []) as AuditEntry[]);
