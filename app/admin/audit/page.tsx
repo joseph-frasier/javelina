@@ -94,11 +94,12 @@ export default function AdminAuditPage() {
 
     if (dateRange !== 'all') {
       const now = Date.now();
-      const days = {
+      const daysMap = {
         '1d': 1,
         '7d': 7,
         '30d': 30
-      }[dateRange as keyof typeof days] || 1;
+      } as const;
+      const days = daysMap[dateRange as keyof typeof daysMap] || 1;
 
       const cutoffTime = now - days * 24 * 60 * 60 * 1000;
       filtered = filtered.filter((log) => new Date(log.created_at).getTime() > cutoffTime);
