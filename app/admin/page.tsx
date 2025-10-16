@@ -38,12 +38,8 @@ export default function AdminDashboard() {
           credentials: 'include', // Ensure cookies are sent
         });
         
-        console.log('Dashboard API response status:', response.status);
-        
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-          console.error('Dashboard API error:', errorData);
-          throw new Error(`Failed to fetch dashboard data: ${response.status}`);
+          throw new Error('Failed to fetch dashboard data');
         }
         
         const data = await response.json();

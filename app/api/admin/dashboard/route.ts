@@ -12,12 +12,9 @@ export async function GET(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
     
-    console.log('[Dashboard API] Cookie token:', token ? 'present' : 'missing');
-    
     if (!token) {
-      console.log('[Dashboard API] No token found, returning 401');
       return NextResponse.json(
-        { error: 'Unauthorized - No token' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
@@ -25,14 +22,11 @@ export async function GET(request: Request) {
     // Validate token against in-memory store
     const isValid = await isValidAdminToken(token);
     if (!isValid) {
-      console.log('[Dashboard API] Token invalid, returning 401');
       return NextResponse.json(
-        { error: 'Unauthorized - Invalid token' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-
-    console.log('[Dashboard API] Token valid, returning data');
     
     // Return mock data for development
     return NextResponse.json({
@@ -45,7 +39,7 @@ export async function GET(request: Request) {
       recentAudit: []
     });
   } catch (error) {
-    console.error('[Dashboard API] Error:', error);
+    console.error('Dashboard API error:', error);
     // Return default empty data instead of erroring
     return NextResponse.json({
       kpis: {
