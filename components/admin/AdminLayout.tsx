@@ -110,7 +110,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       href={item.href}
                       className={clsx(
                         'p-2 rounded-md transition-colors flex items-center justify-center',
-                        isActive ? 'text-orange-dark bg-orange-light' : 'text-gray-slate hover:bg-gray-50'
+                        isActive ? 'text-orange-dark bg-orange-light' : 'text-gray-slate'
                       )}
                       title={item.label}
                     >
@@ -134,7 +134,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                         isActive
                           ? 'bg-orange-light text-orange-dark font-medium'
-                          : 'text-gray-slate hover:bg-gray-50'
+                          : 'text-gray-slate'
                       )}
                     >
                       {item.icon}
