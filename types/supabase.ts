@@ -79,6 +79,10 @@ export interface Database {
           id: string
           name: string
           description: string | null
+          stripe_customer_id: string | null
+          subscription_status: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
+          trial_ends_at: string | null
+          current_period_end: string | null
           created_at: string
           updated_at: string
         }
@@ -86,6 +90,10 @@ export interface Database {
           id?: string
           name: string
           description?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
+          trial_ends_at?: string | null
+          current_period_end?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -93,6 +101,10 @@ export interface Database {
           id?: string
           name?: string
           description?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
+          trial_ends_at?: string | null
+          current_period_end?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -339,6 +351,170 @@ export interface Database {
           }
         ]
       }
+      subscription_plans: {
+        Row: {
+          id: string
+          name: string
+          stripe_price_id: string | null
+          description: string | null
+          price_monthly: number | null
+          price_annual: number | null
+          limits: Json
+          features: Json | null
+          is_active: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          stripe_price_id?: string | null
+          description?: string | null
+          price_monthly?: number | null
+          price_annual?: number | null
+          limits: Json
+          features?: Json | null
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          stripe_price_id?: string | null
+          description?: string | null
+          price_monthly?: number | null
+          price_annual?: number | null
+          limits?: Json
+          features?: Json | null
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      organization_subscriptions: {
+        Row: {
+          id: string
+          organization_id: string
+          stripe_subscription_id: string | null
+          stripe_customer_id: string | null
+          plan_id: string | null
+          status: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
+          current_period_start: string | null
+          current_period_end: string | null
+          trial_start: string | null
+          trial_end: string | null
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          plan_id?: string | null
+          status?: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          trial_start?: string | null
+          trial_end?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          plan_id?: string | null
+          status?: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          trial_start?: string | null
+          trial_end?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'organization_subscriptions_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'organization_subscriptions_plan_id_fkey'
+            columns: ['plan_id']
+            referencedRelation: 'subscription_plans'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      usage_tracking: {
+        Row: {
+          id: string
+          organization_id: string
+          period_start: string
+          period_end: string
+          organizations_count: number
+          environments_count: number
+          zones_count: number
+          dns_records_count: number
+          api_calls_count: number
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          period_start: string
+          period_end: string
+          organizations_count?: number
+          environments_count?: number
+          zones_count?: number
+          dns_records_count?: number
+          api_calls_count?: number
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          period_start?: string
+          period_end?: string
+          organizations_count?: number
+          environments_count?: number
+          zones_count?: number
+          dns_records_count?: number
+          api_calls_count?: number
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'usage_tracking_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -363,3 +539,6 @@ export type Environment = Database['public']['Tables']['environments']['Row']
 export type Zone = Database['public']['Tables']['zones']['Row']
 export type AuditLog = Database['public']['Tables']['audit_logs']['Row']
 export type DNSRecord = Database['public']['Tables']['dns_records']['Row']
+export type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row']
+export type OrganizationSubscription = Database['public']['Tables']['organization_subscriptions']['Row']
+export type UsageTracking = Database['public']['Tables']['usage_tracking']['Row']
