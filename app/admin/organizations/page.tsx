@@ -13,6 +13,7 @@ import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
+import { Pagination } from '@/components/admin/Pagination';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { createOrganization, softDeleteOrganization } from '@/lib/actions/admin/organizations';
 import { useToastStore } from '@/lib/toast-store';
@@ -44,6 +45,10 @@ export default function AdminOrganizationsPage() {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
+  
   const [actioningOrgId, setActioningOrgId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createName, setCreateName] = useState('');
@@ -71,6 +76,8 @@ export default function AdminOrganizationsPage() {
 
   useEffect(() => {
     filterOrganizations();
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
   }, [orgs, searchName, statusFilter, memberCountFilter, sortBy]);
 
   const fetchOrganizations = async () => {
@@ -308,6 +315,17 @@ export default function AdminOrganizationsPage() {
 
   const hasActiveFilters = searchName || statusFilter !== 'active' || memberCountFilter !== 'all' || sortBy !== 'name';
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredOrgs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrgs = filteredOrgs.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    clearSelection(); // Clear selection when changing pages
+  };
+
   return (
     <AdminProtectedRoute>
       <AdminLayout>
@@ -475,15 +493,27 @@ export default function AdminOrganizationsPage() {
 
           {/* Organizations Table */}
           <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Organizations List</h2>
-              <Tooltip content="User groups">
-                <InfoIcon />
-              </Tooltip>
-              {selectedIds.size > 0 && (
-                <span className="ml-auto text-sm text-gray-slate dark:text-gray-400">
-                  {selectedIds.size} selected
-                </span>
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Organizations List</h2>
+                <Tooltip content="User groups">
+                  <InfoIcon />
+                </Tooltip>
+                {selectedIds.size > 0 && (
+                  <span className="ml-2 text-sm text-gray-slate dark:text-gray-400">
+                    {selectedIds.size} selected
+                  </span>
+                )}
+              </div>
+              {filteredOrgs.length > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={filteredOrgs.length}
+                  itemsPerPage={itemsPerPage}
+                  position="top"
+                />
               )}
             </div>
 
@@ -515,8 +545,18 @@ export default function AdminOrganizationsPage() {
                       <th className="text-left py-3 px-4 w-12">
                         <input
                           type="checkbox"
-                          checked={selectedIds.size === filteredOrgs.length && filteredOrgs.length > 0}
-                          onChange={(e) => e.target.checked ? selectAll() : clearSelection()}
+                          checked={paginatedOrgs.length > 0 && paginatedOrgs.every(org => selectedIds.has(org.id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              paginatedOrgs.forEach(org => setSelectedIds(prev => new Set(prev).add(org.id)));
+                            } else {
+                              paginatedOrgs.forEach(org => setSelectedIds(prev => {
+                                const newSet = new Set(prev);
+                                newSet.delete(org.id);
+                                return newSet;
+                              }));
+                            }
+                          }}
                           className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                         />
                       </th>
@@ -542,7 +582,7 @@ export default function AdminOrganizationsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredOrgs.map((org) => {
+                    {paginatedOrgs.map((org) => {
                       const createdDate = formatDateWithRelative(org.created_at);
                       return (
                         <tr key={org.id} className="border-b border-gray-light dark:border-gray-700">
@@ -592,6 +632,18 @@ export default function AdminOrganizationsPage() {
                     })}
                   </tbody>
                 </table>
+                
+                {/* Bottom Pagination */}
+                {filteredOrgs.length > itemsPerPage && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={filteredOrgs.length}
+                    itemsPerPage={itemsPerPage}
+                    position="bottom"
+                  />
+                )}
               </div>
             )}
           </Card>

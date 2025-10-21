@@ -14,6 +14,7 @@ import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
+import { Pagination } from '@/components/admin/Pagination';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { disableUser, enableUser, sendPasswordResetEmail } from '@/lib/actions/admin/users';
 import { useToastStore } from '@/lib/toast-store';
@@ -49,6 +50,10 @@ export default function AdminUsersPage() {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
+  
   const [actioningUserId, setActioningUserId] = useState<string | null>(null);
   
   // Confirmation modal state
@@ -72,6 +77,8 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     filterUsers();
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
   }, [users, searchEmail, statusFilter, roleFilter, activityFilter]);
 
   const fetchUsers = async () => {
@@ -348,6 +355,17 @@ export default function AdminUsersPage() {
 
   const hasActiveFilters = searchEmail || statusFilter !== 'all' || roleFilter !== 'all' || activityFilter !== 'all';
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    clearSelection(); // Clear selection when changing pages
+  };
+
   return (
     <AdminProtectedRoute>
       <AdminLayout>
@@ -470,15 +488,27 @@ export default function AdminUsersPage() {
 
           {/* Users Table */}
           <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Users List</h2>
-              <Tooltip content="All registered users">
-                <InfoIcon />
-              </Tooltip>
-              {selectedIds.size > 0 && (
-                <span className="ml-auto text-sm text-gray-slate dark:text-gray-400">
-                  {selectedIds.size} selected
-                </span>
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Users List</h2>
+                <Tooltip content="All registered users">
+                  <InfoIcon />
+                </Tooltip>
+                {selectedIds.size > 0 && (
+                  <span className="ml-2 text-sm text-gray-slate dark:text-gray-400">
+                    {selectedIds.size} selected
+                  </span>
+                )}
+              </div>
+              {filteredUsers.length > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={filteredUsers.length}
+                  itemsPerPage={itemsPerPage}
+                  position="top"
+                />
               )}
             </div>
 
@@ -510,8 +540,18 @@ export default function AdminUsersPage() {
                       <th className="text-left py-3 px-4 w-12">
                         <input
                           type="checkbox"
-                          checked={selectedIds.size === filteredUsers.length && filteredUsers.length > 0}
-                          onChange={(e) => e.target.checked ? selectAll() : clearSelection()}
+                          checked={paginatedUsers.length > 0 && paginatedUsers.every(user => selectedIds.has(user.id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              paginatedUsers.forEach(user => setSelectedIds(prev => new Set(prev).add(user.id)));
+                            } else {
+                              paginatedUsers.forEach(user => setSelectedIds(prev => {
+                                const newSet = new Set(prev);
+                                newSet.delete(user.id);
+                                return newSet;
+                              }));
+                            }
+                          }}
                           className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                         />
                       </th>
@@ -538,7 +578,7 @@ export default function AdminUsersPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((user) => {
+                    {paginatedUsers.map((user) => {
                       const lastLoginDate = formatDateWithRelative(user.last_login);
                       const activityStatus = getActivityStatus(user.last_login);
                       const activityBadge = getActivityBadge(activityStatus);
@@ -597,6 +637,18 @@ export default function AdminUsersPage() {
                     })}
                   </tbody>
                 </table>
+                
+                {/* Bottom Pagination */}
+                {filteredUsers.length > itemsPerPage && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={filteredUsers.length}
+                    itemsPerPage={itemsPerPage}
+                    position="bottom"
+                  />
+                )}
               </div>
             )}
           </Card>
