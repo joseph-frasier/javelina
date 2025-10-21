@@ -545,7 +545,7 @@ export default function AdminOrganizationsPage() {
                     {filteredOrgs.map((org) => {
                       const createdDate = formatDateWithRelative(org.created_at);
                       return (
-                        <tr key={org.id} className="border-b border-gray-light hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <tr key={org.id} className="border-b border-gray-light dark:border-gray-700">
                           <td className="py-3 px-4">
                             <input
                               type="checkbox"
@@ -555,13 +555,13 @@ export default function AdminOrganizationsPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
-                            <p className="font-medium text-gray-900 dark:text-gray-100">{org.name}</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{org.name}</p>
                             {org.description && (
-                              <p className="text-sm text-gray-slate dark:text-gray-400 truncate max-w-xs">{org.description}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">{org.description}</p>
                             )}
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <p className="text-sm text-gray-900 dark:text-gray-100 font-semibold">{getMemberCount(org)}</p>
+                            <p className="text-sm text-gray-900 dark:text-white font-semibold">{getMemberCount(org)}</p>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span
@@ -579,7 +579,7 @@ export default function AdminOrganizationsPage() {
                           </td>
                           <td className="py-3 px-4">
                             <Tooltip content={createdDate.absolute}>
-                              <p className="text-sm text-gray-slate dark:text-gray-400 cursor-help">
+                              <p className="text-sm text-gray-600 dark:text-gray-300 cursor-help">
                                 {createdDate.relative}
                               </p>
                             </Tooltip>

@@ -544,7 +544,7 @@ export default function AdminUsersPage() {
                       const activityBadge = getActivityBadge(activityStatus);
                       
                       return (
-                        <tr key={user.id} className="border-b border-gray-light hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <tr key={user.id} className="border-b border-gray-light dark:border-gray-700">
                           <td className="py-3 px-4">
                             <input
                               type="checkbox"
@@ -554,13 +554,13 @@ export default function AdminUsersPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
-                            <p className="font-medium text-gray-900 dark:text-gray-100">{user.name}</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
                             {user.role && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-300">{user.role}</p>
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            <p className="text-sm text-gray-slate dark:text-gray-400">{user.email}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{user.email}</p>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${activityBadge.color}`}>
@@ -584,7 +584,7 @@ export default function AdminUsersPage() {
                           </td>
                           <td className="py-3 px-4">
                             <Tooltip content={lastLoginDate.absolute}>
-                              <p className="text-sm text-gray-slate dark:text-gray-400 cursor-help">
+                              <p className="text-sm text-gray-600 dark:text-gray-300 cursor-help">
                                 {lastLoginDate.relative}
                               </p>
                             </Tooltip>
