@@ -50,7 +50,7 @@ export function ExportButton({ data, filename, disabled = false, label = 'Export
     <div className="relative">
       <Button
         variant="outline"
-        size="sm"
+        size="md"
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || isExporting}
         className="flex items-center gap-2"
