@@ -556,11 +556,11 @@ export default function AdminUsersPage() {
                           <td className="py-3 px-4">
                             <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
                             {user.role && (
-                              <p className="text-xs text-gray-500 dark:text-gray-300">{user.role}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-100">{user.role}</p>
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            <p className="text-sm text-gray-600 dark:text-gray-300">{user.email}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-100">{user.email}</p>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${activityBadge.color}`}>
@@ -584,7 +584,7 @@ export default function AdminUsersPage() {
                           </td>
                           <td className="py-3 px-4">
                             <Tooltip content={lastLoginDate.absolute}>
-                              <p className="text-sm text-gray-600 dark:text-gray-300 cursor-help">
+                              <p className="text-sm text-gray-600 dark:text-gray-100 cursor-help">
                                 {lastLoginDate.relative}
                               </p>
                             </Tooltip>

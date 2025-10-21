@@ -30,7 +30,7 @@ export function Card({
               <h3 className="font-bold text-orange text-lg mb-1">{title}</h3>
             )}
             {description && (
-              <p className="text-gray-slate dark:text-gray-300 font-light text-sm">
+              <p className="text-gray-slate dark:text-gray-100 font-light text-sm">
                 {description}
               </p>
             )}
@@ -38,7 +38,7 @@ export function Card({
           {icon && <div className="ml-4">{icon}</div>}
         </div>
       )}
-      <div className="text-gray-slate dark:text-gray-300 font-light">{children}</div>
+      <div className="text-gray-slate dark:text-gray-100 font-light">{children}</div>
     </div>
   );
 }
@@ -68,12 +68,12 @@ export function StatCard({
     <Card className="hover:border-orange transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-regular text-gray-slate dark:text-gray-300 mb-1">{title}</p>
+          <p className="text-sm font-regular text-gray-slate dark:text-gray-100 mb-1">{title}</p>
           <p className="text-3xl font-black text-orange-dark">{value}</p>
           {change && (
             <p
               className={clsx(
-                'text-sm font-medium mt-2 dark:text-gray-300',
+                'text-sm font-medium mt-2 dark:text-gray-100',
                 changeColors[changeType]
               )}
             >

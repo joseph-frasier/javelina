@@ -557,7 +557,7 @@ export default function AdminOrganizationsPage() {
                           <td className="py-3 px-4">
                             <p className="font-medium text-gray-900 dark:text-white">{org.name}</p>
                             {org.description && (
-                              <p className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">{org.description}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-100 truncate max-w-xs">{org.description}</p>
                             )}
                           </td>
                           <td className="py-3 px-4 text-center">
@@ -579,7 +579,7 @@ export default function AdminOrganizationsPage() {
                           </td>
                           <td className="py-3 px-4">
                             <Tooltip content={createdDate.absolute}>
-                              <p className="text-sm text-gray-600 dark:text-gray-300 cursor-help">
+                              <p className="text-sm text-gray-600 dark:text-gray-100 cursor-help">
                                 {createdDate.relative}
                               </p>
                             </Tooltip>
