@@ -146,8 +146,6 @@ export default function SettingsPage() {
               {/* General Settings */}
               {activeSection === 'general' && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">General Settings</h2>
-                  
                   <div className="space-y-6">
                     {/* Theme Selection */}
                     <div>
@@ -389,8 +387,6 @@ export default function SettingsPage() {
               {/* Security Settings */}
               {activeSection === 'security' && permissions.canEdit && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">Security Settings</h2>
-                  
                   <div className="space-y-6">
                     {/* MFA */}
                     <div>
@@ -491,8 +487,6 @@ export default function SettingsPage() {
               {/* Access Management */}
               {activeSection === 'access' && permissions.canManageUsers && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">Access Management</h2>
-                  
                   <div className="space-y-6">
                     {/* Organization Members */}
                     <div>
@@ -552,8 +546,6 @@ export default function SettingsPage() {
               {/* Integrations */}
               {activeSection === 'integrations' && permissions.canEdit && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">Integration Settings</h2>
-                  
                   <div className="space-y-6">
                     {/* Slack */}
                     <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
@@ -623,8 +615,7 @@ export default function SettingsPage() {
               {/* Audit & Compliance */}
               {activeSection === 'audit' && permissions.canViewAudit && (
                 <Card className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-orange-dark">Audit & Compliance</h2>
+                  <div className="flex items-center justify-end mb-6">
                     <Button variant="outline" size="sm">
                       Export Logs
                     </Button>
@@ -661,8 +652,6 @@ export default function SettingsPage() {
               {/* Password & Authentication */}
               {activeSection === 'password' && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">Password & Authentication</h2>
-                  
                   <div className="space-y-6">
                     {/* Change Password */}
                     <div>
