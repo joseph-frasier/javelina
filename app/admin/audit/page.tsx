@@ -208,7 +208,7 @@ export default function AdminAuditPage() {
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Audit Entries</h2>
-              <Tooltip content="Complete log of all administrative actions performed in the system. Click any entry to see full details.">
+              <Tooltip content="Admin action log">
                 <InfoIcon />
               </Tooltip>
             </div>

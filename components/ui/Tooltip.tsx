@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface TooltipProps {
   content: string;
@@ -10,7 +10,6 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const positionClasses = {
     top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
@@ -19,34 +18,35 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
     right: 'left-full top-1/2 -translate-y-1/2 ml-2',
   };
 
+  const arrowClasses = {
+    top: 'top-full left-1/2 -translate-x-1/2 -mt-1',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 -mb-1',
+    left: 'left-full top-1/2 -translate-y-1/2 -ml-1',
+    right: 'right-full top-1/2 -translate-y-1/2 -mr-1',
+  };
+
   return (
-    <div className="relative inline-block">
-      <div
+    <span className="relative inline-flex">
+      <span
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
-        className="cursor-help"
+        className="cursor-help inline-flex"
       >
         {children}
-      </div>
+      </span>
 
       {isVisible && (
-        <div
-          ref={tooltipRef}
-          className={`absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg whitespace-nowrap animate-in fade-in zoom-in-95 duration-100 ${positionClasses[position]}`}
+        <span
+          className={`absolute z-[9999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-100 ${positionClasses[position]}`}
         >
           {content}
           {/* Arrow */}
-          <div
-            className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${
-              position === 'top' ? 'bottom-[-4px] left-1/2 -translate-x-1/2' :
-              position === 'bottom' ? 'top-[-4px] left-1/2 -translate-x-1/2' :
-              position === 'left' ? 'right-[-4px] top-1/2 -translate-y-1/2' :
-              'left-[-4px] top-1/2 -translate-y-1/2'
-            }`}
+          <span
+            className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${arrowClasses[position]}`}
           />
-        </div>
+        </span>
       )}
-    </div>
+    </span>
   );
 }
 
