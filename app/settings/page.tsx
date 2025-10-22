@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
+import { ExportButton } from '@/components/admin/ExportButton';
 import { useState } from 'react';
 
 export default function SettingsPage() {
@@ -616,9 +617,11 @@ export default function SettingsPage() {
               {activeSection === 'audit' && permissions.canViewAudit && (
                 <Card className="p-6">
                   <div className="flex items-center justify-end mb-6">
-                    <Button variant="outline" size="sm">
-                      Export Logs
-                    </Button>
+                    <ExportButton 
+                      data={auditLogs} 
+                      filename="audit-logs"
+                      label="Export Logs"
+                    />
                   </div>
                   
                   <div className="space-y-4">
