@@ -655,6 +655,7 @@ export default function SettingsPage() {
               {/* Password & Authentication */}
               {activeSection === 'password' && (
                 <Card className="p-6">
+                  <h2 className="text-xl font-semibold text-orange-dark dark:text-orange mb-6">Sign in methods</h2>
                   <div className="space-y-3">
                     {/* Email */}
                     <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
