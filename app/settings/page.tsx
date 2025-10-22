@@ -123,6 +123,18 @@ export default function SettingsPage() {
     }
   };
 
+  const handleConnectedOAuthClick = (provider: 'google' | 'github') => {
+    const providerName = provider === 'google' ? 'Google' : 'GitHub';
+    const providerUrl = provider === 'google' 
+      ? 'https://myaccount.google.com/permissions' 
+      : 'https://github.com/settings/applications';
+    
+    addToast(
+      'info', 
+      `To disconnect your ${providerName} account, please manage your connected applications at ${providerUrl}`
+    );
+  };
+
   if (!user) return null;
 
   const formatDate = (dateString: string) => {
@@ -820,10 +832,10 @@ export default function SettingsPage() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => isGoogleConnected ? handleOAuthDisconnect('google') : handleOAuthConnect('google')}
+                        onClick={() => isGoogleConnected ? handleConnectedOAuthClick('google') : handleOAuthConnect('google')}
                         disabled={isLoadingOAuth}
                       >
-                        {isLoadingOAuth ? 'Loading...' : (isGoogleConnected ? 'Disconnect' : 'Connect')}
+                        {isLoadingOAuth ? 'Loading...' : (isGoogleConnected ? 'Connected' : 'Connect')}
                       </Button>
                     </div>
 
@@ -845,10 +857,10 @@ export default function SettingsPage() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => isGithubConnected ? handleOAuthDisconnect('github') : handleOAuthConnect('github')}
+                        onClick={() => isGithubConnected ? handleConnectedOAuthClick('github') : handleOAuthConnect('github')}
                         disabled={isLoadingOAuth}
                       >
-                        {isLoadingOAuth ? 'Loading...' : (isGithubConnected ? 'Disconnect' : 'Connect')}
+                        {isLoadingOAuth ? 'Loading...' : (isGithubConnected ? 'Connected' : 'Connect')}
                       </Button>
                     </div>
                   </div>
