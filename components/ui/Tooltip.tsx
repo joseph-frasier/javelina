@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface TooltipProps {
   content: string;
@@ -10,48 +11,58 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isPositioned, setIsPositioned] = useState(false);
-  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({ visibility: 'hidden' });
+  const [mounted, setMounted] = useState(false);
   const triggerRef = useRef<HTMLSpanElement>(null);
-  const tooltipRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isVisible && triggerRef.current && tooltipRef.current) {
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-      const spacing = 8;
-      
-      let top = 0;
-      let left = 0;
+      const updatePosition = () => {
+        if (triggerRef.current && tooltipRef.current) {
+          const triggerRect = triggerRef.current.getBoundingClientRect();
+          const tooltipRect = tooltipRef.current.getBoundingClientRect();
+          const spacing = 8;
+          
+          let top = 0;
+          let left = 0;
 
-      switch (position) {
-        case 'top':
-          top = triggerRect.top - tooltipRect.height - spacing;
-          left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
-          break;
-        case 'bottom':
-          top = triggerRect.bottom + spacing;
-          left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
-          break;
-        case 'left':
-          top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
-          left = triggerRect.left - tooltipRect.width - spacing;
-          break;
-        case 'right':
-          top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
-          left = triggerRect.right + spacing;
-          break;
-      }
+          switch (position) {
+            case 'top':
+              top = triggerRect.top - tooltipRect.height - spacing;
+              left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+              break;
+            case 'bottom':
+              top = triggerRect.bottom + spacing;
+              left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+              break;
+            case 'left':
+              top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+              left = triggerRect.left - tooltipRect.width - spacing;
+              break;
+            case 'right':
+              top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+              left = triggerRect.right + spacing;
+              break;
+          }
 
-      setTooltipStyle({ 
-        top: `${top}px`, 
-        left: `${left}px`,
-        opacity: 1,
-        transition: 'opacity 0.1s ease-in'
+          setTooltipStyle({ 
+            top: `${top}px`, 
+            left: `${left}px`,
+            visibility: 'visible',
+            opacity: 1
+          });
+        }
+      };
+
+      // Wait for tooltip to render, then position it
+      requestAnimationFrame(() => {
+        requestAnimationFrame(updatePosition);
       });
-      setIsPositioned(true);
-    } else {
-      setIsPositioned(false);
     }
   }, [isVisible, position]);
 
@@ -61,6 +72,20 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
     left: 'left-full top-1/2 -translate-y-1/2 -ml-1',
     right: 'right-full top-1/2 -translate-y-1/2 -mr-1',
   };
+
+  const tooltipElement = isVisible && mounted ? (
+    <div
+      ref={tooltipRef}
+      style={tooltipStyle}
+      className="fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none transition-opacity duration-100"
+    >
+      {content}
+      {/* Arrow */}
+      <span
+        className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${arrowClasses[position]}`}
+      />
+    </div>
+  ) : null;
 
   return (
     <>
@@ -74,19 +99,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
         </span>
       </span>
 
-      {isVisible && (
-        <span
-          ref={tooltipRef}
-          style={isPositioned ? tooltipStyle : { top: 0, left: 0, opacity: 0 }}
-          className="fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none"
-        >
-          {content}
-          {/* Arrow */}
-          <span
-            className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${arrowClasses[position]}`}
-          />
-        </span>
-      )}
+      {mounted && tooltipElement && createPortal(tooltipElement, document.body)}
     </>
   );
 }
