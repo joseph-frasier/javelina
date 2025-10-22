@@ -7,10 +7,15 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
 import { ExportButton } from '@/components/admin/ExportButton';
-import { useState } from 'react';
+import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
+import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
+import { createClient } from '@/lib/supabase/client';
+import { useToastStore } from '@/lib/toast-store';
+import { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
+  const { addToast } = useToastStore();
   const { 
     general, 
     security, 
@@ -24,6 +29,99 @@ export default function SettingsPage() {
   } = useSettingsStore();
   
   const [activeSection, setActiveSection] = useState('general');
+  
+  // Modal states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  
+  // OAuth connection states
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+  const [isGithubConnected, setIsGithubConnected] = useState(false);
+  const [isLoadingOAuth, setIsLoadingOAuth] = useState(false);
+
+  // Fetch OAuth connection status on mount
+  useEffect(() => {
+    checkOAuthConnections();
+  }, []);
+
+  const checkOAuthConnections = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.identities) {
+        const googleIdentity = user.identities.find(id => id.provider === 'google');
+        const githubIdentity = user.identities.find(id => id.provider === 'github');
+        
+        setIsGoogleConnected(!!googleIdentity);
+        setIsGithubConnected(!!githubIdentity);
+      }
+    } catch (error) {
+      console.error('Error checking OAuth connections:', error);
+    }
+  };
+
+  const handleOAuthConnect = async (provider: 'google' | 'github') => {
+    // Check if another social provider is already connected
+    const hasOtherProvider = (provider === 'google' && isGithubConnected) || 
+                            (provider === 'github' && isGoogleConnected);
+    
+    if (hasOtherProvider) {
+      addToast('error', 'You can only connect one social provider at a time. Please disconnect the other provider first.');
+      return;
+    }
+
+    setIsLoadingOAuth(true);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/settings?section=password`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('OAuth connection error:', error);
+      addToast('error', error.message || `Failed to connect ${provider}`);
+      setIsLoadingOAuth(false);
+    }
+  };
+
+  const handleOAuthDisconnect = async (provider: 'google' | 'github') => {
+    setIsLoadingOAuth(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('No user found');
+
+      const identity = user.identities?.find(id => id.provider === provider);
+      
+      if (!identity) throw new Error('Identity not found');
+
+      const { error } = await supabase.auth.unlinkIdentity(identity);
+
+      if (error) throw error;
+
+      // Update state
+      if (provider === 'google') {
+        setIsGoogleConnected(false);
+      } else {
+        setIsGithubConnected(false);
+      }
+
+      addToast('success', `${provider === 'google' ? 'Google' : 'GitHub'} account disconnected`);
+    } catch (error: any) {
+      console.error('OAuth disconnection error:', error);
+      addToast('error', error.message || `Failed to disconnect ${provider}`);
+    } finally {
+      setIsLoadingOAuth(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -670,7 +768,11 @@ export default function SettingsPage() {
                           <p className="text-sm text-gray-slate dark:text-gray-400">1 verified email configured</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowEmailModal(true)}
+                      >
                         Manage
                       </Button>
                     </div>
@@ -688,7 +790,11 @@ export default function SettingsPage() {
                           <p className="text-sm text-gray-slate dark:text-gray-400">Configured</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowPasswordModal(true)}
+                      >
                         Change password
                       </Button>
                     </div>
@@ -706,11 +812,18 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">Google</p>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">Sign in with your Google account</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {isGoogleConnected ? 'Connected' : 'Sign in with your Google account'}
+                          </p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
-                        Connect
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => isGoogleConnected ? handleOAuthDisconnect('google') : handleOAuthConnect('google')}
+                        disabled={isLoadingOAuth}
+                      >
+                        {isLoadingOAuth ? 'Loading...' : (isGoogleConnected ? 'Disconnect' : 'Connect')}
                       </Button>
                     </div>
 
@@ -724,11 +837,18 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">GitHub</p>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">Sign in with your GitHub account</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {isGithubConnected ? 'Connected' : 'Sign in with your GitHub account'}
+                          </p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
-                        Connect
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => isGithubConnected ? handleOAuthDisconnect('github') : handleOAuthConnect('github')}
+                        disabled={isLoadingOAuth}
+                      >
+                        {isLoadingOAuth ? 'Loading...' : (isGithubConnected ? 'Disconnect' : 'Connect')}
                       </Button>
                     </div>
                   </div>
@@ -738,6 +858,16 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <ChangePasswordModal 
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
+      <ManageEmailModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+      />
     </ProtectedRoute>
   );
 }
