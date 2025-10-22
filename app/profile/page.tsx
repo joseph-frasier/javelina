@@ -92,12 +92,6 @@ export default function ProfilePage() {
                   >
                     {isEditing ? 'Cancel' : 'Edit Profile'}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                  >
-                    Change Password
-                  </Button>
                 </div>
               </div>
             </Card>
