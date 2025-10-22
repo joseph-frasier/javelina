@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface TooltipProps {
   content: string;
@@ -10,15 +10,16 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [isPositioned, setIsPositioned] = useState(false);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
 
-  const updatePosition = useCallback(() => {
-    if (triggerRef.current && tooltipRef.current) {
+  useEffect(() => {
+    if (isVisible && triggerRef.current && tooltipRef.current) {
       const triggerRect = triggerRef.current.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
-      const spacing = 8; // Space between trigger and tooltip
+      const spacing = 8;
       
       let top = 0;
       let left = 0;
@@ -42,18 +43,17 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
           break;
       }
 
-      setTooltipStyle({ top: `${top}px`, left: `${left}px` });
-    }
-  }, [position]);
-
-  useEffect(() => {
-    if (isVisible) {
-      // Use requestAnimationFrame to ensure DOM has updated
-      requestAnimationFrame(() => {
-        updatePosition();
+      setTooltipStyle({ 
+        top: `${top}px`, 
+        left: `${left}px`,
+        opacity: 1,
+        transition: 'opacity 0.1s ease-in'
       });
+      setIsPositioned(true);
+    } else {
+      setIsPositioned(false);
     }
-  }, [isVisible, updatePosition]);
+  }, [isVisible, position]);
 
   const arrowClasses = {
     top: 'top-full left-1/2 -translate-x-1/2 -mt-1',
@@ -77,7 +77,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
       {isVisible && (
         <span
           ref={tooltipRef}
-          style={tooltipStyle}
+          style={isPositioned ? tooltipStyle : { top: 0, left: 0, opacity: 0 }}
           className="fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none"
         >
           {content}
