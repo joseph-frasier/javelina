@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface TooltipProps {
   content: string;
@@ -14,8 +14,8 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
-    if (isVisible && triggerRef.current && tooltipRef.current) {
+  const updatePosition = useCallback(() => {
+    if (triggerRef.current && tooltipRef.current) {
       const triggerRect = triggerRef.current.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
       const spacing = 8; // Space between trigger and tooltip
@@ -44,7 +44,16 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
 
       setTooltipStyle({ top: `${top}px`, left: `${left}px` });
     }
-  }, [isVisible, position]);
+  }, [position]);
+
+  useEffect(() => {
+    if (isVisible) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        updatePosition();
+      });
+    }
+  }, [isVisible, updatePosition]);
 
   const arrowClasses = {
     top: 'top-full left-1/2 -translate-x-1/2 -mt-1',
@@ -69,7 +78,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
         <span
           ref={tooltipRef}
           style={tooltipStyle}
-          className="fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none"
         >
           {content}
           {/* Arrow */}
