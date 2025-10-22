@@ -401,20 +401,57 @@ export const useAuthStore = create<AuthState>()(
 
       // Reset password
       resetPassword: async (email: string) => {
+        // Check if we're using placeholder Supabase credentials (development mode with mock data)
+        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        if (isPlaceholderMode) {
+          // Mock mode - simulate sending email
+          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
+          
+          // Check if email exists in mock users
+          const userExists = mockUsers.some(u => u.email === email)
+          
+          if (!userExists) {
+            // Still return success to prevent email enumeration
+            return { success: true }
+          }
+          
+          console.log(`[Mock] Password reset email would be sent to: ${email}`)
+          return { success: true }
+        }
+        
+        // Real Supabase authentication
         const supabase = createClient()
 
         try {
+          const resetUrl = `${window.location.origin}/reset-password`
+          console.log('Sending password reset email to:', email)
+          console.log('Reset URL:', resetUrl)
+
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/reset-password`,
+            redirectTo: resetUrl,
           })
 
           if (error) {
+            console.error('Password reset error:', error)
+            // Return more specific error messages
+            if (error.message.includes('rate limit')) {
+              return { success: false, error: 'Too many requests. Please try again later.' }
+            }
+            if (error.message.includes('email')) {
+              return { success: false, error: 'Unable to send email. Please check your email address.' }
+            }
             return { success: false, error: error.message }
           }
 
+          console.log('Password reset email sent successfully')
           return { success: true }
         } catch (error: any) {
-          return { success: false, error: error.message || 'An error occurred' }
+          console.error('Password reset exception:', error)
+          return { 
+            success: false, 
+            error: error.message || 'Failed to send reset email. Please try again.' 
+          }
         }
       },
 
