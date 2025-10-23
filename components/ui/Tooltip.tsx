@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface TooltipProps {
   content: string;
@@ -10,13 +11,60 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({ visibility: 'hidden' });
+  const [mounted, setMounted] = useState(false);
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const positionClasses = {
-    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
-    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
-  };
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isVisible && triggerRef.current && tooltipRef.current) {
+      const updatePosition = () => {
+        if (triggerRef.current && tooltipRef.current) {
+          const triggerRect = triggerRef.current.getBoundingClientRect();
+          const tooltipRect = tooltipRef.current.getBoundingClientRect();
+          const spacing = 8;
+          
+          let top = 0;
+          let left = 0;
+
+          switch (position) {
+            case 'top':
+              top = triggerRect.top - tooltipRect.height - spacing;
+              left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+              break;
+            case 'bottom':
+              top = triggerRect.bottom + spacing;
+              left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+              break;
+            case 'left':
+              top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+              left = triggerRect.left - tooltipRect.width - spacing;
+              break;
+            case 'right':
+              top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+              left = triggerRect.right + spacing;
+              break;
+          }
+
+          setTooltipStyle({ 
+            top: `${top}px`, 
+            left: `${left}px`,
+            visibility: 'visible',
+            opacity: 1
+          });
+        }
+      };
+
+      // Wait for tooltip to render, then position it
+      requestAnimationFrame(() => {
+        requestAnimationFrame(updatePosition);
+      });
+    }
+  }, [isVisible, position]);
 
   const arrowClasses = {
     top: 'top-full left-1/2 -translate-x-1/2 -mt-1',
@@ -25,28 +73,34 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
     right: 'right-full top-1/2 -translate-y-1/2 -mr-1',
   };
 
-  return (
-    <span className="relative inline-flex">
+  const tooltipElement = isVisible && mounted ? (
+    <div
+      ref={tooltipRef}
+      style={tooltipStyle}
+      className="fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none transition-opacity duration-100"
+    >
+      {content}
+      {/* Arrow */}
       <span
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
-        className="cursor-help inline-flex"
-      >
-        {children}
+        className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${arrowClasses[position]}`}
+      />
+    </div>
+  ) : null;
+
+  return (
+    <>
+      <span className="relative inline-flex" ref={triggerRef}>
+        <span
+          onMouseEnter={() => setIsVisible(true)}
+          onMouseLeave={() => setIsVisible(false)}
+          className="cursor-help inline-flex"
+        >
+          {children}
+        </span>
       </span>
 
-      {isVisible && (
-        <span
-          className={`absolute z-[9999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-100 ${positionClasses[position]}`}
-        >
-          {content}
-          {/* Arrow */}
-          <span
-            className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${arrowClasses[position]}`}
-          />
-        </span>
-      )}
-    </span>
+      {mounted && tooltipElement && createPortal(tooltipElement, document.body)}
+    </>
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 import { createClient } from '@/lib/supabase/client';
 
@@ -45,6 +45,20 @@ export function AvatarUpload({
     },
     []
   );
+
+  // Scroll to top when enlarged view opens
+  useEffect(() => {
+    if (showEnlargedView) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [showEnlargedView]);
+
+  // Scroll to top when crop modal opens
+  useEffect(() => {
+    if (imageSrc) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [imageSrc]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -284,11 +298,11 @@ export function AvatarUpload({
       {/* Enlarged View Modal */}
       {showEnlargedView && currentAvatarUrl && (
         <div 
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/90 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8"
           onClick={() => setShowEnlargedView(false)}
         >
           <div 
-            className="relative max-w-2xl max-h-[90vh] p-4"
+            className="relative max-w-2xl p-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
@@ -305,7 +319,7 @@ export function AvatarUpload({
             <img
               src={currentAvatarUrl}
               alt="Profile picture"
-              className="max-w-full max-h-[70vh] rounded-lg object-contain"
+              className="max-w-full max-h-[80vh] rounded-lg object-contain"
             />
 
             {/* Remove Button */}
@@ -324,7 +338,7 @@ export function AvatarUpload({
 
       {/* Crop Modal */}
       {imageSrc && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/80 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
           <div className="bg-white rounded-xl p-6 w-full max-w-2xl mx-4">
             <h3 className="text-xl font-bold text-orange-dark mb-4">
               Crop Your Photo

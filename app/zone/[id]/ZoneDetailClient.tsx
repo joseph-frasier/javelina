@@ -6,6 +6,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { Modal } from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
 import { RecordDistributionChart } from '@/components/dns/RecordDistributionChart';
 import { TTLHeatmap } from '@/components/dns/TTLHeatmap';
@@ -378,137 +380,124 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       )}
 
       {/* Edit Zone Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto pt-12 pb-12">
-          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-2xl w-full mx-4 my-8">
-            <div className="p-6 border-b border-gray-light">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-orange-dark">Edit Zone: {zone.name}</h2>
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="text-gray-slate hover:text-orange-dark"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="p-6 space-y-6">
-              {/* Zone Name */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Name <span className="text-red-600">*</span></label>
-                <input
-                  type="text"
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  placeholder="e.g., example.com"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light"
-                />
-              </div>
+      <Modal 
+        isOpen={showEditModal} 
+        onClose={() => setShowEditModal(false)} 
+        title={`Edit Zone: ${zone.name}`}
+        size="large"
+      >
+        <div className="space-y-6">
+          {/* Zone Name */}
+          <div>
+            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Zone Name <span className="text-red-600">*</span></label>
+            <Input
+              type="text"
+              value={editFormData.name}
+              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+              placeholder="e.g., example.com"
+            />
+          </div>
 
-              {/* Zone Type */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark mb-2">Zone Type <span className="text-red-600">*</span></label>
-                <Dropdown
-                  options={[
-                    { value: 'primary', label: 'Primary' },
-                    { value: 'secondary', label: 'Secondary' },
-                    { value: 'redirect', label: 'Redirect' },
-                  ]}
-                  value={editFormData.zone_type}
-                  onChange={(value) => handleZoneTypeChange(value)}
-                />
-              </div>
+          {/* Zone Type */}
+          <div>
+            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Zone Type <span className="text-red-600">*</span></label>
+            <Dropdown
+              options={[
+                { value: 'primary', label: 'Primary' },
+                { value: 'secondary', label: 'Secondary' },
+                { value: 'redirect', label: 'Redirect' },
+              ]}
+              value={editFormData.zone_type}
+              onChange={(value) => handleZoneTypeChange(value)}
+            />
+          </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark mb-2">Description</label>
-                <textarea
-                  value={editFormData.description}
-                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                  placeholder="Zone description (optional)"
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light"
-                />
-              </div>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Description</label>
+            <textarea
+              value={editFormData.description}
+              onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+              placeholder="Zone description (optional)"
+              rows={3}
+              className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
+            />
+          </div>
 
-              {/* Nameservers */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark mb-2">Nameservers</label>
-                <textarea
-                  value={editFormData.nameservers}
-                  onChange={(e) => setEditFormData({ ...editFormData, nameservers: e.target.value })}
-                  placeholder="One nameserver per line (e.g., ns1.example.com)"
-                  rows={4}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light font-mono text-xs"
-                />
-              </div>
+          {/* Nameservers */}
+          <div>
+            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Nameservers</label>
+            <textarea
+              value={editFormData.nameservers}
+              onChange={(e) => setEditFormData({ ...editFormData, nameservers: e.target.value })}
+              placeholder="One nameserver per line (e.g., ns1.example.com)"
+              rows={4}
+              className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent font-mono text-xs disabled:bg-gray-light disabled:cursor-not-allowed"
+            />
+          </div>
 
-              {/* Active Status Toggle */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-orange-dark">Active Status <span className="text-red-600">*</span></label>
-                <button
-                  onClick={() => setEditFormData({ ...editFormData, active: !editFormData.active })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    editFormData.active ? 'bg-orange' : 'bg-gray-light'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      editFormData.active ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-light flex justify-end space-x-3">
-              <Button 
-                variant="secondary"
-                onClick={() => setShowEditModal(false)} 
-                disabled={isEditSaving}
-              >
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={handleSaveZone} disabled={isEditSaving}>
-                {isEditSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
+          {/* Active Status Toggle */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-orange-dark dark:text-white">Active Status <span className="text-red-600">*</span></label>
+            <button
+              onClick={() => setEditFormData({ ...editFormData, active: !editFormData.active })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                editFormData.active ? 'bg-orange' : 'bg-gray-light'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  editFormData.active ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </div>
-      )}
+        <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-light">
+          <Button 
+            variant="secondary"
+            onClick={() => setShowEditModal(false)} 
+            disabled={isEditSaving}
+          >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSaveZone} disabled={isEditSaving}>
+            {isEditSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
+      </Modal>
 
       {/* Delete Zone Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto pt-12 pb-12">
-          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-md w-full mx-4 my-8">
-            <div className="p-6">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-orange-dark text-center mb-2">Delete Zone</h2>
-              <p className="text-gray-slate text-center mb-6">
-                Are you sure you want to delete <span className="font-bold text-orange-dark">{zone.name}</span>?
-                This action cannot be undone and will delete all {zoneSummary.totalRecords} DNS records.
-              </p>
-              <div className="flex space-x-3">
-                <Button variant="outline" className="flex-1" onClick={() => setShowDeleteModal(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  className="flex-1 bg-red-600 hover:bg-red-700"
-                  onClick={handleDeleteZone}
-                >
-                  Delete Zone
-                </Button>
-              </div>
-            </div>
+      <Modal 
+        isOpen={showDeleteModal} 
+        onClose={() => setShowDeleteModal(false)} 
+        title="Delete Zone"
+        size="small"
+      >
+        <div className="text-center">
+          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-gray-slate dark:text-gray-400 mb-6">
+            Are you sure you want to delete <span className="font-bold text-orange-dark dark:text-white">{zone.name}</span>?
+            This action cannot be undone and will delete all {zoneSummary.totalRecords} DNS records.
+          </p>
+          <div className="flex space-x-3">
+            <Button variant="outline" className="flex-1" onClick={() => setShowDeleteModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 bg-red-600 hover:bg-red-700"
+              onClick={handleDeleteZone}
+            >
+              Delete Zone
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Diff Viewer Modal */}
       {selectedLog && (

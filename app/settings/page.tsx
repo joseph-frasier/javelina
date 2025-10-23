@@ -6,10 +6,16 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
-import { useState } from 'react';
+import { ExportButton } from '@/components/admin/ExportButton';
+import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
+import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
+import { createClient } from '@/lib/supabase/client';
+import { useToastStore } from '@/lib/toast-store';
+import { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
+  const { addToast } = useToastStore();
   const { 
     general, 
     security, 
@@ -23,6 +29,111 @@ export default function SettingsPage() {
   } = useSettingsStore();
   
   const [activeSection, setActiveSection] = useState('general');
+  
+  // Modal states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  
+  // OAuth connection states
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+  const [isGithubConnected, setIsGithubConnected] = useState(false);
+  const [isLoadingOAuth, setIsLoadingOAuth] = useState(false);
+
+  // Fetch OAuth connection status on mount
+  useEffect(() => {
+    checkOAuthConnections();
+  }, []);
+
+  const checkOAuthConnections = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.identities) {
+        const googleIdentity = user.identities.find(id => id.provider === 'google');
+        const githubIdentity = user.identities.find(id => id.provider === 'github');
+        
+        setIsGoogleConnected(!!googleIdentity);
+        setIsGithubConnected(!!githubIdentity);
+      }
+    } catch (error) {
+      console.error('Error checking OAuth connections:', error);
+    }
+  };
+
+  const handleOAuthConnect = async (provider: 'google' | 'github') => {
+    // Check if another social provider is already connected
+    const hasOtherProvider = (provider === 'google' && isGithubConnected) || 
+                            (provider === 'github' && isGoogleConnected);
+    
+    if (hasOtherProvider) {
+      addToast('error', 'You can only connect one social provider at a time. Please disconnect the other provider first.');
+      return;
+    }
+
+    setIsLoadingOAuth(true);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/settings?section=password`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('OAuth connection error:', error);
+      addToast('error', error.message || `Failed to connect ${provider}`);
+      setIsLoadingOAuth(false);
+    }
+  };
+
+  const handleOAuthDisconnect = async (provider: 'google' | 'github') => {
+    setIsLoadingOAuth(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('No user found');
+
+      const identity = user.identities?.find(id => id.provider === provider);
+      
+      if (!identity) throw new Error('Identity not found');
+
+      const { error } = await supabase.auth.unlinkIdentity(identity);
+
+      if (error) throw error;
+
+      // Update state
+      if (provider === 'google') {
+        setIsGoogleConnected(false);
+      } else {
+        setIsGithubConnected(false);
+      }
+
+      addToast('success', `${provider === 'google' ? 'Google' : 'GitHub'} account disconnected`);
+    } catch (error: any) {
+      console.error('OAuth disconnection error:', error);
+      addToast('error', error.message || `Failed to disconnect ${provider}`);
+    } finally {
+      setIsLoadingOAuth(false);
+    }
+  };
+
+  const handleConnectedOAuthClick = (provider: 'google' | 'github') => {
+    const providerName = provider === 'google' ? 'Google' : 'GitHub';
+    const providerUrl = provider === 'google' 
+      ? 'https://myaccount.google.com/permissions' 
+      : 'https://github.com/settings/applications';
+    
+    addToast(
+      'info', 
+      `To disconnect your ${providerName} account, please manage your connected applications at ${providerUrl}`
+    );
+  };
 
   if (!user) return null;
 
@@ -102,6 +213,15 @@ export default function SettingsPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
       )
+    },
+    { 
+      id: 'password', 
+      name: 'Password & Authentication', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
     }
   ];
 
@@ -119,7 +239,7 @@ export default function SettingsPage() {
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center ${
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center whitespace-nowrap ${
                       activeSection === section.id
                         ? 'bg-orange text-white'
                         : 'text-gray-slate hover:bg-gray-light/30'
@@ -137,8 +257,6 @@ export default function SettingsPage() {
               {/* General Settings */}
               {activeSection === 'general' && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">General Settings</h2>
-                  
                   <div className="space-y-6">
                     {/* Theme Selection */}
                     <div>
@@ -380,8 +498,6 @@ export default function SettingsPage() {
               {/* Security Settings */}
               {activeSection === 'security' && permissions.canEdit && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">Security Settings</h2>
-                  
                   <div className="space-y-6">
                     {/* MFA */}
                     <div>
@@ -482,8 +598,6 @@ export default function SettingsPage() {
               {/* Access Management */}
               {activeSection === 'access' && permissions.canManageUsers && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">Access Management</h2>
-                  
                   <div className="space-y-6">
                     {/* Organization Members */}
                     <div>
@@ -543,8 +657,6 @@ export default function SettingsPage() {
               {/* Integrations */}
               {activeSection === 'integrations' && permissions.canEdit && (
                 <Card className="p-6">
-                  <h2 className="text-2xl font-semibold text-orange-dark mb-6">Integration Settings</h2>
-                  
                   <div className="space-y-6">
                     {/* Slack */}
                     <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
@@ -614,11 +726,12 @@ export default function SettingsPage() {
               {/* Audit & Compliance */}
               {activeSection === 'audit' && permissions.canViewAudit && (
                 <Card className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-orange-dark">Audit & Compliance</h2>
-                    <Button variant="outline" size="sm">
-                      Export Logs
-                    </Button>
+                  <div className="flex items-center justify-end mb-6">
+                    <ExportButton 
+                      data={auditLogs} 
+                      filename="audit-logs"
+                      label="Export Logs"
+                    />
                   </div>
                   
                   <div className="space-y-4">
@@ -648,10 +761,125 @@ export default function SettingsPage() {
                   </div>
                 </Card>
               )}
+
+              {/* Password & Authentication */}
+              {activeSection === 'password' && (
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold text-orange-dark dark:text-orange mb-6">Sign in methods</h2>
+                  <div className="space-y-3">
+                    {/* Email */}
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Email</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">1 verified email configured</p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowEmailModal(true)}
+                      >
+                        Manage
+                      </Button>
+                    </div>
+
+                    {/* Password */}
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Password</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">Configured</p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowPasswordModal(true)}
+                      >
+                        Change password
+                      </Button>
+                    </div>
+
+                    {/* Google */}
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Google</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {isGoogleConnected ? 'Connected' : 'Sign in with your Google account'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => isGoogleConnected ? handleConnectedOAuthClick('google') : handleOAuthConnect('google')}
+                        disabled={isLoadingOAuth}
+                      >
+                        {isLoadingOAuth ? 'Loading...' : (isGoogleConnected ? 'Connected' : 'Connect')}
+                      </Button>
+                    </div>
+
+                    {/* GitHub */}
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">GitHub</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {isGithubConnected ? 'Connected' : 'Sign in with your GitHub account'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => isGithubConnected ? handleConnectedOAuthClick('github') : handleOAuthConnect('github')}
+                        disabled={isLoadingOAuth}
+                      >
+                        {isLoadingOAuth ? 'Loading...' : (isGithubConnected ? 'Connected' : 'Connect')}
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <ChangePasswordModal 
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
+      <ManageEmailModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+      />
     </ProtectedRoute>
   );
 }

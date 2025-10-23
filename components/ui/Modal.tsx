@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -13,13 +15,68 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, title, children, size = 'medium' }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
 
   // Ensure we're on the client side
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  // Handle opening/closing with animation
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    }
+  }, [isOpen]);
+
+  // GSAP Animation
+  useGSAP(() => {
+    if (!mounted || !shouldRender) return;
+
+    if (isOpen && modalRef.current && overlayRef.current) {
+      // Opening animation - Scale + Fade
+      gsap.fromTo(
+        overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+      );
+
+      gsap.fromTo(
+        modalRef.current,
+        { 
+          scale: 0.95, 
+          opacity: 0,
+          y: 20
+        },
+        { 
+          scale: 1, 
+          opacity: 1,
+          y: 0,
+          duration: 0.4, 
+          ease: 'power3.out'
+        }
+      );
+    } else if (!isOpen && modalRef.current && overlayRef.current) {
+      // Closing animation
+      gsap.to(overlayRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in'
+      });
+
+      gsap.to(modalRef.current, {
+        scale: 0.95,
+        opacity: 0,
+        y: 20,
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => setShouldRender(false)
+      });
+    }
+  }, [isOpen, mounted, shouldRender]);
 
   // Handle escape key
   useEffect(() => {
@@ -46,7 +103,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
     };
   }, [isOpen]);
 
-  if (!isOpen || !mounted) return null;
+  if (!shouldRender || !mounted) return null;
 
   const sizeClasses = {
     small: 'max-w-md',
@@ -62,9 +119,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
       aria-modal="true"
       style={{ zIndex: 9999 }}
     >
-      {/* Overlay with fade-in animation */}
+      {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 ease-out"
+        ref={overlayRef}
+        className="fixed inset-0 bg-black bg-opacity-50"
         onClick={onClose}
         aria-hidden="true"
         style={{ zIndex: 9999 }}
@@ -74,7 +132,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
       <div className="flex min-h-full items-center justify-center p-4 relative" style={{ zIndex: 10000 }}>
         <div
           ref={modalRef}
-          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl transform transition-all duration-300 ease-out`}
+          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl`}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-light">

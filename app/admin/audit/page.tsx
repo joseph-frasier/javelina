@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
+import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
+import { ExportButton } from '@/components/admin/ExportButton';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
@@ -33,6 +35,30 @@ export default function AdminAuditPage() {
   const [searchResource, setSearchResource] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('all');
+
+  // Quick filter presets
+  const quickFilters = [
+    { label: 'All', action: '', resource: '', date: 'all' },
+    { label: 'Critical Actions', action: 'delete', resource: '', date: 'all' },
+    { label: 'User Changes', action: '', resource: 'user', date: 'all' },
+    { label: 'Org Changes', action: '', resource: 'organization', date: 'all' },
+    { label: 'Recent (24h)', action: '', resource: '', date: '1d' },
+    { label: 'This Week', action: '', resource: '', date: '7d' },
+  ];
+
+  const applyQuickFilter = (filter: typeof quickFilters[0]) => {
+    setSearchAction(filter.action);
+    setSearchResource(filter.resource);
+    setDateRange(filter.date);
+    setSearchActor('');
+  };
+
+  const clearFilters = () => {
+    setSearchActor('');
+    setSearchAction('');
+    setSearchResource('');
+    setDateRange('all');
+  };
 
   useEffect(() => {
     fetchAuditLogs();
@@ -129,9 +155,12 @@ export default function AdminAuditPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">Audit Log</h1>
-            <p className="text-gray-slate mt-2">View all admin actions</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">Audit Log</h1>
+              <p className="text-gray-slate mt-2">View all admin actions</p>
+            </div>
+            <ExportButton data={filteredLogs} filename="audit-log" />
           </div>
 
           {/* Stat Cards */}
@@ -170,37 +199,74 @@ export default function AdminAuditPage() {
             </div>
           )}
 
+          {/* Quick Filter Chips */}
+          <div className="flex flex-wrap gap-2">
+            {quickFilters.map((filter, index) => (
+              <button
+                key={index}
+                onClick={() => applyQuickFilter(filter)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  searchAction === filter.action &&
+                  searchResource === filter.resource &&
+                  dateRange === filter.date
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
           {/* Filters */}
           <Card className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Input
-                type="text"
-                placeholder="Search by actor name/email..."
-                value={searchActor}
-                onChange={(e) => setSearchActor(e.target.value)}
-              />
-              <Input
-                type="text"
-                placeholder="Search by action..."
-                value={searchAction}
-                onChange={(e) => setSearchAction(e.target.value)}
-              />
-              <Input
-                type="text"
-                placeholder="Search by resource type..."
-                value={searchResource}
-                onChange={(e) => setSearchResource(e.target.value)}
-              />
-              <Dropdown
-                value={dateRange}
-                onChange={setDateRange}
-                options={[
-                  { value: 'all', label: 'All Time' },
-                  { value: '1d', label: 'Last 24 Hours' },
-                  { value: '7d', label: 'Last 7 Days' },
-                  { value: '30d', label: 'Last 30 Days' }
-                ]}
-              />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Input
+                  type="text"
+                  placeholder="Search by actor name/email..."
+                  value={searchActor}
+                  onChange={(e) => setSearchActor(e.target.value)}
+                />
+                <Input
+                  type="text"
+                  placeholder="Search by action..."
+                  value={searchAction}
+                  onChange={(e) => setSearchAction(e.target.value)}
+                />
+                <Input
+                  type="text"
+                  placeholder="Search by resource type..."
+                  value={searchResource}
+                  onChange={(e) => setSearchResource(e.target.value)}
+                />
+                <Dropdown
+                  value={dateRange}
+                  onChange={setDateRange}
+                  options={[
+                    { value: 'all', label: 'All Time' },
+                    { value: '1d', label: 'Last 24 Hours' },
+                    { value: '7d', label: 'Last 7 Days' },
+                    { value: '30d', label: 'Last 30 Days' }
+                  ]}
+                />
+              </div>
+
+              {(searchActor || searchAction || searchResource || dateRange !== 'all') && (
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-sm text-gray-slate dark:text-gray-400">
+                    {filteredLogs.length} of {logs.length} entries match your filters
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={clearFilters}
+                    className="!text-orange-600 dark:!text-orange-400"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
             </div>
           </Card>
 
