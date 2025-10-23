@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Modal } from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
 import { RecordDistributionChart } from '@/components/dns/RecordDistributionChart';
 import { TTLHeatmap } from '@/components/dns/TTLHeatmap';
@@ -389,12 +390,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           {/* Zone Name */}
           <div>
             <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Zone Name <span className="text-red-600">*</span></label>
-            <input
+            <Input
               type="text"
               value={editFormData.name}
               onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
               placeholder="e.g., example.com"
-              className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light dark:text-white"
             />
           </div>
 
@@ -420,7 +420,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
               placeholder="Zone description (optional)"
               rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light dark:text-white"
+              className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
             />
           </div>
 
@@ -432,7 +432,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               onChange={(e) => setEditFormData({ ...editFormData, nameservers: e.target.value })}
               placeholder="One nameserver per line (e.g., ns1.example.com)"
               rows={4}
-              className="w-full px-3 py-2 rounded-lg border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-gray-slate dark:bg-gray-light font-mono text-xs dark:text-white"
+              className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent font-mono text-xs disabled:bg-gray-light disabled:cursor-not-allowed"
             />
           </div>
 
