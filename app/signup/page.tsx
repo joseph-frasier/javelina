@@ -85,12 +85,12 @@ export default function SignupPage() {
 
     if (result.success) {
       setSuccessMessage(
-        'Account created! Please check your email to verify your account.'
+        'Account created! Redirecting to select your plan...'
       );
-      // Optionally redirect after a delay
+      // Redirect to pricing page
       setTimeout(() => {
-        router.push('/login');
-      }, 3000);
+        router.push('/pricing');
+      }, 2000);
     } else {
       setErrors({
         email: result.error,
@@ -134,7 +134,7 @@ export default function SignupPage() {
               </h2>
               <p className="text-gray-slate">{successMessage}</p>
               <p className="text-sm text-gray-slate mt-4">
-                Redirecting to login...
+                Redirecting to pricing...
               </p>
             </div>
           ) : (
