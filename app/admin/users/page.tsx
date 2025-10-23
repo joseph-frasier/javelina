@@ -533,28 +533,99 @@ export default function AdminUsersPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-light">
-                      <th className="text-left py-3 px-4 w-12">
-                        <input
-                          type="checkbox"
-                          checked={paginatedUsers.length > 0 && paginatedUsers.every(user => selectedIds.has(user.id))}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              paginatedUsers.forEach(user => setSelectedIds(prev => new Set(prev).add(user.id)));
-                            } else {
-                              paginatedUsers.forEach(user => setSelectedIds(prev => {
-                                const newSet = new Set(prev);
-                                newSet.delete(user.id);
-                                return newSet;
-                              }));
-                            }
-                          }}
-                          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              <>
+              {/* Mobile Card View - Below 640px */}
+              <div className="sm:hidden space-y-3">
+                {paginatedUsers.map((user) => {
+                  const lastLoginDate = formatDateWithRelative(user.last_login);
+                  const activityStatus = getActivityStatus(user.last_login);
+                  const activityBadge = getActivityBadge(activityStatus);
+                  const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+
+                  return (
+                    <Card key={user.id} className="p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(user.id)}
+                            onChange={() => toggleSelect(user.id)}
+                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 flex-shrink-0"
+                          />
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange text-white flex items-center justify-center text-sm font-semibold">
+                            {userInitial}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</p>
+                            {user.role && (
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{user.role}</p>
+                            )}
+                          </div>
+                        </div>
+                        <QuickActionsDropdown
+                          userId={user.id}
+                          userName={user.name}
+                          userEmail={user.email}
+                          isActive={user.status === 'active'}
+                          onActionComplete={refreshData}
                         />
-                      </th>
+                      </div>
+
+                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Activity:</span>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${activityBadge.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${activityBadge.dotColor} ${activityBadge.animate ? 'animate-pulse' : ''}`} />
+                            {activityBadge.label}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            user.status === 'active'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          }`}>
+                            {user.status === 'active' ? 'Active' : 'Disabled'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Last Login:</span>
+                          <span className="text-gray-900 dark:text-gray-100 text-xs">{lastLoginDate}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table - 640px+ */}
+              <div className="hidden sm:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-light">
+                        <th className="text-left py-3 px-4 w-12">
+                          <input
+                            type="checkbox"
+                            checked={paginatedUsers.length > 0 && paginatedUsers.every(user => selectedIds.has(user.id))}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                paginatedUsers.forEach(user => setSelectedIds(prev => new Set(prev).add(user.id)));
+                              } else {
+                                paginatedUsers.forEach(user => setSelectedIds(prev => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(user.id);
+                                  return newSet;
+                                }));
+                              }
+                            }}
+                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          />
+                        </th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Email</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
@@ -637,6 +708,7 @@ export default function AdminUsersPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
                 
                 {/* Bottom Pagination */}
                 {filteredUsers.length > itemsPerPage && (
@@ -650,6 +722,7 @@ export default function AdminUsersPage() {
                   />
                 )}
               </div>
+              </>
             )}
           </Card>
 
