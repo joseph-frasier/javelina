@@ -8,7 +8,11 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
 
-export function Header() {
+interface HeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function Header({ onMenuToggle }: HeaderProps = {}) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { general, setTheme } = useSettingsStore();
@@ -96,9 +100,20 @@ export function Header() {
 
   return (
     <header className="bg-white dark:bg-orange-dark border-b border-gray-light sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto pr-4 sm:pr-6 lg:pr-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {/* Hamburger Menu Button - Mobile Only */}
+            <button
+              onClick={onMenuToggle}
+              className="md:hidden p-2 rounded-md text-gray-slate hover:text-orange hover:bg-gray-light/30 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
             <Link href="/" className="flex items-center">
               <Logo
                 width={325}
