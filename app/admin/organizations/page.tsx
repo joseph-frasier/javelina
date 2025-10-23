@@ -332,19 +332,24 @@ export default function AdminOrganizationsPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">Organizations</h1>
-              <p className="text-gray-slate dark:text-gray-300 mt-2">Manage all organizations</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <ExportButton data={filteredOrgs} filename="organizations" />
-              <Button
-                variant="primary"
-                onClick={() => setShowCreateForm(true)}
-              >
-                + Create Organization
-              </Button>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Organizations</h1>
+                <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all organizations</p>
+              </div>
+              
+              {/* Buttons - Stacked on mobile, side-by-side on desktop */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <Button
+                  variant="primary"
+                  onClick={() => setShowCreateForm(true)}
+                  className="w-full sm:w-auto order-1 sm:order-2"
+                >
+                  + Create Organization
+                </Button>
+                <ExportButton data={filteredOrgs} filename="organizations" className="w-full sm:w-auto order-2 sm:order-1" />
+              </div>
             </div>
           </div>
 
