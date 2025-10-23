@@ -674,7 +674,7 @@ export default function AdminOrganizationsPage() {
           </Card>
 
           {/* Summary */}
-          {!loading && (
+          {!loading && filteredOrgs.length <= itemsPerPage && (
             <p className="text-sm text-gray-slate dark:text-gray-400">
               Showing {filteredOrgs.length} of {orgs.length} organizations
             </p>

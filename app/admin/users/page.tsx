@@ -654,7 +654,7 @@ export default function AdminUsersPage() {
           </Card>
 
           {/* Summary */}
-          {!loading && (
+          {!loading && filteredUsers.length <= itemsPerPage && (
             <p className="text-sm text-gray-slate dark:text-gray-400">
               Showing {filteredUsers.length} of {users.length} users
             </p>
