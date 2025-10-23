@@ -11,7 +11,12 @@ import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { useEnvironments } from '@/lib/hooks/useEnvironments';
 import { useZones } from '@/lib/hooks/useZones';
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobileMenuOpen?: boolean;
+  onMobileMenuClose?: () => void;
+}
+
+export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: SidebarProps = {}) {
   const router = useRouter();
   const { user } = useAuthStore();
   const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
@@ -19,6 +24,7 @@ export function Sidebar() {
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   
   // Refs for GSAP animations
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const envContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const zoneContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   
@@ -29,11 +35,34 @@ export function Sidebar() {
   // Get organizations from authenticated user (already from Supabase)
   const userOrganizations = user?.organizations || [];
 
+  // Animate mobile menu
+  useEffect(() => {
+    if (sidebarRef.current) {
+      if (isMobileMenuOpen) {
+        gsap.to(sidebarRef.current, {
+          x: 0,
+          duration: 0.3,
+          ease: 'power2.out',
+        });
+      } else {
+        gsap.to(sidebarRef.current, {
+          x: -280,
+          duration: 0.3,
+          ease: 'power2.in',
+        });
+      }
+    }
+  }, [isMobileMenuOpen]);
+
   const handleOrganizationSuccess = (organizationId: string) => {
     // Auto-expand and select the new organization
     selectAndExpand(organizationId);
     // Navigate to the new organization page
     router.push(`/organization/${organizationId}`);
+    // Close mobile menu if open
+    if (onMobileMenuClose) {
+      onMobileMenuClose();
+    }
   };
 
   const handleToggleOrg = (orgId: string) => {
@@ -185,21 +214,69 @@ export function Sidebar() {
   }, [expandedEnvironments]);
 
   return (
-    <aside
-      className={`bg-white dark:bg-orange-dark border-r border-gray-light transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64'
-      } h-screen overflow-hidden sticky top-0 flex flex-col`}
-    >
-      {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
-        {!isCollapsed && (
+    <>
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onMobileMenuClose}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside
+        ref={sidebarRef}
+        className={`fixed top-16 left-0 bottom-0 bg-white dark:bg-orange-dark border-r border-gray-light overflow-hidden flex flex-col z-50 md:hidden w-64 -translate-x-full`}
+      >
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
           <h2 className="font-bold text-orange-dark dark:text-white">Organizations</h2>
-        )}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 rounded-md transition-colors"
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
+          <button
+            onClick={onMobileMenuClose}
+            className="p-2 rounded-md transition-colors hover:bg-gray-light"
+            aria-label="Close menu"
+          >
+            <svg className="w-5 h-5 text-gray-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <nav className="flex-1 overflow-y-auto p-4">
+          {renderOrganizations()}
+        </nav>
+
+        {/* Add Organization Button */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-light">
+          <button
+            onClick={() => setIsAddOrgModalOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange text-white rounded-md hover:bg-orange-hover transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span>Add Organization</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Desktop Sidebar */}
+      <aside
+        className={`hidden md:flex bg-white dark:bg-orange-dark border-r border-gray-light transition-all duration-300 ${
+          isCollapsed ? 'w-16' : 'w-64'
+        } h-screen overflow-hidden sticky top-0 flex-col`}
+      >
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
+          {!isCollapsed && (
+            <h2 className="font-bold text-orange-dark dark:text-white">Organizations</h2>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-2 rounded-md transition-colors"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
           <svg
             className="w-5 h-5 text-gray-slate"
             fill="none"
@@ -332,13 +409,40 @@ export function Sidebar() {
         )}
       </nav>
 
+      {/* Add Organization Button - Desktop */}
+      <div className="flex-shrink-0 p-4 border-t border-gray-light">
+        {!isCollapsed && (
+          <button
+            onClick={() => setIsAddOrgModalOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange text-white rounded-md hover:bg-orange-hover transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span>Add Organization</span>
+          </button>
+        )}
+        {isCollapsed && (
+          <button
+            onClick={() => setIsAddOrgModalOpen(true)}
+            className="w-full flex items-center justify-center p-2 bg-orange text-white rounded-md hover:bg-orange-hover transition-colors"
+            aria-label="Add Organization"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </aside>
+
       {/* Add Organization Modal */}
       <AddOrganizationModal
         isOpen={isAddOrgModalOpen}
         onClose={() => setIsAddOrgModalOpen(false)}
         onSuccess={handleOrganizationSuccess}
       />
-    </aside>
+    </>
   );
 }
 
