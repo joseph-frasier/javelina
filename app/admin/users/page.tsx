@@ -588,7 +588,7 @@ export default function AdminUsersPage() {
 
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600 dark:text-gray-400">Last Login:</span>
-                          <span className="text-gray-900 dark:text-gray-100 text-xs">{lastLoginDate}</span>
+                          <span className="text-gray-900 dark:text-gray-100 text-xs">{lastLoginDate.relative}</span>
                         </div>
                       </div>
                     </Card>

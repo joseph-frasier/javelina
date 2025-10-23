@@ -608,7 +608,7 @@ export default function AdminOrganizationsPage() {
 
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600 dark:text-gray-400">Created:</span>
-                          <span className="text-gray-900 dark:text-gray-100 text-xs">{createdDate}</span>
+                          <span className="text-gray-900 dark:text-gray-100 text-xs">{createdDate.relative}</span>
                         </div>
                       </div>
                     </Card>
