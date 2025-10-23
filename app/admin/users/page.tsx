@@ -563,13 +563,7 @@ export default function AdminUsersPage() {
                             )}
                           </div>
                         </div>
-                        <QuickActionsDropdown
-                          userId={user.id}
-                          userName={user.name}
-                          userEmail={user.email}
-                          isActive={user.status === 'active'}
-                          onActionComplete={refreshData}
-                        />
+                        <QuickActionsDropdown actions={getQuickActions(user)} align="right" />
                       </div>
 
                       <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">

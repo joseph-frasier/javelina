@@ -586,12 +586,7 @@ export default function AdminOrganizationsPage() {
                             )}
                           </div>
                         </div>
-                        <QuickActionsDropdown
-                          orgId={org.id}
-                          orgName={org.name}
-                          isActive={org.status === 'active'}
-                          onActionComplete={refreshData}
-                        />
+                        <QuickActionsDropdown actions={getQuickActions(org)} align="right" />
                       </div>
 
                       <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
