@@ -350,7 +350,7 @@ export default function AdminOrganizationsPage() {
 
           {/* Stat Cards */}
           {!loading && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 label="Total Organizations"
                 value={stats.total}
@@ -461,7 +461,7 @@ export default function AdminOrganizationsPage() {
           {/* Filters */}
           <Card className="p-6">
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Input
                   type="text"
                   placeholder="Search by organization name..."
