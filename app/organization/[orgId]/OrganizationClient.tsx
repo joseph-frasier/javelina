@@ -71,14 +71,14 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     <>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-orange-dark mb-2">{org.name}</h1>
-            {org.description && <p className="text-gray-slate">{org.description}</p>}
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-2 break-words">{org.name}</h1>
+            {org.description && <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300">{org.description}</p>}
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
             {canAddEnvironment && (
-              <Button variant="secondary" onClick={() => setIsAddEnvModalOpen(true)}>
+              <Button variant="secondary" size="sm" onClick={() => setIsAddEnvModalOpen(true)} className="justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -86,7 +86,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               </Button>
             )}
             {canEditOrg && (
-              <Button variant="secondary" onClick={() => setIsEditModalOpen(true)}>
+              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -94,7 +94,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               </Button>
             )}
             {canDeleteOrg && (
-              <Button variant="secondary" onClick={() => setIsDeleteModalOpen(true)} className="!bg-red-600 hover:!bg-red-700 !text-white">
+              <Button variant="secondary" size="sm" onClick={() => setIsDeleteModalOpen(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
@@ -106,21 +106,21 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
         {/* Overview Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card title="Total Environments" className="p-6">
-            <p className="text-3xl font-bold text-orange">{org.environmentsCount}</p>
-            <p className="text-sm text-gray-slate mt-1">
+          <Card title="Total Environments" className="p-4 sm:p-6">
+            <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{org.environmentsCount}</p>
+            <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">
               {org.environments.filter(e => e.status === 'active').length} active
             </p>
           </Card>
-          <Card title="Total Zones" className="p-6">
-            <p className="text-3xl font-bold text-orange">{org.zonesCount}</p>
-            <p className="text-sm text-gray-slate mt-1">DNS zones managed</p>
+          <Card title="Total Zones" className="p-4 sm:p-6">
+            <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{org.zonesCount}</p>
+            <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">DNS zones managed</p>
           </Card>
         </div>
 
         {/* Environments Grid */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-orange-dark mb-4">Environments</h2>
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-orange-dark dark:text-orange mb-4">Environments</h2>
           {org.environments.length === 0 ? (
             <Card className="p-12">
               <div className="text-center">
