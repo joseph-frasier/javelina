@@ -344,7 +344,7 @@ export default function AdminOrganizationsPage() {
                 variant="primary"
                 onClick={() => setShowCreateForm(true)}
                 size="sm"
-                className="flex items-center gap-2 !py-2"
+                className="flex items-center gap-2 !py-2 border-2 border-transparent"
               >
                 + Create Organization
               </Button>
