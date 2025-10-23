@@ -832,7 +832,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Google */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                    <div className="flex items-center justify-between gap-4 p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                           <svg className="w-6 h-6" viewBox="0 0 24 24">
@@ -854,14 +854,14 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => isGoogleConnected ? handleConnectedOAuthClick('google') : handleOAuthConnect('google')}
                         disabled={isLoadingOAuth}
-                        className="w-full sm:w-auto"
+                        className="flex-shrink-0"
                       >
                         {isLoadingOAuth ? 'Loading...' : (isGoogleConnected ? 'Connected' : 'Connect')}
                       </Button>
                     </div>
 
                     {/* GitHub */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                    <div className="flex items-center justify-between gap-4 p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
@@ -880,7 +880,7 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => isGithubConnected ? handleConnectedOAuthClick('github') : handleOAuthConnect('github')}
                         disabled={isLoadingOAuth}
-                        className="w-full sm:w-auto"
+                        className="flex-shrink-0"
                       >
                         {isLoadingOAuth ? 'Loading...' : (isGithubConnected ? 'Connected' : 'Connect')}
                       </Button>
