@@ -160,7 +160,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
               </button>
 
               {isNotificationOpen && (
-                <div className="absolute left-2 right-2 sm:left-auto sm:right-0 mt-2 sm:w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-80 sm:w-80 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
                   <div className="p-4 border-b border-gray-light flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Notifications</h3>
                     <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
