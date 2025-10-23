@@ -141,7 +141,7 @@ export function ManageEmailModal({ isOpen, onClose }: ManageEmailModalProps) {
 
         {/* Info Text */}
         <p className="text-sm text-gray-600 dark:text-gray-400 pt-2">
-          You'll receive a verification email at the new address. Once verified, you can set it as your primary email.
+          You&apos;ll receive a verification email at the new address. Once verified, you can set it as your primary email.
         </p>
       </div>
     </Modal>

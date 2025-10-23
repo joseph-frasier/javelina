@@ -207,7 +207,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
 
         {/* Password Requirements */}
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Make sure it's at least 15 characters OR at least 8 characters including a number and a lowercase letter.{' '}
+          Make sure it&apos;s at least 15 characters OR at least 8 characters including a number and a lowercase letter.{' '}
           <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">
             Learn more.
           </a>
