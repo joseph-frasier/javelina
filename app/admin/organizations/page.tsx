@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { Modal } from '@/components/ui/Modal';
 import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -340,9 +341,9 @@ export default function AdminOrganizationsPage() {
               <ExportButton data={filteredOrgs} filename="organizations" />
               <Button
                 variant="primary"
-                onClick={() => setShowCreateForm(!showCreateForm)}
+                onClick={() => setShowCreateForm(true)}
               >
-                {showCreateForm ? 'Cancel' : '+ Create Organization'}
+                + Create Organization
               </Button>
             </div>
           </div>
@@ -393,45 +394,69 @@ export default function AdminOrganizationsPage() {
             </div>
           )}
 
-          {/* Create Form */}
-          {showCreateForm && (
-            <Card className="p-6 bg-orange-50 dark:bg-orange-900/10">
-              <h2 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">Create New Organization</h2>
-              <div className="space-y-4">
+          {/* Create Organization Modal */}
+          <Modal
+            isOpen={showCreateForm}
+            onClose={() => {
+              setShowCreateForm(false);
+              setCreateName('');
+              setCreateDescription('');
+            }}
+            title="Create New Organization"
+            size="medium"
+          >
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="org-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                  Organization Name <span className="text-red-500">*</span>
+                </label>
                 <Input
+                  id="org-name"
                   type="text"
-                  placeholder="Organization name..."
+                  placeholder="e.g., Acme Corp"
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
+                  disabled={isCreating}
                 />
-                <Input
-                  type="text"
-                  placeholder="Description (optional)..."
+              </div>
+              
+              <div>
+                <label htmlFor="org-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                  Description
+                </label>
+                <textarea
+                  id="org-description"
+                  placeholder="Optional description or notes"
                   value={createDescription}
                   onChange={(e) => setCreateDescription(e.target.value)}
+                  disabled={isCreating}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
                 />
-                <div className="flex gap-2">
-                  <Button
-                    variant="primary"
-                    disabled={isCreating}
-                    onClick={handleCreateOrganization}
-                  >
-                    {isCreating ? 'Creating...' : 'Create'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setCreateName('');
-                      setCreateDescription('');
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
               </div>
-            </Card>
-          )}
+
+              <div className="flex items-center justify-end space-x-3 pt-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setCreateName('');
+                    setCreateDescription('');
+                  }}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleCreateOrganization}
+                  disabled={isCreating || !createName.trim()}
+                >
+                  {isCreating ? 'Creating...' : 'Create Organization'}
+                </Button>
+              </div>
+            </div>
+          </Modal>
 
           {/* Filters */}
           <Card className="p-6">
