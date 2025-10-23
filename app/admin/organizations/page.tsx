@@ -344,6 +344,7 @@ export default function AdminOrganizationsPage() {
                 variant="primary"
                 onClick={() => setShowCreateForm(true)}
                 size="sm"
+                className="!py-2"
               >
                 + Create Organization
               </Button>
