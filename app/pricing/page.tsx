@@ -39,26 +39,26 @@ export default function PricingPage() {
     <div className="min-h-screen bg-orange-light">
       {/* Header */}
       <div className="border-b border-gray-light bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Logo width={200} height={80} />
+        <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1">
+          <Logo width={150} height={60} />
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-black text-orange-dark mb-4">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-black text-orange-dark mb-2">
             Choose Your Plan
           </h1>
-          <p className="text-xl text-gray-slate font-light max-w-2xl mx-auto">
+          <p className="text-base text-gray-slate font-light max-w-2xl mx-auto">
             Start managing your DNS infrastructure with confidence. Select the
             plan that fits your needs.
           </p>
         </div>
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {PLANS.map((plan) => (
             <PricingCard
               key={plan.id}
@@ -70,49 +70,39 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-20 max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-orange-dark text-center mb-12">
+        <div className="mt-8 max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-orange-dark text-center mb-6">
             Frequently Asked Questions
           </h2>
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-gray-light p-6">
-              <h3 className="text-lg font-bold text-orange-dark mb-2">
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg border border-gray-light p-4">
+              <h3 className="text-base font-bold text-orange-dark mb-1">
                 Can I change my plan later?
               </h3>
-              <p className="text-gray-slate font-regular">
+              <p className="text-sm text-gray-slate font-regular">
                 Yes! You can upgrade or downgrade your plan at any time. Changes
                 will be prorated and reflected in your next billing cycle.
               </p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-light p-6">
-              <h3 className="text-lg font-bold text-orange-dark mb-2">
+            <div className="bg-white rounded-lg border border-gray-light p-4">
+              <h3 className="text-base font-bold text-orange-dark mb-1">
                 What payment methods do you accept?
               </h3>
-              <p className="text-gray-slate font-regular">
+              <p className="text-sm text-gray-slate font-regular">
                 We accept all major credit cards (Visa, Mastercard, American
                 Express) and support automatic billing for your convenience.
               </p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-light p-6">
-              <h3 className="text-lg font-bold text-orange-dark mb-2">
+            <div className="bg-white rounded-lg border border-gray-light p-4">
+              <h3 className="text-base font-bold text-orange-dark mb-1">
                 Is there a free trial?
               </h3>
-              <p className="text-gray-slate font-regular">
+              <p className="text-sm text-gray-slate font-regular">
                 Our Free plan is available forever with no credit card required.
                 For paid plans, we offer a 14-day money-back guarantee.
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Footer Links */}
-        <div className="text-center mt-16">
-          <p className="text-gray-slate font-light">
-            Need help choosing?{' '}
-            <Link href="/contact" className="text-orange hover:underline">
-              Contact our sales team
-            </Link>
-          </p>
         </div>
       </div>
     </div>

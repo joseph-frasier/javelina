@@ -54,15 +54,8 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-orange-light">
       {/* Header */}
       <div className="border-b border-gray-light bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Logo width={200} height={80} />
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Back Link */}
-        <div className="mb-8">
+        <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
+          <Logo width={150} height={60} />
           <Link
             href="/pricing"
             className="inline-flex items-center text-orange hover:underline font-regular"
@@ -83,13 +76,16 @@ export default function CheckoutPage() {
             Back to pricing
           </Link>
         </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Title */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-black text-orange-dark mb-2">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-black text-orange-dark mb-2">
             Complete Your Purchase
           </h1>
-          <p className="text-lg text-gray-slate font-light">
+          <p className="text-base text-gray-slate font-light">
             You&apos;re one step away from unlocking powerful DNS management
           </p>
         </div>
