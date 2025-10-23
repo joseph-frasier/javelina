@@ -563,7 +563,67 @@ export default function AdminOrganizationsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Mobile Card View - Below 640px */}
+              <div className="sm:hidden space-y-3">
+                {paginatedOrgs.map((org) => {
+                  const createdDate = formatDateWithRelative(org.created_at);
+
+                  return (
+                    <Card key={org.id} className="p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(org.id)}
+                            onChange={() => toggleSelect(org.id)}
+                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 dark:text-white truncate">{org.name}</p>
+                            {org.description && (
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{org.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <QuickActionsDropdown
+                          orgId={org.id}
+                          orgName={org.name}
+                          isActive={org.status === 'active'}
+                          onActionComplete={refreshData}
+                        />
+                      </div>
+
+                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Members:</span>
+                          <span className="text-gray-900 dark:text-gray-100 font-medium">{org.member_count || 0}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            org.status === 'active'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                          }`}>
+                            {org.status === 'active' ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Created:</span>
+                          <span className="text-gray-900 dark:text-gray-100 text-xs">{createdDate}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table - 640px+ */}
+              <div className="hidden sm:block">
+                <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-light">
@@ -657,6 +717,7 @@ export default function AdminOrganizationsPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
                 
                 {/* Bottom Pagination */}
                 {filteredOrgs.length > itemsPerPage && (
@@ -670,6 +731,7 @@ export default function AdminOrganizationsPage() {
                   />
                 )}
               </div>
+              </>
             )}
           </Card>
 
