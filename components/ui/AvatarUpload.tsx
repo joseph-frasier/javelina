@@ -53,6 +53,13 @@ export function AvatarUpload({
     }
   }, [showEnlargedView]);
 
+  // Scroll to top when crop modal opens
+  useEffect(() => {
+    if (imageSrc) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [imageSrc]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
@@ -331,7 +338,7 @@ export function AvatarUpload({
 
       {/* Crop Modal */}
       {imageSrc && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/80 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-8">
           <div className="bg-white rounded-xl p-6 w-full max-w-2xl mx-4">
             <h3 className="text-xl font-bold text-orange-dark mb-4">
               Crop Your Photo
