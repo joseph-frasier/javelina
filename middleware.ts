@@ -77,8 +77,11 @@ export async function middleware(request: NextRequest) {
     const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/admin/login', '/pricing', '/checkout']
     const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
-    // If user is not authenticated and trying to access a protected route (but allow /admin/* routes)
-    if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin')) {
+    // Check if user just completed payment (allow dashboard access)
+    const paymentComplete = request.nextUrl.searchParams.get('payment_complete') === 'true'
+
+    // If user is not authenticated and trying to access a protected route (but allow /admin/* routes and payment completion)
+    if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
       const redirectUrl = new URL('/login', request.url)
       // Add the current URL as a redirect parameter so we can send them back after login
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)

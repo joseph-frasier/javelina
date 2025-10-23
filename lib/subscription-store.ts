@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type PlanId = 'free' | 'pro' | 'enterprise';
+export type PlanId = 'free' | 'basic' | 'pro' | 'enterprise';
 export type SubscriptionStatus = 'active' | 'inactive' | 'trialing' | 'past_due' | 'canceled';
 
 export interface Plan {
@@ -12,6 +12,7 @@ export interface Plan {
   features: string[];
   description: string;
   popular?: boolean;
+  stripePriceId?: string; // Stripe price ID for this plan
 }
 
 export interface Subscription {
@@ -34,38 +35,51 @@ interface SubscriptionState {
   clearSelectedPlan: () => void;
 }
 
-// Mock plan data
+// Plan data matching Stripe pricing
 export const PLANS: Plan[] = [
   {
     id: 'free',
     name: 'Free',
     price: 0,
     interval: 'month',
-    description: 'Perfect for getting started',
+    description: 'For testing and limited use',
     features: [
       '1 organization',
       '2 environments',
       '10 DNS zones',
       'Basic DNS records',
       'Community support',
-      '24-hour DNS propagation',
+    ],
+  },
+  {
+    id: 'basic',
+    name: 'Basic',
+    price: 3.50,
+    interval: 'month',
+    description: 'For small-scale websites',
+    features: [
+      '3 organizations',
+      '5 environments',
+      '25 DNS zones',
+      'All record types',
+      'Email support',
+      'Basic analytics',
     ],
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: 49,
+    price: 6.70,
     interval: 'month',
-    description: 'For growing teams',
+    description: 'For SMBs with analytics',
     popular: true,
     features: [
-      '5 organizations',
+      '10 organizations',
       'Unlimited environments',
       'Unlimited DNS zones',
       'All record types',
       'Priority email support',
       'Advanced analytics',
-      '1-hour DNS propagation',
       'API access',
       'Team collaboration',
     ],
@@ -73,9 +87,9 @@ export const PLANS: Plan[] = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 199,
+    price: 450,
     interval: 'month',
-    description: 'For large-scale operations',
+    description: 'Large-scale SLAs',
     features: [
       'Unlimited organizations',
       'Unlimited environments',
@@ -83,7 +97,6 @@ export const PLANS: Plan[] = [
       'All record types',
       '24/7 phone & email support',
       'Advanced analytics & reporting',
-      'Instant DNS propagation',
       'Full API access',
       'Team collaboration',
       'SSO & SAML integration',
