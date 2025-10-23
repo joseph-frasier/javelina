@@ -30,15 +30,15 @@ export default function ProfilePage() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
       case 'Admin':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
       case 'Editor':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
       case 'Viewer':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
     }
   };
 
@@ -53,12 +53,12 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-8">
-        <div className="flex gap-8">
-          {/* Left Sidebar - 320px */}
-          <div className="w-80 flex-shrink-0 space-y-6">
+      <div className="p-4 sm:p-6 md:p-8">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+          {/* Left Sidebar - Full width on mobile, 320px on desktop */}
+          <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
             {/* Profile Card */}
-            <Card className="p-6">
+            <Card className="p-4 sm:p-6">
               <div className="flex flex-col items-center text-center">
                 <div className="mb-4">
                   <AvatarUpload
@@ -68,27 +68,28 @@ export default function ProfilePage() {
                     onAvatarUpdate={handleAvatarUpdate}
                   />
                 </div>
-                <h2 className="text-xl font-bold text-orange-dark mb-1">
+                <h2 className="text-lg sm:text-xl font-bold text-orange-dark dark:text-orange mb-1">
                   {user.name}
                 </h2>
-                <p className="text-sm text-gray-slate mb-2">
+                <p className="text-sm text-gray-slate dark:text-gray-300 mb-2 break-words">
                   {user.email}
                 </p>
                 {user.title && (
-                  <p className="text-sm text-gray-slate mb-2">
+                  <p className="text-sm text-gray-slate dark:text-gray-300 mb-2">
                     {user.title}
                   </p>
                 )}
                 {user.role === 'superuser' && (
-                  <p className="text-sm font-semibold text-orange mb-4">
+                  <p className="text-sm font-semibold text-orange dark:text-orange mb-4">
                     SuperUser
                   </p>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(!isEditing)}
+                    className="flex-1 sm:flex-none"
                   >
                     {isEditing ? 'Cancel' : 'Edit Profile'}
                   </Button>
@@ -98,23 +99,23 @@ export default function ProfilePage() {
 
             {/* Admin Controls Card */}
             {(user.role === 'superuser' || user.organizations?.some(org => org.role === 'Admin' || org.role === 'SuperAdmin')) && (
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-orange-dark mb-4 text-center">
+              <Card className="p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold text-orange-dark dark:text-orange mb-3 sm:mb-4 text-center">
                   Admin Controls
                 </h3>
-                <div className="space-y-3">
-                  <Button variant="outline" size="sm" className="w-full">
+                <div className="space-y-2 sm:space-y-3">
+                  <Button variant="outline" size="sm" className="w-full justify-center">
                     Manage Members
                   </Button>
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button variant="outline" size="sm" className="w-full justify-center">
                     Invite Users
                   </Button>
                   {user.role === 'superuser' && (
                     <>
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full justify-center">
                         Set Primary Domain
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full justify-center">
                         Resolve Conflicts
                       </Button>
                     </>
@@ -124,24 +125,24 @@ export default function ProfilePage() {
             )}
 
             {/* Billing Card */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-orange-dark mb-4 text-center">
+            <Card className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-orange-dark dark:text-orange mb-3 sm:mb-4 text-center">
                 Billing
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate">Plan</span>
-                  <span className="text-sm font-medium">Pro</span>
+                  <span className="text-sm text-gray-slate dark:text-gray-400">Plan</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Pro</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate">Seats Used</span>
-                  <span className="text-sm font-medium">6 / 10</span>
+                  <span className="text-sm text-gray-slate dark:text-gray-400">Seats Used</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">6 / 10</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate">Next Invoice</span>
-                  <span className="text-sm font-medium">Nov 1, 2025</span>
+                  <span className="text-sm text-gray-slate dark:text-gray-400">Next Invoice</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Nov 1, 2025</span>
                 </div>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full justify-center">
                   Manage Billing
                 </Button>
               </div>
@@ -149,36 +150,36 @@ export default function ProfilePage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 space-y-4 sm:space-y-6">
             {/* Organization Membership */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-orange-dark">
+            <Card className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Organization Membership
                 </h3>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto justify-center">
                   Manage Organizations
                 </Button>
               </div>
-              <div className="grid gap-4">
+              <div className="grid gap-3 sm:gap-4">
                 {user.organizations?.map((org) => (
-                  <div key={org.id} className="border border-gray-light rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-orange-dark">{org.name}</h4>
-                      <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)}`}>
+                  <div key={org.id} className="border border-gray-light dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-800">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <h4 className="font-medium text-orange-dark dark:text-orange break-words">{org.name}</h4>
+                      <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)} flex-shrink-0 self-start sm:self-auto`}>
                         {getRoleDisplayText(org.role)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-slate mb-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-slate dark:text-gray-400 mb-3">
                       <span>{org.environments_count} environments</span>
                       <span>{org.environments?.reduce((sum, env) => sum + env.zones_count, 0) || 0} zones</span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button variant="outline" size="sm" className="justify-center">
                         Go to Org
                       </Button>
                       {(org.role === 'Admin' || org.role === 'SuperAdmin') && (
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="justify-center">
                           Manage
                         </Button>
                       )}
@@ -189,43 +190,43 @@ export default function ProfilePage() {
             </Card>
 
             {/* API Keys */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-orange-dark">
+            <Card className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   API Keys
                 </h3>
-                <Button variant="primary" size="sm">
+                <Button variant="primary" size="sm" className="w-full sm:w-auto justify-center">
                   Create API Key
                 </Button>
               </div>
               <div className="space-y-3">
-                <div className="border border-gray-light rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">CI Integration</h4>
-                      <p className="text-sm text-gray-slate">Created Jun 1, 2025</p>
+                <div className="border border-gray-light dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 break-words">CI Integration</h4>
+                      <p className="text-sm text-gray-slate dark:text-gray-400">Created Jun 1, 2025</p>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                    <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                      <Button variant="outline" size="sm" className="justify-center">
                         Rotate
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600">
+                      <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400 justify-center">
                         Revoke
                       </Button>
                     </div>
                   </div>
                 </div>
-                <div className="border border-gray-light rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">CLI</h4>
-                      <p className="text-sm text-gray-slate">Created Jul 3, 2025</p>
+                <div className="border border-gray-light dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 break-words">CLI</h4>
+                      <p className="text-sm text-gray-slate dark:text-gray-400">Created Jul 3, 2025</p>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                    <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                      <Button variant="outline" size="sm" className="justify-center">
                         Rotate
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600">
+                      <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400 justify-center">
                         Revoke
                       </Button>
                     </div>
@@ -235,38 +236,38 @@ export default function ProfilePage() {
             </Card>
 
             {/* Activity Feed */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-orange-dark">
+            <Card className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Recent Activity
                 </h3>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto justify-center">
                   Export Activity
                 </Button>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Enabled MFA</p>
-                    <p className="text-xs text-gray-slate">Sep 30, 2025 at 12:34 PM</p>
-                    <p className="text-xs text-gray-slate">Company Corp</p>
+                  <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">Enabled MFA</p>
+                    <p className="text-xs text-gray-slate dark:text-gray-400">Sep 30, 2025 at 12:34 PM</p>
+                    <p className="text-xs text-gray-slate dark:text-gray-400">Company Corp</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Created DNS zone example.com</p>
-                    <p className="text-xs text-gray-slate">Sep 28, 2025 at 9:01 AM</p>
-                    <p className="text-xs text-gray-slate">Company Corp • example.com</p>
+                  <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">Created DNS zone example.com</p>
+                    <p className="text-xs text-gray-slate dark:text-gray-400">Sep 28, 2025 at 9:01 AM</p>
+                    <p className="text-xs text-gray-slate dark:text-gray-400">Company Corp • example.com</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-orange rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Updated DNS record</p>
-                    <p className="text-xs text-gray-slate">Sep 25, 2025 at 2:15 PM</p>
-                    <p className="text-xs text-gray-slate">Company Corp • api.example.com</p>
+                  <div className="w-2 h-2 bg-orange dark:bg-orange rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">Updated DNS record</p>
+                    <p className="text-xs text-gray-slate dark:text-gray-400">Sep 25, 2025 at 2:15 PM</p>
+                    <p className="text-xs text-gray-slate dark:text-gray-400">Company Corp • api.example.com</p>
                   </div>
                 </div>
               </div>
