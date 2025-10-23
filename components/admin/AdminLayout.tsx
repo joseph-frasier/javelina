@@ -214,7 +214,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Main Content */}
         <main ref={containerRef} className="flex-1 overflow-auto bg-gray-50 dark:bg-orange-dark">
-          <div ref={contentRef} className="p-8 max-w-7xl mx-auto w-full">
+          <div ref={contentRef} className="p-8 w-full">
             {children}
           </div>
         </main>
