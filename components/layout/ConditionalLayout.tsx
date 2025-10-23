@@ -23,15 +23,17 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
     setIsMobileMenuOpen(false);
   }, [pathname]);
   
-  // Hide sidebar and header on authentication pages and admin routes
+  // Hide sidebar and header on authentication pages, pricing/checkout, and admin routes
   const isAuthPage = pathname === '/login' || 
                      pathname === '/signup' || 
                      pathname === '/forgot-password' || 
                      pathname === '/reset-password';
 
+  const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout';
+
   const isAdminRoute = pathname.startsWith('/admin');
 
-  if (isAuthPage || isAdminRoute) {
+  if (isAuthPage || isPricingOrCheckout || isAdminRoute) {
     return <>{children}</>;
   }
 
