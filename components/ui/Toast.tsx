@@ -92,10 +92,10 @@ function Toast({ toast, onClose }: ToastProps) {
       role="alert"
     >
       <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
-      <div className="ml-2 sm:ml-3 text-xs sm:text-sm font-medium break-words">{toast.message}</div>
+      <div className="ml-2 sm:ml-3 text-xs sm:text-sm font-medium break-words flex-1">{toast.message}</div>
       <button
         onClick={() => onClose(toast.id)}
-        className="ml-2 sm:ml-3 -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex h-8 w-8 hover:bg-white/50 transition-colors flex-shrink-0"
+        className="ml-2 sm:ml-3 rounded-lg p-1.5 inline-flex h-8 w-8 hover:bg-white/50 transition-colors flex-shrink-0"
         aria-label="Close"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
