@@ -371,13 +371,13 @@ export default function AdminUsersPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Users</h1>
-                <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all system users</p>
-              </div>
-              <ExportButton data={filteredUsers} filename="users" className="w-full sm:w-auto" />
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Users</h1>
+              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all system users</p>
+            </div>
+            <div className="flex-shrink-0">
+              <ExportButton data={filteredUsers} filename="users" />
             </div>
           </div>
 

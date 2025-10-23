@@ -155,17 +155,19 @@ export default function AdminAuditPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">Audit Log</h1>
-              <p className="text-gray-slate mt-2">View all admin actions</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Audit Log</h1>
+              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">View all admin actions</p>
             </div>
-            <ExportButton data={filteredLogs} filename="audit-log" />
+            <div className="flex-shrink-0">
+              <ExportButton data={filteredLogs} filename="audit-log" />
+            </div>
           </div>
 
           {/* Stat Cards */}
           {!loading && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <StatCard
                 label="Total Events"
                 value={stats.total}

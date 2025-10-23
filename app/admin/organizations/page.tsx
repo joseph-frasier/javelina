@@ -332,24 +332,22 @@ export default function AdminOrganizationsPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Organizations</h1>
-                <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all organizations</p>
-              </div>
-              
-              {/* Buttons - Stacked on mobile, side-by-side on desktop */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <Button
-                  variant="primary"
-                  onClick={() => setShowCreateForm(true)}
-                  className="w-full sm:w-auto order-1 sm:order-2"
-                >
-                  + Create Organization
-                </Button>
-                <ExportButton data={filteredOrgs} filename="organizations" className="w-full sm:w-auto order-2 sm:order-1" />
-              </div>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Organizations</h1>
+              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all organizations</p>
+            </div>
+            
+            {/* Buttons - Stacked vertically on mobile, side-by-side on desktop */}
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateForm(true)}
+                size="sm"
+              >
+                + Create Organization
+              </Button>
+              <ExportButton data={filteredOrgs} filename="organizations" />
             </div>
           </div>
 

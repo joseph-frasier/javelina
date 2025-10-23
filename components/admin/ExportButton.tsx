@@ -54,7 +54,7 @@ export function ExportButton({ data, filename, disabled = false, label = 'Export
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || isExporting}
-        className="flex items-center gap-2 !py-2 w-full"
+        className="flex items-center gap-2 !py-2"
       >
         {isExporting ? (
           <>
