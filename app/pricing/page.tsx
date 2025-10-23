@@ -12,25 +12,54 @@ export default function PricingPage() {
   const router = useRouter();
   const selectPlan = useSubscriptionStore((state) => state.selectPlan);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const showToast = useToastStore((state) => state.showToast);
+  const addToast = useToastStore((state) => state.addToast);
+  const user = useAuthStore((state) => state.user);
 
-  const handleSelectPlan = (planId: string) => {
+  const handleSelectPlan = async (planId: string) => {
     if (planId === 'free') {
-      // Free plan - create subscription
+      // Free plan - create Stripe customer and go to dashboard
       selectPlan(planId);
       
+      try {
+        // Create Stripe customer for future upgrades
+        const response = await fetch('/api/stripe/create-customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user?.email || 'guest@example.com',
+            name: user?.name || 'Guest User',
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error('Failed to create Stripe customer:', data.error);
+        } else {
+          console.log('Stripe customer created:', data.customerId);
+        }
+      } catch (error) {
+        console.error('Error creating Stripe customer:', error);
+      }
+
       // Check if user is authenticated
       if (isAuthenticated) {
         // User is authenticated, go to dashboard
-        router.push('/');
+        addToast('success', 'Welcome to Javelina Free!');
+        router.push('/?payment_complete=true');
       } else {
         // User needs to login/verify email first
-        showToast('Please login to continue to your dashboard', 'info');
+        addToast('info', 'Please login to continue to your dashboard');
         router.push('/login');
       }
+    } else if (planId === 'enterprise') {
+      // Enterprise plan - redirect to contact/sales
+      addToast('info', 'Please contact our sales team for Enterprise pricing');
+      // In a real app, this would go to a contact form
+      router.push('/pricing'); // For now, just stay on pricing
     } else {
-      // Paid plan - go to checkout
-      selectPlan(planId as 'pro' | 'enterprise');
+      // Paid plan (basic/pro) - go to checkout
+      selectPlan(planId as 'basic' | 'pro');
       router.push('/checkout');
     }
   };

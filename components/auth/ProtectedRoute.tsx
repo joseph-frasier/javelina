@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 
 interface ProtectedRouteProps {
@@ -10,13 +10,18 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useAuthStore();
+  
+  // Check if user just completed payment
+  const paymentComplete = searchParams.get('payment_complete') === 'true';
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // Allow access if authenticated OR if they just completed payment
+    if (!isLoading && !isAuthenticated && !paymentComplete) {
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, paymentComplete, router]);
 
   if (isLoading) {
     return (
@@ -29,7 +34,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!isAuthenticated) {
+  // Show content if authenticated OR if payment just completed
+  if (!isAuthenticated && !paymentComplete) {
     return null;
   }
 
