@@ -39,8 +39,8 @@ export function Pagination({
 
   if (position === 'top') {
     return (
-      <div className="flex items-center justify-end gap-2">
-        <span className="text-sm text-gray-600 dark:text-gray-100">
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-2 sm:gap-3">
+        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-100">
           {startItem}-{endItem} of {totalItems}
         </span>
         <div className="flex items-center gap-1">
@@ -49,11 +49,11 @@ export function Pagination({
             size="sm"
             onClick={handlePrevious}
             disabled={currentPage === 1}
-            className="px-3 py-1.5 text-sm"
+            className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm"
           >
             ← Previous
           </Button>
-          <span className="px-3 py-1.5 text-sm font-medium text-gray-900 dark:text-white">
+          <span className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
             {currentPage} of {totalPages}
           </span>
           <Button
@@ -61,7 +61,7 @@ export function Pagination({
             size="sm"
             onClick={handleNext}
             disabled={currentPage === totalPages}
-            className="px-3 py-1.5 text-sm"
+            className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm"
           >
             Next →
           </Button>
@@ -71,21 +71,21 @@ export function Pagination({
   }
 
   return (
-    <div className="flex items-center justify-center gap-4 py-4">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 py-4">
       <Button
         variant="outline"
         size="sm"
         onClick={handlePrevious}
         disabled={currentPage === 1}
-        className="px-4 py-2"
+        className="px-3 sm:px-4 py-2 text-xs sm:text-sm w-full sm:w-auto"
       >
         ← Previous
       </Button>
       <div className="flex flex-col items-center gap-1">
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
+        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
           Page {currentPage} of {totalPages}
         </span>
-        <span className="text-xs text-gray-600 dark:text-gray-100">
+        <span className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-100 whitespace-nowrap">
           Showing {startItem}-{endItem} of {totalItems}
         </span>
       </div>
@@ -94,7 +94,7 @@ export function Pagination({
         size="sm"
         onClick={handleNext}
         disabled={currentPage === totalPages}
-        className="px-4 py-2"
+        className="px-3 sm:px-4 py-2 text-xs sm:text-sm w-full sm:w-auto"
       >
         Next →
       </Button>
