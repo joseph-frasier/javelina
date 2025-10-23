@@ -88,11 +88,11 @@ function Toast({ toast, onClose }: ToastProps) {
 
   return (
     <div
-      className={`flex items-start p-3 sm:p-4 mb-3 rounded-lg border-l-4 shadow-lg ${getToastStyles()} animate-slide-in-right`}
+      className={`flex items-start p-3 sm:p-4 rounded-lg border-l-4 shadow-lg min-w-[280px] max-w-full sm:max-w-md ${getToastStyles()} animate-slide-in-right`}
       role="alert"
     >
       <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
-      <div className="ml-2 sm:ml-3 text-xs sm:text-sm font-medium flex-1 break-words">{toast.message}</div>
+      <div className="ml-2 sm:ml-3 text-xs sm:text-sm font-medium break-words">{toast.message}</div>
       <button
         onClick={() => onClose(toast.id)}
         className="ml-2 sm:ml-3 -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex h-8 w-8 hover:bg-white/50 transition-colors flex-shrink-0"
@@ -117,7 +117,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
   return (
-    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 sm:w-full sm:max-w-md space-y-3">
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 flex flex-col items-end space-y-3">
       {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onClose={onClose} />
       ))}
