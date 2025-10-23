@@ -65,6 +65,74 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
     }
   };
 
+  // Render organizations list (shared between mobile and desktop)
+  const renderOrganizations = () => {
+    return (
+      <div className="space-y-1">
+        {userOrganizations.map((org) => (
+          <div key={org.id}>
+            {/* Organization */}
+            <div className="flex items-center group">
+              <button
+                onClick={() => handleToggleOrg(org.id)}
+                className="p-1 rounded transition-colors"
+                aria-label={expandedOrgs.has(org.id) ? 'Collapse' : 'Expand'}
+              >
+                <svg
+                  className={`w-4 h-4 text-gray-slate transition-transform ${
+                    expandedOrgs.has(org.id) ? 'rotate-90' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+              <Link
+                href={`/organization/${org.id}`}
+                className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
+              >
+                <svg
+                  className="w-4 h-4 text-orange"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                  />
+                </svg>
+                <span className="text-sm font-medium text-orange-dark dark:text-white">
+                  {org.name}
+                </span>
+              </Link>
+            </div>
+
+            {/* Environments */}
+            {expandedOrgs.has(org.id) && (
+              <EnvironmentsList
+                orgId={org.id}
+                expandedEnvironments={expandedEnvironments}
+                handleToggleEnvironment={handleToggleEnvironment}
+                envContainerRefs={envContainerRefs}
+                zoneContainerRefs={zoneContainerRefs}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const handleToggleOrg = (orgId: string) => {
     const isExpanding = !expandedOrgs.has(orgId);
     
@@ -343,69 +411,8 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
             ))}
           </div>
         ) : (
-          // Expanded view - show full tree
-          <div className="space-y-1">
-            {userOrganizations.map((org) => (
-              <div key={org.id}>
-                {/* Organization */}
-                <div className="flex items-center group">
-                  <button
-                    onClick={() => handleToggleOrg(org.id)}
-                    className="p-1 rounded transition-colors"
-                    aria-label={expandedOrgs.has(org.id) ? 'Collapse' : 'Expand'}
-                  >
-                    <svg
-                      className={`w-4 h-4 text-gray-slate transition-transform ${
-                        expandedOrgs.has(org.id) ? 'rotate-90' : ''
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
-                  <Link
-                    href={`/organization/${org.id}`}
-                    className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
-                  >
-                    <svg
-                      className="w-4 h-4 text-orange"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-orange-dark dark:text-white">
-                      {org.name}
-                    </span>
-                  </Link>
-                </div>
-
-                {/* Environments */}
-                {expandedOrgs.has(org.id) && (
-                  <EnvironmentsList
-                    orgId={org.id}
-                    expandedEnvironments={expandedEnvironments}
-                    handleToggleEnvironment={handleToggleEnvironment}
-                    envContainerRefs={envContainerRefs}
-                    zoneContainerRefs={zoneContainerRefs}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+          // Expanded view - use shared render function
+          renderOrganizations()
         )}
       </nav>
 
