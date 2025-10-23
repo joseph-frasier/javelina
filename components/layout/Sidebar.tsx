@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useAuthStore } from '@/lib/auth-store';
@@ -18,6 +18,7 @@ interface SidebarProps {
 
 export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: SidebarProps = {}) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuthStore();
   const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -298,13 +299,13 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
       >
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
-          <h2 className="font-bold text-orange-dark dark:text-white">Organizations</h2>
+          <h2 className="font-bold text-orange-dark dark:text-white">Navigation</h2>
           <button
             onClick={onMobileMenuClose}
-            className="p-2 rounded-md transition-colors hover:bg-gray-light"
+            className="p-2 rounded-md transition-colors hover:bg-gray-light dark:hover:bg-gray-700"
             aria-label="Close menu"
           >
-            <svg className="w-5 h-5 text-gray-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-slate dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -312,7 +313,45 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
 
         {/* Content */}
         <nav className="flex-1 overflow-y-auto p-4">
-          {renderOrganizations()}
+          {/* Dashboard & Analytics Links */}
+          <div className="mb-4 space-y-1 pb-4 border-b border-gray-light dark:border-gray-700">
+            <Link
+              href="/"
+              onClick={onMobileMenuClose}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                pathname === '/' 
+                  ? 'bg-orange text-white' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="font-medium">Dashboard</span>
+            </Link>
+            <Link
+              href="/analytics"
+              onClick={onMobileMenuClose}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                pathname === '/analytics' 
+                  ? 'bg-orange text-white' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="font-medium">Analytics</span>
+            </Link>
+          </div>
+
+          {/* Organizations Section */}
+          <div className="mb-2">
+            <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3 mb-2">
+              Organizations
+            </h3>
+            {renderOrganizations()}
+          </div>
         </nav>
 
         {/* Add Organization Button */}
@@ -338,7 +377,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
           {!isCollapsed && (
-            <h2 className="font-bold text-orange-dark dark:text-white">Organizations</h2>
+            <h2 className="font-bold text-orange-dark dark:text-white">Navigation</h2>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -346,7 +385,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
           <svg
-            className="w-5 h-5 text-gray-slate"
+            className="w-5 h-5 text-gray-slate dark:text-gray-300"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -361,9 +400,70 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         </button>
       </div>
 
+      {/* Dashboard & Analytics Links */}
+      <div className="flex-shrink-0 p-4 border-b border-gray-light dark:border-gray-700">
+        {isCollapsed ? (
+          // Collapsed - icons only
+          <div className="flex flex-col space-y-2">
+            <Link
+              href="/"
+              className={`p-2 rounded-md transition-colors flex items-center justify-center ${
+                pathname === '/' ? 'bg-orange text-white' : 'hover:bg-gray-light dark:hover:bg-gray-700'
+              }`}
+              title="Dashboard"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </Link>
+            <Link
+              href="/analytics"
+              className={`p-2 rounded-md transition-colors flex items-center justify-center ${
+                pathname === '/analytics' ? 'bg-orange text-white' : 'hover:bg-gray-light dark:hover:bg-gray-700'
+              }`}
+              title="Analytics"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </Link>
+          </div>
+        ) : (
+          // Expanded - full links
+          <div className="space-y-1">
+            <Link
+              href="/"
+              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                pathname === '/' 
+                  ? 'bg-orange text-white' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="font-medium">Dashboard</span>
+            </Link>
+            <Link
+              href="/analytics"
+              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                pathname === '/analytics' 
+                  ? 'bg-orange text-white' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="font-medium">Analytics</span>
+            </Link>
+          </div>
+        )}
+      </div>
+
       {/* Add Organization Button */}
       {!isCollapsed && (
-        <div className="flex-shrink-0 p-4 border-b border-gray-light">
+        <div className="flex-shrink-0 px-4 pt-4 pb-2">
           <button
             onClick={() => setIsAddOrgModalOpen(true)}
             className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-orange hover:bg-orange-dark text-white rounded-md transition-colors"
@@ -382,8 +482,17 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         </div>
       )}
 
+      {/* Organizations Section Header */}
+      {!isCollapsed && (
+        <div className="px-4 py-2">
+          <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3">
+            Organizations
+          </h3>
+        </div>
+      )}
+
       {/* Tree View */}
-      <nav className="flex-1 overflow-y-auto p-4 pb-8 min-h-0" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+      <nav className="flex-1 overflow-y-auto p-4 pb-8 min-h-0" style={{ maxHeight: 'calc(100vh - 350px)' }}>
         {isCollapsed ? (
           // Collapsed view - show icons only
           <div className="flex flex-col space-y-2">
@@ -391,11 +500,11 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
               <Link
                 key={org.id}
                 href={`/organization/${org.id}`}
-                className="p-2 rounded-md transition-colors flex items-center justify-center"
+                className="p-2 rounded-md transition-colors flex items-center justify-center hover:bg-gray-light dark:hover:bg-gray-700"
                 title={org.name}
               >
                 <svg
-                  className="w-5 h-5 text-gray-slate"
+                  className="w-5 h-5 text-gray-slate dark:text-gray-300"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
