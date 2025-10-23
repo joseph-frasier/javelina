@@ -227,14 +227,34 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold text-orange-dark mb-8">Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-4 sm:mb-6 md:mb-8">Settings</h1>
           
-          <div className="flex gap-8">
-            {/* Sidebar Navigation */}
-            <div className="w-64 flex-shrink-0">
-              <nav className="space-y-2">
+          {/* Mobile: Horizontal Scrolling Tabs */}
+          <div className="md:hidden mb-6 -mx-4 px-4 overflow-x-auto">
+            <nav className="flex gap-2 min-w-max pb-2">
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap text-sm ${
+                    activeSection === section.id
+                      ? 'bg-orange text-white'
+                      : 'text-gray-slate dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-light/30'
+                  }`}
+                >
+                  <span>{section.icon}</span>
+                  <span>{section.name}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+            {/* Desktop: Sidebar Navigation */}
+            <div className="hidden md:block w-64 flex-shrink-0">
+              <nav className="space-y-2 sticky top-6">
                 {sections.map((section) => (
                   <button
                     key={section.id}
@@ -242,7 +262,7 @@ export default function SettingsPage() {
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center whitespace-nowrap ${
                       activeSection === section.id
                         ? 'bg-orange text-white'
-                        : 'text-gray-slate hover:bg-gray-light/30'
+                        : 'text-gray-slate dark:text-gray-300 hover:bg-gray-light/30 dark:hover:bg-gray-800'
                     }`}
                   >
                     <span className="mr-3">{section.icon}</span>
@@ -253,15 +273,15 @@ export default function SettingsPage() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {/* General Settings */}
               {activeSection === 'general' && (
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
                     {/* Theme Selection */}
                     <div>
-                      <label className="block text-sm font-medium text-orange-dark mb-2">Theme</label>
-                      <div className="flex gap-4">
+                      <label className="block text-sm font-medium text-orange-dark dark:text-orange mb-2">Theme</label>
+                      <div className="flex flex-wrap gap-4">
                         <label className="flex items-center">
                           <input
                             type="radio"
@@ -299,7 +319,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Two Column Layout for Compact Settings */}
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       {/* Language */}
                       <div>
                         <Dropdown
@@ -497,7 +517,7 @@ export default function SettingsPage() {
 
               {/* Security Settings */}
               {activeSection === 'security' && permissions.canEdit && (
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
                     {/* MFA */}
                     <div>
@@ -597,7 +617,7 @@ export default function SettingsPage() {
 
               {/* Access Management */}
               {activeSection === 'access' && permissions.canManageUsers && (
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
                     {/* Organization Members */}
                     <div>
@@ -656,7 +676,7 @@ export default function SettingsPage() {
 
               {/* Integrations */}
               {activeSection === 'integrations' && permissions.canEdit && (
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
                     {/* Slack */}
                     <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
@@ -725,7 +745,7 @@ export default function SettingsPage() {
 
               {/* Audit & Compliance */}
               {activeSection === 'audit' && permissions.canViewAudit && (
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <div className="flex items-center justify-end mb-6">
                     <ExportButton 
                       data={auditLogs} 
@@ -764,7 +784,7 @@ export default function SettingsPage() {
 
               {/* Password & Authentication */}
               {activeSection === 'password' && (
-                <Card className="p-6">
+                <Card className="p-4 sm:p-6">
                   <h2 className="text-xl font-semibold text-orange-dark dark:text-orange mb-6">Sign in methods</h2>
                   <div className="space-y-3">
                     {/* Email */}
@@ -812,9 +832,9 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Google */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                           <svg className="w-6 h-6" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -834,15 +854,16 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => isGoogleConnected ? handleConnectedOAuthClick('google') : handleOAuthConnect('google')}
                         disabled={isLoadingOAuth}
+                        className="w-full sm:w-auto"
                       >
                         {isLoadingOAuth ? 'Loading...' : (isGoogleConnected ? 'Connected' : 'Connect')}
                       </Button>
                     </div>
 
                     {/* GitHub */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
                           </svg>
@@ -859,6 +880,7 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => isGithubConnected ? handleConnectedOAuthClick('github') : handleOAuthConnect('github')}
                         disabled={isLoadingOAuth}
+                        className="w-full sm:w-auto"
                       >
                         {isLoadingOAuth ? 'Loading...' : (isGithubConnected ? 'Connected' : 'Connect')}
                       </Button>
