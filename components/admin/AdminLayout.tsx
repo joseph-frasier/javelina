@@ -71,7 +71,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         });
       } else {
         gsap.to(sidebarRef.current, {
-          x: -280,
+          x: '-100%',
           duration: 0.3,
           ease: 'power2.in',
         });
@@ -156,8 +156,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <aside
           ref={sidebarRef}
           className={clsx(
-            'fixed top-16 left-0 bottom-0 bg-white border-r border-gray-light overflow-hidden flex flex-col z-50 md:hidden',
-            'w-64 -translate-x-full'
+            'fixed top-16 left-0 bottom-0 bg-white overflow-hidden flex flex-col z-50 md:hidden',
+            'w-full -translate-x-full'
           )}
         >
           {/* Sidebar Header */}
