@@ -145,9 +145,9 @@ export default function AdminDashboard() {
           </div>
 
           {/* KPI Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Total Users Card */}
-            <Card className="p-6 hover:shadow-lg transition-shadow">
+            <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Deleted Organizations Card */}
-            <Card className="p-6 hover:shadow-lg transition-shadow">
+            <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Active Members Card */}
-            <Card className="p-6 hover:shadow-lg transition-shadow">
+            <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center">

@@ -83,20 +83,20 @@ export default function AnalyticsPage() {
           outline: none !important;
         }
       `}</style>
-      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
+      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="font-black text-4xl text-orange-dark mb-2">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="font-black text-2xl sm:text-3xl md:text-4xl text-orange-dark dark:text-orange mb-2">
             DNS Analytics
           </h1>
-          <p className="font-light text-gray-slate text-base">
+          <p className="font-light text-gray-slate dark:text-gray-300 text-sm sm:text-base">
             Monitor DNS activity and performance across all zones
           </p>
         </div>
 
         {/* Filters Section */}
-        <Card className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="mb-4 sm:mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Organization Filter */}
             <Dropdown
               label="Organization"
@@ -136,39 +136,39 @@ export default function AnalyticsPage() {
 
             {/* Start Date */}
             <div>
-              <label className="block text-sm font-medium text-orange-dark mb-2">
+              <label className="block text-sm font-medium text-orange-dark dark:text-orange mb-2">
                 Start Date
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark"
+                className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark dark:text-gray-100"
               />
             </div>
 
             {/* End Date */}
             <div>
-              <label className="block text-sm font-medium text-orange-dark mb-2">
+              <label className="block text-sm font-medium text-orange-dark dark:text-orange mb-2">
                 End Date
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-light focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark"
+                className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark dark:text-gray-100"
               />
             </div>
           </div>
 
           {/* Last Refresh */}
-          <div className="mt-4 text-sm text-gray-slate font-light">
+          <div className="mt-4 text-xs sm:text-sm text-gray-slate dark:text-gray-400 font-light">
             Last refreshed: {isMounted ? lastRefresh.toLocaleTimeString() : '--'}
           </div>
         </Card>
 
         {/* Overview Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatCard
             title="Unique Domains"
             value="238"
@@ -237,8 +237,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Traffic Over Time Chart */}
-        <Card title="Traffic Over Time" description="DNS query volume" className="mb-8">
-          <div className="mt-6 h-80">
+        <Card title="Traffic Over Time" description="DNS query volume" className="mb-6 sm:mb-8">
+          <div className="mt-4 sm:mt-6 h-64 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trafficData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#D9D9D9" />
@@ -276,24 +276,24 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Top Queried Domains */}
           <Card
             title="Top Queried Domains"
             description="Most frequently queried domains"
           >
             <div className="mt-4">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto -mx-2 sm:mx-0">
+                <table className="w-full min-w-full">
                   <thead>
-                    <tr className="border-b border-gray-light">
-                      <th className="text-left py-3 px-2 font-bold text-sm text-orange-dark">
+                    <tr className="border-b border-gray-light dark:border-gray-700">
+                      <th className="text-left py-2 sm:py-3 px-2 font-bold text-xs sm:text-sm text-orange-dark dark:text-orange">
                         Domain
                       </th>
-                      <th className="text-right py-3 px-2 font-bold text-sm text-orange-dark">
+                      <th className="text-right py-2 sm:py-3 px-2 font-bold text-xs sm:text-sm text-orange-dark dark:text-orange">
                         Queries
                       </th>
-                      <th className="text-right py-3 px-2 font-bold text-sm text-orange-dark">
+                      <th className="text-right py-2 sm:py-3 px-2 font-bold text-xs sm:text-sm text-orange-dark dark:text-orange">
                         % of Total
                       </th>
                     </tr>
@@ -302,15 +302,15 @@ export default function AnalyticsPage() {
                     {topDomains.map((item, index) => (
                       <tr
                         key={index}
-                        className="border-b border-gray-light last:border-0"
+                        className="border-b border-gray-light dark:border-gray-700 last:border-0"
                       >
-                        <td className="py-3 px-2 font-regular text-orange-dark">
+                        <td className="py-2 sm:py-3 px-2 font-regular text-xs sm:text-sm text-orange-dark dark:text-gray-200">
                           {item.domain}
                         </td>
-                        <td className="py-3 px-2 text-right font-medium text-orange-dark">
+                        <td className="py-2 sm:py-3 px-2 text-right font-medium text-xs sm:text-sm text-orange-dark dark:text-gray-200">
                           {item.queries.toLocaleString()}
                         </td>
-                        <td className="py-3 px-2 text-right font-medium text-blue-electric">
+                        <td className="py-2 sm:py-3 px-2 text-right font-medium text-xs sm:text-sm text-blue-electric dark:text-blue-400">
                           {item.percent}
                         </td>
                       </tr>
@@ -327,7 +327,7 @@ export default function AnalyticsPage() {
             description="DNS record types breakdown"
           >
             <div 
-              className="mt-6 h-64" 
+              className="mt-4 sm:mt-6 h-64 sm:h-72" 
               style={{ outline: 'none' }}
               onMouseDown={(e) => e.preventDefault()}
             >
@@ -377,17 +377,17 @@ export default function AnalyticsPage() {
           description="DNS errors by type and affected zones"
         >
           <div className="mt-4">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto -mx-2 sm:mx-0">
+              <table className="w-full min-w-full">
                 <thead>
-                  <tr className="border-b border-gray-light">
-                    <th className="text-left py-3 px-2 font-bold text-sm text-orange-dark">
+                  <tr className="border-b border-gray-light dark:border-gray-700">
+                    <th className="text-left py-2 sm:py-3 px-2 font-bold text-xs sm:text-sm text-orange-dark dark:text-orange">
                       Error Type
                     </th>
-                    <th className="text-right py-3 px-2 font-bold text-sm text-orange-dark">
+                    <th className="text-right py-2 sm:py-3 px-2 font-bold text-xs sm:text-sm text-orange-dark dark:text-orange">
                       Count
                     </th>
-                    <th className="text-right py-3 px-2 font-bold text-sm text-orange-dark">
+                    <th className="text-right py-2 sm:py-3 px-2 font-bold text-xs sm:text-sm text-orange-dark dark:text-orange">
                       Affected Zones
                     </th>
                   </tr>
@@ -396,15 +396,15 @@ export default function AnalyticsPage() {
                   {errorData.map((item, index) => (
                     <tr
                       key={index}
-                      className="border-b border-gray-light last:border-0"
+                      className="border-b border-gray-light dark:border-gray-700 last:border-0"
                     >
-                      <td className="py-3 px-2 font-regular text-orange-dark">
+                      <td className="py-2 sm:py-3 px-2 font-regular text-xs sm:text-sm text-orange-dark dark:text-gray-200">
                         {item.error_type}
                       </td>
-                      <td className="py-3 px-2 text-right font-medium text-red-500">
+                      <td className="py-2 sm:py-3 px-2 text-right font-medium text-xs sm:text-sm text-red-500 dark:text-red-400">
                         {item.count}
                       </td>
-                      <td className="py-3 px-2 text-right font-medium text-gray-slate">
+                      <td className="py-2 sm:py-3 px-2 text-right font-medium text-xs sm:text-sm text-gray-slate dark:text-gray-400">
                         {item.zones}
                       </td>
                     </tr>

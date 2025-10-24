@@ -7,7 +7,11 @@ import { getAdminUser, logoutAdmin } from '@/lib/admin-auth';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
 
-export function AdminHeader() {
+interface AdminHeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   const router = useRouter();
   const { general, setTheme } = useSettingsStore();
   const [admin, setAdmin] = useState<any>(null);
@@ -107,9 +111,20 @@ export function AdminHeader() {
 
   return (
     <header className="bg-white border-b border-gray-light">
-      <div className="max-w-full mx-auto pr-4 sm:pr-6 lg:pr-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {/* Hamburger Menu Button - Mobile Only */}
+            <button
+              onClick={onMenuToggle}
+              className="md:hidden p-2 rounded-md text-gray-slate hover:text-orange hover:bg-gray-light/30 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
             <Link href="/admin" className="flex items-center">
               <Logo
                 width={325}
@@ -164,15 +179,15 @@ export function AdminHeader() {
               </button>
 
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
                   <div className="p-4 border-b border-gray-light flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-orange-dark">Notifications</h3>
+                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Notifications</h3>
                     <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
                       Clear All
                     </button>
                   </div>
                   <div className="p-8 text-center">
-                    <p className="text-sm text-gray-slate">No new notifications</p>
+                    <p className="text-sm text-gray-slate dark:text-gray-300">No new notifications</p>
                   </div>
                 </div>
               )}
