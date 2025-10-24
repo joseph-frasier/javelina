@@ -33,8 +33,13 @@ export default function AdminAuditPage() {
   const [searchActor, setSearchActor] = useState('');
   const [searchAction, setSearchAction] = useState('');
   const [searchResource, setSearchResource] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Additional search across all columns
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('all');
+  
+  // Sorting
+  const [sortKey, setSortKey] = useState<string | null>('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('desc');
 
   // Quick filter presets
   const quickFilters = [
@@ -57,7 +62,27 @@ export default function AdminAuditPage() {
     setSearchActor('');
     setSearchAction('');
     setSearchResource('');
+    setSearchQuery('');
     setDateRange('all');
+    setSortKey('created_at');
+    setSortDirection('desc');
+  };
+
+  // Handle column sorting
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Same column: cycle through asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortKey(null);
+        setSortDirection(null);
+      }
+    } else {
+      // New column: start with asc
+      setSortKey(key);
+      setSortDirection('asc');
+    }
   };
 
   useEffect(() => {
@@ -66,7 +91,7 @@ export default function AdminAuditPage() {
 
   useEffect(() => {
     filterLogs();
-  }, [logs, searchActor, searchAction, searchResource, dateRange]);
+  }, [logs, searchActor, searchAction, searchResource, searchQuery, dateRange, sortKey, sortDirection]);
 
   const fetchAuditLogs = async () => {
     try {
@@ -118,6 +143,22 @@ export default function AdminAuditPage() {
       );
     }
 
+    // Additional search across all columns
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((log) => {
+        return (
+          log.action?.toLowerCase().includes(query) ||
+          log.resource_type?.toLowerCase().includes(query) ||
+          log.resource_id?.toLowerCase().includes(query) ||
+          log.admin_users?.name?.toLowerCase().includes(query) ||
+          log.admin_users?.email?.toLowerCase().includes(query) ||
+          log.ip_address?.toLowerCase().includes(query) ||
+          JSON.stringify(log.details).toLowerCase().includes(query)
+        );
+      });
+    }
+
     if (dateRange !== 'all') {
       const now = Date.now();
       const daysMap = {
@@ -129,6 +170,44 @@ export default function AdminAuditPage() {
 
       const cutoffTime = now - days * 24 * 60 * 60 * 1000;
       filtered = filtered.filter((log) => new Date(log.created_at).getTime() > cutoffTime);
+    }
+
+    // Apply sorting
+    if (sortKey && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        if (sortKey === 'admin_users') {
+          aValue = a.admin_users?.name || '';
+          bValue = b.admin_users?.name || '';
+        } else {
+          aValue = a[sortKey as keyof AuditLog];
+          bValue = b[sortKey as keyof AuditLog];
+        }
+
+        // Handle null/undefined
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Handle dates
+        if (sortKey === 'created_at') {
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
+          return sortDirection === 'asc'
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
+        // Handle strings
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (sortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        }
+        return bStr.localeCompare(aStr);
+      });
     }
 
     setFilteredLogs(filtered);
@@ -271,6 +350,32 @@ export default function AdminAuditPage() {
               )}
             </div>
           </Card>
+
+          {/* Additional Search */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search across all fields..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
 
           {/* Audit Log Table */}
           <Card className="p-6">
