@@ -74,7 +74,7 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // Public routes that don't require authentication
-    const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/admin/login', '/pricing', '/checkout']
+    const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
     const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
     // Check if user just completed payment (allow dashboard access)
@@ -89,8 +89,24 @@ export async function middleware(request: NextRequest) {
     }
 
     // If user IS authenticated and trying to access login/signup pages
+    // Check if they have completed onboarding (have organizations)
     if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
-      return NextResponse.redirect(new URL('/', request.url))
+      // Check if user has organizations
+      const { data: memberships } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .limit(1)
+
+      const hasOrganizations = memberships && memberships.length > 0
+
+      if (hasOrganizations) {
+        // User has completed onboarding, send to dashboard
+        return NextResponse.redirect(new URL('/', request.url))
+      } else {
+        // First-time user, send to pricing to complete onboarding
+        return NextResponse.redirect(new URL('/pricing?onboarding=true', request.url))
+      }
     }
   } catch (error) {
     console.error('Middleware error:', error)

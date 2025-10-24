@@ -12,7 +12,7 @@ import { Logo } from '@/components/ui/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithOAuth, isAuthenticated, isLoading } = useAuthStore();
+  const { login, loginWithOAuth, isAuthenticated, isLoading, user } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -22,11 +22,27 @@ export default function LoginPage() {
   );
 
   // Redirect if already authenticated
+  // Note: Middleware will handle the actual redirect based on organization status
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
+    if (isAuthenticated && user) {
+      console.log('[Login] User authenticated, middleware will handle redirect:', {
+        hasOrganizations: user.organizations && user.organizations.length > 0,
+        organizationsCount: user.organizations?.length || 0,
+        user: user.email
+      });
+      
+      // Check if user has organizations (completed onboarding)
+      const hasOrganizations = user.organizations && user.organizations.length > 0;
+      
+      if (hasOrganizations) {
+        console.log('[Login] Redirecting to dashboard (has organizations)');
+        router.push('/');
+      } else {
+        console.log('[Login] Redirecting to pricing (first-time user)');
+        router.push('/pricing?onboarding=true');
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -57,7 +73,26 @@ export default function LoginPage() {
     const result = await login(email, password);
     
     if (result.success) {
-      router.push('/');
+      // Check if user has organizations (completed onboarding)
+      // We need to wait a moment for the user state to update
+      setTimeout(() => {
+        const currentUser = useAuthStore.getState().user;
+        const hasOrganizations = currentUser?.organizations && currentUser.organizations.length > 0;
+        
+        console.log('[Login] Post-login redirect, checking organizations:', {
+          hasOrganizations,
+          organizationsCount: currentUser?.organizations?.length || 0,
+          user: currentUser?.email
+        });
+        
+        if (hasOrganizations) {
+          console.log('[Login] Redirecting to dashboard (has organizations)');
+          router.push('/');
+        } else {
+          console.log('[Login] Redirecting to pricing (first-time user)');
+          router.push('/pricing?onboarding=true');
+        }
+      }, 100);
     } else {
       setErrors({ 
         email: result.error,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
 import { PLANS, useSubscriptionStore } from '@/lib/subscription-store';
@@ -10,6 +10,8 @@ import Link from 'next/link';
 
 export default function PricingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isOnboarding = searchParams.get('onboarding') === 'true';
   const selectPlan = useSubscriptionStore((state) => state.selectPlan);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const addToast = useToastStore((state) => state.addToast);
@@ -75,14 +77,44 @@ export default function PricingPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Onboarding Welcome Banner */}
+        {isOnboarding && (
+          <div className="mb-8 bg-gradient-to-r from-orange to-orange-dark rounded-xl shadow-lg border border-orange p-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <svg
+                  className="w-6 h-6 text-white mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h2 className="text-xl font-bold text-white">
+                  Welcome to Javelina! 🎉
+                </h2>
+              </div>
+              <p className="text-white/90 text-sm">
+                Your email has been verified. Choose a plan below to start managing your DNS infrastructure.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-3xl font-black text-orange-dark mb-2">
-            Choose Your Plan
+            {isOnboarding ? 'Choose Your Plan' : 'Pricing Plans'}
           </h1>
           <p className="text-base text-gray-slate font-light max-w-2xl mx-auto">
-            Start managing your DNS infrastructure with confidence. Select the
-            plan that fits your needs.
+            {isOnboarding
+              ? 'Select the plan that best fits your needs. You can upgrade or downgrade anytime.'
+              : 'Start managing your DNS infrastructure with confidence. Select the plan that fits your needs.'}
           </p>
         </div>
 
