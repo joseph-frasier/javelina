@@ -195,15 +195,6 @@ export default function AdminOrganizationsPage() {
     setFilteredOrgs(filtered);
   };
 
-  const clearFilters = () => {
-    setSearchName('');
-    setSearchQuery('');
-    setStatusFilter('active');
-    setMemberCountFilter('all');
-    setSortKey('name');
-    setSortDirection('asc');
-  };
-
   // Handle column sorting
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -538,22 +529,6 @@ export default function AdminOrganizationsPage() {
                   ]}
                 />
               </div>
-
-              {hasActiveFilters && (
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-slate dark:text-gray-400">
-                    {filteredOrgs.length} of {orgs.length} organizations match your filters
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={clearFilters}
-                    className="!text-orange-600 dark:!text-orange-400"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
             </div>
           </Card>
 
