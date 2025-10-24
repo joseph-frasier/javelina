@@ -551,15 +551,6 @@ export default function AdminOrganizationsPage() {
                     { value: '51+', label: '51+ Members' }
                   ]}
                 />
-                <Dropdown
-                  value={sortBy}
-                  onChange={(value) => setSortBy(value as any)}
-                  options={[
-                    { value: 'name', label: 'Sort by Name' },
-                    { value: 'members', label: 'Sort by Members' },
-                    { value: 'created', label: 'Sort by Date' }
-                  ]}
-                />
               </div>
 
               {hasActiveFilters && (
