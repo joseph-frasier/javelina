@@ -42,10 +42,16 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [zoneSummary, setZoneSummary] = useState<ZoneSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [dnsRecords, setDnsRecords] = useState<DNSRecord[]>([]);
+  const [filteredDnsRecords, setFilteredDnsRecords] = useState<DNSRecord[]>([]);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
+  // DNS Records search and sort
+  const [dnsSearchQuery, setDnsSearchQuery] = useState('');
+  const [dnsSortKey, setDnsSortKey] = useState<string | null>(null);
+  const [dnsSortDirection, setDnsSortDirection] = useState<'asc' | 'desc' | null>(null);
   
   // Edit form state
   const [editFormData, setEditFormData] = useState({
@@ -70,9 +76,73 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       setZoneSummary(summary);
       setAuditLogs(logs);
       setDnsRecords(records);
+      setFilteredDnsRecords(records);
     };
     loadData();
   }, [zoneId, zone.name, zone.records_count]);
+
+  // Filter and sort DNS records
+  useEffect(() => {
+    let filtered = [...dnsRecords];
+
+    // Apply search
+    if (dnsSearchQuery.trim()) {
+      const query = dnsSearchQuery.toLowerCase();
+      filtered = filtered.filter((record) => {
+        return (
+          record.name?.toLowerCase().includes(query) ||
+          record.type?.toLowerCase().includes(query) ||
+          record.value?.toLowerCase().includes(query) ||
+          record.ttl?.toString().includes(query)
+        );
+      });
+    }
+
+    // Apply sorting
+    if (dnsSortKey && dnsSortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any = a[dnsSortKey as keyof DNSRecord];
+        let bValue: any = b[dnsSortKey as keyof DNSRecord];
+
+        // Handle null/undefined
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Handle numbers (TTL)
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return dnsSortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
+        // Handle strings
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (dnsSortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        }
+        return bStr.localeCompare(aStr);
+      });
+    }
+
+    setFilteredDnsRecords(filtered);
+  }, [dnsRecords, dnsSearchQuery, dnsSortKey, dnsSortDirection]);
+
+  // Handle DNS records sorting
+  const handleDnsSort = (key: string) => {
+    if (dnsSortKey === key) {
+      // Same column: cycle through asc -> desc -> null
+      if (dnsSortDirection === 'asc') {
+        setDnsSortDirection('desc');
+      } else if (dnsSortDirection === 'desc') {
+        setDnsSortKey(null);
+        setDnsSortDirection(null);
+      }
+    } else {
+      // New column: start with asc
+      setDnsSortKey(key);
+      setDnsSortDirection('asc');
+    }
+  };
 
   const handleVerify = async () => {
     setIsVerifying(true);
@@ -273,9 +343,35 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
       {/* DNS Records Table */}
       <Card title="DNS Records" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="search"
+              placeholder="Search DNS records..."
+              value={dnsSearchQuery}
+              onChange={(e) => setDnsSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+            />
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+        </div>
+
         {/* Mobile Card View - Below 640px */}
         <div className="sm:hidden space-y-3">
-          {dnsRecords.slice(0, 10).map((record) => (
+          {filteredDnsRecords.slice(0, 10).map((record) => (
             <div key={record.id} className="p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
               <div className="flex items-start justify-between mb-3">
                 <div className="font-semibold text-orange-dark dark:text-orange break-words flex-1 text-sm">{record.name}</div>
@@ -303,9 +399,9 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               </div>
             </div>
           ))}
-          {dnsRecords.length > 10 && (
+          {filteredDnsRecords.length > 10 && (
             <div className="mt-4 text-center text-sm text-gray-slate dark:text-gray-400">
-              Showing 10 of {dnsRecords.length} records
+              Showing 10 of {filteredDnsRecords.length} records
             </div>
           )}
         </div>
@@ -315,15 +411,63 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-light dark:border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-slate dark:text-gray-400">Name</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-slate dark:text-gray-400">Type</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-slate dark:text-gray-400">Value</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-slate dark:text-gray-400">TTL</th>
+                <th 
+                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                    dnsSortKey === 'name' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                  }`}
+                  onClick={() => handleDnsSort('name')}
+                >
+                  <div className="flex items-center gap-2">
+                    Name
+                    {dnsSortKey === 'name' && (
+                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
+                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                    dnsSortKey === 'type' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                  }`}
+                  onClick={() => handleDnsSort('type')}
+                >
+                  <div className="flex items-center gap-2">
+                    Type
+                    {dnsSortKey === 'type' && (
+                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
+                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                    dnsSortKey === 'value' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                  }`}
+                  onClick={() => handleDnsSort('value')}
+                >
+                  <div className="flex items-center gap-2">
+                    Value
+                    {dnsSortKey === 'value' && (
+                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
+                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                    dnsSortKey === 'ttl' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                  }`}
+                  onClick={() => handleDnsSort('ttl')}
+                >
+                  <div className="flex items-center gap-2">
+                    TTL
+                    {dnsSortKey === 'ttl' && (
+                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-slate dark:text-gray-400">Status</th>
               </tr>
             </thead>
             <tbody>
-              {dnsRecords.slice(0, 10).map((record) => (
+              {filteredDnsRecords.slice(0, 10).map((record) => (
                 <tr key={record.id} className="border-b border-gray-light dark:border-gray-700 hover:bg-gray-light/30 dark:hover:bg-gray-700/30 transition-colors">
                   <td className="py-3 px-4 text-sm font-medium text-orange-dark dark:text-orange">{record.name}</td>
                   <td className="py-3 px-4">
@@ -344,9 +488,9 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               ))}
             </tbody>
           </table>
-          {dnsRecords.length > 10 && (
+          {filteredDnsRecords.length > 10 && (
             <div className="mt-4 text-center text-sm text-gray-slate dark:text-gray-400">
-              Showing 10 of {dnsRecords.length} records
+              Showing 10 of {filteredDnsRecords.length} records
             </div>
           )}
         </div>
