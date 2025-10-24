@@ -38,8 +38,7 @@ export default function AdminOrganizationsPage() {
   const [loading, setLoading] = useState(true);
   
   // Filters
-  const [searchName, setSearchName] = useState('');
-  const [searchQuery, setSearchQuery] = useState(''); // Additional search across all columns
+  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
   const [statusFilter, setStatusFilter] = useState<'active' | 'deleted' | 'all'>('active');
   const [memberCountFilter, setMemberCountFilter] = useState<string>('all');
   
@@ -83,7 +82,7 @@ export default function AdminOrganizationsPage() {
     filterOrganizations();
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [orgs, searchName, searchQuery, statusFilter, memberCountFilter, sortKey, sortDirection]);
+  }, [orgs, searchQuery, statusFilter, memberCountFilter, sortKey, sortDirection]);
 
   const fetchOrganizations = async () => {
     try {
@@ -118,14 +117,7 @@ export default function AdminOrganizationsPage() {
   const filterOrganizations = () => {
     let filtered = orgs;
 
-    // Search filter
-    if (searchName) {
-      filtered = filtered.filter((org) =>
-        org.name.toLowerCase().includes(searchName.toLowerCase())
-      );
-    }
-
-    // Additional search across all columns
+    // Search across all columns
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((org) => {
@@ -374,7 +366,7 @@ export default function AdminOrganizationsPage() {
     totalMembers: orgs.reduce((sum, org) => sum + getMemberCount(org), 0),
   };
 
-  const hasActiveFilters = searchName || statusFilter !== 'active' || memberCountFilter !== 'all' || sortKey !== null;
+  const hasActiveFilters = searchQuery || statusFilter !== 'active' || memberCountFilter !== 'all' || sortKey !== null;
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredOrgs.length / itemsPerPage);
@@ -525,13 +517,7 @@ export default function AdminOrganizationsPage() {
           {/* Filters */}
           <Card className="p-6">
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Input
-                  type="text"
-                  placeholder="Search by organization name..."
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Dropdown
                   value={statusFilter}
                   onChange={(value) => setStatusFilter(value as any)}
