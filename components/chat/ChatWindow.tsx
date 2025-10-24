@@ -13,6 +13,13 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(false);
 
+  // Handle shouldRender state
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    }
+  }, [isOpen]);
+
   // Handle click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -34,8 +41,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   useGSAP(() => {
     if (!windowRef.current) return;
 
-    if (isOpen) {
-      setShouldRender(true);
+    if (isOpen && shouldRender) {
       // Animate in: slide up + fade + scale
       gsap.fromTo(
         windowRef.current,
@@ -52,7 +58,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
           ease: 'power3.out',
         }
       );
-    } else if (shouldRender) {
+    } else if (!isOpen && shouldRender) {
       // Animate out: slide down + fade + scale
       gsap.to(windowRef.current, {
         y: 20,
