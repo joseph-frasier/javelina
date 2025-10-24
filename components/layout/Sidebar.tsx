@@ -312,7 +312,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         </div>
 
         {/* Content */}
-        <nav className="flex-1 overflow-y-auto p-4">
+        <nav className="flex-1 overflow-y-auto p-4 pb-24">
           {/* Dashboard & Analytics Links */}
           <div className="mb-4 space-y-1 pb-4 border-b border-gray-light dark:border-gray-700">
             <Link
