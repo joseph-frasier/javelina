@@ -39,9 +39,13 @@ export default function AdminOrganizationsPage() {
   
   // Filters
   const [searchName, setSearchName] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Additional search across all columns
   const [statusFilter, setStatusFilter] = useState<'active' | 'deleted' | 'all'>('active');
   const [memberCountFilter, setMemberCountFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'name' | 'members' | 'created'>('name');
+  
+  // Sorting
+  const [sortKey, setSortKey] = useState<string | null>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('asc');
   
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -79,7 +83,7 @@ export default function AdminOrganizationsPage() {
     filterOrganizations();
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [orgs, searchName, statusFilter, memberCountFilter, sortBy]);
+  }, [orgs, searchName, searchQuery, statusFilter, memberCountFilter, sortKey, sortDirection]);
 
   const fetchOrganizations = async () => {
     try {
@@ -121,6 +125,21 @@ export default function AdminOrganizationsPage() {
       );
     }
 
+    // Additional search across all columns
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((org) => {
+        const memberCount = getMemberCount(org).toString();
+        const status = org.deleted_at ? 'deleted' : 'active';
+        return (
+          org.name?.toLowerCase().includes(query) ||
+          org.description?.toLowerCase().includes(query) ||
+          memberCount.includes(query) ||
+          status.includes(query)
+        );
+      });
+    }
+
     // Status filter
     if (statusFilter === 'active') {
       filtered = filtered.filter((org) => !org.deleted_at);
@@ -145,28 +164,69 @@ export default function AdminOrganizationsPage() {
       });
     }
 
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'members':
-          return getMemberCount(b) - getMemberCount(a);
-        case 'created':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        default:
-          return 0;
-      }
-    });
+    // Apply sorting
+    if (sortKey && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        if (sortKey === 'members') {
+          aValue = getMemberCount(a);
+          bValue = getMemberCount(b);
+        } else if (sortKey === 'created_at') {
+          aValue = new Date(a.created_at).getTime();
+          bValue = new Date(b.created_at).getTime();
+        } else {
+          aValue = a[sortKey as keyof Organization];
+          bValue = b[sortKey as keyof Organization];
+        }
+
+        // Handle null/undefined
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Compare
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (sortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        }
+        return bStr.localeCompare(aStr);
+      });
+    }
 
     setFilteredOrgs(filtered);
   };
 
   const clearFilters = () => {
     setSearchName('');
+    setSearchQuery('');
     setStatusFilter('active');
     setMemberCountFilter('all');
-    setSortBy('name');
+    setSortKey('name');
+    setSortDirection('asc');
+  };
+
+  // Handle column sorting
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Same column: cycle through asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortKey(null);
+        setSortDirection(null);
+      }
+    } else {
+      // New column: start with asc
+      setSortKey(key);
+      setSortDirection('asc');
+    }
   };
 
   // Bulk selection functions
@@ -520,6 +580,32 @@ export default function AdminOrganizationsPage() {
             </div>
           </Card>
 
+          {/* Additional Search */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search across all fields..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
+
           {/* Organizations Table */}
           <Card className="p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
@@ -644,13 +730,35 @@ export default function AdminOrganizationsPage() {
                           className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                         />
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
-                        <div className="flex items-center justify-center gap-1">
-                          Members
-                          <Tooltip content="Member count">
-                            <InfoIcon />
-                          </Tooltip>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'name' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Name
+                          {sortKey === 'name' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className={`text-center py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'members' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('members')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center gap-1">
+                            Members
+                            <Tooltip content="Member count">
+                              <InfoIcon />
+                            </Tooltip>
+                          </div>
+                          {sortKey === 'members' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
                         </div>
                       </th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
@@ -661,7 +769,19 @@ export default function AdminOrganizationsPage() {
                           </Tooltip>
                         </div>
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Created</th>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'created_at' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('created_at')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Created
+                          {sortKey === 'created_at' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
                     </tr>
                   </thead>
