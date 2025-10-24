@@ -30,43 +30,12 @@ export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchActor, setSearchActor] = useState('');
-  const [searchAction, setSearchAction] = useState('');
-  const [searchResource, setSearchResource] = useState('');
-  const [searchQuery, setSearchQuery] = useState(''); // Additional search across all columns
+  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState('all');
   
   // Sorting
   const [sortKey, setSortKey] = useState<string | null>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('desc');
-
-  // Quick filter presets
-  const quickFilters = [
-    { label: 'All', action: '', resource: '', date: 'all' },
-    { label: 'Critical Actions', action: 'delete', resource: '', date: 'all' },
-    { label: 'User Changes', action: '', resource: 'user', date: 'all' },
-    { label: 'Org Changes', action: '', resource: 'organization', date: 'all' },
-    { label: 'Recent (24h)', action: '', resource: '', date: '1d' },
-    { label: 'This Week', action: '', resource: '', date: '7d' },
-  ];
-
-  const applyQuickFilter = (filter: typeof quickFilters[0]) => {
-    setSearchAction(filter.action);
-    setSearchResource(filter.resource);
-    setDateRange(filter.date);
-    setSearchActor('');
-  };
-
-  const clearFilters = () => {
-    setSearchActor('');
-    setSearchAction('');
-    setSearchResource('');
-    setSearchQuery('');
-    setDateRange('all');
-    setSortKey('created_at');
-    setSortDirection('desc');
-  };
 
   // Handle column sorting
   const handleSort = (key: string) => {
@@ -91,7 +60,7 @@ export default function AdminAuditPage() {
 
   useEffect(() => {
     filterLogs();
-  }, [logs, searchActor, searchAction, searchResource, searchQuery, dateRange, sortKey, sortDirection]);
+  }, [logs, searchQuery, sortKey, sortDirection]);
 
   const fetchAuditLogs = async () => {
     try {
@@ -123,27 +92,7 @@ export default function AdminAuditPage() {
   const filterLogs = () => {
     let filtered = logs;
 
-    if (searchActor) {
-      filtered = filtered.filter(
-        (log) =>
-          log.admin_users?.name.toLowerCase().includes(searchActor.toLowerCase()) ||
-          log.admin_users?.email.toLowerCase().includes(searchActor.toLowerCase())
-      );
-    }
-
-    if (searchAction) {
-      filtered = filtered.filter((log) =>
-        log.action.toLowerCase().includes(searchAction.toLowerCase())
-      );
-    }
-
-    if (searchResource) {
-      filtered = filtered.filter((log) =>
-        log.resource_type.toLowerCase().includes(searchResource.toLowerCase())
-      );
-    }
-
-    // Additional search across all columns
+    // Search across all columns
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((log) => {
@@ -157,19 +106,6 @@ export default function AdminAuditPage() {
           JSON.stringify(log.details).toLowerCase().includes(query)
         );
       });
-    }
-
-    if (dateRange !== 'all') {
-      const now = Date.now();
-      const daysMap = {
-        '1d': 1,
-        '7d': 7,
-        '30d': 30
-      } as const;
-      const days = daysMap[dateRange as keyof typeof daysMap] || 1;
-
-      const cutoffTime = now - days * 24 * 60 * 60 * 1000;
-      filtered = filtered.filter((log) => new Date(log.created_at).getTime() > cutoffTime);
     }
 
     // Apply sorting
@@ -280,78 +216,7 @@ export default function AdminAuditPage() {
             </div>
           )}
 
-          {/* Quick Filter Chips */}
-          <div className="flex flex-wrap gap-2">
-            {quickFilters.map((filter, index) => (
-              <button
-                key={index}
-                onClick={() => applyQuickFilter(filter)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  searchAction === filter.action &&
-                  searchResource === filter.resource &&
-                  dateRange === filter.date
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Filters */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Input
-                  type="text"
-                  placeholder="Search by actor name/email..."
-                  value={searchActor}
-                  onChange={(e) => setSearchActor(e.target.value)}
-                />
-                <Input
-                  type="text"
-                  placeholder="Search by action..."
-                  value={searchAction}
-                  onChange={(e) => setSearchAction(e.target.value)}
-                />
-                <Input
-                  type="text"
-                  placeholder="Search by resource type..."
-                  value={searchResource}
-                  onChange={(e) => setSearchResource(e.target.value)}
-                />
-                <Dropdown
-                  value={dateRange}
-                  onChange={setDateRange}
-                  options={[
-                    { value: 'all', label: 'All Time' },
-                    { value: '1d', label: 'Last 24 Hours' },
-                    { value: '7d', label: 'Last 7 Days' },
-                    { value: '30d', label: 'Last 30 Days' }
-                  ]}
-                />
-              </div>
-
-              {(searchActor || searchAction || searchResource || dateRange !== 'all') && (
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-slate dark:text-gray-400">
-                    {filteredLogs.length} of {logs.length} entries match your filters
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={clearFilters}
-                    className="!text-orange-600 dark:!text-orange-400"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Additional Search */}
+          {/* Search */}
           <div className="mb-4">
             <div className="relative">
               <input
@@ -401,9 +266,7 @@ export default function AdminAuditPage() {
                 </svg>
                 <p className="text-gray-slate text-lg font-medium">No audit entries found</p>
                 <p className="text-gray-400 text-sm mt-2">
-                  {searchActor || searchAction || searchResource || dateRange !== 'all'
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'No administrative actions have been recorded yet.'}
+                  {searchQuery ? 'Try adjusting your search query.' : 'No administrative actions have been recorded yet.'}
                 </p>
               </div>
             ) : (
