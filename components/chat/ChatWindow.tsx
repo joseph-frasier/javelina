@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -9,7 +11,9 @@ interface ChatWindowProps {
 
 export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
+  const [shouldRender, setShouldRender] = useState(false);
 
+  // Handle click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (windowRef.current && !windowRef.current.contains(event.target as Node)) {
@@ -26,12 +30,47 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  // GSAP animations
+  useGSAP(() => {
+    if (!windowRef.current) return;
+
+    if (isOpen) {
+      setShouldRender(true);
+      // Animate in: slide up + fade + scale
+      gsap.fromTo(
+        windowRef.current,
+        {
+          y: 40,
+          opacity: 0,
+          scale: 0.9,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.4,
+          ease: 'power3.out',
+        }
+      );
+    } else if (shouldRender) {
+      // Animate out: slide down + fade + scale
+      gsap.to(windowRef.current, {
+        y: 20,
+        opacity: 0,
+        scale: 0.95,
+        duration: 0.25,
+        ease: 'power2.in',
+        onComplete: () => setShouldRender(false),
+      });
+    }
+  }, [isOpen, shouldRender]);
+
+  if (!shouldRender) return null;
 
   return (
     <div
       ref={windowRef}
-      className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[350px] h-[500px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50 animate-in slide-in-from-bottom-4 fade-in duration-300"
+      className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[350px] h-[500px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-light dark:border-gray-600">
