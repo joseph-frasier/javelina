@@ -47,7 +47,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         });
       } else {
         gsap.to(sidebarRef.current, {
-          x: -280,
+          x: '-100%',
           duration: 0.3,
           ease: 'power2.in',
         });
@@ -295,7 +295,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
       {/* Mobile Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`fixed top-16 left-0 bottom-0 bg-white dark:bg-orange-dark border-r border-gray-light overflow-hidden flex flex-col z-50 md:hidden w-64 -translate-x-full`}
+        className={`fixed top-16 left-0 bottom-0 bg-white dark:bg-orange-dark overflow-hidden flex flex-col z-50 md:hidden w-full -translate-x-full`}
       >
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
