@@ -68,6 +68,84 @@ export function EnvironmentClient({
   const canEditEnvironment = ['SuperAdmin', 'Admin', 'Editor'].includes(organization.role);
   const canDeleteEnvironment = ['SuperAdmin', 'Admin'].includes(organization.role);
 
+  // Zones search and sort
+  const [zoneSearchQuery, setZoneSearchQuery] = useState('');
+  const [zoneSortKey, setZoneSortKey] = useState<string | null>(null);
+  const [zoneSortDirection, setZoneSortDirection] = useState<'asc' | 'desc' | null>(null);
+  
+  // Filter and sort zones
+  const filteredZones = (() => {
+    let filtered = [...zones];
+
+    // Apply search
+    if (zoneSearchQuery.trim()) {
+      const query = zoneSearchQuery.toLowerCase();
+      filtered = filtered.filter((zone) => {
+        return (
+          zone.name?.toLowerCase().includes(query) ||
+          zone.zone_type?.toLowerCase().includes(query) ||
+          zone.description?.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply sorting
+    if (zoneSortKey && zoneSortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any = a[zoneSortKey as keyof Zone];
+        let bValue: any = b[zoneSortKey as keyof Zone];
+
+        // Handle null/undefined
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Handle booleans (active)
+        if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+          const aNum = aValue ? 1 : 0;
+          const bNum = bValue ? 1 : 0;
+          return zoneSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+        }
+
+        // Handle dates
+        if (zoneSortKey === 'created_at' || zoneSortKey === 'updated_at') {
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
+          return zoneSortDirection === 'asc'
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
+        // Handle strings
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (zoneSortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        }
+        return bStr.localeCompare(aStr);
+      });
+    }
+
+    return filtered;
+  })();
+
+  // Handle zones sorting
+  const handleZoneSort = (key: string) => {
+    if (zoneSortKey === key) {
+      // Same column: cycle through asc -> desc -> null
+      if (zoneSortDirection === 'asc') {
+        setZoneSortDirection('desc');
+      } else if (zoneSortDirection === 'desc') {
+        setZoneSortKey(null);
+        setZoneSortDirection(null);
+      }
+    } else {
+      // New column: start with asc
+      setZoneSortKey(key);
+      setZoneSortDirection('asc');
+    }
+  };
+
   const breadcrumbItems = [
     { label: organization.name, href: `/organization/${orgId}` },
     { label: environment.name }
@@ -149,6 +227,34 @@ export function EnvironmentClient({
 
         {/* Zones Table */}
         <Card title="DNS Zones" className="p-4 sm:p-6">
+          {/* Search */}
+          {zones.length > 0 && (
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="search"
+                  placeholder="Search zones..."
+                  value={zoneSearchQuery}
+                  onChange={(e) => setZoneSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          )}
+
           {zones.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <svg
@@ -179,11 +285,15 @@ export function EnvironmentClient({
                 </div>
               )}
             </div>
+          ) : filteredZones.length === 0 ? (
+            <div className="text-center py-8 sm:py-12">
+              <p className="text-gray-slate dark:text-gray-400">No zones match your search.</p>
+            </div>
           ) : (
             <>
               {/* Mobile Card View - Below 640px */}
               <div className="sm:hidden space-y-3">
-                {zones.map((zone) => (
+                {filteredZones.map((zone) => (
                   <div key={zone.id} className="p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
                     <div className="flex items-start justify-between mb-3">
                       <Link
@@ -229,17 +339,57 @@ export function EnvironmentClient({
                 <table className="min-w-full divide-y divide-gray-light dark:divide-gray-700">
                   <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-slate dark:text-gray-400 uppercase tracking-wider">
-                        Zone Name
+                      <th 
+                        className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          zoneSortKey === 'name' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                        }`}
+                        onClick={() => handleZoneSort('name')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Zone Name
+                          {zoneSortKey === 'name' && (
+                            <span className="text-orange">{zoneSortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-slate dark:text-gray-400 uppercase tracking-wider">
-                        Type
+                      <th 
+                        className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          zoneSortKey === 'zone_type' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                        }`}
+                        onClick={() => handleZoneSort('zone_type')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Type
+                          {zoneSortKey === 'zone_type' && (
+                            <span className="text-orange">{zoneSortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-slate dark:text-gray-400 uppercase tracking-wider">
-                        Status
+                      <th 
+                        className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          zoneSortKey === 'active' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                        }`}
+                        onClick={() => handleZoneSort('active')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Status
+                          {zoneSortKey === 'active' && (
+                            <span className="text-orange">{zoneSortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-slate dark:text-gray-400 uppercase tracking-wider">
-                        Last Modified
+                      <th 
+                        className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          zoneSortKey === 'updated_at' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
+                        }`}
+                        onClick={() => handleZoneSort('updated_at')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Last Modified
+                          {zoneSortKey === 'updated_at' && (
+                            <span className="text-orange">{zoneSortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-slate dark:text-gray-400 uppercase tracking-wider">
                         Actions
@@ -247,7 +397,7 @@ export function EnvironmentClient({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-light dark:divide-gray-700">
-                    {zones.map((zone) => (
+                    {filteredZones.map((zone) => (
                       <tr key={zone.id} className="hover:bg-gray-light/30 dark:hover:bg-gray-700/30 transition-colors">
                         <td className="px-4 py-4 whitespace-nowrap">
                           <Link
