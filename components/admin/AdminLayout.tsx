@@ -7,6 +7,7 @@ import { clsx } from 'clsx';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { AdminHeader } from './AdminHeader';
+import { AIChatWidget } from '@/components/chat/AIChatWidget';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -305,6 +306,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </main>
       </div>
+      <AIChatWidget />
     </div>
   );
 }

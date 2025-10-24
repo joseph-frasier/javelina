@@ -7,6 +7,7 @@ import { Sidebar } from './Sidebar';
 import { PageTransition } from './PageTransition';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { useImpersonationStore } from '@/lib/admin-impersonation';
+import { AIChatWidget } from '@/components/chat/AIChatWidget';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -35,18 +36,21 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      {isImpersonating && <ImpersonationBanner />}
-      <Header onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar 
-          isMobileMenuOpen={isMobileMenuOpen} 
-          onMobileMenuClose={() => setIsMobileMenuOpen(false)} 
-        />
-        <PageTransition>
-          {children}
-        </PageTransition>
+    <>
+      <div className="flex flex-col h-screen">
+        {isImpersonating && <ImpersonationBanner />}
+        <Header onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar 
+            isMobileMenuOpen={isMobileMenuOpen} 
+            onMobileMenuClose={() => setIsMobileMenuOpen(false)} 
+          />
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </div>
       </div>
-    </div>
+      <AIChatWidget />
+    </>
   );
 }
