@@ -37,10 +37,8 @@ export default function AdminOrganizationsPage() {
   const [filteredOrgs, setFilteredOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Filters
+  // Search
   const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
-  const [statusFilter, setStatusFilter] = useState<'active' | 'deleted' | 'all'>('active');
-  const [memberCountFilter, setMemberCountFilter] = useState<string>('all');
   
   // Sorting
   const [sortKey, setSortKey] = useState<string | null>('name');
@@ -82,7 +80,7 @@ export default function AdminOrganizationsPage() {
     filterOrganizations();
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [orgs, searchQuery, statusFilter, memberCountFilter, sortKey, sortDirection]);
+  }, [orgs, searchQuery, sortKey, sortDirection]);
 
   const fetchOrganizations = async () => {
     try {
@@ -129,30 +127,6 @@ export default function AdminOrganizationsPage() {
           memberCount.includes(query) ||
           status.includes(query)
         );
-      });
-    }
-
-    // Status filter
-    if (statusFilter === 'active') {
-      filtered = filtered.filter((org) => !org.deleted_at);
-    } else if (statusFilter === 'deleted') {
-      filtered = filtered.filter((org) => org.deleted_at);
-    }
-
-    // Member count filter
-    if (memberCountFilter !== 'all') {
-      filtered = filtered.filter((org) => {
-        const count = getMemberCount(org);
-        switch (memberCountFilter) {
-          case '1-10':
-            return count >= 1 && count <= 10;
-          case '11-50':
-            return count >= 11 && count <= 50;
-          case '51+':
-            return count >= 51;
-          default:
-            return true;
-        }
       });
     }
 
@@ -357,8 +331,6 @@ export default function AdminOrganizationsPage() {
     totalMembers: orgs.reduce((sum, org) => sum + getMemberCount(org), 0),
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'active' || memberCountFilter !== 'all' || sortKey !== null;
-
   // Pagination calculations
   const totalPages = Math.ceil(filteredOrgs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -505,33 +477,6 @@ export default function AdminOrganizationsPage() {
             </div>
           </Modal>
 
-          {/* Filters */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Dropdown
-                  value={statusFilter}
-                  onChange={(value) => setStatusFilter(value as any)}
-                  options={[
-                    { value: 'all', label: 'All Organizations' },
-                    { value: 'active', label: 'Active Only' },
-                    { value: 'deleted', label: 'Deleted Only' }
-                  ]}
-                />
-                <Dropdown
-                  value={memberCountFilter}
-                  onChange={setMemberCountFilter}
-                  options={[
-                    { value: 'all', label: 'All Sizes' },
-                    { value: '1-10', label: '1-10 Members' },
-                    { value: '11-50', label: '11-50 Members' },
-                    { value: '51+', label: '51+ Members' }
-                  ]}
-                />
-              </div>
-            </div>
-          </Card>
-
           {/* Organizations Table */}
           <Card className="p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
@@ -599,9 +544,7 @@ export default function AdminOrganizationsPage() {
                 </svg>
                 <p className="text-gray-slate dark:text-gray-300 text-lg font-medium">No organizations found</p>
                 <p className="text-gray-400 text-sm mt-2">
-                  {hasActiveFilters
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'Click "Create Organization" above to get started.'}
+                  {searchQuery ? 'Try adjusting your search query.' : 'Click "Create Organization" above to get started.'}
                 </p>
               </div>
             ) : (
