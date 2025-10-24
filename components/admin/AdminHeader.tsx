@@ -193,6 +193,16 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
               )}
             </div>
 
+            {/* Theme Toggle */}
+            <button
+              onClick={cycleTheme}
+              className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 rounded-md"
+              aria-label={`Theme: ${general.theme} (press to change)`}
+              title={`Current theme: ${general.theme}`}
+            >
+              {getThemeIcon()}
+            </button>
+
             {/* Global Search - Placeholder */}
             <div className="hidden md:block relative group">
               <input
@@ -219,16 +229,6 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                 Coming soon
               </div>
             </div>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={cycleTheme}
-              className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 rounded-md"
-              aria-label={`Theme: ${general.theme} (press to change)`}
-              title={`Current theme: ${general.theme}`}
-            >
-              {getThemeIcon()}
-            </button>
 
             {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
