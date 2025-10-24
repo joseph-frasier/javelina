@@ -374,7 +374,7 @@ export default function AdminOrganizationsPage() {
     totalMembers: orgs.reduce((sum, org) => sum + getMemberCount(org), 0),
   };
 
-  const hasActiveFilters = searchName || statusFilter !== 'active' || memberCountFilter !== 'all' || sortBy !== 'name';
+  const hasActiveFilters = searchName || statusFilter !== 'active' || memberCountFilter !== 'all' || sortKey !== null;
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredOrgs.length / itemsPerPage);
