@@ -322,6 +322,7 @@ export default function AdminOrganizationsPage() {
   ];
 
   const getMemberCount = (org: Organization) => org.organization_members?.length || 0;
+  const getStatus = (org: Organization) => org.deleted_at ? 'deleted' : 'active';
 
   // Calculate stats
   const stats = {
@@ -577,17 +578,17 @@ export default function AdminOrganizationsPage() {
                       <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600 dark:text-gray-400">Members:</span>
-                          <span className="text-gray-900 dark:text-gray-100 font-medium">{org.member_count || 0}</span>
+                          <span className="text-gray-900 dark:text-gray-100 font-medium">{getMemberCount(org)}</span>
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600 dark:text-gray-400">Status:</span>
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            org.status === 'active'
+                            getStatus(org) === 'active'
                               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                               : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                           }`}>
-                            {org.status === 'active' ? 'Active' : 'Inactive'}
+                            {getStatus(org) === 'active' ? 'Active' : 'Deleted'}
                           </span>
                         </div>
 
