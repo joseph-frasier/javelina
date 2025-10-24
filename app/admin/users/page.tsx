@@ -42,10 +42,15 @@ export default function AdminUsersPage() {
   
   // Filters
   const [searchEmail, setSearchEmail] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Additional search across all columns
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [activityFilter, setActivityFilter] = useState<string>('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Sorting
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
   
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -79,7 +84,7 @@ export default function AdminUsersPage() {
     filterUsers();
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [users, searchEmail, statusFilter, roleFilter, activityFilter]);
+  }, [users, searchEmail, searchQuery, statusFilter, roleFilter, activityFilter, sortKey, sortDirection]);
 
   const fetchUsers = async () => {
     try {
@@ -122,6 +127,20 @@ export default function AdminUsersPage() {
       );
     }
 
+    // Additional search across all columns
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((user) => {
+        return (
+          user.name?.toLowerCase().includes(query) ||
+          user.email?.toLowerCase().includes(query) ||
+          user.role?.toLowerCase().includes(query) ||
+          user.status?.toLowerCase().includes(query) ||
+          getActivityStatus(user.last_login)?.toLowerCase().includes(query)
+        );
+      });
+    }
+
     if (statusFilter !== 'all') {
       filtered = filtered.filter((user) => (user.status || 'active') === statusFilter);
     }
@@ -137,14 +156,64 @@ export default function AdminUsersPage() {
       });
     }
 
+    // Apply sorting
+    if (sortKey && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any = a[sortKey as keyof User];
+        let bValue: any = b[sortKey as keyof User];
+
+        // Handle null/undefined
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Handle dates (last_login, created_at)
+        if (sortKey === 'last_login' || sortKey === 'created_at') {
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
+          return sortDirection === 'asc'
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
+        // Handle strings
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (sortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        }
+        return bStr.localeCompare(aStr);
+      });
+    }
+
     setFilteredUsers(filtered);
   };
 
   const clearFilters = () => {
     setSearchEmail('');
+    setSearchQuery('');
     setStatusFilter('all');
     setRoleFilter('all');
     setActivityFilter('all');
+    setSortKey(null);
+    setSortDirection(null);
+  };
+
+  // Handle column sorting
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Same column: cycle through asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortKey(null);
+        setSortDirection(null);
+      }
+    } else {
+      // New column: start with asc
+      setSortKey(key);
+      setSortDirection('asc');
+    }
   };
 
   // Bulk selection functions
@@ -488,6 +557,32 @@ export default function AdminUsersPage() {
             </div>
           </Card>
 
+          {/* Additional Search */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search across all fields..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
+
           {/* Users Table */}
           <Card className="p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
@@ -622,8 +717,32 @@ export default function AdminUsersPage() {
                             className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                           />
                         </th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Email</th>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'name' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Name
+                          {sortKey === 'name' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'email' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('email')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Email
+                          {sortKey === 'email' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
                         <div className="flex items-center justify-center gap-1">
                           Activity
@@ -632,15 +751,37 @@ export default function AdminUsersPage() {
                           </Tooltip>
                         </div>
                       </th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
-                        <div className="flex items-center justify-center gap-1">
-                          Status
-                          <Tooltip content="Account status">
-                            <InfoIcon />
-                          </Tooltip>
+                      <th 
+                        className={`text-center py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'status' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center gap-1">
+                            Status
+                            <Tooltip content="Account status">
+                              <InfoIcon />
+                            </Tooltip>
+                          </div>
+                          {sortKey === 'status' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
                         </div>
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Last Login</th>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'last_login' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('last_login')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Last Login
+                          {sortKey === 'last_login' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
                     </tr>
                   </thead>
