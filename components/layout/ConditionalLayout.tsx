@@ -1,11 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { PageTransition } from './PageTransition';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { useImpersonationStore } from '@/lib/admin-impersonation';
+import { AIChatWidget } from '@/components/chat/AIChatWidget';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,12 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   const { isImpersonating } = useImpersonationStore();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
   
   // Hide sidebar and header on authentication pages and admin routes
   const isAuthPage = pathname === '/login' || 
@@ -28,15 +36,21 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      {isImpersonating && <ImpersonationBanner />}
-      <Header />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <PageTransition>
-          {children}
-        </PageTransition>
+    <>
+      <div className="flex flex-col h-screen">
+        {isImpersonating && <ImpersonationBanner />}
+        <Header onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar 
+            isMobileMenuOpen={isMobileMenuOpen} 
+            onMobileMenuClose={() => setIsMobileMenuOpen(false)} 
+          />
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </div>
       </div>
-    </div>
+      <AIChatWidget />
+    </>
   );
 }

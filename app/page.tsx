@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-8">
+      <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
       {/* Hero Section */}
       <div className="mb-8">
         <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
@@ -69,7 +69,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid - Updated for new hierarchy */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <StatCard
             title="Total Organizations"
             value={aggregateStats.totalOrgs.toString()}
@@ -138,7 +138,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card
           title="Quick Actions"
           description="Common tasks and shortcuts"
