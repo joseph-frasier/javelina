@@ -41,12 +41,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   
   // Filters
-  const [searchEmail, setSearchEmail] = useState('');
-  const [searchQuery, setSearchQuery] = useState(''); // Additional search across all columns
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled'>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [activityFilter, setActivityFilter] = useState<string>('all');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
   
   // Sorting
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -84,7 +79,7 @@ export default function AdminUsersPage() {
     filterUsers();
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [users, searchEmail, searchQuery, statusFilter, roleFilter, activityFilter, sortKey, sortDirection]);
+  }, [users, searchQuery, sortKey, sortDirection]);
 
   const fetchUsers = async () => {
     try {
@@ -119,15 +114,7 @@ export default function AdminUsersPage() {
   const filterUsers = () => {
     let filtered = users;
 
-    if (searchEmail) {
-      filtered = filtered.filter(
-        (user) =>
-          user.email.toLowerCase().includes(searchEmail.toLowerCase()) ||
-          user.name.toLowerCase().includes(searchEmail.toLowerCase())
-      );
-    }
-
-    // Additional search across all columns
+    // Search across all columns
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((user) => {
@@ -138,21 +125,6 @@ export default function AdminUsersPage() {
           user.status?.toLowerCase().includes(query) ||
           getActivityStatus(user.last_login)?.toLowerCase().includes(query)
         );
-      });
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((user) => (user.status || 'active') === statusFilter);
-    }
-
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter((user) => user.role === roleFilter);
-    }
-
-    if (activityFilter !== 'all') {
-      filtered = filtered.filter((user) => {
-        const status = getActivityStatus(user.last_login);
-        return status === activityFilter;
       });
     }
 
@@ -187,16 +159,6 @@ export default function AdminUsersPage() {
     }
 
     setFilteredUsers(filtered);
-  };
-
-  const clearFilters = () => {
-    setSearchEmail('');
-    setSearchQuery('');
-    setStatusFilter('all');
-    setRoleFilter('all');
-    setActivityFilter('all');
-    setSortKey(null);
-    setSortDirection(null);
   };
 
   // Handle column sorting
@@ -422,8 +384,6 @@ export default function AdminUsersPage() {
     online: users.filter((u) => getActivityStatus(u.last_login) === 'online').length,
   };
 
-  const hasActiveFilters = searchEmail || statusFilter !== 'all' || roleFilter !== 'all' || activityFilter !== 'all';
-
   // Pagination calculations
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -496,68 +456,7 @@ export default function AdminUsersPage() {
             </div>
           )}
 
-          {/* Filters */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Input
-                  type="text"
-                  placeholder="Search by email or name..."
-                  value={searchEmail}
-                  onChange={(e) => setSearchEmail(e.target.value)}
-                />
-                <Dropdown
-                  value={statusFilter}
-                  onChange={(value) => setStatusFilter(value as any)}
-                  options={[
-                    { value: 'all', label: 'All Status' },
-                    { value: 'active', label: 'Active' },
-                    { value: 'disabled', label: 'Disabled' }
-                  ]}
-                />
-                <Dropdown
-                  value={roleFilter}
-                  onChange={setRoleFilter}
-                  options={[
-                    { value: 'all', label: 'All Roles' },
-                    { value: 'SuperAdmin', label: 'SuperAdmin' },
-                    { value: 'Admin', label: 'Admin' },
-                    { value: 'Editor', label: 'Editor' },
-                    { value: 'Viewer', label: 'Viewer' }
-                  ]}
-                />
-                <Dropdown
-                  value={activityFilter}
-                  onChange={setActivityFilter}
-                  options={[
-                    { value: 'all', label: 'All Activity' },
-                    { value: 'online', label: 'Online Now' },
-                    { value: 'active', label: 'Active Today' },
-                    { value: 'recent', label: 'Recent (30d)' },
-                    { value: 'inactive', label: 'Inactive' }
-                  ]}
-                />
-              </div>
-
-              {hasActiveFilters && (
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-slate dark:text-gray-400">
-                    {filteredUsers.length} of {users.length} users match your filters
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={clearFilters}
-                    className="!text-orange-600 dark:!text-orange-400"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Additional Search */}
+          {/* Search */}
           <div className="mb-4">
             <div className="relative">
               <input
@@ -624,9 +523,7 @@ export default function AdminUsersPage() {
                 </svg>
                 <p className="text-gray-slate dark:text-gray-300 text-lg font-medium">No users found</p>
                 <p className="text-gray-400 text-sm mt-2">
-                  {hasActiveFilters
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'No users have been registered yet.'}
+                  {searchQuery ? 'Try adjusting your search query.' : 'No users have been registered yet.'}
                 </p>
               </div>
             ) : (
