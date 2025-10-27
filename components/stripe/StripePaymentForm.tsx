@@ -34,7 +34,7 @@ export function StripePaymentForm({
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/?payment_complete=true`,
+          return_url: `${window.location.origin}/stripe/success`,
         },
       });
 
@@ -120,3 +120,4 @@ export function StripePaymentForm({
     </form>
   );
 }
+

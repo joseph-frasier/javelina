@@ -1,66 +1,67 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
 import { StripeProvider } from '@/components/stripe/StripeProvider';
 import { StripePaymentForm } from '@/components/stripe/StripePaymentForm';
-import { useSubscriptionStore } from '@/lib/subscription-store';
 import { useToastStore } from '@/lib/toast-store';
 
-export default function CheckoutPage() {
+interface CheckoutData {
+  org_id: string;
+  price_id: string;
+  plan_name?: string;
+  plan_price?: number;
+  billing_interval?: string;
+}
+
+function CheckoutContent() {
   const router = useRouter();
-  const { selectedPlan } = useSubscriptionStore();
+  const searchParams = useSearchParams();
   const addToast = useToastStore((state) => state.addToast);
   const [clientSecret, setClientSecret] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
 
-  // Redirect if no plan selected
   useEffect(() => {
-    if (!selectedPlan) {
+    const org_id = searchParams.get('org_id');
+    const price_id = searchParams.get('price_id');
+
+    if (!org_id || !price_id) {
+      addToast('error', 'Invalid checkout parameters');
       router.push('/pricing');
       return;
     }
 
-    // Create payment intent when component mounts
-    const createPaymentIntent = async () => {
+    setCheckoutData({
+      org_id,
+      price_id,
+      plan_name: searchParams.get('plan_name') || 'Selected Plan',
+      plan_price: parseFloat(searchParams.get('plan_price') || '0'),
+      billing_interval: searchParams.get('billing_interval') || 'month',
+    });
+
+    // Create subscription intent
+    const createSubscriptionIntent = async () => {
       try {
         setIsLoading(true);
-        
-        // Get the Stripe price ID based on selected plan
-        let priceId = '';
-        if (selectedPlan.id === 'basic') {
-          priceId = selectedPlan.interval === 'month' 
-            ? process.env.NEXT_PUBLIC_STRIPE_PRICE_BASIC_MONTHLY!
-            : process.env.NEXT_PUBLIC_STRIPE_PRICE_BASIC_ANNUAL!;
-        } else if (selectedPlan.id === 'pro') {
-          priceId = selectedPlan.interval === 'month'
-            ? process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY!
-            : process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL!;
-        }
 
-        if (!priceId) {
-          addToast('error', 'Invalid plan selected');
-          router.push('/pricing');
-          return;
-        }
-
-        const response = await fetch('/api/stripe/create-payment-intent', {
+        const response = await fetch('/api/stripe/create-subscription-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ priceId }),
+          body: JSON.stringify({ org_id, price_id }),
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to create payment intent');
+          throw new Error(data.error || 'Failed to create subscription');
         }
 
         setClientSecret(data.clientSecret);
       } catch (error: any) {
-        console.error('Error creating payment intent:', error);
+        console.error('Error creating subscription:', error);
         addToast('error', error.message || 'Failed to initialize payment');
         router.push('/pricing');
       } finally {
@@ -68,18 +69,19 @@ export default function CheckoutPage() {
       }
     };
 
-    createPaymentIntent();
-  }, [selectedPlan, router, addToast]);
+    createSubscriptionIntent();
+  }, [searchParams, router, addToast]);
 
   const handlePaymentSuccess = () => {
-    addToast('success', 'Payment successful! Welcome to Javelina.');
+    addToast('success', 'Payment successful! Activating your subscription...');
+    // User will be redirected by Stripe to the return_url
   };
 
   const handlePaymentError = (error: string) => {
     addToast('error', error);
   };
 
-  if (!selectedPlan) {
+  if (!checkoutData) {
     return null;
   }
 
@@ -164,53 +166,20 @@ export default function CheckoutPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h3 className="font-bold text-orange-dark">
-                          {selectedPlan.name} Plan
+                          {checkoutData.plan_name}
                         </h3>
                         <p className="text-sm text-gray-slate font-light">
-                          Billed {selectedPlan.interval}ly
+                          Billed {checkoutData.billing_interval}ly
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-orange-dark">
-                          ${selectedPlan.price}
+                          ${checkoutData.plan_price}
                         </p>
                         <p className="text-sm text-gray-slate font-light">
-                          /{selectedPlan.interval}
+                          /{checkoutData.billing_interval}
                         </p>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-light pt-4">
-                    <p className="text-sm text-gray-slate font-light mb-3">
-                      What&apos;s included:
-                    </p>
-                    <div className="space-y-2">
-                      {selectedPlan.features.slice(0, 5).map((feature, index) => (
-                        <div key={index} className="flex items-start">
-                          <svg
-                            className="w-4 h-4 text-orange mr-2 flex-shrink-0 mt-0.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-slate font-regular">
-                            {feature}
-                          </span>
-                        </div>
-                      ))}
-                      {selectedPlan.features.length > 5 && (
-                        <p className="text-sm text-gray-slate font-light italic pl-6">
-                          + {selectedPlan.features.length - 5} more features
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -223,7 +192,7 @@ export default function CheckoutPage() {
                       Total due today
                     </span>
                     <span className="text-2xl font-black text-orange-dark">
-                      ${selectedPlan.price}
+                      ${checkoutData.plan_price}
                     </span>
                   </div>
 
@@ -231,7 +200,7 @@ export default function CheckoutPage() {
                   <div className="pt-4 border-t border-gray-light">
                     <p className="text-xs text-gray-slate font-light">
                       Your subscription will automatically renew every{' '}
-                      {selectedPlan.interval}. You can cancel anytime from your
+                      {checkoutData.billing_interval}. You can cancel anytime from your
                       account settings.
                     </p>
                   </div>
@@ -267,5 +236,17 @@ export default function CheckoutPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-orange-light flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange"></div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   );
 }
