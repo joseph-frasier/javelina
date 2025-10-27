@@ -18,41 +18,39 @@ export default function PricingPage() {
   const user = useAuthStore((state) => state.user);
 
   const handleSelectPlan = async (planId: string) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      addToast('info', 'Please login to continue');
+      router.push('/login?redirect=/pricing');
+      return;
+    }
+
     if (planId === 'free') {
-      // Free plan - create Stripe customer and go to dashboard
+      // Free plan - create organization with free subscription
       selectPlan(planId);
       
       try {
-        // Create Stripe customer for future upgrades
-        const response = await fetch('/api/stripe/create-customer', {
+        const response = await fetch('/api/organizations/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: user?.email || 'guest@example.com',
-            name: user?.name || 'Guest User',
+            name: `${user?.user_metadata?.name || user?.email?.split('@')[0] || 'My'} Organization`,
+            plan_code: 'free',
           }),
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-          console.error('Failed to create Stripe customer:', data.error);
-        } else {
-          console.log('Stripe customer created:', data.customerId);
+          addToast('error', data.error || 'Failed to create organization');
+          return;
         }
-      } catch (error) {
-        console.error('Error creating Stripe customer:', error);
-      }
 
-      // Check if user is authenticated
-      if (isAuthenticated) {
-        // User is authenticated, go to dashboard
         addToast('success', 'Welcome to Javelina Free!');
-        router.push('/?payment_complete=true');
-      } else {
-        // User needs to login/verify email first
-        addToast('info', 'Please login to continue to your dashboard');
-        router.push('/login');
+        router.push(`/organization/${data.org_id}`);
+      } catch (error) {
+        console.error('Error creating organization:', error);
+        addToast('error', 'Failed to create organization');
       }
     } else if (planId === 'enterprise') {
       // Enterprise plan - redirect to contact/sales
@@ -60,9 +58,41 @@ export default function PricingPage() {
       // In a real app, this would go to a contact form
       router.push('/pricing'); // For now, just stay on pricing
     } else {
-      // Paid plan (basic/pro) - go to checkout
+      // Paid plan (basic/pro) - need to create organization first or select existing
       selectPlan(planId as 'basic' | 'pro');
-      router.push('/checkout');
+      
+      // For now, redirect to checkout with plan info
+      // TODO: Add org selection modal if user has multiple orgs
+      const plan = PLANS.find(p => p.id === planId);
+      if (plan) {
+        // Create a temporary organization for the paid plan
+        // In production, you'd want to let users select an existing org or create new
+        try {
+          const response = await fetch('/api/organizations/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: `${user?.user_metadata?.name || user?.email?.split('@')[0] || 'My'} Organization`,
+              plan_code: 'free', // Start with free, will be upgraded after payment
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            addToast('error', data.error || 'Failed to create organization');
+            return;
+          }
+
+          // Redirect to checkout with org_id and plan details
+          router.push(
+            `/checkout?org_id=${data.org_id}&price_id=${plan.priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
+          );
+        } catch (error) {
+          console.error('Error creating organization:', error);
+          addToast('error', 'Failed to create organization');
+        }
+      }
     }
   };
 
