@@ -7,8 +7,10 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const { 
     general, 
@@ -23,6 +25,15 @@ export default function SettingsPage() {
   } = useSettingsStore();
   
   const [activeSection, setActiveSection] = useState('general');
+
+  const handleSectionClick = (sectionId: string, externalLink?: boolean) => {
+    if (externalLink && sectionId === 'billing') {
+      // Navigate to billing page
+      router.push('/settings/billing');
+      return;
+    }
+    setActiveSection(sectionId);
+  };
 
   if (!user) return null;
 
@@ -66,6 +77,16 @@ export default function SettingsPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       )
+    },
+    { 
+      id: 'billing', 
+      name: 'Billing & Subscription', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      ),
+      externalLink: true
     },
     { 
       id: 'security', 
@@ -118,7 +139,7 @@ export default function SettingsPage() {
                 {sections.map((section) => (
                   <button
                     key={section.id}
-                    onClick={() => setActiveSection(section.id)}
+                    onClick={() => handleSectionClick(section.id, (section as any).externalLink)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center ${
                       activeSection === section.id
                         ? 'bg-orange text-white'
@@ -127,6 +148,11 @@ export default function SettingsPage() {
                   >
                     <span className="mr-3">{section.icon}</span>
                     {section.name}
+                    {(section as any).externalLink && (
+                      <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    )}
                   </button>
                 ))}
               </nav>
