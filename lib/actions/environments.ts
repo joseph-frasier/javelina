@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { canCreateResource } from '@/lib/entitlements'
 
 export async function createEnvironment(formData: {
   organization_id: string
@@ -31,6 +32,15 @@ export async function createEnvironment(formData: {
   
   if (!['SuperAdmin', 'Admin', 'Editor'].includes(membership.role)) {
     return { error: 'You do not have permission to create environments. Only SuperAdmin, Admin, and Editor roles can create environments.' }
+  }
+  
+  // Check entitlement limits
+  const limitCheck = await canCreateResource(formData.organization_id, 'environment')
+  if (!limitCheck.canCreate) {
+    return { 
+      error: limitCheck.reason || 'Environment limit reached. Please upgrade your plan to create more environments.',
+      upgrade_required: true 
+    }
   }
   
   // Validate environment name
