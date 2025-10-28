@@ -99,7 +99,7 @@ export function UsageMeter({
 
       {isNearLimit && !isAtLimit && (
         <p className="text-xs text-yellow-600 font-regular">
-          You're approaching your {resourceType} limit
+          You&apos;re approaching your {resourceType} limit
         </p>
       )}
     </div>

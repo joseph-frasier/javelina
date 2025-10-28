@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Modal from '@/components/ui/Modal';
+import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 
 interface Plan {
