@@ -203,6 +203,7 @@ export async function checkMultipleEntitlements(
 
 /**
  * Increment cached resource count
+ * TODO: Replace with PostgreSQL function for atomic increment
  */
 export async function incrementResourceCount(
   orgId: string,
@@ -211,9 +212,17 @@ export async function incrementResourceCount(
   const supabase = await createClient();
 
   if (resourceType === 'environment') {
+    // Fetch current count
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('environments_count')
+      .eq('id', orgId)
+      .single();
+
+    // Update with incremented value
     await supabase
       .from('organizations')
-      .update({ environments_count: supabase.raw('environments_count + 1') })
+      .update({ environments_count: (org?.environments_count || 0) + 1 })
       .eq('id', orgId);
   }
   // For zones, we increment the environment's zones_count instead
@@ -222,6 +231,7 @@ export async function incrementResourceCount(
 
 /**
  * Decrement cached resource count
+ * TODO: Replace with PostgreSQL function for atomic decrement
  */
 export async function decrementResourceCount(
   orgId: string,
@@ -230,10 +240,18 @@ export async function decrementResourceCount(
   const supabase = await createClient();
 
   if (resourceType === 'environment') {
+    // Fetch current count
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('environments_count')
+      .eq('id', orgId)
+      .single();
+
+    // Update with decremented value (minimum 0)
     await supabase
       .from('organizations')
       .update({ 
-        environments_count: supabase.raw('GREATEST(environments_count - 1, 0)') 
+        environments_count: Math.max((org?.environments_count || 0) - 1, 0)
       })
       .eq('id', orgId);
   }
