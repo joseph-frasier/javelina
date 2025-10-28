@@ -129,28 +129,57 @@ export async function POST(request: NextRequest) {
 
     // Create Subscription with incomplete status
     // This generates a PaymentIntent that we can use with Stripe Elements
-    const subscription = await stripe.subscriptions.create({
-      customer: customerId,
-      items: [
-        {
-          price: price_id,
+    let subscription: Stripe.Subscription;
+    try {
+      subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [
+          {
+            price: price_id,
+          },
+        ],
+        payment_behavior: 'default_incomplete',
+        payment_settings: {
+          save_default_payment_method: 'on_subscription',
         },
-      ],
-      payment_behavior: 'default_incomplete',
-      payment_settings: {
-        save_default_payment_method: 'on_subscription',
-      },
-      expand: ['latest_invoice.payment_intent'],
-      metadata: {
-        org_id: organization.id,
-        user_id: user.id,
-        plan_code: planCode,
-      },
-    }, { idempotencyKey });
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          org_id: organization.id,
+          user_id: user.id,
+          plan_code: planCode,
+        },
+      }, { idempotencyKey });
+    } catch (e: any) {
+      const msg = e?.message || '';
+      const code = e?.statusCode || e?.status || e?.code;
+      const isIdempoInUse = code === 409 || msg.includes('another in-progress request using this Idempotent Key');
+      if (isIdempoInUse) {
+        // Another request is creating the same subscription. Wait briefly and reuse it.
+        for (let i = 0; i < 5; i++) {
+          await new Promise(res => setTimeout(res, 300));
+          const retryList = await stripe.subscriptions.list({
+            customer: customerId,
+            status: 'incomplete',
+            expand: ['data.latest_invoice.payment_intent'],
+            limit: 10,
+          });
+          const found = retryList.data.find(s => s.items.data[0]?.price?.id === price_id);
+          if (found) {
+            subscription = found;
+            break;
+          }
+        }
+        if (!subscription) {
+          throw new Error('Subscription creation is in progress. Please retry momentarily.');
+        }
+      } else {
+        throw e;
+      }
+    }
 
     // Get the client secret from the payment intent
     const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+    const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
 
     if (!paymentIntent || !paymentIntent.client_secret) {
       throw new Error('Failed to create payment intent for subscription');

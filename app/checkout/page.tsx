@@ -23,6 +23,7 @@ function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
+  const hasRequestedRef = useState({ current: false })[0];
 
   useEffect(() => {
     const org_id = searchParams.get('org_id');
@@ -41,6 +42,10 @@ function CheckoutContent() {
       plan_price: parseFloat(searchParams.get('plan_price') || '0'),
       billing_interval: searchParams.get('billing_interval') || 'month',
     });
+
+    // Guard against double invocation in React StrictMode
+    if (hasRequestedRef.current) return;
+    hasRequestedRef.current = true;
 
     // Create subscription intent
     const createSubscriptionIntent = async () => {
@@ -70,7 +75,7 @@ function CheckoutContent() {
     };
 
     createSubscriptionIntent();
-  }, [searchParams, router, addToast]);
+  }, [searchParams, router, addToast, hasRequestedRef]);
 
   const handlePaymentSuccess = () => {
     addToast('success', 'Payment successful! Activating your subscription...');

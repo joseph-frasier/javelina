@@ -45,6 +45,11 @@ export async function POST(request: NextRequest) {
         await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
         break;
 
+      case 'invoice.paid':
+        // Treat as alias of payment_succeeded
+        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+        break;
+
       case 'invoice.payment_failed':
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
@@ -61,8 +66,12 @@ export async function POST(request: NextRequest) {
         await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
         break;
 
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+      default: {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Unhandled event type: ${event.type}`);
+        }
+        break;
+      }
     }
 
     return NextResponse.json({ received: true });
@@ -86,14 +95,73 @@ export async function POST(request: NextRequest) {
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('💰 Invoice payment succeeded:', invoice.id);
 
-  if (!invoice.subscription) {
-    console.log('No subscription associated with invoice');
+  const resolveSubscriptionId = async (): Promise<string | null> => {
+    // 1) Direct field on invoice
+    if (invoice.subscription) {
+      return typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : invoice.subscription.id;
+    }
+
+    // 2) Check invoice lines
+    const lineWithSub: any | undefined = invoice.lines?.data?.find(
+      (l: any) => !!l.subscription
+    );
+    if (lineWithSub?.subscription) {
+      return typeof lineWithSub.subscription === 'string'
+        ? lineWithSub.subscription
+        : lineWithSub.subscription.id;
+    }
+
+    // 3) Refetch invoice with expansion
+    try {
+      const full = await stripe.invoices.retrieve(invoice.id, {
+        expand: ['subscription', 'lines.data.subscription'],
+      });
+      if (full.subscription) {
+        return typeof full.subscription === 'string'
+          ? full.subscription
+          : full.subscription.id;
+      }
+      const expandedLine: any | undefined = full.lines?.data?.find(
+        (l: any) => !!l.subscription
+      );
+      if (expandedLine?.subscription) {
+        return typeof expandedLine.subscription === 'string'
+          ? expandedLine.subscription
+          : expandedLine.subscription.id;
+      }
+    } catch (e) {
+      console.warn('Failed to refetch invoice for subscription linkage:', invoice.id, e);
+    }
+
+    // 4) Last resort: infer from customer's subscriptions matching invoice price
+    try {
+      if (invoice.customer && typeof invoice.customer === 'string') {
+        const subs = await stripe.subscriptions.list({
+          customer: invoice.customer,
+          status: 'all',
+          limit: 10,
+          expand: ['data.items.data.price'],
+        });
+        const invPriceId = (invoice.lines?.data?.[0] as any)?.price?.id;
+        const match = subs.data.find((s) =>
+          s.items.data.some((it) => it.price?.id === invPriceId)
+        );
+        if (match) return match.id;
+      }
+    } catch (e) {
+      console.warn('Failed to infer subscription from customer:', invoice.id, e);
+    }
+
+    return null;
+  };
+
+  const subscriptionId = await resolveSubscriptionId();
+  if (!subscriptionId) {
+    console.warn('Unable to associate invoice with a subscription:', invoice.id);
     return;
   }
-
-  const subscriptionId = typeof invoice.subscription === 'string' 
-    ? invoice.subscription 
-    : invoice.subscription.id;
 
   try {
     // Check if subscription exists in database
