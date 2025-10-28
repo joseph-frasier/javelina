@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
@@ -12,7 +12,7 @@ import { getPlanById } from '@/lib/plans-config';
 import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
 
-export default function PricingPage() {
+function PricingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnboarding = searchParams.get('onboarding') === 'true';
@@ -188,6 +188,21 @@ export default function PricingPage() {
         selectedPlan={selectedPlanForOrg}
       />
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+          <span className="text-orange-dark">Loading...</span>
+        </div>
+      </div>
+    }>
+      <PricingContent />
+    </Suspense>
   );
 }
 
