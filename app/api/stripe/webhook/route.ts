@@ -8,8 +8,7 @@ import {
   updateOrgStripeCustomer,
   getSubscriptionByStripeId,
 } from '@/lib/stripe-helpers';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { stripe } from '@/lib/stripe';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -94,11 +93,12 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('💰 Invoice payment succeeded:', invoice.id);
 
   const resolveSubscriptionId = async (): Promise<string | null> => {
-    // 1) Direct field on invoice
-    if (invoice.subscription) {
-      return typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : invoice.subscription.id;
+    // 1) Direct field on invoice (TypeScript doesn't know about expanded fields)
+    const invoiceAny = invoice as any;
+    if (invoiceAny.subscription) {
+      return typeof invoiceAny.subscription === 'string'
+        ? invoiceAny.subscription
+        : invoiceAny.subscription.id;
     }
 
     // 2) Check invoice lines
@@ -116,10 +116,11 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       const full = await stripe.invoices.retrieve(invoice.id, {
         expand: ['subscription', 'lines.data.subscription'],
       });
-      if (full.subscription) {
-        return typeof full.subscription === 'string'
-          ? full.subscription
-          : full.subscription.id;
+      const fullAny = full as any;
+      if (fullAny.subscription) {
+        return typeof fullAny.subscription === 'string'
+          ? fullAny.subscription
+          : fullAny.subscription.id;
       }
       const expandedLine: any | undefined = full.lines?.data?.find(
         (l: any) => !!l.subscription
@@ -197,13 +198,14 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.log('❌ Invoice payment failed:', invoice.id);
 
-  if (!invoice.subscription) {
+  const invoiceAny = invoice as any;
+  if (!invoiceAny.subscription) {
     return;
   }
 
-  const subscriptionId = typeof invoice.subscription === 'string'
-    ? invoice.subscription
-    : invoice.subscription.id;
+  const subscriptionId = typeof invoiceAny.subscription === 'string'
+    ? invoiceAny.subscription
+    : invoiceAny.subscription.id;
 
   try {
     await updateSubscriptionStatus(subscriptionId, 'past_due');

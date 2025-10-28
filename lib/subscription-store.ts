@@ -25,10 +25,25 @@ interface SubscriptionState {
 }
 
 /**
+ * Legacy plan format for backwards compatibility
+ * Used by components that expect the old plan structure
+ */
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  priceId: string;
+  interval: string;
+  features: string[];
+  description: string;
+  popular?: boolean;
+}
+
+/**
  * Export PLANS for backwards compatibility
  * Maps from new plan config to old format
  */
-export const PLANS = PLANS_CONFIG.map((plan) => ({
+export const PLANS: Plan[] = PLANS_CONFIG.map((plan) => ({
   id: plan.id as PlanId,
   name: plan.name,
   price: plan.monthly?.amount || 0,

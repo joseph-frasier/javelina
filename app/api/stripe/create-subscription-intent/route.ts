@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
-});
+import { stripe } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
@@ -123,8 +120,9 @@ export async function POST(request: NextRequest) {
     console.log('✅ Subscription created:', subscription.id);
 
     // Try PaymentIntent path first (first invoice requires payment)
+    // TypeScript doesn't know about expanded fields, so we need to cast
     const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
-    const pi = latestInvoice?.payment_intent as Stripe.PaymentIntent | null;
+    const pi = (latestInvoice as any)?.payment_intent as Stripe.PaymentIntent | null | undefined;
     
     if (pi?.client_secret) {
       console.log('💳 Returning PaymentIntent client_secret');
@@ -153,7 +151,7 @@ export async function POST(request: NextRequest) {
       const refreshed = await stripe.invoices.retrieve(latestInvoice.id, { 
         expand: ['payment_intent'] 
       });
-      const fallbackPi = refreshed.payment_intent as Stripe.PaymentIntent | null;
+      const fallbackPi = (refreshed as any).payment_intent as Stripe.PaymentIntent | null | undefined;
       
       if (fallbackPi?.client_secret) {
         console.log('💳 Returning PaymentIntent client_secret (fallback)');
