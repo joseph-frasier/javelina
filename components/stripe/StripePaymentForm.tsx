@@ -12,12 +12,14 @@ interface StripePaymentFormProps {
   onSuccess: () => void;
   onError: (error: string) => void;
   orgId?: string; // Optional org_id to include in return URL
+  flow?: 'payment_intent' | 'setup_intent'; // Type of confirmation to perform
 }
 
 export function StripePaymentForm({
   onSuccess,
   onError,
   orgId,
+  flow = 'payment_intent',
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
@@ -33,25 +35,41 @@ export function StripePaymentForm({
     setIsProcessing(true);
 
     try {
+      // Validate element inputs before submission
+      const { error: submitError } = await elements.submit();
+      if (submitError) {
+        onError(submitError.message || 'Validation failed');
+        setIsProcessing(false);
+        return;
+      }
+
       // Build return URL with org_id if available
       const returnUrl = orgId 
         ? `${window.location.origin}/stripe/success?org_id=${orgId}`
         : `${window.location.origin}/stripe/success`;
 
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: returnUrl,
-        },
-      });
+      // Use appropriate confirmation method based on flow type
+      const { error } = flow === 'payment_intent'
+        ? await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+              return_url: returnUrl,
+            },
+          })
+        : await stripe.confirmSetup({
+            elements,
+            confirmParams: {
+              return_url: returnUrl,
+            },
+          });
 
       if (error) {
         // This point will only be reached if there's an immediate error when
-        // confirming the payment. Otherwise, the customer will be redirected
-        onError(error.message || 'Payment failed');
+        // confirming. Otherwise, the customer will be redirected
+        onError(error.message || `${flow === 'payment_intent' ? 'Payment' : 'Setup'} failed`);
         setIsProcessing(false);
       } else {
-        // Payment succeeded, user will be redirected
+        // Succeeded, user will be redirected
         onSuccess();
       }
     } catch (err: any) {

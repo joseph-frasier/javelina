@@ -9,9 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import type { Subscription, SubscriptionStatus } from '@/types/billing';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-09-30.clover',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Use service role client for webhook write operations (bypasses RLS)
 // Use regular client for read operations

@@ -16,11 +16,18 @@ interface CheckoutData {
   billing_interval?: string;
 }
 
+interface SubscriptionIntent {
+  subscriptionId: string;
+  clientSecret: string;
+  flow: 'payment_intent' | 'setup_intent';
+}
+
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const addToast = useToastStore((state) => state.addToast);
   const [clientSecret, setClientSecret] = useState<string>('');
+  const [flow, setFlow] = useState<'payment_intent' | 'setup_intent'>('payment_intent');
   const [isLoading, setIsLoading] = useState(true);
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const hasRequestedRef = useState({ current: false })[0];
@@ -58,13 +65,14 @@ function CheckoutContent() {
           body: JSON.stringify({ org_id, price_id }),
         });
 
-        const data = await response.json();
+        const data: SubscriptionIntent = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to create subscription');
+          throw new Error((data as any).error || 'Failed to create subscription');
         }
 
         setClientSecret(data.clientSecret);
+        setFlow(data.flow);
       } catch (error: any) {
         console.error('Error creating subscription:', error);
         addToast('error', error.message || 'Failed to initialize payment');
@@ -154,6 +162,7 @@ function CheckoutContent() {
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
                     orgId={checkoutData.org_id}
+                    flow={flow}
                   />
                 </StripeProvider>
               </div>
