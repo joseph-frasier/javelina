@@ -11,6 +11,7 @@ function SuccessPageContent() {
   const addToast = useToastStore((state) => state.addToast);
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [countdown, setCountdown] = useState(3);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
     const paymentIntent = searchParams.get('payment_intent');
@@ -45,16 +46,12 @@ function SuccessPageContent() {
 
   useEffect(() => {
     if (status === 'success') {
-      const orgId = searchParams.get('org_id');
-      
       // Start countdown
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            addToast('success', 'Welcome to your new plan!');
-            // Redirect to organization dashboard if we have org_id, otherwise home
-            router.push(orgId ? `/organization/${orgId}` : '/');
+            setShouldRedirect(true);
             return 0;
           }
           return prev - 1;
@@ -63,7 +60,19 @@ function SuccessPageContent() {
 
       return () => clearInterval(timer);
     }
-  }, [status, router, addToast, searchParams]);
+  }, [status]);
+
+  useEffect(() => {
+    if (!shouldRedirect) return;
+    const orgId = searchParams.get('org_id');
+    const path = orgId ? `/organization/${orgId}` : '/';
+    // Navigate after commit
+    router.push(path);
+    // Defer toast to next tick to avoid state update during render of Providers
+    setTimeout(() => {
+      try { addToast('success', 'Welcome to your new plan!'); } catch {}
+    }, 0);
+  }, [shouldRedirect, searchParams, router, addToast]);
 
   if (status === 'error') {
     return (
