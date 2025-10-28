@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins can manage billing
-    if (membership.role !== 'Admin') {
+    if (!['SuperAdmin', 'Admin'].includes(membership.role)) {
       return NextResponse.json(
         { error: 'Only organization admins can manage billing' },
         { status: 403 }
@@ -102,6 +102,31 @@ export async function POST(request: NextRequest) {
 
     const planCode = plan?.code || 'unknown';
 
+    // Try to reuse an existing incomplete subscription for this customer and price
+    const existing = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'incomplete',
+      expand: ['data.latest_invoice.payment_intent'],
+      limit: 10,
+    });
+
+    const reuse = existing.data.find(s => s.items.data[0]?.price?.id === price_id);
+
+    if (reuse) {
+      const reuseInvoice = reuse.latest_invoice as Stripe.Invoice | null;
+      const reusePi = reuseInvoice?.payment_intent as Stripe.PaymentIntent | null;
+
+      if (reusePi?.client_secret) {
+        return NextResponse.json({
+          subscriptionId: reuse.id,
+          clientSecret: reusePi.client_secret,
+        });
+      }
+    }
+
+    // No reusable subscription found: create a new one with an idempotency key
+    const idempotencyKey = `org:${org_id}:price:${price_id}:user:${user.id}`;
+
     // Create Subscription with incomplete status
     // This generates a PaymentIntent that we can use with Stripe Elements
     const subscription = await stripe.subscriptions.create({
@@ -121,7 +146,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         plan_code: planCode,
       },
-    });
+    }, { idempotencyKey });
 
     // Get the client secret from the payment intent
     const invoice = subscription.latest_invoice as Stripe.Invoice;

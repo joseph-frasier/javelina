@@ -148,6 +148,7 @@ function CheckoutContent() {
                   <StripePaymentForm
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
+                    orgId={checkoutData.org_id}
                   />
                 </StripeProvider>
               </div>

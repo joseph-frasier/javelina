@@ -11,11 +11,13 @@ import Button from '@/components/ui/Button';
 interface StripePaymentFormProps {
   onSuccess: () => void;
   onError: (error: string) => void;
+  orgId?: string; // Optional org_id to include in return URL
 }
 
 export function StripePaymentForm({
   onSuccess,
   onError,
+  orgId,
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
@@ -31,10 +33,15 @@ export function StripePaymentForm({
     setIsProcessing(true);
 
     try {
+      // Build return URL with org_id if available
+      const returnUrl = orgId 
+        ? `${window.location.origin}/stripe/success?org_id=${orgId}`
+        : `${window.location.origin}/stripe/success`;
+
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/stripe/success`,
+          return_url: returnUrl,
         },
       });
 

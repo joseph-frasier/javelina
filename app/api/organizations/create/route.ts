@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       .from('organizations')
       .insert({
         name,
-        created_by: user.id,
+        owner_id: user.id,
       })
       .select()
       .single();
@@ -71,14 +71,16 @@ export async function POST(request: NextRequest) {
     const { error: memberError } = await supabase
       .from('organization_members')
       .insert({
-        org_id: organization.id,
+        organization_id: organization.id,
         user_id: user.id,
-        role: 'admin',
+        role: 'SuperAdmin',
+        environments_count: 0,
+        zones_count: 0
       });
 
     if (memberError) {
       console.error('Error adding user as member:', memberError);
-      // Don't fail the request, user is already owner via created_by
+      // Don't fail the request, user is already owner via owner_id
     }
 
     // Create Stripe customer (even for free plan, for future upgrades)
@@ -102,25 +104,34 @@ export async function POST(request: NextRequest) {
       // Don't fail, we can update it later
     }
 
-    // Create subscription record for free plan
-    const { error: subscriptionError } = await supabase
-      .from('subscriptions')
-      .insert({
-        org_id: organization.id,
-        plan_id: plan.id,
-        status: 'active',
-        created_by: user.id,
-        metadata: {
-          plan_code: plan_code,
-        },
-      });
+    // Create subscription record ONLY for free plan
+    // For paid plans, Stripe webhooks will create the subscription after payment
+    if (plan_code === 'free') {
+      const now = new Date();
+      const oneYearFromNow = new Date(now);
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .insert({
+          org_id: organization.id,
+          plan_id: plan.id,
+          status: 'active',
+          current_period_start: now.toISOString(),
+          current_period_end: oneYearFromNow.toISOString(),
+          created_by: user.id,
+          metadata: {
+            plan_code: plan_code,
+          },
+        });
 
-    if (subscriptionError) {
-      console.error('Error creating subscription:', subscriptionError);
-      return NextResponse.json(
-        { error: 'Failed to create subscription' },
-        { status: 500 }
-      );
+      if (subscriptionError) {
+        console.error('Error creating subscription:', subscriptionError);
+        return NextResponse.json(
+          { error: 'Failed to create subscription' },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
