@@ -134,21 +134,24 @@ export async function createSubscriptionRecord(
   const priceId = stripeData.items.data[0]?.price.id;
   const planId = priceId ? await getPlanIdFromPriceId(priceId) : null;
 
+  // Cast to any to access properties that TypeScript doesn't recognize due to API version mismatch
+  const stripeAny = stripeData as any;
+
   const subscriptionData = {
     org_id: orgId,
     stripe_subscription_id: stripeData.id,
     plan_id: planId,
     status: stripeData.status as SubscriptionStatus,
-    current_period_start: stripeData.current_period_start 
-      ? new Date(stripeData.current_period_start * 1000).toISOString()
+    current_period_start: stripeAny.current_period_start 
+      ? new Date(stripeAny.current_period_start * 1000).toISOString()
       : new Date().toISOString(),
-    current_period_end: stripeData.current_period_end
-      ? new Date(stripeData.current_period_end * 1000).toISOString()
+    current_period_end: stripeAny.current_period_end
+      ? new Date(stripeAny.current_period_end * 1000).toISOString()
       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default to 30 days from now
-    trial_start: stripeData.trial_start ? new Date(stripeData.trial_start * 1000).toISOString() : null,
-    trial_end: stripeData.trial_end ? new Date(stripeData.trial_end * 1000).toISOString() : null,
-    cancel_at: stripeData.cancel_at ? new Date(stripeData.cancel_at * 1000).toISOString() : null,
-    cancel_at_period_end: stripeData.cancel_at_period_end || false,
+    trial_start: stripeAny.trial_start ? new Date(stripeAny.trial_start * 1000).toISOString() : null,
+    trial_end: stripeAny.trial_end ? new Date(stripeAny.trial_end * 1000).toISOString() : null,
+    cancel_at: stripeAny.cancel_at ? new Date(stripeAny.cancel_at * 1000).toISOString() : null,
+    cancel_at_period_end: stripeAny.cancel_at_period_end || false,
     created_by: stripeData.metadata?.user_id || null,
     metadata: stripeData.metadata || {},
     updated_at: new Date().toISOString(),
@@ -187,19 +190,22 @@ export async function updateSubscriptionRecord(
   const priceId = stripeData.items.data[0]?.price.id;
   const planId = priceId ? await getPlanIdFromPriceId(priceId) : null;
 
+  // Cast to any to access properties that TypeScript doesn't recognize due to API version mismatch
+  const stripeAny = stripeData as any;
+
   const updateData = {
     plan_id: planId,
     status: stripeData.status as SubscriptionStatus,
-    current_period_start: stripeData.current_period_start 
-      ? new Date(stripeData.current_period_start * 1000).toISOString()
+    current_period_start: stripeAny.current_period_start 
+      ? new Date(stripeAny.current_period_start * 1000).toISOString()
       : new Date().toISOString(),
-    current_period_end: stripeData.current_period_end
-      ? new Date(stripeData.current_period_end * 1000).toISOString()
+    current_period_end: stripeAny.current_period_end
+      ? new Date(stripeAny.current_period_end * 1000).toISOString()
       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    trial_start: stripeData.trial_start ? new Date(stripeData.trial_start * 1000).toISOString() : null,
-    trial_end: stripeData.trial_end ? new Date(stripeData.trial_end * 1000).toISOString() : null,
-    cancel_at: stripeData.cancel_at ? new Date(stripeData.cancel_at * 1000).toISOString() : null,
-    cancel_at_period_end: stripeData.cancel_at_period_end || false,
+    trial_start: stripeAny.trial_start ? new Date(stripeAny.trial_start * 1000).toISOString() : null,
+    trial_end: stripeAny.trial_end ? new Date(stripeAny.trial_end * 1000).toISOString() : null,
+    cancel_at: stripeAny.cancel_at ? new Date(stripeAny.cancel_at * 1000).toISOString() : null,
+    cancel_at_period_end: stripeAny.cancel_at_period_end || false,
     metadata: stripeData.metadata || {},
     updated_at: new Date().toISOString(),
   };
