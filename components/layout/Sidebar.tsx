@@ -7,7 +7,6 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useAuthStore } from '@/lib/auth-store';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
-import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { useEnvironments } from '@/lib/hooks/useEnvironments';
 import { useZones } from '@/lib/hooks/useZones';
 
@@ -16,7 +15,6 @@ export function Sidebar() {
   const { user } = useAuthStore();
   const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   
   // Refs for GSAP animations
   const envContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -28,13 +26,6 @@ export function Sidebar() {
 
   // Get organizations from authenticated user (already from Supabase)
   const userOrganizations = user?.organizations || [];
-
-  const handleOrganizationSuccess = (organizationId: string) => {
-    // Auto-expand and select the new organization
-    selectAndExpand(organizationId);
-    // Navigate to the new organization page
-    router.push(`/organization/${organizationId}`);
-  };
 
   const handleToggleOrg = (orgId: string) => {
     const isExpanding = !expandedOrgs.has(orgId);
@@ -220,7 +211,7 @@ export function Sidebar() {
       {!isCollapsed && (
         <div className="flex-shrink-0 p-4 border-b border-gray-light">
           <button
-            onClick={() => setIsAddOrgModalOpen(true)}
+            onClick={() => router.push('/pricing')}
             className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-orange hover:bg-orange-dark text-white rounded-md transition-colors"
             title="Add Organization"
           >
@@ -331,13 +322,6 @@ export function Sidebar() {
           </div>
         )}
       </nav>
-
-      {/* Add Organization Modal */}
-      <AddOrganizationModal
-        isOpen={isAddOrgModalOpen}
-        onClose={() => setIsAddOrgModalOpen(false)}
-        onSuccess={handleOrganizationSuccess}
-      />
     </aside>
   );
 }

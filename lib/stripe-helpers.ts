@@ -6,11 +6,22 @@
 
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import type { Subscription, SubscriptionStatus } from '@/types/billing';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia',
 });
+
+// Use service role client for webhook write operations (bypasses RLS)
+// Use regular client for read operations
+const getSupabaseServiceClient = () => {
+  const client = createServiceRoleClient();
+  if (!client) {
+    throw new Error('Supabase service role client not configured');
+  }
+  return client;
+};
 
 // =====================================================
 // ORGANIZATION LOOKUPS
@@ -113,12 +124,14 @@ export async function getPlanByCode(code: string) {
 
 /**
  * Create subscription record in database
+ * Uses upsert to handle concurrent webhook events for the same organization
  */
 export async function createSubscriptionRecord(
   orgId: string,
   stripeData: Stripe.Subscription
 ): Promise<Subscription | null> {
-  const supabase = await createClient();
+  // Use service role client for webhook write operations
+  const supabase = getSupabaseServiceClient();
   
   // Get plan ID from price ID
   const priceId = stripeData.items.data[0]?.price.id;
@@ -129,24 +142,29 @@ export async function createSubscriptionRecord(
     stripe_subscription_id: stripeData.id,
     plan_id: planId,
     status: stripeData.status as SubscriptionStatus,
-    current_period_start: new Date(stripeData.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(stripeData.current_period_end * 1000).toISOString(),
+    current_period_start: stripeData.current_period_start 
+      ? new Date(stripeData.current_period_start * 1000).toISOString()
+      : new Date().toISOString(),
+    current_period_end: stripeData.current_period_end
+      ? new Date(stripeData.current_period_end * 1000).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default to 30 days from now
     trial_start: stripeData.trial_start ? new Date(stripeData.trial_start * 1000).toISOString() : null,
     trial_end: stripeData.trial_end ? new Date(stripeData.trial_end * 1000).toISOString() : null,
     cancel_at: stripeData.cancel_at ? new Date(stripeData.cancel_at * 1000).toISOString() : null,
     cancel_at_period_end: stripeData.cancel_at_period_end || false,
     created_by: stripeData.metadata?.user_id || null,
     metadata: stripeData.metadata || {},
+    updated_at: new Date().toISOString(),
   };
 
   const { data, error } = await supabase
     .from('subscriptions')
-    .insert(subscriptionData)
+    .upsert(subscriptionData, { onConflict: 'org_id' })
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating subscription record:', error);
+    console.error('Error creating/updating subscription record:', error);
     return null;
   }
 
@@ -165,7 +183,8 @@ export async function updateSubscriptionRecord(
   subscriptionId: string,
   stripeData: Stripe.Subscription
 ): Promise<Subscription | null> {
-  const supabase = await createClient();
+  // Use service role client for webhook write operations
+  const supabase = getSupabaseServiceClient();
   
   // Get plan ID from price ID (in case plan changed)
   const priceId = stripeData.items.data[0]?.price.id;
@@ -174,8 +193,12 @@ export async function updateSubscriptionRecord(
   const updateData = {
     plan_id: planId,
     status: stripeData.status as SubscriptionStatus,
-    current_period_start: new Date(stripeData.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(stripeData.current_period_end * 1000).toISOString(),
+    current_period_start: stripeData.current_period_start 
+      ? new Date(stripeData.current_period_start * 1000).toISOString()
+      : new Date().toISOString(),
+    current_period_end: stripeData.current_period_end
+      ? new Date(stripeData.current_period_end * 1000).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     trial_start: stripeData.trial_start ? new Date(stripeData.trial_start * 1000).toISOString() : null,
     trial_end: stripeData.trial_end ? new Date(stripeData.trial_end * 1000).toISOString() : null,
     cancel_at: stripeData.cancel_at ? new Date(stripeData.cancel_at * 1000).toISOString() : null,
@@ -218,7 +241,8 @@ async function createSubscriptionItems(
   subscriptionId: string,
   items: Stripe.SubscriptionItem[]
 ): Promise<void> {
-  const supabase = await createClient();
+  // Use service role client for webhook write operations
+  const supabase = getSupabaseServiceClient();
   
   const itemsData = items.map((item) => ({
     subscription_id: subscriptionId,
@@ -241,7 +265,8 @@ async function createSubscriptionItems(
 export async function cancelSubscriptionRecord(
   subscriptionId: string
 ): Promise<void> {
-  const supabase = await createClient();
+  // Use service role client for webhook write operations
+  const supabase = getSupabaseServiceClient();
   
   const { error } = await supabase
     .from('subscriptions')
@@ -264,7 +289,8 @@ export async function updateSubscriptionStatus(
   status: SubscriptionStatus,
   periodEnd?: Date
 ): Promise<void> {
-  const supabase = await createClient();
+  // Use service role client for webhook write operations
+  const supabase = getSupabaseServiceClient();
   
   const updateData: any = {
     status,
@@ -299,8 +325,8 @@ export async function syncSubscriptionFromStripe(
     // Fetch from Stripe
     const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
     
-    // Check if exists in database
-    const supabase = await createClient();
+    // Check if exists in database - use service role for webhook operations
+    const supabase = getSupabaseServiceClient();
     const { data: existing } = await supabase
       .from('subscriptions')
       .select('id, org_id')
@@ -332,7 +358,8 @@ export async function updateOrgStripeCustomer(
   orgId: string,
   customerId: string
 ): Promise<void> {
-  const supabase = await createClient();
+  // Use service role client for webhook write operations
+  const supabase = getSupabaseServiceClient();
   
   const { error } = await supabase
     .from('organizations')
@@ -374,7 +401,7 @@ export async function getSubscriptionByStripeId(stripeSubscriptionId: string) {
     .from('subscriptions')
     .select('*')
     .eq('stripe_subscription_id', stripeSubscriptionId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching subscription by stripe ID:', error);

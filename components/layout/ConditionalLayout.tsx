@@ -12,17 +12,19 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   
-  // Hide sidebar and header on authentication pages, pricing/checkout, and admin routes
+  // Hide sidebar and header on authentication pages, pricing/checkout/stripe pages, and admin routes
   const isAuthPage = pathname === '/login' || 
                      pathname === '/signup' || 
                      pathname === '/forgot-password' || 
                      pathname === '/reset-password';
 
   const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout';
+  
+  const isStripeFlow = pathname.startsWith('/stripe/');
 
   const isAdminRoute = pathname.startsWith('/admin');
 
-  if (isAuthPage || isPricingOrCheckout || isAdminRoute) {
+  if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute) {
     return <>{children}</>;
   }
 

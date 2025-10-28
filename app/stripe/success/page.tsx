@@ -13,55 +13,48 @@ function SuccessPageContent() {
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    const sessionId = searchParams.get('session_id');
+    const paymentIntent = searchParams.get('payment_intent');
 
-    if (!sessionId) {
-      addToast('error', 'Invalid session');
+    if (!paymentIntent) {
+      addToast('error', 'Invalid payment session');
       router.push('/pricing');
       return;
     }
 
-    // Poll for subscription status
-    let pollCount = 0;
     const maxPolls = 30; // 30 seconds max
-    
-    const pollStatus = async () => {
-      try {
-        // In a real implementation, you'd get the org_id from the session
-        // For now, we'll redirect to dashboard and let it handle loading
-        pollCount++;
+    let cancelled = false;
 
-        if (pollCount >= maxPolls) {
-          // Timeout - redirect anyway
+    (async () => {
+      for (let i = 0; i < maxPolls && !cancelled; i++) {
+        // Simple delay for processing (webhooks should be fast)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        // After ~3 seconds, proceed
+        if (i >= 2 && !cancelled) {
           setStatus('success');
           return;
         }
-
-        // Simple delay for processing
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // After a short delay, mark as success
-        if (pollCount >= 3) {
-          setStatus('success');
-        }
-      } catch (error) {
-        console.error('Error polling status:', error);
-        setStatus('error');
       }
-    };
+      if (!cancelled) {
+        // Timeout - redirect anyway
+        setStatus('success');
+      }
+    })();
 
-    pollStatus();
+    return () => { cancelled = true; };
   }, [searchParams, router, addToast]);
 
   useEffect(() => {
     if (status === 'success') {
+      const orgId = searchParams.get('org_id');
+      
       // Start countdown
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
             addToast('success', 'Welcome to your new plan!');
-            router.push('/');
+            // Redirect to organization dashboard if we have org_id, otherwise home
+            router.push(orgId ? `/organization/${orgId}` : '/');
             return 0;
           }
           return prev - 1;
@@ -70,7 +63,7 @@ function SuccessPageContent() {
 
       return () => clearInterval(timer);
     }
-  }, [status, router, addToast]);
+  }, [status, router, addToast, searchParams]);
 
   if (status === 'error') {
     return (
@@ -111,6 +104,9 @@ function SuccessPageContent() {
   }
 
   if (status === 'success') {
+    const orgId = searchParams.get('org_id');
+    const redirectPath = orgId ? `/organization/${orgId}` : '/';
+    
     return (
       <div className="min-h-screen bg-orange-light flex items-center justify-center p-4">
         <div className="max-w-md w-full">
@@ -137,7 +133,7 @@ function SuccessPageContent() {
               Your subscription is now active. Redirecting to dashboard in {countdown}...
             </p>
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push(redirectPath)}
               className="w-full bg-orange hover:bg-orange-dark text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
               Go to Dashboard Now

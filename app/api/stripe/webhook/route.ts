@@ -170,15 +170,9 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     // Update organization with Stripe customer ID
     await updateOrgStripeCustomer(orgId, customerId);
 
-    // Check if subscription already exists
-    const existing = await getSubscriptionByStripeId(subscription.id);
-    if (existing) {
-      console.log('Subscription already exists, updating...');
-      await updateSubscriptionRecord(subscription.id, subscription);
-    } else {
-      // Create subscription record
-      await createSubscriptionRecord(orgId, subscription);
-    }
+    // Use upsert to create or update subscription record
+    // This atomically handles concurrent webhook events for the same org
+    await createSubscriptionRecord(orgId, subscription);
 
     console.log('✅ Subscription record synced:', subscription.id);
   } catch (error) {
@@ -197,14 +191,19 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     const existing = await getSubscriptionByStripeId(subscription.id);
 
     if (existing) {
+      // Subscription exists in database, update it
       await updateSubscriptionRecord(subscription.id, subscription);
       console.log('✅ Subscription record updated:', subscription.id);
     } else {
-      // Subscription not in database, create it
+      // Subscription not in database, create it with upsert
+      // This atomically handles the case where another webhook event
+      // is simultaneously creating the same subscription
       const orgId = subscription.metadata?.org_id;
       if (orgId) {
         await createSubscriptionRecord(orgId, subscription);
         console.log('✅ Subscription record created from update:', subscription.id);
+      } else {
+        console.error('Cannot create subscription from update: missing org_id in metadata');
       }
     }
   } catch (error) {

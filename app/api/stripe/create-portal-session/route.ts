@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins can access billing portal
-    if (member.role !== 'admin' && member.role !== 'Admin') {
+    if (!['SuperAdmin', 'Admin', 'admin'].includes(member.role)) {
       return NextResponse.json(
         { error: 'Only organization admins can access billing settings' },
         { status: 403 }

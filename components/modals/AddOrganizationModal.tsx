@@ -9,14 +9,16 @@ import Input from '@/components/ui/Input';
 import { createOrganization } from '@/lib/actions/organizations';
 import { useToastStore } from '@/lib/toast-store';
 import { useAuthStore } from '@/lib/auth-store';
+import type { Plan } from '@/lib/plans-config';
 
 interface AddOrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (organizationId: string) => void;
+  selectedPlan?: Plan | null; // Optional plan for billing integration
 }
 
-export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganizationModalProps) {
+export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan }: AddOrganizationModalProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { fetchProfile } = useAuthStore();
@@ -52,47 +54,81 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
     setIsSubmitting(true);
     setErrors({});
 
-    // Call the server action
-    const result = await createOrganization({
-      name: name.trim(),
-      description: description.trim() || undefined
-    });
+    try {
+      let organizationId: string;
+      let organizationName: string;
 
-    // Check for errors from server action
-    if (result.error) {
-      setErrors({ general: result.error });
-      addToast('error', result.error);
+      // If a plan is selected, use the billing API endpoint
+      if (selectedPlan) {
+        const response = await fetch('/api/organizations/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name.trim(),
+            plan_code: selectedPlan.code,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setErrors({ general: data.error || 'Failed to create organization' });
+          addToast('error', data.error || 'Failed to create organization');
+          setIsSubmitting(false);
+          return;
+        }
+
+        organizationId = data.org_id;
+        organizationName = data.name;
+      } else {
+        // No plan selected - use the standard server action
+        const result = await createOrganization({
+          name: name.trim(),
+          description: description.trim() || undefined
+        });
+
+        // Check for errors from server action
+        if (result.error) {
+          setErrors({ general: result.error });
+          addToast('error', result.error);
+          setIsSubmitting(false);
+          return;
+        }
+
+        organizationId = result.data!.id;
+        organizationName = result.data!.name;
+      }
+
+      // Invalidate React Query cache for organizations
+      await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      
+      // Refresh user profile to update organizations list in auth store
+      await fetchProfile();
+      
+      // Refresh the page data
+      router.refresh();
+
+      addToast('success', `Organization "${organizationName}" created successfully!`);
+      
+      // Reset form
+      setName('');
+      setDescription('');
+      
+      // Call success callback with organization ID
+      if (onSuccess) {
+        onSuccess(organizationId);
+      }
+      
+      // Close modal
+      onClose();
+      
       setIsSubmitting(false);
-      return;
+    } catch (error: any) {
+      console.error('Error creating organization:', error);
+      setErrors({ general: error.message || 'An unexpected error occurred' });
+      addToast('error', 'Failed to create organization');
+      setIsSubmitting(false);
     }
-
-    // Success - organization created
-    const organization = result.data!;
-
-    // Invalidate React Query cache for organizations
-    await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-    
-    // Refresh user profile to update organizations list in auth store
-    await fetchProfile();
-    
-    // Refresh the page data
-    router.refresh();
-
-    addToast('success', `Organization "${organization.name}" created successfully!`);
-    
-    // Reset form
-    setName('');
-    setDescription('');
-    
-    // Call success callback
-    if (onSuccess) {
-      onSuccess(organization.id);
-    }
-    
-    // Close modal
-    onClose();
-    
-    setIsSubmitting(false);
   };
 
   const handleClose = () => {
@@ -105,8 +141,47 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess }: AddOrganiza
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add Organization" size="medium">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={handleClose} 
+      title={selectedPlan ? `Create Organization - ${selectedPlan.name} Plan` : "Add Organization"} 
+      size="medium"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {selectedPlan && (
+          <div className="p-4 bg-orange-light border border-orange rounded-lg">
+            <div className="flex items-start space-x-3">
+              <svg
+                className="w-5 h-5 text-orange flex-shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-orange-dark">
+                  Selected Plan: {selectedPlan.name}
+                </p>
+                <p className="text-xs text-gray-slate mt-1">
+                  {selectedPlan.description}
+                  {selectedPlan.monthly && selectedPlan.monthly.amount > 0 && (
+                    <> • ${selectedPlan.monthly.amount}/month</>
+                  )}
+                  {selectedPlan.monthly && selectedPlan.monthly.amount === 0 && (
+                    <> • Free forever</>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {errors.general && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="text-sm text-red-800">{errors.general}</p>

@@ -1,11 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
 import { PLANS, useSubscriptionStore } from '@/lib/subscription-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
+import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
+import { getPlanById } from '@/lib/plans-config';
+import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
 
 export default function PricingPage() {
@@ -16,6 +20,10 @@ export default function PricingPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const addToast = useToastStore((state) => state.addToast);
   const user = useAuthStore((state) => state.user);
+  
+  // Modal state
+  const [showOrgModal, setShowOrgModal] = useState(false);
+  const [selectedPlanForOrg, setSelectedPlanForOrg] = useState<Plan | null>(null);
 
   const handleSelectPlan = async (planId: string) => {
     // Check if user is authenticated
@@ -25,75 +33,47 @@ export default function PricingPage() {
       return;
     }
 
-    if (planId === 'free') {
-      // Free plan - create organization with free subscription
-      selectPlan(planId);
-      
-      try {
-        const response = await fetch('/api/organizations/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: `${user?.user_metadata?.name || user?.email?.split('@')[0] || 'My'} Organization`,
-            plan_code: 'free',
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          addToast('error', data.error || 'Failed to create organization');
-          return;
-        }
-
-        addToast('success', 'Welcome to Javelina Free!');
-        router.push(`/organization/${data.org_id}`);
-      } catch (error) {
-        console.error('Error creating organization:', error);
-        addToast('error', 'Failed to create organization');
-      }
-    } else if (planId === 'enterprise') {
+    if (planId === 'enterprise') {
       // Enterprise plan - redirect to contact/sales
       addToast('info', 'Please contact our sales team for Enterprise pricing');
       // In a real app, this would go to a contact form
-      router.push('/pricing'); // For now, just stay on pricing
+      return;
+    }
+
+    // Get the full plan configuration
+    const plan = getPlanById(planId);
+    if (!plan) {
+      addToast('error', 'Invalid plan selected');
+      return;
+    }
+
+    // Store selected plan and show organization creation modal
+    selectPlan(planId as 'free' | 'basic' | 'pro');
+    setSelectedPlanForOrg(plan);
+    setShowOrgModal(true);
+  };
+
+  const handleOrgCreated = (orgId: string) => {
+    // Organization created successfully
+    if (!selectedPlanForOrg) return;
+
+    if (selectedPlanForOrg.id === 'free') {
+      // Free plan - redirect to organization dashboard
+      addToast('success', 'Welcome to Javelina Free!');
+      router.push(`/organization/${orgId}`);
     } else {
-      // Paid plan (basic/pro) - need to create organization first or select existing
-      selectPlan(planId as 'basic' | 'pro');
-      
-      // For now, redirect to checkout with plan info
-      // TODO: Add org selection modal if user has multiple orgs
-      const plan = PLANS.find(p => p.id === planId);
+      // Paid plan - redirect to checkout
+      const plan = PLANS.find(p => p.id === selectedPlanForOrg.id);
       if (plan) {
-        // Create a temporary organization for the paid plan
-        // In production, you'd want to let users select an existing org or create new
-        try {
-          const response = await fetch('/api/organizations/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: `${user?.user_metadata?.name || user?.email?.split('@')[0] || 'My'} Organization`,
-              plan_code: 'free', // Start with free, will be upgraded after payment
-            }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            addToast('error', data.error || 'Failed to create organization');
-            return;
-          }
-
-          // Redirect to checkout with org_id and plan details
-          router.push(
-            `/checkout?org_id=${data.org_id}&price_id=${plan.priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
-          );
-        } catch (error) {
-          console.error('Error creating organization:', error);
-          addToast('error', 'Failed to create organization');
-        }
+        router.push(
+          `/checkout?org_id=${orgId}&price_id=${plan.priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
+        );
       }
     }
+
+    // Clean up
+    setShowOrgModal(false);
+    setSelectedPlanForOrg(null);
   };
 
   return (
@@ -196,6 +176,17 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+
+      {/* Organization Creation Modal */}
+      <AddOrganizationModal
+        isOpen={showOrgModal}
+        onClose={() => {
+          setShowOrgModal(false);
+          setSelectedPlanForOrg(null);
+        }}
+        onSuccess={handleOrgCreated}
+        selectedPlan={selectedPlanForOrg}
+      />
     </div>
   );
 }
