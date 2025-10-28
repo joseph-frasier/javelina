@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-09-30.clover',
+  apiVersion: '2024-06-20',
 });
 
 export async function POST(request: NextRequest) {
@@ -102,99 +102,74 @@ export async function POST(request: NextRequest) {
 
     const planCode = plan?.code || 'unknown';
 
-    // Try to reuse an existing incomplete subscription for this customer and price
-    const existing = await stripe.subscriptions.list({
+    // Create subscription with payment_behavior='default_incomplete'
+    // This forces Stripe to create either a PaymentIntent (for paid invoices)
+    // or a SetupIntent (for $0 first invoices like trials/coupons)
+    const subscription = await stripe.subscriptions.create({
       customer: customerId,
-      status: 'incomplete',
-      expand: ['data.latest_invoice.payment_intent'],
-      limit: 10,
+      items: [{ price: price_id }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: {
+        save_default_payment_method: 'on_subscription',
+      },
+      expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
+      metadata: {
+        org_id: organization.id,
+        user_id: user.id,
+        plan_code: planCode,
+      },
     });
 
-    const reuse = existing.data.find(s => s.items.data[0]?.price?.id === price_id);
+    console.log('✅ Subscription created:', subscription.id);
 
-    if (reuse && reuse.latest_invoice) {
-      const reuseInvoice = reuse.latest_invoice as Stripe.Invoice;
-      // Check if payment_intent is expanded (object) vs just ID (string)
-      if (reuseInvoice.payment_intent && typeof reuseInvoice.payment_intent === 'object') {
-        const reusePi = reuseInvoice.payment_intent as Stripe.PaymentIntent;
-        if (reusePi.client_secret) {
-          return NextResponse.json({
-            subscriptionId: reuse.id,
-            clientSecret: reusePi.client_secret,
-          });
-        }
-      }
-    }
-
-    // No reusable subscription found: create a new one with an idempotency key
-    const idempotencyKey = `org:${org_id}:price:${price_id}:user:${user.id}`;
-
-    // Create Subscription with incomplete status
-    // This generates a PaymentIntent that we can use with Stripe Elements
-    let subscription: Stripe.Subscription;
-    try {
-      subscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: [
-          {
-            price: price_id,
-          },
-        ],
-        payment_behavior: 'default_incomplete',
-        payment_settings: {
-          save_default_payment_method: 'on_subscription',
-        },
-        expand: ['latest_invoice.payment_intent'],
-        metadata: {
-          org_id: organization.id,
-          user_id: user.id,
-          plan_code: planCode,
-        },
-      }, { idempotencyKey });
-    } catch (e: any) {
-      const msg = e?.message || '';
-      const code = e?.statusCode || e?.status || e?.code;
-      const isIdempoInUse = code === 409 || msg.includes('another in-progress request using this Idempotent Key');
-      if (isIdempoInUse) {
-        // Another request is creating the same subscription. Wait briefly and reuse it.
-        for (let i = 0; i < 5; i++) {
-          await new Promise(res => setTimeout(res, 300));
-          const retryList = await stripe.subscriptions.list({
-            customer: customerId,
-            status: 'incomplete',
-            expand: ['data.latest_invoice.payment_intent'],
-            limit: 10,
-          });
-          const found = retryList.data.find(s => s.items.data[0]?.price?.id === price_id);
-          if (found) {
-            subscription = found;
-            break;
-          }
-        }
-        if (!subscription) {
-          throw new Error('Subscription creation is in progress. Please retry momentarily.');
-        }
-      } else {
-        throw e;
-      }
-    }
-
-    // Get the client secret from the payment intent
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    // Check if payment_intent is expanded (object) vs just ID (string)
-    if (!invoice || !invoice.payment_intent || typeof invoice.payment_intent !== 'object') {
-      throw new Error('Failed to retrieve payment intent for subscription');
-    }
+    // Try PaymentIntent path first (first invoice requires payment)
+    const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
+    const pi = latestInvoice?.payment_intent as Stripe.PaymentIntent | null;
     
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-    if (!paymentIntent.client_secret) {
-      throw new Error('Payment intent missing client secret');
+    if (pi?.client_secret) {
+      console.log('💳 Returning PaymentIntent client_secret');
+      return NextResponse.json({
+        subscriptionId: subscription.id,
+        clientSecret: pi.client_secret,
+        flow: 'payment_intent',
+      });
     }
 
-    return NextResponse.json({
-      subscriptionId: subscription.id,
-      clientSecret: paymentIntent.client_secret,
-    });
+    // If first invoice is $0 (trial/coupon), a SetupIntent will exist
+    const si = subscription.pending_setup_intent as Stripe.SetupIntent | null;
+    
+    if (si?.client_secret) {
+      console.log('🔧 Returning SetupIntent client_secret (trial/coupon)');
+      return NextResponse.json({
+        subscriptionId: subscription.id,
+        clientSecret: si.client_secret,
+        flow: 'setup_intent',
+      });
+    }
+
+    // Defensive: expand invoice again if needed
+    if (latestInvoice?.id) {
+      console.log('🔄 Attempting fallback: re-fetching invoice');
+      const refreshed = await stripe.invoices.retrieve(latestInvoice.id, { 
+        expand: ['payment_intent'] 
+      });
+      const fallbackPi = refreshed.payment_intent as Stripe.PaymentIntent | null;
+      
+      if (fallbackPi?.client_secret) {
+        console.log('💳 Returning PaymentIntent client_secret (fallback)');
+        return NextResponse.json({
+          subscriptionId: subscription.id,
+          clientSecret: fallbackPi.client_secret,
+          flow: 'payment_intent',
+        });
+      }
+    }
+
+    console.error('❌ Could not obtain client_secret from subscription');
+    return NextResponse.json(
+      { error: 'Could not obtain client secret for subscription checkout' },
+      { status: 500 }
+    );
   } catch (error: any) {
     console.error('Error creating subscription intent:', error);
     return NextResponse.json(
@@ -203,4 +178,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
