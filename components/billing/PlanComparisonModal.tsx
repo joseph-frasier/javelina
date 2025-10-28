@@ -120,7 +120,7 @@ export function PlanComparisonModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Compare Plans"
-      size="xl"
+      size="large"
     >
       <div className="py-4">
         <p className="text-sm text-gray-slate mb-6">
