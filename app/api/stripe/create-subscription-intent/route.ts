@@ -112,15 +112,17 @@ export async function POST(request: NextRequest) {
 
     const reuse = existing.data.find(s => s.items.data[0]?.price?.id === price_id);
 
-    if (reuse) {
-      const reuseInvoice = reuse.latest_invoice as Stripe.Invoice | null;
-      const reusePi = reuseInvoice?.payment_intent as Stripe.PaymentIntent | null;
-
-      if (reusePi?.client_secret) {
-        return NextResponse.json({
-          subscriptionId: reuse.id,
-          clientSecret: reusePi.client_secret,
-        });
+    if (reuse && reuse.latest_invoice) {
+      const reuseInvoice = reuse.latest_invoice as Stripe.Invoice;
+      // Check if payment_intent is expanded (object) vs just ID (string)
+      if (reuseInvoice.payment_intent && typeof reuseInvoice.payment_intent === 'object') {
+        const reusePi = reuseInvoice.payment_intent as Stripe.PaymentIntent;
+        if (reusePi.client_secret) {
+          return NextResponse.json({
+            subscriptionId: reuse.id,
+            clientSecret: reusePi.client_secret,
+          });
+        }
       }
     }
 
@@ -179,10 +181,14 @@ export async function POST(request: NextRequest) {
 
     // Get the client secret from the payment intent
     const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
-
-    if (!paymentIntent || !paymentIntent.client_secret) {
-      throw new Error('Failed to create payment intent for subscription');
+    // Check if payment_intent is expanded (object) vs just ID (string)
+    if (!invoice || !invoice.payment_intent || typeof invoice.payment_intent !== 'object') {
+      throw new Error('Failed to retrieve payment intent for subscription');
+    }
+    
+    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+    if (!paymentIntent.client_secret) {
+      throw new Error('Payment intent missing client secret');
     }
 
     return NextResponse.json({
