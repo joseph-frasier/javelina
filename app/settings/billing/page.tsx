@@ -61,8 +61,8 @@ export default function BillingPage() {
       const orgIds = memberships.map(m => m.organization_id);
       const { data: subscriptions, error: subError } = await supabase
         .from('subscriptions')
-        .select('organization_id, status, current_period_end, plan_id')
-        .in('organization_id', orgIds);
+        .select('org_id, status, current_period_end, plan_id')
+        .in('org_id', orgIds);
 
       if (subError) {
         console.error('Error fetching subscriptions:', subError);
@@ -88,10 +88,8 @@ export default function BillingPage() {
       // Combine data
       const orgs: Organization[] = memberships.map(m => {
         const org = (m.organizations as any);
-        const sub = subscriptions?.find(s => s.organization_id === m.organization_id);
+        const sub = subscriptions?.find(s => s.org_id === m.organization_id);
         const plan = sub?.plan_id ? plans.find(p => p.id === sub.plan_id) : null;
-        
-        console.log(`Org ${org.name} (${m.organization_id}):`, { sub, plan });
         
         return {
           id: org.id,
@@ -174,7 +172,7 @@ export default function BillingPage() {
                 No Organizations Available
               </h3>
               <p className="text-sm text-yellow-700">
-                You don't have admin access to any organizations. Only admins can manage billing.
+                You don&apos;t have admin access to any organizations. Only admins can manage billing.
               </p>
             </div>
           ) : (
