@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const { data: member, error: memberError } = await supabase
       .from('organization_members')
       .select('role')
-      .eq('org_id', org_id)
+      .eq('organization_id', org_id)
       .eq('user_id', user.id)
       .single();
 
@@ -71,9 +71,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe billing portal session
+    // Auto-detect the site URL from request headers (works locally and on Vercel)
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const host = request.headers.get('host') || 'localhost:3000';
+    const returnUrl = `${protocol}://${host}/settings/billing/${org_id}`;
+
     const session = await stripe.billingPortal.sessions.create({
       customer: organization.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing?org_id=${org_id}`,
+      return_url: returnUrl,
     });
 
     return NextResponse.json({
