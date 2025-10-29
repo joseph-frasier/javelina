@@ -41,11 +41,11 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   
   // Filters
-  const [searchEmail, setSearchEmail] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled'>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [activityFilter, setActivityFilter] = useState<string>('all');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
+  
+  // Sorting
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
   
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -79,7 +79,7 @@ export default function AdminUsersPage() {
     filterUsers();
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [users, searchEmail, statusFilter, roleFilter, activityFilter]);
+  }, [users, searchQuery, sortKey, sortDirection]);
 
   const fetchUsers = async () => {
     try {
@@ -114,37 +114,68 @@ export default function AdminUsersPage() {
   const filterUsers = () => {
     let filtered = users;
 
-    if (searchEmail) {
-      filtered = filtered.filter(
-        (user) =>
-          user.email.toLowerCase().includes(searchEmail.toLowerCase()) ||
-          user.name.toLowerCase().includes(searchEmail.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((user) => (user.status || 'active') === statusFilter);
-    }
-
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter((user) => user.role === roleFilter);
-    }
-
-    if (activityFilter !== 'all') {
+    // Search across all columns
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter((user) => {
-        const status = getActivityStatus(user.last_login);
-        return status === activityFilter;
+        return (
+          user.name?.toLowerCase().includes(query) ||
+          user.email?.toLowerCase().includes(query) ||
+          user.role?.toLowerCase().includes(query) ||
+          user.status?.toLowerCase().includes(query) ||
+          getActivityStatus(user.last_login)?.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply sorting
+    if (sortKey && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any = a[sortKey as keyof User];
+        let bValue: any = b[sortKey as keyof User];
+
+        // Handle null/undefined
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Handle dates (last_login, created_at)
+        if (sortKey === 'last_login' || sortKey === 'created_at') {
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
+          return sortDirection === 'asc'
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
+        // Handle strings
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (sortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        }
+        return bStr.localeCompare(aStr);
       });
     }
 
     setFilteredUsers(filtered);
   };
 
-  const clearFilters = () => {
-    setSearchEmail('');
-    setStatusFilter('all');
-    setRoleFilter('all');
-    setActivityFilter('all');
+  // Handle column sorting
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Same column: cycle through asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortKey(null);
+        setSortDirection(null);
+      }
+    } else {
+      // New column: start with asc
+      setSortKey(key);
+      setSortDirection('asc');
+    }
   };
 
   // Bulk selection functions
@@ -353,8 +384,6 @@ export default function AdminUsersPage() {
     online: users.filter((u) => getActivityStatus(u.last_login) === 'online').length,
   };
 
-  const hasActiveFilters = searchEmail || statusFilter !== 'all' || roleFilter !== 'all' || activityFilter !== 'all';
-
   // Pagination calculations
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -371,17 +400,19 @@ export default function AdminUsersPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">Users</h1>
-              <p className="text-gray-slate dark:text-gray-300 mt-2">Manage all system users</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Users</h1>
+              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all system users</p>
             </div>
-            <ExportButton data={filteredUsers} filename="users" />
+            <div className="flex-shrink-0">
+              <ExportButton data={filteredUsers} filename="users" />
+            </div>
           </div>
 
           {/* Stat Cards */}
           {!loading && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 label="Total Users"
                 value={stats.total}
@@ -425,67 +456,6 @@ export default function AdminUsersPage() {
             </div>
           )}
 
-          {/* Filters */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Input
-                  type="text"
-                  placeholder="Search by email or name..."
-                  value={searchEmail}
-                  onChange={(e) => setSearchEmail(e.target.value)}
-                />
-                <Dropdown
-                  value={statusFilter}
-                  onChange={(value) => setStatusFilter(value as any)}
-                  options={[
-                    { value: 'all', label: 'All Status' },
-                    { value: 'active', label: 'Active' },
-                    { value: 'disabled', label: 'Disabled' }
-                  ]}
-                />
-                <Dropdown
-                  value={roleFilter}
-                  onChange={setRoleFilter}
-                  options={[
-                    { value: 'all', label: 'All Roles' },
-                    { value: 'SuperAdmin', label: 'SuperAdmin' },
-                    { value: 'Admin', label: 'Admin' },
-                    { value: 'Editor', label: 'Editor' },
-                    { value: 'Viewer', label: 'Viewer' }
-                  ]}
-                />
-                <Dropdown
-                  value={activityFilter}
-                  onChange={setActivityFilter}
-                  options={[
-                    { value: 'all', label: 'All Activity' },
-                    { value: 'online', label: 'Online Now' },
-                    { value: 'active', label: 'Active Today' },
-                    { value: 'recent', label: 'Recent (30d)' },
-                    { value: 'inactive', label: 'Inactive' }
-                  ]}
-                />
-              </div>
-
-              {hasActiveFilters && (
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-slate dark:text-gray-400">
-                    {filteredUsers.length} of {users.length} users match your filters
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={clearFilters}
-                    className="!text-orange-600 dark:!text-orange-400"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-
           {/* Users Table */}
           <Card className="p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
@@ -512,6 +482,32 @@ export default function AdminUsersPage() {
               )}
             </div>
 
+            {/* Search */}
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="search"
+                  placeholder="Search across all fields..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-pulse space-y-4">
@@ -527,36 +523,123 @@ export default function AdminUsersPage() {
                 </svg>
                 <p className="text-gray-slate dark:text-gray-300 text-lg font-medium">No users found</p>
                 <p className="text-gray-400 text-sm mt-2">
-                  {hasActiveFilters
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'No users have been registered yet.'}
+                  {searchQuery ? 'Try adjusting your search query.' : 'No users have been registered yet.'}
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-light">
-                      <th className="text-left py-3 px-4 w-12">
-                        <input
-                          type="checkbox"
-                          checked={paginatedUsers.length > 0 && paginatedUsers.every(user => selectedIds.has(user.id))}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              paginatedUsers.forEach(user => setSelectedIds(prev => new Set(prev).add(user.id)));
-                            } else {
-                              paginatedUsers.forEach(user => setSelectedIds(prev => {
-                                const newSet = new Set(prev);
-                                newSet.delete(user.id);
-                                return newSet;
-                              }));
-                            }
-                          }}
-                          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                        />
+              <>
+              {/* Mobile Card View - Below 640px */}
+              <div className="sm:hidden space-y-3">
+                {paginatedUsers.map((user) => {
+                  const lastLoginDate = formatDateWithRelative(user.last_login);
+                  const activityStatus = getActivityStatus(user.last_login);
+                  const activityBadge = getActivityBadge(activityStatus);
+                  const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+
+                  return (
+                    <Card key={user.id} className="p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(user.id)}
+                            onChange={() => toggleSelect(user.id)}
+                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 flex-shrink-0"
+                          />
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange text-white flex items-center justify-center text-sm font-semibold">
+                            {userInitial}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</p>
+                            {user.role && (
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{user.role}</p>
+                            )}
+                          </div>
+                        </div>
+                        <QuickActionsDropdown actions={getQuickActions(user)} align="right" />
+                      </div>
+
+                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Activity:</span>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${activityBadge.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${activityBadge.dotColor} ${activityBadge.animate ? 'animate-pulse' : ''}`} />
+                            {activityBadge.label}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            user.status === 'active'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          }`}>
+                            {user.status === 'active' ? 'Active' : 'Disabled'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Last Login:</span>
+                          <span className="text-gray-900 dark:text-gray-100 text-xs">{lastLoginDate.relative}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table - 640px+ */}
+              <div className="hidden sm:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-light">
+                        <th className="text-left py-3 px-4 w-12">
+                          <input
+                            type="checkbox"
+                            checked={paginatedUsers.length > 0 && paginatedUsers.every(user => selectedIds.has(user.id))}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                paginatedUsers.forEach(user => setSelectedIds(prev => new Set(prev).add(user.id)));
+                              } else {
+                                paginatedUsers.forEach(user => setSelectedIds(prev => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(user.id);
+                                  return newSet;
+                                }));
+                              }
+                            }}
+                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          />
+                        </th>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'name' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Name
+                          {sortKey === 'name' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Email</th>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'email' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('email')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Email
+                          {sortKey === 'email' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
                         <div className="flex items-center justify-center gap-1">
                           Activity
@@ -565,15 +648,37 @@ export default function AdminUsersPage() {
                           </Tooltip>
                         </div>
                       </th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
-                        <div className="flex items-center justify-center gap-1">
-                          Status
-                          <Tooltip content="Account status">
-                            <InfoIcon />
-                          </Tooltip>
+                      <th 
+                        className={`text-center py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'status' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center gap-1">
+                            Status
+                            <Tooltip content="Account status">
+                              <InfoIcon />
+                            </Tooltip>
+                          </div>
+                          {sortKey === 'status' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
                         </div>
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Last Login</th>
+                      <th 
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
+                          sortKey === 'last_login' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                        onClick={() => handleSort('last_login')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Last Login
+                          {sortKey === 'last_login' && (
+                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
                     </tr>
                   </thead>
@@ -637,6 +742,7 @@ export default function AdminUsersPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
                 
                 {/* Bottom Pagination */}
                 {filteredUsers.length > itemsPerPage && (
@@ -650,6 +756,7 @@ export default function AdminUsersPage() {
                   />
                 )}
               </div>
+              </>
             )}
           </Card>
 

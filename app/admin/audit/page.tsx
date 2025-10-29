@@ -30,34 +30,28 @@ export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchActor, setSearchActor] = useState('');
-  const [searchAction, setSearchAction] = useState('');
-  const [searchResource, setSearchResource] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState('all');
+  
+  // Sorting
+  const [sortKey, setSortKey] = useState<string | null>('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('desc');
 
-  // Quick filter presets
-  const quickFilters = [
-    { label: 'All', action: '', resource: '', date: 'all' },
-    { label: 'Critical Actions', action: 'delete', resource: '', date: 'all' },
-    { label: 'User Changes', action: '', resource: 'user', date: 'all' },
-    { label: 'Org Changes', action: '', resource: 'organization', date: 'all' },
-    { label: 'Recent (24h)', action: '', resource: '', date: '1d' },
-    { label: 'This Week', action: '', resource: '', date: '7d' },
-  ];
-
-  const applyQuickFilter = (filter: typeof quickFilters[0]) => {
-    setSearchAction(filter.action);
-    setSearchResource(filter.resource);
-    setDateRange(filter.date);
-    setSearchActor('');
-  };
-
-  const clearFilters = () => {
-    setSearchActor('');
-    setSearchAction('');
-    setSearchResource('');
-    setDateRange('all');
+  // Handle column sorting
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Same column: cycle through asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortKey(null);
+        setSortDirection(null);
+      }
+    } else {
+      // New column: start with asc
+      setSortKey(key);
+      setSortDirection('asc');
+    }
   };
 
   useEffect(() => {
@@ -66,7 +60,7 @@ export default function AdminAuditPage() {
 
   useEffect(() => {
     filterLogs();
-  }, [logs, searchActor, searchAction, searchResource, dateRange]);
+  }, [logs, searchQuery, sortKey, sortDirection]);
 
   const fetchAuditLogs = async () => {
     try {
@@ -98,37 +92,58 @@ export default function AdminAuditPage() {
   const filterLogs = () => {
     let filtered = logs;
 
-    if (searchActor) {
-      filtered = filtered.filter(
-        (log) =>
-          log.admin_users?.name.toLowerCase().includes(searchActor.toLowerCase()) ||
-          log.admin_users?.email.toLowerCase().includes(searchActor.toLowerCase())
-      );
+    // Search across all columns
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((log) => {
+        return (
+          log.action?.toLowerCase().includes(query) ||
+          log.resource_type?.toLowerCase().includes(query) ||
+          log.resource_id?.toLowerCase().includes(query) ||
+          log.admin_users?.name?.toLowerCase().includes(query) ||
+          log.admin_users?.email?.toLowerCase().includes(query) ||
+          log.ip_address?.toLowerCase().includes(query) ||
+          JSON.stringify(log.details).toLowerCase().includes(query)
+        );
+      });
     }
 
-    if (searchAction) {
-      filtered = filtered.filter((log) =>
-        log.action.toLowerCase().includes(searchAction.toLowerCase())
-      );
-    }
+    // Apply sorting
+    if (sortKey && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
 
-    if (searchResource) {
-      filtered = filtered.filter((log) =>
-        log.resource_type.toLowerCase().includes(searchResource.toLowerCase())
-      );
-    }
+        if (sortKey === 'admin_users') {
+          aValue = a.admin_users?.name || '';
+          bValue = b.admin_users?.name || '';
+        } else {
+          aValue = a[sortKey as keyof AuditLog];
+          bValue = b[sortKey as keyof AuditLog];
+        }
 
-    if (dateRange !== 'all') {
-      const now = Date.now();
-      const daysMap = {
-        '1d': 1,
-        '7d': 7,
-        '30d': 30
-      } as const;
-      const days = daysMap[dateRange as keyof typeof daysMap] || 1;
+        // Handle null/undefined
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
 
-      const cutoffTime = now - days * 24 * 60 * 60 * 1000;
-      filtered = filtered.filter((log) => new Date(log.created_at).getTime() > cutoffTime);
+        // Handle dates
+        if (sortKey === 'created_at') {
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
+          return sortDirection === 'asc'
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
+        // Handle strings
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (sortDirection === 'asc') {
+          return aStr.localeCompare(bStr);
+        }
+        return bStr.localeCompare(aStr);
+      });
     }
 
     setFilteredLogs(filtered);
@@ -155,17 +170,19 @@ export default function AdminAuditPage() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">Audit Log</h1>
-              <p className="text-gray-slate mt-2">View all admin actions</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Audit Log</h1>
+              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">View all admin actions</p>
             </div>
-            <ExportButton data={filteredLogs} filename="audit-log" />
+            <div className="flex-shrink-0">
+              <ExportButton data={filteredLogs} filename="audit-log" />
+            </div>
           </div>
 
           {/* Stat Cards */}
           {!loading && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <StatCard
                 label="Total Events"
                 value={stats.total}
@@ -199,77 +216,6 @@ export default function AdminAuditPage() {
             </div>
           )}
 
-          {/* Quick Filter Chips */}
-          <div className="flex flex-wrap gap-2">
-            {quickFilters.map((filter, index) => (
-              <button
-                key={index}
-                onClick={() => applyQuickFilter(filter)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  searchAction === filter.action &&
-                  searchResource === filter.resource &&
-                  dateRange === filter.date
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Filters */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Input
-                  type="text"
-                  placeholder="Search by actor name/email..."
-                  value={searchActor}
-                  onChange={(e) => setSearchActor(e.target.value)}
-                />
-                <Input
-                  type="text"
-                  placeholder="Search by action..."
-                  value={searchAction}
-                  onChange={(e) => setSearchAction(e.target.value)}
-                />
-                <Input
-                  type="text"
-                  placeholder="Search by resource type..."
-                  value={searchResource}
-                  onChange={(e) => setSearchResource(e.target.value)}
-                />
-                <Dropdown
-                  value={dateRange}
-                  onChange={setDateRange}
-                  options={[
-                    { value: 'all', label: 'All Time' },
-                    { value: '1d', label: 'Last 24 Hours' },
-                    { value: '7d', label: 'Last 7 Days' },
-                    { value: '30d', label: 'Last 30 Days' }
-                  ]}
-                />
-              </div>
-
-              {(searchActor || searchAction || searchResource || dateRange !== 'all') && (
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-slate dark:text-gray-400">
-                    {filteredLogs.length} of {logs.length} entries match your filters
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={clearFilters}
-                    className="!text-orange-600 dark:!text-orange-400"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-
           {/* Audit Log Table */}
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -277,6 +223,32 @@ export default function AdminAuditPage() {
               <Tooltip content="Admin action log">
                 <InfoIcon />
               </Tooltip>
+            </div>
+
+            {/* Search */}
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="search"
+                  placeholder="Search across all fields..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
             </div>
 
             {loading ? (
@@ -294,9 +266,7 @@ export default function AdminAuditPage() {
                 </svg>
                 <p className="text-gray-slate text-lg font-medium">No audit entries found</p>
                 <p className="text-gray-400 text-sm mt-2">
-                  {searchActor || searchAction || searchResource || dateRange !== 'all'
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'No administrative actions have been recorded yet.'}
+                  {searchQuery ? 'Try adjusting your search query.' : 'No administrative actions have been recorded yet.'}
                 </p>
               </div>
             ) : (

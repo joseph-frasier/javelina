@@ -7,7 +7,11 @@ import { getAdminUser, logoutAdmin } from '@/lib/admin-auth';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
 
-export function AdminHeader() {
+interface AdminHeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   const router = useRouter();
   const { general, setTheme } = useSettingsStore();
   const [admin, setAdmin] = useState<any>(null);
@@ -107,9 +111,20 @@ export function AdminHeader() {
 
   return (
     <header className="bg-white border-b border-gray-light">
-      <div className="max-w-full mx-auto pr-4 sm:pr-6 lg:pr-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {/* Hamburger Menu Button - Mobile Only */}
+            <button
+              onClick={onMenuToggle}
+              className="md:hidden p-2 rounded-md text-gray-slate hover:text-orange hover:bg-gray-light/30 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
             <Link href="/admin" className="flex items-center">
               <Logo
                 width={325}
@@ -164,15 +179,15 @@ export function AdminHeader() {
               </button>
 
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
                   <div className="p-4 border-b border-gray-light flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-orange-dark">Notifications</h3>
+                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Notifications</h3>
                     <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
                       Clear All
                     </button>
                   </div>
                   <div className="p-8 text-center">
-                    <p className="text-sm text-gray-slate">No new notifications</p>
+                    <p className="text-sm text-gray-slate dark:text-gray-300">No new notifications</p>
                   </div>
                 </div>
               )}
@@ -187,6 +202,33 @@ export function AdminHeader() {
             >
               {getThemeIcon()}
             </button>
+
+            {/* Global Search - Placeholder */}
+            <div className="hidden md:block relative group">
+              <input
+                type="search"
+                placeholder="Search everything..."
+                className="w-64 px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                disabled
+                title="Global search coming soon"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <div className="absolute hidden group-hover:block top-full left-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap z-10">
+                Coming soon
+              </div>
+            </div>
 
             {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>

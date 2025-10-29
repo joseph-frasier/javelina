@@ -10,9 +10,10 @@ interface ExportButtonProps {
   filename: string;
   disabled?: boolean;
   label?: string;
+  className?: string;
 }
 
-export function ExportButton({ data, filename, disabled = false, label = 'Export' }: ExportButtonProps) {
+export function ExportButton({ data, filename, disabled = false, label = 'Export', className = '' }: ExportButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { addToast } = useToastStore();
@@ -47,7 +48,7 @@ export function ExportButton({ data, filename, disabled = false, label = 'Export
   };
 
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       <Button
         variant="outline"
         size="sm"

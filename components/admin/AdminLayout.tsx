@@ -7,6 +7,7 @@ import { clsx } from 'clsx';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { AdminHeader } from './AdminHeader';
+import { AIChatWidget } from '@/components/chat/AIChatWidget';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -54,9 +55,35 @@ const navigationItems = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const prevPathnameRef = useRef<string | null>(null);
+
+  // Animate mobile menu
+  useEffect(() => {
+    if (sidebarRef.current) {
+      if (isMobileMenuOpen) {
+        gsap.to(sidebarRef.current, {
+          x: 0,
+          duration: 0.3,
+          ease: 'power2.out',
+        });
+      } else {
+        gsap.to(sidebarRef.current, {
+          x: '-100%',
+          duration: 0.3,
+          ease: 'power2.in',
+        });
+      }
+    }
+  }, [isMobileMenuOpen]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   // Animate on every pathname change (including first load)
   useEffect(() => {
@@ -114,14 +141,74 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex flex-col h-screen">
       {/* Header at top */}
-      <AdminHeader />
+      <AdminHeader onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+      
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
       
       {/* Sidebar and content below */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar - Mobile */}
+        <aside
+          ref={sidebarRef}
+          className={clsx(
+            'fixed top-16 left-0 bottom-0 bg-white overflow-hidden flex flex-col z-50 md:hidden',
+            'w-full -translate-x-full'
+          )}
+        >
+          {/* Sidebar Header */}
+          <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
+            <h2 className="font-bold text-orange-dark">Admin Panel</h2>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 rounded-md transition-colors hover:bg-gray-light"
+              aria-label="Close menu"
+            >
+              <svg className="w-5 h-5 text-gray-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto p-4 pb-20 space-y-2">
+            {navigationItems.map((item) => {
+              const isActive = item.href === '/admin'
+                ? pathname === '/admin'
+                : pathname === item.href || pathname.startsWith(item.href + '/');
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    className={clsx(
+                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                      isActive
+                        ? 'bg-orange-light text-orange-dark font-medium'
+                        : 'text-gray-slate hover:bg-gray-light/30'
+                    )}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-light text-xs text-gray-slate">
+            <p>Irongrove Admin v1.0</p>
+          </div>
+        </aside>
+
+        {/* Sidebar - Desktop */}
         <aside
           className={clsx(
-            'bg-white border-r border-gray-light transition-all duration-300 overflow-hidden flex flex-col',
+            'hidden md:flex bg-white border-r border-gray-light transition-all duration-300 overflow-hidden flex-col',
             isCollapsed ? 'w-16' : 'w-64'
           )}
         >
@@ -214,11 +301,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Main Content */}
         <main ref={containerRef} className="flex-1 overflow-auto bg-gray-50 dark:bg-orange-dark">
-          <div ref={contentRef} className="p-8 max-w-7xl mx-auto w-full">
+          <div ref={contentRef} className="p-4 sm:p-6 md:p-8 w-full">
             {children}
           </div>
         </main>
       </div>
+      <AIChatWidget />
     </div>
   );
 }

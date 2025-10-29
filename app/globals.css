@@ -70,6 +70,16 @@ body {
   border-color: var(--border-color) !important;
 }
 
+/* Ensure no orange/yellow accent bars appear */
+header::before,
+header::after {
+  display: none !important;
+}
+
+header {
+  box-shadow: none !important;
+}
+
 .theme-dark main {
   background-color: var(--bg-secondary) !important;
 }
