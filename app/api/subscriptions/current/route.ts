@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const { data: member, error: memberError } = await supabase
       .from('organization_members')
       .select('role')
-      .eq('org_id', org_id)
+      .eq('organization_id', org_id)
       .eq('user_id', user.id)
       .single();
 
