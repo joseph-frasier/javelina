@@ -45,7 +45,6 @@ export default function OrganizationBillingPage() {
     if (!orgId || !user?.id) {
       return;
     }
-
     try {
       const supabase = createClient();
       

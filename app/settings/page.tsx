@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/lib/auth-store';
 import { useSettingsStore } from '@/lib/settings-store';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { SettingsLayout } from '@/components/layout/SettingsLayout';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
@@ -807,6 +808,7 @@ export default function SettingsPage() {
                   </div>
                 </Card>
               )}
+<<<<<<< HEAD
 
               {/* Password & Authentication */}
               {activeSection === 'password' && (

@@ -22,7 +22,6 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
   const { user } = useAuthStore();
   const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   
   // Refs for GSAP animations
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -35,6 +34,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
 
   // Get organizations from authenticated user (already from Supabase)
   const userOrganizations = user?.organizations || [];
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
 
   // Animate mobile menu
   useEffect(() => {
@@ -133,7 +133,6 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
       </div>
     );
   };
-
 
   const handleToggleOrg = (orgId: string) => {
     const isExpanding = !expandedOrgs.has(orgId);
