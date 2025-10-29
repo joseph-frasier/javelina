@@ -75,7 +75,8 @@ export async function getOrgByStripeSubscription(subscriptionId: string) {
  * Map Stripe Price ID to database plan ID
  */
 export async function getPlanIdFromPriceId(priceId: string): Promise<string | null> {
-  const supabase = await createClient();
+  // Use service role client for reliable access (webhooks, etc)
+  const supabase = getSupabaseServiceClient();
   
   // Price ID is stored in plan metadata
   const { data, error } = await supabase
@@ -84,12 +85,21 @@ export async function getPlanIdFromPriceId(priceId: string): Promise<string | nu
     .eq('is_active', true);
 
   if (error) {
-    console.error('Error fetching plans:', error);
+    console.error('Error fetching plans for price lookup:', error);
     return null;
   }
 
+  console.log(`Looking up plan for price_id: ${priceId}`);
+  console.log('Available plans:', data);
+
   // Find plan with matching price_id in metadata
   const plan = data?.find((p) => p.metadata?.price_id === priceId);
+  
+  if (plan) {
+    console.log(`✅ Found plan ${plan.code} (${plan.id}) for price ${priceId}`);
+  } else {
+    console.error(`❌ No plan found for price_id: ${priceId}`);
+  }
   
   return plan?.id || null;
 }

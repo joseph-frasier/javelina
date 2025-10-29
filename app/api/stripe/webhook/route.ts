@@ -235,6 +235,42 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       return;
     }
 
+    // DEFENSIVE CHECK: Cancel any existing active subscriptions for this org
+    // This prevents double-charging when Stripe Customer Portal creates a new subscription
+    // instead of updating the existing one
+    const existingSubscription = await getSubscriptionByStripeId(subscription.id);
+    
+    if (!existingSubscription) {
+      // This is truly a new subscription, check for other active ones
+      const { createClient } = await import('@/lib/supabase/server');
+      const supabase = await createClient();
+      
+      const { data: activeSubscriptions, error: subError } = await supabase
+        .from('subscriptions')
+        .select('stripe_subscription_id')
+        .eq('org_id', orgId)
+        .in('status', ['active', 'trialing'])
+        .neq('stripe_subscription_id', subscription.id);
+      
+      if (!subError && activeSubscriptions && activeSubscriptions.length > 0) {
+        console.log(`⚠️ Found ${activeSubscriptions.length} existing active subscription(s) for org ${orgId}`);
+        
+        // Cancel all existing active subscriptions in Stripe to prevent double-charging
+        for (const oldSub of activeSubscriptions) {
+          if (oldSub.stripe_subscription_id) {
+            try {
+              console.log(`🗑️ Canceling old subscription in Stripe: ${oldSub.stripe_subscription_id}`);
+              await stripe.subscriptions.cancel(oldSub.stripe_subscription_id);
+              console.log(`✅ Successfully canceled old subscription: ${oldSub.stripe_subscription_id}`);
+            } catch (cancelError: any) {
+              console.error(`❌ Error canceling old subscription ${oldSub.stripe_subscription_id}:`, cancelError.message);
+              // Continue anyway - the database upsert will replace the record
+            }
+          }
+        }
+      }
+    }
+
     // Update organization with Stripe customer ID
     await updateOrgStripeCustomer(orgId, customerId);
 

@@ -59,37 +59,45 @@ export default function BillingPage() {
 
       // Get subscription data for each organization
       const orgIds = memberships.map(m => m.organization_id);
+      console.log('Querying subscriptions for org_ids:', orgIds);
+      console.log('Current user ID:', user?.id);
+      
       const { data: subscriptions, error: subError } = await supabase
         .from('subscriptions')
-        .select('org_id, status, current_period_end, plan_id')
+        .select('org_id, status, current_period_end, plan_id, metadata')
         .in('org_id', orgIds);
 
       if (subError) {
         console.error('Error fetching subscriptions:', subError);
+        console.error('Subscription query error details:', JSON.stringify(subError, null, 2));
       }
 
-      // Get plans separately if we have subscriptions
-      let plans: any[] = [];
-      if (subscriptions?.length) {
-        const planIds = [...new Set(subscriptions.map(s => s.plan_id).filter(Boolean))];
-        if (planIds.length) {
-          const { data: plansData } = await supabase
-            .from('plans')
-            .select('id, code, name')
-            .in('id', planIds);
-          plans = plansData || [];
-        }
-      }
+      console.log('Raw subscriptions data:', subscriptions);
+      console.log('Number of subscriptions found:', subscriptions?.length || 0);
 
-      console.log('Subscriptions data:', subscriptions);
-      console.log('Plans data:', plans);
-      console.log('Organization IDs:', orgIds);
+      // Get all plans to match against
+      const { data: allPlans } = await supabase
+        .from('plans')
+        .select('id, code, name')
+        .eq('is_active', true);
+
+      console.log('All plans:', allPlans);
 
       // Combine data
       const orgs: Organization[] = memberships.map(m => {
         const org = (m.organizations as any);
         const sub = subscriptions?.find(s => s.org_id === m.organization_id);
-        const plan = sub?.plan_id ? plans.find(p => p.id === sub.plan_id) : null;
+        
+        // Try to find plan by plan_id first
+        let plan = sub?.plan_id ? allPlans?.find(p => p.id === sub.plan_id) : null;
+        
+        // Fallback: if no plan found but subscription has metadata with plan_code, try matching by code
+        if (!plan && sub?.metadata?.plan_code && allPlans) {
+          plan = allPlans.find(p => p.code === sub.metadata.plan_code);
+          console.log(`Using metadata fallback for ${org.name}: plan_code=${sub.metadata.plan_code}, found plan:`, plan);
+        }
+        
+        console.log(`Org ${org.name}: sub=`, sub, 'plan=', plan);
         
         return {
           id: org.id,

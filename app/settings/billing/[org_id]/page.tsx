@@ -13,7 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 export default function OrganizationBillingPage() {
   const router = useRouter();
   const params = useParams();
-  const orgId = params.org_id as string;
+  const orgId = params?.org_id as string | undefined;
   
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -31,12 +31,21 @@ export default function OrganizationBillingPage() {
       return;
     }
 
-    if (orgId) {
-      verifyAccessAndFetchData();
+    if (!orgId) {
+      addToast('error', 'Organization ID is required');
+      router.push('/settings/billing');
+      return;
     }
+
+    verifyAccessAndFetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, orgId]);
 
   const verifyAccessAndFetchData = async () => {
+    if (!orgId || !user?.id) {
+      return;
+    }
+
     try {
       const supabase = createClient();
       
@@ -45,7 +54,7 @@ export default function OrganizationBillingPage() {
         .from('organization_members')
         .select('role')
         .eq('organization_id', orgId)
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .single();
 
       if (memberError || !membership || !['Admin', 'SuperAdmin'].includes(membership.role)) {
@@ -77,6 +86,8 @@ export default function OrganizationBillingPage() {
   };
 
   const fetchCurrentPlan = async () => {
+    if (!orgId) return;
+
     try {
       const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
       const data = await response.json();
@@ -106,6 +117,11 @@ export default function OrganizationBillingPage() {
   };
 
   const handleManageBilling = async () => {
+    if (!orgId) {
+      addToast('error', 'Organization ID is required');
+      return;
+    }
+
     try {
       const response = await fetch('/api/stripe/create-portal-session', {
         method: 'POST',
@@ -243,12 +259,14 @@ export default function OrganizationBillingPage() {
           </div>
 
           {/* Subscription Manager */}
-          <SubscriptionManager
-            orgId={orgId}
-            onChangePlan={handleChangePlan}
-            onManageBilling={handleManageBilling}
-            onCancelSubscription={handleCancelSubscription}
-          />
+          {orgId && (
+            <SubscriptionManager
+              orgId={orgId}
+              onChangePlan={handleChangePlan}
+              onManageBilling={handleManageBilling}
+              onCancelSubscription={handleCancelSubscription}
+            />
+          )}
         </div>
 
         {/* Plan Comparison Modal */}

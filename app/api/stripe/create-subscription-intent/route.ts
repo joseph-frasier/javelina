@@ -90,6 +90,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // CRITICAL: Check for existing active subscriptions
+    // If one exists, we should update it, not create a new one
+    const { data: existingSubscriptions, error: existingSubError } = await supabase
+      .from('subscriptions')
+      .select('stripe_subscription_id, status')
+      .eq('org_id', org_id)
+      .in('status', ['active', 'trialing', 'past_due']);
+
+    if (!existingSubError && existingSubscriptions && existingSubscriptions.length > 0) {
+      console.log(`⚠️ Organization ${org_id} already has ${existingSubscriptions.length} active subscription(s)`);
+      
+      // Cancel all existing subscriptions in Stripe before creating new one
+      for (const existingSub of existingSubscriptions) {
+        if (existingSub.stripe_subscription_id) {
+          try {
+            console.log(`🗑️ Canceling existing subscription: ${existingSub.stripe_subscription_id}`);
+            await stripe.subscriptions.cancel(existingSub.stripe_subscription_id);
+            console.log(`✅ Canceled old subscription: ${existingSub.stripe_subscription_id}`);
+          } catch (cancelError: any) {
+            console.error(`Error canceling subscription ${existingSub.stripe_subscription_id}:`, cancelError.message);
+            // Continue anyway - we'll create the new one and let the webhook handle cleanup
+          }
+        }
+      }
+    }
+
     // Get plan code from price ID for metadata
     const { data: plan } = await supabase
       .from('plans')
