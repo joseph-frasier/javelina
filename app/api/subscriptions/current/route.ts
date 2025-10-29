@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const { data: member, error: memberError } = await supabase
       .from('organization_members')
       .select('role')
-      .eq('org_id', org_id)
+      .eq('organization_id', org_id)
       .eq('user_id', user.id)
       .single();
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Call get_org_subscription function
     const { data: subscriptionData, error: subError } = await supabase
-      .rpc('get_org_subscription', { p_org_id: org_id });
+      .rpc('get_org_subscription', { org_uuid: org_id });
 
     if (subError) {
       console.error('Error getting subscription:', subError);
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // Get entitlements
     const { data: entitlements, error: entError } = await supabase
-      .rpc('get_org_entitlements', { p_org_id: org_id });
+      .rpc('get_org_entitlements', { org_uuid: org_id });
 
     if (entError) {
       console.error('Error getting entitlements:', entError);

@@ -1,200 +1,230 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
-import { useToastStore } from '@/lib/toast-store';
-import { SubscriptionManager } from '@/components/billing/SubscriptionManager';
-import { PlanComparisonModal } from '@/components/billing/PlanComparisonModal';
+import { SettingsLayout } from '@/components/layout/SettingsLayout';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { Card } from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import { createClient } from '@/lib/supabase/client';
 
-function BillingContent() {
+interface Organization {
+  id: string;
+  name: string;
+  current_plan: string;
+  plan_status: string;
+  next_billing_date: string | null;
+  stripe_customer_id: string | null;
+}
+
+export default function BillingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const addToast = useToastStore((state) => state.addToast);
-  
-  const [orgId, setOrgId] = useState<string | null>(null);
-  const [currentPlanCode, setCurrentPlanCode] = useState<string>('free');
-  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login?redirect=/settings/billing');
-      return;
+    if (user) {
+      fetchAdminOrganizations();
     }
+  }, [user]);
 
-    // Get org_id from query params or first available org
-    const orgIdParam = searchParams.get('org_id');
-    
-    if (orgIdParam) {
-      setOrgId(orgIdParam);
-      fetchCurrentPlan(orgIdParam);
-    } else {
-      // TODO: Fetch user's organizations and use the first one
-      // For now, show error
-      addToast('error', 'Please select an organization');
-      setLoading(false);
-    }
-  }, [isAuthenticated, searchParams]);
-
-  const fetchCurrentPlan = async (orgId: string) => {
+  const fetchAdminOrganizations = async () => {
     try {
-      const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
-      const data = await response.json();
+      const supabase = createClient();
+      
+      // Get organizations where user is Admin or SuperAdmin
+      const { data: memberships, error: memberError } = await supabase
+        .from('organization_members')
+        .select(`
+          organization_id,
+          role,
+          organizations!inner(
+            id,
+            name,
+            stripe_customer_id
+          )
+        `)
+        .eq('user_id', user?.id)
+        .in('role', ['Admin', 'SuperAdmin']);
 
-      if (response.ok && data.plan) {
-        setCurrentPlanCode(data.plan.code);
+      if (memberError) throw memberError;
+
+      if (!memberships || memberships.length === 0) {
+        setOrganizations([]);
+        setLoading(false);
+        return;
       }
+
+      // Get subscription data for each organization
+      const orgIds = memberships.map(m => m.organization_id);
+      const { data: subscriptions, error: subError } = await supabase
+        .from('subscriptions')
+        .select('organization_id, status, current_period_end, plan_id')
+        .in('organization_id', orgIds);
+
+      if (subError) {
+        console.error('Error fetching subscriptions:', subError);
+      }
+
+      // Get plans separately if we have subscriptions
+      let plans: any[] = [];
+      if (subscriptions?.length) {
+        const planIds = [...new Set(subscriptions.map(s => s.plan_id).filter(Boolean))];
+        if (planIds.length) {
+          const { data: plansData } = await supabase
+            .from('plans')
+            .select('id, code, name')
+            .in('id', planIds);
+          plans = plansData || [];
+        }
+      }
+
+      console.log('Subscriptions data:', subscriptions);
+      console.log('Plans data:', plans);
+      console.log('Organization IDs:', orgIds);
+
+      // Combine data
+      const orgs: Organization[] = memberships.map(m => {
+        const org = (m.organizations as any);
+        const sub = subscriptions?.find(s => s.organization_id === m.organization_id);
+        const plan = sub?.plan_id ? plans.find(p => p.id === sub.plan_id) : null;
+        
+        console.log(`Org ${org.name} (${m.organization_id}):`, { sub, plan });
+        
+        return {
+          id: org.id,
+          name: org.name,
+          current_plan: plan?.name || 'Free',
+          plan_status: sub?.status || 'active',
+          next_billing_date: sub?.current_period_end || null,
+          stripe_customer_id: org.stripe_customer_id,
+        };
+      });
+
+      setOrganizations(orgs);
     } catch (error) {
-      console.error('Error fetching current plan:', error);
+      console.error('Error fetching admin organizations:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangePlan = () => {
-    setShowPlanModal(true);
+  const handleManageBilling = (orgId: string) => {
+    router.push(`/settings/billing/${orgId}`);
   };
 
-  const handleManageBilling = async () => {
-    if (!orgId) return;
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
-    try {
-      const response = await fetch('/api/stripe/create-portal-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ org_id: orgId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create portal session');
-      }
-
-      // Redirect to Stripe Customer Portal
-      window.location.href = data.url;
-    } catch (error: any) {
-      console.error('Error opening billing portal:', error);
-      addToast('error', error.message || 'Failed to open billing portal');
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'canceled':
+      case 'past_due':
+        return 'bg-red-100 text-red-800';
+      case 'trialing':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const handleCancelSubscription = async () => {
-    if (!orgId) return;
-
-    const confirmed = window.confirm(
-      'Are you sure you want to cancel your subscription? You will still have access until the end of your billing period.'
-    );
-
-    if (!confirmed) return;
-
-    try {
-      // For now, redirect to customer portal where they can cancel
-      handleManageBilling();
-      
-      // TODO: Implement direct cancellation API
-      // const response = await fetch('/api/subscriptions/cancel', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ org_id: orgId }),
-      // });
-    } catch (error: any) {
-      console.error('Error canceling subscription:', error);
-      addToast('error', error.message || 'Failed to cancel subscription');
-    }
-  };
-
-  const handleSelectPlan = async (planCode: string, priceId: string) => {
-    if (!orgId) return;
-
-    setShowPlanModal(false);
-
-    if (planCode === 'free') {
-      // Downgrading to free - handle via customer portal
-      addToast('info', 'Please use the billing portal to downgrade to free');
-      handleManageBilling();
-      return;
-    }
-
-    // Redirect to checkout for paid plans
-    const plan = {
-      name: planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-      price: planCode === 'basic_monthly' ? 3.50 : planCode === 'pro_monthly' ? 6.70 : 450,
-    };
-
-    router.push(
-      `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-      </div>
-    );
-  }
-
-  if (!orgId) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-lg font-bold text-yellow-800 mb-2">
-            No Organization Selected
-          </h2>
-          <p className="text-sm text-yellow-700">
-            Please select an organization to view billing information.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-black text-orange-dark mb-2">
-            Billing & Subscription
-          </h1>
-          <p className="text-base text-gray-slate">
-            Manage your subscription, view usage, and update billing information
-          </p>
-        </div>
+    <ProtectedRoute>
+      <SettingsLayout>
+        <Card className="p-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold text-orange-dark mb-2">
+              Billing & Subscription
+            </h2>
+            <p className="text-sm text-gray-slate">
+              Manage billing for your organizations
+            </p>
+          </div>
 
-        {/* Subscription Manager */}
-        <SubscriptionManager
-          orgId={orgId}
-          onChangePlan={handleChangePlan}
-          onManageBilling={handleManageBilling}
-          onCancelSubscription={handleCancelSubscription}
-        />
-      </div>
-
-      {/* Plan Comparison Modal */}
-      <PlanComparisonModal
-        isOpen={showPlanModal}
-        onClose={() => setShowPlanModal(false)}
-        currentPlanCode={currentPlanCode}
-        onSelectPlan={handleSelectPlan}
-      />
-    </>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+            </div>
+          ) : organizations.length === 0 ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+              <svg
+                className="w-12 h-12 text-yellow-600 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h3 className="text-lg font-bold text-yellow-800 mb-2">
+                No Organizations Available
+              </h3>
+              <p className="text-sm text-yellow-700">
+                You don't have admin access to any organizations. Only admins can manage billing.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {organizations.map((org) => (
+                <div
+                  key={org.id}
+                  className="flex items-center justify-between p-5 border border-gray-light rounded-lg hover:border-orange/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold text-orange-dark">
+                        {org.name}
+                      </h3>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
+                          org.plan_status
+                        )}`}
+                      >
+                        {org.plan_status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm text-gray-slate">
+                      <div>
+                        <span className="font-medium">Plan:</span>{' '}
+                        <span className="text-orange-dark font-semibold">
+                          {org.current_plan}
+                        </span>
+                      </div>
+                      {org.next_billing_date && (
+                        <div>
+                          <span className="font-medium">Next Billing:</span>{' '}
+                          {formatDate(org.next_billing_date)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={() => handleManageBilling(org.id)}
+                  >
+                    Manage Billing
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </SettingsLayout>
+    </ProtectedRoute>
   );
 }
-
-export default function BillingPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-      </div>
-    }>
-      <BillingContent />
-    </Suspense>
-  );
-}
-

@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useEnvironments } from '@/lib/hooks/useEnvironments';
 import { useZones } from '@/lib/hooks/useZones';
+import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
@@ -21,6 +22,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
   const { user } = useAuthStore();
   const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   
   // Refs for GSAP animations
   const sidebarRef = useRef<HTMLDivElement>(null);
