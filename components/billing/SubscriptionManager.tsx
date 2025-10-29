@@ -160,8 +160,7 @@ export function SubscriptionManager({
             {subscription.subscription.cancel_at_period_end && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                 <p className="text-xs text-yellow-800">
-                  Your subscription will be canceled on{' '}
-                  {new Date(subscription.subscription.current_period_end).toLocaleDateString()}
+                  Your subscription will be canceled on {new Date(subscription.subscription.current_period_end).toLocaleDateString()}
                 </p>
               </div>
             )}

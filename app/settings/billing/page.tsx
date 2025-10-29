@@ -78,11 +78,12 @@ export default function BillingPage() {
       const orgs: Organization[] = memberships.map(m => {
         const org = (m.organizations as any);
         const sub = subscriptions?.find(s => s.org_id === m.organization_id);
+        const plan = Array.isArray(sub?.plans) ? sub.plans[0] : sub?.plans;
         
         return {
           id: org.id,
           name: org.name,
-          current_plan: sub?.plans?.name || 'Free',
+          current_plan: plan?.name || 'Free',
           plan_status: sub?.status || 'active',
           next_billing_date: sub?.current_period_end || null,
           stripe_customer_id: org.stripe_customer_id,
@@ -160,7 +161,7 @@ export default function BillingPage() {
                 No Organizations Available
               </h3>
               <p className="text-sm text-yellow-700">
-                You don't have admin access to any organizations. Only admins can manage billing.
+                You don&apos;t have admin access to any organizations. Only admins can manage billing.
               </p>
             </div>
           ) : (
