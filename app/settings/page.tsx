@@ -808,7 +808,6 @@ export default function SettingsPage() {
                   </div>
                 </Card>
               )}
-<<<<<<< HEAD
 
               {/* Password & Authentication */}
               {activeSection === 'password' && (

@@ -93,7 +93,7 @@ export async function getPlanIdFromPriceId(priceId: string): Promise<string | nu
   console.log('Available plans:', data);
 
   // Find plan with matching price_id in metadata
-  const plan = data?.find((p) => p.metadata?.price_id === priceId);
+  const plan = data?.find((p: { id: string; code: string; metadata?: { price_id?: string } }) => p.metadata?.price_id === priceId);
   
   if (plan) {
     console.log(`✅ Found plan ${plan.code} (${plan.id}) for price ${priceId}`);
