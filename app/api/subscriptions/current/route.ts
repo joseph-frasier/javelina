@@ -42,8 +42,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Call get_org_subscription function
-    const { data: subscriptionData, error: subError } = await supabase
+    const { data: subscriptionDataArray, error: subError } = await supabase
       .rpc('get_org_subscription', { org_uuid: org_id });
+
+    console.log('RPC get_org_subscription result:', subscriptionDataArray);
+    console.log('RPC error:', subError);
 
     if (subError) {
       console.error('Error getting subscription:', subError);
@@ -52,6 +55,13 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // RPC returns an array, get first element
+    const subscriptionData = subscriptionDataArray && subscriptionDataArray.length > 0 
+      ? subscriptionDataArray[0] 
+      : null;
+
+    console.log('Extracted subscription object:', subscriptionData);
 
     // Get plan details
     let plan = null;
@@ -62,9 +72,15 @@ export async function GET(request: NextRequest) {
         .eq('code', subscriptionData.plan_code)
         .single();
 
+      console.log('Plan lookup for code:', subscriptionData.plan_code);
+      console.log('Plan data:', planData);
+      console.log('Plan error:', planError);
+
       if (!planError && planData) {
         plan = planData;
       }
+    } else {
+      console.log('No subscription data or plan_code to lookup');
     }
 
     // Get entitlements

@@ -40,6 +40,10 @@ export function SubscriptionManager({
         throw new Error(data.error || 'Failed to fetch subscription');
       }
 
+      console.log('SubscriptionManager received data:', data);
+      console.log('Plan object:', data.plan);
+      console.log('Subscription object:', data.subscription);
+
       setSubscription(data);
 
       // Build usage data from entitlements
