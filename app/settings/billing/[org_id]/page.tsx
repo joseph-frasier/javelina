@@ -81,8 +81,18 @@ export default function OrganizationBillingPage() {
       const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
       const data = await response.json();
 
-      if (response.ok && data.plan) {
-        setCurrentPlanCode(data.plan.code);
+      if (response.ok) {
+        // Check if we have subscription data with a plan_code
+        if (data.subscription && data.subscription.plan_code) {
+          setCurrentPlanCode(data.subscription.plan_code);
+        } else if (data.plan && data.plan.code) {
+          // Fallback to plan object
+          setCurrentPlanCode(data.plan.code);
+        } else {
+          // No subscription found, default to free
+          setCurrentPlanCode('free');
+        }
+        console.log('Fetched plan data:', data);
       }
     } catch (error) {
       console.error('Error fetching current plan:', error);
