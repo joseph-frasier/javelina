@@ -155,15 +155,46 @@ export default function OrganizationBillingPage() {
       return;
     }
 
-    // Redirect to checkout for paid plans
-    const plan = {
-      name: planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-      price: planCode === 'basic_monthly' ? 3.50 : planCode === 'pro_monthly' ? 6.70 : 450,
-    };
+    // Check if this is an upgrade/downgrade (has existing subscription) or new subscription
+    if (currentPlanCode && currentPlanCode !== 'free') {
+      // Existing subscription - update it instead of creating new one
+      try {
+        addToast('info', 'Updating your subscription...');
+        
+        const response = await fetch('/api/stripe/update-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            org_id: orgId,
+            new_price_id: priceId,
+          }),
+        });
 
-    router.push(
-      `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
-    );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to update subscription');
+        }
+
+        addToast('success', 'Subscription updated successfully!');
+        
+        // Refresh the page to show updated plan
+        window.location.reload();
+      } catch (error: any) {
+        console.error('Error updating subscription:', error);
+        addToast('error', error.message || 'Failed to update subscription');
+      }
+    } else {
+      // No existing subscription - redirect to checkout for new subscription
+      const plan = {
+        name: planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        price: planCode === 'basic_monthly' ? 3.50 : planCode === 'pro_monthly' ? 6.70 : 450,
+      };
+
+      router.push(
+        `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
+      );
+    }
   };
 
   if (loading || !hasAccess) {
