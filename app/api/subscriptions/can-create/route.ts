@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
     // Call can_create_resource function
     const { data, error } = await supabase
       .rpc('can_create_resource', {
-        p_org_id: org_id,
-        p_resource_type: resource_type,
+        org_uuid: org_id,
+        resource_type: resource_type,
       });
 
     if (error) {
@@ -94,8 +94,8 @@ export async function GET(request: NextRequest) {
     // Get the limit
     const { data: entitlement } = await supabase
       .rpc('check_entitlement', {
-        p_org_id: org_id,
-        p_entitlement_key: entitlement_key,
+        org_uuid: org_id,
+        entitlement_key: entitlement_key,
       });
 
     if (entitlement?.value) {

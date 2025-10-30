@@ -18,8 +18,8 @@ export async function checkFeatureAccess(
   
   const { data, error } = await supabase
     .rpc('check_entitlement', {
-      p_org_id: orgId,
-      p_entitlement_key: feature,
+      org_uuid: orgId,
+      entitlement_key: feature,
     });
 
   if (error) {
@@ -80,8 +80,8 @@ export async function canCreateResource(
   
   const { data, error } = await supabase
     .rpc('can_create_resource', {
-      p_org_id: orgId,
-      p_resource_type: resourceType,
+      org_uuid: orgId,
+      resource_type: resourceType,
     });
 
   if (error) {
@@ -98,8 +98,8 @@ export async function canCreateResource(
   
   const { data: entitlement } = await supabase
     .rpc('check_entitlement', {
-      p_org_id: orgId,
-      p_entitlement_key: limitKey,
+      org_uuid: orgId,
+      entitlement_key: limitKey,
     });
 
   const limit = entitlement?.value ? parseInt(entitlement.value, 10) : null;
@@ -138,8 +138,8 @@ export async function getEntitlementLimit(
   
   const { data, error } = await supabase
     .rpc('check_entitlement', {
-      p_org_id: orgId,
-      p_entitlement_key: entitlementKey,
+      org_uuid: orgId,
+      entitlement_key: entitlementKey,
     });
 
   if (error || !data?.value) {
@@ -181,7 +181,7 @@ export async function checkMultipleEntitlements(
 
   // Fetch all entitlements for the org
   const { data: entitlements, error } = await supabase
-    .rpc('get_org_entitlements', { p_org_id: orgId });
+    .rpc('get_org_entitlements', { org_uuid: orgId });
 
   if (error || !entitlements) {
     return results;
