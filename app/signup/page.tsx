@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
 import { Logo } from '@/components/ui/Logo';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -35,6 +36,8 @@ export default function SignupPage() {
       router.push('/');
     }
   }, [isAuthenticated, router]);
+
+  // No polling needed - Supabase requires manual login after verification
 
   const validateForm = (): boolean => {
     const newErrors: any = {};
@@ -85,12 +88,9 @@ export default function SignupPage() {
 
     if (result.success) {
       setSuccessMessage(
-        'Account created! Please check your email to verify your account.'
+        'Account created! Please check your email to verify your account, then return here to sign in.'
       );
-      // Optionally redirect after a delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 3000);
+      // User will need to verify email then manually login
     } else {
       setErrors({
         email: result.error,
@@ -132,10 +132,24 @@ export default function SignupPage() {
               <h2 className="text-2xl font-bold text-orange-dark mb-2">
                 Success!
               </h2>
-              <p className="text-gray-slate">{successMessage}</p>
-              <p className="text-sm text-gray-slate mt-4">
-                Redirecting to login...
-              </p>
+              <p className="text-gray-slate mb-6">{successMessage}</p>
+              
+              {/* Sign In Button */}
+              <div className="mt-6">
+                <p className="text-sm text-gray-slate mb-3">
+                  Already verified your email?
+                </p>
+                <Link href="/login">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">

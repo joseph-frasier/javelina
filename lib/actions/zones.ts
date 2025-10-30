@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { canCreateResource } from '@/lib/entitlements'
 
 export async function createZone(formData: {
   environment_id: string
@@ -16,26 +17,69 @@ export async function createZone(formData: {
     return { error: 'Not authenticated' }
   }
   
+  // Get organization ID from environment
+  const { data: environment, error: envError } = await supabase
+    .from('environments')
+    .select('organization_id, org_id')
+    .eq('id', formData.environment_id)
+    .single()
+  
+  if (envError || !environment) {
+    return { error: 'Environment not found' }
+  }
+  
+  const orgId = environment.organization_id || environment.org_id
+  
+  // Verify user has permission
+  const { data: membership, error: memberError } = await supabase
+    .from('organization_members')
+    .select('role')
+    .eq('org_id', orgId)
+    .eq('user_id', user.id)
+    .single()
+  
+  if (memberError || !membership) {
+    return { error: 'You do not have access to this organization' }
+  }
+  
+  if (!['SuperAdmin', 'Admin', 'Editor'].includes(membership.role)) {
+    return { error: 'You do not have permission to create zones' }
+  }
+  
+  // Check entitlement limits
+  const limitCheck = await canCreateResource(orgId, 'zone')
+  if (!limitCheck.canCreate) {
+    return { 
+      error: limitCheck.reason || 'Zone limit reached. Please upgrade your plan to create more zones.',
+      upgrade_required: true 
+    }
+  }
+  
+  // Validate zone name
+  if (!formData.name.trim()) {
+    return { error: 'Zone name is required' }
+  }
+  
   const { data, error } = await supabase
     .from('zones')
     .insert({
       environment_id: formData.environment_id,
-      name: formData.name,
+      name: formData.name.trim(),
       zone_type: formData.zone_type,
-      description: formData.description,
+      description: formData.description?.trim() || null,
       active: true,
       created_by: user.id
     })
-    .select('*, environments(organization_id)')
+    .select('*, environments(organization_id, org_id)')
     .single()
   
   if (error) {
     return { error: error.message }
   }
   
-  const orgId = data.environments?.organization_id
-  revalidatePath(`/organization/${orgId}`)
-  revalidatePath(`/organization/${orgId}/environment/${formData.environment_id}`)
+  const returnedOrgId = data.environments?.organization_id || data.environments?.org_id
+  revalidatePath(`/organization/${returnedOrgId}`)
+  revalidatePath(`/organization/${returnedOrgId}/environment/${formData.environment_id}`)
   return { data }
 }
 

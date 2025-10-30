@@ -74,11 +74,14 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // Public routes that don't require authentication
-    const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/admin/login']
+    const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
     const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
-    // If user is not authenticated and trying to access a protected route (but allow /admin/* routes)
-    if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin')) {
+    // Check if user just completed payment (allow dashboard access)
+    const paymentComplete = request.nextUrl.searchParams.get('payment_complete') === 'true'
+
+    // If user is not authenticated and trying to access a protected route (but allow /admin/* routes and payment completion)
+    if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
       const redirectUrl = new URL('/login', request.url)
       // Add the current URL as a redirect parameter so we can send them back after login
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
@@ -86,8 +89,24 @@ export async function middleware(request: NextRequest) {
     }
 
     // If user IS authenticated and trying to access login/signup pages
+    // Check if they have completed onboarding (have organizations)
     if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
-      return NextResponse.redirect(new URL('/', request.url))
+      // Check if user has organizations
+      const { data: memberships } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .limit(1)
+
+      const hasOrganizations = memberships && memberships.length > 0
+
+      if (hasOrganizations) {
+        // User has completed onboarding, send to dashboard
+        return NextResponse.redirect(new URL('/', request.url))
+      } else {
+        // First-time user, send to pricing to complete onboarding
+        return NextResponse.redirect(new URL('/pricing?onboarding=true', request.url))
+      }
     }
   } catch (error) {
     console.error('Middleware error:', error)
