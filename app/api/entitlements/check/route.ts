@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
     // Call check_entitlement function
     const { data, error } = await supabase
       .rpc('check_entitlement', {
-        p_org_id: org_id,
-        p_entitlement_key: entitlement_key,
+        org_uuid: org_id,
+        entitlement_key: entitlement_key,
       });
 
     if (error) {
