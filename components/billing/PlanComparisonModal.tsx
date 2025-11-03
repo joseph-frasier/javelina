@@ -120,12 +120,10 @@ export function PlanComparisonModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Compare Plans"
+      subtitle="Choose the plan that best fits your needs. You can upgrade or downgrade at any time."
       size="xlarge"
     >
-      <p className="text-sm text-gray-slate dark:text-gray-400 mb-4 mt-2">
-        Choose the plan that best fits your needs. You can upgrade or downgrade at any time.
-      </p>
-      <div>
+      <div className="py-4">
 
         {/* Top 3 Plans */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
