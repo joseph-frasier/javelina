@@ -237,7 +237,7 @@ export default function OrganizationBillingPage() {
           {/* Header with Back Button */}
           <div className="mb-6">
             <button
-              onClick={() => router.push('/settings/billing')}
+              onClick={() => router.push('/settings')}
               className="flex items-center text-gray-slate hover:text-orange-dark mb-4 transition-colors"
             >
               <svg
