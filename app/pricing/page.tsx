@@ -144,7 +144,7 @@ function PricingContent() {
 
         {/* Enterprise Plan - Bottom Section */}
         {PLANS.filter(plan => plan.id === 'enterprise').map((plan) => (
-          <div key={plan.id} className="mb-8 bg-gray-50 rounded-xl p-4 border-2 border-gray-light">
+          <div key={plan.id} className="mb-8 bg-white rounded-xl p-4 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               {/* Left: Plan Info */}
               <div className="flex-1">
