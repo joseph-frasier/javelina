@@ -78,24 +78,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe customer (even for free plan, for future upgrades)
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name: user.user_metadata?.name || user.email,
-      metadata: {
-        org_id: organization.id,
-        user_id: user.id,
-      },
-    });
+    let customerId: string | null = null;
+    if (stripe) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.user_metadata?.name || user.email,
+        metadata: {
+          org_id: organization.id,
+          user_id: user.id,
+        },
+      });
+      customerId = customer.id;
 
-    // Update organization with Stripe customer ID
-    const { error: updateError } = await supabase
-      .from('organizations')
-      .update({ stripe_customer_id: customer.id })
-      .eq('id', organization.id);
+      // Update organization with Stripe customer ID
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ stripe_customer_id: customer.id })
+        .eq('id', organization.id);
 
-    if (updateError) {
-      console.error('Error updating organization with customer ID:', updateError);
-      // Don't fail, we can update it later
+      if (updateError) {
+        console.error('Error updating organization with customer ID:', updateError);
+        // Don't fail, we can update it later
+      }
     }
 
     // Create subscription record ONLY for free plan
@@ -131,7 +135,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       org_id: organization.id,
       name: organization.name,
-      stripe_customer_id: customer.id,
+      stripe_customer_id: customerId,
       plan_code,
       message: 'Organization created successfully',
     });

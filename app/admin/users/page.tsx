@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
@@ -71,17 +71,7 @@ export default function AdminUsersPage() {
     variant: 'danger',
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    filterUsers();
-    // Reset to page 1 when filters change
-    setCurrentPage(1);
-  }, [users, searchQuery, sortKey, sortDirection]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const client = createServiceRoleClient();
       
@@ -109,9 +99,9 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = users;
 
     // Search across all columns
@@ -159,7 +149,17 @@ export default function AdminUsersPage() {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [users, searchQuery, sortKey, sortDirection]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    filterUsers();
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  }, [filterUsers]);
 
   // Handle column sorting
   const handleSort = (key: string) => {

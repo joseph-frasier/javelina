@@ -20,14 +20,16 @@ import Stripe from 'stripe';
 export const STRIPE_API_VERSION = '2024-06-20' as const;
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+  console.warn('⚠️ STRIPE_SECRET_KEY environment variable is not set. Billing features will be disabled.');
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  // Type guard bypass to satisfy TypeScript literal union check
-  // while preserving the correct runtime API version
-  apiVersion: STRIPE_API_VERSION as any,
-});
+export const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      // Type guard bypass to satisfy TypeScript literal union check
+      // while preserving the correct runtime API version
+      apiVersion: STRIPE_API_VERSION as any,
+    })
+  : null;
 
 // Sanity check: validate version string format in non-production environments
 if (process.env.NODE_ENV !== 'production') {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -72,17 +72,7 @@ export default function AdminOrganizationsPage() {
     variant: 'danger',
   });
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
-
-  useEffect(() => {
-    filterOrganizations();
-    // Reset to page 1 when filters change
-    setCurrentPage(1);
-  }, [orgs, searchQuery, sortKey, sortDirection]);
-
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       const client = createServiceRoleClient();
       
@@ -110,9 +100,9 @@ export default function AdminOrganizationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
-  const filterOrganizations = () => {
+  const filterOrganizations = useCallback(() => {
     let filtered = orgs;
 
     // Search across all columns
@@ -167,7 +157,17 @@ export default function AdminOrganizationsPage() {
     }
 
     setFilteredOrgs(filtered);
-  };
+  }, [orgs, searchQuery, sortKey, sortDirection]);
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, [fetchOrganizations]);
+
+  useEffect(() => {
+    filterOrganizations();
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  }, [filterOrganizations]);
 
   // Handle column sorting
   const handleSort = (key: string) => {

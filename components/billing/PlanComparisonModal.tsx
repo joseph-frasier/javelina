@@ -120,22 +120,21 @@ export function PlanComparisonModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Compare Plans"
+      subtitle="Choose the plan that best fits your needs. You can upgrade or downgrade at any time."
       size="xlarge"
     >
       <div className="py-4">
-        <p className="text-sm text-gray-slate mb-6">
-          Choose the plan that best fits your needs. You can upgrade or downgrade at any time.
-        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {AVAILABLE_PLANS.map((plan) => {
+        {/* Top 3 Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {AVAILABLE_PLANS.filter(plan => plan.code !== 'enterprise_monthly').map((plan) => {
             const isCurrent = plan.code === currentPlanCode;
             const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
 
             return (
               <div
                 key={plan.code}
-                className={`relative rounded-lg border-2 p-4 transition-all ${
+                className={`relative rounded-lg border-2 p-4 transition-all flex flex-col ${
                   isCurrent
                     ? 'border-orange bg-orange-light'
                     : plan.isPopular
@@ -163,23 +162,25 @@ export function PlanComparisonModal({
 
                 {/* Plan Header */}
                 <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-orange-dark mb-2">
+                  <h3 className="text-lg font-bold text-orange-dark">
                     {plan.name}
                   </h3>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-3xl font-black text-orange-dark">
-                      ${plan.price}
-                    </span>
-                    {plan.billing_interval && (
-                      <span className="text-gray-slate ml-1 text-sm">
-                        /{plan.billing_interval}
-                      </span>
+                  <div className="mt-2">
+                    {plan.code === 'free' ? (
+                      <p className="text-2xl font-bold text-gray-slate">$0.00</p>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold text-gray-slate">
+                          ${plan.price.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-400">per month</p>
+                      </>
                     )}
                   </div>
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-2 mb-4 min-h-[200px]">
+                <ul className="space-y-2 mb-4 flex-1">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start text-xs">
                       <svg
@@ -201,50 +202,101 @@ export function PlanComparisonModal({
                 </ul>
 
                 {/* Action Button */}
-                <Button
-                  variant={isCurrent ? 'outline' : isUpgrade ? 'primary' : 'outline'}
-                  size="md"
-                  className="w-full"
-                  disabled={isCurrent}
-                  onClick={() => handleSelectPlan(plan)}
-                >
-                  {isCurrent
-                    ? 'Current Plan'
-                    : isUpgrade
-                    ? 'Upgrade'
-                    : plan.code === 'enterprise_monthly'
-                    ? 'Contact Sales'
-                    : 'Downgrade'}
-                </Button>
+                {isCurrent ? (
+                  <button
+                    disabled
+                    className="w-full mt-auto px-4 py-2 text-base rounded-md font-medium border-2 border-orange text-orange-dark cursor-not-allowed opacity-60"
+                  >
+                    Current Plan
+                  </button>
+                ) : (
+                  <Button
+                    variant={isUpgrade ? 'primary' : 'outline'}
+                    size="md"
+                    className="w-full mt-auto"
+                    onClick={() => handleSelectPlan(plan)}
+                  >
+                    {isUpgrade
+                      ? 'Upgrade'
+                      : plan.code === 'enterprise_monthly'
+                      ? 'Contact Sales'
+                      : 'Downgrade'}
+                  </Button>
+                )}
               </div>
             );
           })}
         </div>
 
-        {/* Money Back Guarantee */}
-        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-start space-x-3">
-            <svg
-              className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-              />
-            </svg>
-            <div>
-              <p className="text-sm font-bold text-green-800">14-Day Money-Back Guarantee</p>
-              <p className="text-xs text-green-700 mt-1">
-                Not satisfied with your upgrade? Get a full refund within 14 days, no questions asked.
-              </p>
+        {/* Enterprise Plan - Separate at Bottom */}
+        {(() => {
+          const plan = AVAILABLE_PLANS.find(p => p.code === 'enterprise_monthly');
+          if (!plan) return null;
+          
+          const isCurrent = plan.code === currentPlanCode;
+          const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
+
+          return (
+            <div className="border-2 border-gray-light dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                {/* Left Side - Plan Info */}
+                <div className="flex-1">
+                  <div className="mb-3">
+                    <h3 className="text-xl font-bold text-orange-dark dark:text-orange mb-1">
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-gray-slate dark:text-gray-400">
+                      For large-scale applications running Internet scale workloads.
+                    </p>
+                  </div>
+
+                  {/* Features in columns */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5">
+                    {plan.features.map((feature, index) => (
+                      <div key={index} className="flex items-start text-sm">
+                        <svg
+                          className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span className="text-gray-slate dark:text-gray-300">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right Side - Action Button */}
+                <div className="flex-shrink-0 md:w-48">
+                  {isCurrent ? (
+                    <button
+                      disabled
+                      className="w-full px-4 py-2 text-base rounded-md font-medium border-2 border-orange text-orange-dark dark:text-orange cursor-not-allowed opacity-60"
+                    >
+                      Current Plan
+                    </button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="md"
+                      className="w-full"
+                      onClick={() => handleSelectPlan(plan)}
+                    >
+                      Contact Sales
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
       </div>
     </Modal>
   );

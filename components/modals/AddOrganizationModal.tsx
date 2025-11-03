@@ -133,10 +133,14 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setName('');
-      setDescription('');
-      setErrors({});
+      // Call onClose first to start the animation
       onClose();
+      // Clear form state after animation completes (200ms)
+      setTimeout(() => {
+        setName('');
+        setDescription('');
+        setErrors({});
+      }, 250);
     }
   };
 
@@ -171,7 +175,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                 <p className="text-xs text-gray-slate mt-1">
                   {selectedPlan.description}
                   {selectedPlan.monthly && selectedPlan.monthly.amount > 0 && (
-                    <> • ${selectedPlan.monthly.amount}/month</>
+                    <> • ${selectedPlan.monthly.amount.toFixed(2)}/month</>
                   )}
                   {selectedPlan.monthly && selectedPlan.monthly.amount === 0 && (
                     <> • Free forever</>

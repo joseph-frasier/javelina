@@ -12,11 +12,12 @@ import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
 import { createClient } from '@/lib/supabase/client';
 import { useToastStore } from '@/lib/toast-store';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function SettingsPage() {
+function SettingsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const { 
@@ -33,6 +34,14 @@ export default function SettingsPage() {
   
   const [activeSection, setActiveSection] = useState('general');
   
+  // Read section from URL query parameter
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
+  
   // Modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -41,6 +50,17 @@ export default function SettingsPage() {
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [isGithubConnected, setIsGithubConnected] = useState(false);
   const [isLoadingOAuth, setIsLoadingOAuth] = useState(false);
+  
+  // Billing states
+  const [billingOrgs, setBillingOrgs] = useState<Array<{
+    id: string;
+    name: string;
+    current_plan: string;
+    plan_status: string;
+    next_billing_date: string | null;
+    stripe_customer_id: string | null;
+  }>>([]);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   // Fetch OAuth connection status on mount
   useEffect(() => {
@@ -138,12 +158,119 @@ export default function SettingsPage() {
     );
   };
 
-  const handleSectionClick = (sectionId: string, externalLink?: boolean) => {
-    if (externalLink && sectionId === 'billing') {
-      // Navigate to billing page
-      router.push('/settings/billing');
-      return;
+  const fetchBillingOrganizations = useCallback(async () => {
+    setBillingLoading(true);
+    try {
+      const supabase = createClient();
+      
+      // Get organizations where user is Admin or SuperAdmin
+      const { data: memberships, error: memberError } = await supabase
+        .from('organization_members')
+        .select(`
+          organization_id,
+          role,
+          organizations!inner(
+            id,
+            name,
+            stripe_customer_id
+          )
+        `)
+        .eq('user_id', user?.id)
+        .in('role', ['Admin', 'SuperAdmin']);
+
+      if (memberError) throw memberError;
+
+      if (!memberships || memberships.length === 0) {
+        setBillingOrgs([]);
+        setBillingLoading(false);
+        return;
+      }
+
+      // Get subscription data for each organization
+      const orgIds = memberships.map(m => m.organization_id);
+      
+      const { data: subscriptions, error: subError } = await supabase
+        .from('subscriptions')
+        .select('org_id, status, current_period_end, plan_id, metadata')
+        .in('org_id', orgIds);
+
+      if (subError) {
+        console.error('Error fetching subscriptions:', subError);
+      }
+
+      // Get all plans to match against
+      const { data: allPlans } = await supabase
+        .from('plans')
+        .select('id, code, name')
+        .eq('is_active', true);
+
+      // Combine data
+      const orgs = memberships.map(m => {
+        const org = (m.organizations as any);
+        const sub = subscriptions?.find(s => s.org_id === m.organization_id);
+        
+        // Try to find plan by plan_id first
+        let plan = sub?.plan_id ? allPlans?.find(p => p.id === sub.plan_id) : null;
+        
+        // Fallback: if no plan found but subscription has metadata with plan_code, try matching by code
+        if (!plan && sub?.metadata?.plan_code && allPlans) {
+          plan = allPlans.find(p => p.code === sub.metadata.plan_code);
+        }
+        
+        return {
+          id: org.id,
+          name: org.name,
+          current_plan: plan?.name || 'Free',
+          plan_status: sub?.status || 'active',
+          next_billing_date: sub?.current_period_end || null,
+          stripe_customer_id: org.stripe_customer_id,
+        };
+      });
+
+      setBillingOrgs(orgs);
+    } catch (error) {
+      console.error('Error fetching billing organizations:', error);
+      addToast('error', 'Failed to load billing information');
+    } finally {
+      setBillingLoading(false);
     }
+  }, [user?.id, addToast]);
+
+  // Fetch billing data when billing section is active
+  useEffect(() => {
+    if (activeSection === 'billing') {
+      fetchBillingOrganizations();
+    }
+  }, [activeSection, fetchBillingOrganizations]);
+
+  const handleManageBilling = (orgId: string) => {
+    router.push(`/settings/billing/${orgId}`);
+  };
+
+  const formatBillingDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getBillingStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+      case 'canceled':
+      case 'past_due':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      case 'trialing':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
+
+  const handleSectionClick = (sectionId: string, externalLink?: boolean) => {
     setActiveSection(sectionId);
   };
 
@@ -197,8 +324,7 @@ export default function SettingsPage() {
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
         </svg>
-      ),
-      externalLink: true
+      )
     },
     { 
       id: 'security', 
@@ -809,6 +935,94 @@ export default function SettingsPage() {
                 </Card>
               )}
 
+              {/* Billing & Subscription */}
+              {activeSection === 'billing' && (
+                <Card className="p-4 sm:p-6">
+                  <div className="mb-6">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-orange-dark dark:text-orange mb-2">
+                      Billing & Subscription
+                    </h2>
+                    <p className="text-sm text-gray-slate dark:text-gray-400">
+                      Manage billing for your organizations
+                    </p>
+                  </div>
+
+                  {billingLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+                    </div>
+                  ) : billingOrgs.length === 0 ? (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 text-center">
+                      <svg
+                        className="w-12 h-12 text-yellow-600 dark:text-yellow-500 mx-auto mb-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <h3 className="text-lg font-bold text-yellow-800 dark:text-yellow-400 mb-2">
+                        No Organizations Available
+                      </h3>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-500">
+                        You don&apos;t have admin access to any organizations. Only admins can manage billing.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {billingOrgs.map((org) => (
+                        <div
+                          key={org.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border border-gray-light dark:border-gray-700 rounded-lg hover:border-orange/50 dark:hover:border-orange/50 transition-colors gap-4"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <h3 className="text-base sm:text-lg font-bold text-orange-dark dark:text-orange">
+                                {org.name}
+                              </h3>
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full ${getBillingStatusColor(
+                                  org.plan_status
+                                )}`}
+                              >
+                                {org.plan_status}
+                              </span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm text-gray-slate dark:text-gray-400">
+                              <div>
+                                <span className="font-medium">Plan:</span>{' '}
+                                <span className="text-orange-dark dark:text-orange font-semibold">
+                                  {org.current_plan}
+                                </span>
+                              </div>
+                              {org.next_billing_date && (
+                                <div>
+                                  <span className="font-medium">Next Billing:</span>{' '}
+                                  {formatBillingDate(org.next_billing_date)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="primary"
+                            size="md"
+                            onClick={() => handleManageBilling(org.id)}
+                            className="w-full sm:w-auto"
+                          >
+                            Manage Billing
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              )}
+
               {/* Password & Authentication */}
               {activeSection === 'password' && (
                 <Card className="p-4 sm:p-6">
@@ -930,5 +1144,17 @@ export default function SettingsPage() {
         onClose={() => setShowEmailModal(false)}
       />
     </ProtectedRoute>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }

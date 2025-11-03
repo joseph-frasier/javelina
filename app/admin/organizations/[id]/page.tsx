@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -52,13 +52,7 @@ export default function AdminOrganizationDetailPage() {
   const [addMemberRole, setAddMemberRole] = useState('Viewer');
   const [isAddingMember, setIsAddingMember] = useState(false);
 
-  useEffect(() => {
-    if (orgId) {
-      fetchData();
-    }
-  }, [orgId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const client = createServiceRoleClient();
 
@@ -100,7 +94,13 @@ export default function AdminOrganizationDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId, addToast]);
+
+  useEffect(() => {
+    if (orgId) {
+      fetchData();
+    }
+  }, [orgId, fetchData]);
 
   const handleAddMember = async () => {
     if (!addMemberEmail.trim()) {

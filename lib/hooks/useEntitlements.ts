@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { OrgEntitlement, CanCreateResourceResponse } from '@/types/billing';
 
 interface UseEntitlementsReturn {
@@ -23,7 +23,7 @@ export function useEntitlements(orgId: string | null): UseEntitlementsReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEntitlements = async () => {
+  const fetchEntitlements = useCallback(async () => {
     if (!orgId) {
       setLoading(false);
       return;
@@ -47,11 +47,11 @@ export function useEntitlements(orgId: string | null): UseEntitlementsReturn {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId]);
 
   useEffect(() => {
     fetchEntitlements();
-  }, [orgId]);
+  }, [fetchEntitlements]);
 
   /**
    * Check if organization has access to a boolean feature

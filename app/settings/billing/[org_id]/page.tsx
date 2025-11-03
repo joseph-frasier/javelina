@@ -89,23 +89,29 @@ export default function OrganizationBillingPage() {
 
     try {
       const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch plan:', response.status, response.statusText);
+        setCurrentPlanCode('free');
+        return;
+      }
+
       const data = await response.json();
 
-      if (response.ok) {
-        // Check if we have subscription data with a plan_code
-        if (data.subscription && data.subscription.plan_code) {
-          setCurrentPlanCode(data.subscription.plan_code);
-        } else if (data.plan && data.plan.code) {
-          // Fallback to plan object
-          setCurrentPlanCode(data.plan.code);
-        } else {
-          // No subscription found, default to free
-          setCurrentPlanCode('free');
-        }
-        console.log('Fetched plan data:', data);
+      // Check if we have subscription data with a plan_code
+      if (data.subscription && data.subscription.plan_code) {
+        setCurrentPlanCode(data.subscription.plan_code);
+      } else if (data.plan && data.plan.code) {
+        // Fallback to plan object
+        setCurrentPlanCode(data.plan.code);
+      } else {
+        // No subscription found, default to free
+        setCurrentPlanCode('free');
       }
+      console.log('Fetched plan data:', data);
     } catch (error) {
       console.error('Error fetching current plan:', error);
+      setCurrentPlanCode('free');
     } finally {
       setLoading(false);
     }
@@ -128,11 +134,13 @@ export default function OrganizationBillingPage() {
         body: JSON.stringify({ org_id: orgId }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create portal session');
+        const errorText = await response.text();
+        console.error('Failed to create portal session:', response.status, errorText);
+        throw new Error('Failed to create portal session');
       }
+
+      const data = await response.json();
 
       // Redirect to Stripe Customer Portal
       window.location.href = data.url;
@@ -185,11 +193,13 @@ export default function OrganizationBillingPage() {
           }),
         });
 
-        const data = await response.json();
-
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to update subscription');
+          const errorText = await response.text();
+          console.error('Failed to update subscription:', response.status, errorText);
+          throw new Error('Failed to update subscription');
         }
+
+        const data = await response.json();
 
         addToast('success', 'Subscription updated successfully!');
         
@@ -215,23 +225,29 @@ export default function OrganizationBillingPage() {
   if (loading || !hasAccess) {
     return (
       <ProtectedRoute>
-        <SettingsLayout>
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-          </div>
-        </SettingsLayout>
+      <SettingsLayout 
+        activeSection="billing"
+        onSectionChange={(sectionId) => router.push(`/settings?section=${sectionId}`)}
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+        </div>
+      </SettingsLayout>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
-      <SettingsLayout>
+      <SettingsLayout 
+        activeSection="billing"
+        onSectionChange={(sectionId) => router.push(`/settings?section=${sectionId}`)}
+      >
         <div>
           {/* Header with Back Button */}
           <div className="mb-6">
             <button
-              onClick={() => router.push('/settings/billing')}
+              onClick={() => router.push('/settings?section=billing')}
               className="flex items-center text-gray-slate hover:text-orange-dark mb-4 transition-colors"
             >
               <svg

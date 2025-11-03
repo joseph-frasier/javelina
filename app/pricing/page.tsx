@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
+import Button from '@/components/ui/Button';
 import { PLANS, useSubscriptionStore } from '@/lib/subscription-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
@@ -11,6 +12,7 @@ import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { getPlanById } from '@/lib/plans-config';
 import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
+import { gsap } from 'gsap';
 
 function PricingContent() {
   const router = useRouter();
@@ -21,9 +23,35 @@ function PricingContent() {
   const addToast = useToastStore((state) => state.addToast);
   const user = useAuthStore((state) => state.user);
   
+  // Refs for GSAP animation
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isInitialMount, setIsInitialMount] = useState(true);
+  
   // Modal state
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [selectedPlanForOrg, setSelectedPlanForOrg] = useState<Plan | null>(null);
+  
+  // GSAP page transition animation on mount
+  useEffect(() => {
+    if (contentRef.current && isInitialMount) {
+      gsap.fromTo(
+        contentRef.current,
+        {
+          opacity: 0,
+          x: 30,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          onComplete: () => {
+            setIsInitialMount(false);
+          }
+        }
+      );
+    }
+  }, [isInitialMount]);
 
   const handleSelectPlan = async (planId: string) => {
     // Check if user is authenticated
@@ -86,7 +114,7 @@ function PricingContent() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Onboarding Welcome Banner */}
         {isOnboarding && (
           <div className="mb-8 bg-gradient-to-r from-orange to-orange-dark rounded-xl shadow-lg border border-orange p-6">
@@ -128,17 +156,69 @@ function PricingContent() {
           </p>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {PLANS.map((plan) => (
+        {/* Pricing Cards Grid - Top 3 Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {PLANS.filter(plan => plan.id !== 'enterprise').map((plan) => (
             <PricingCard
               key={plan.id}
               plan={plan}
               highlighted={plan.popular}
               onSelect={handleSelectPlan}
+              hidePrice={false}
             />
           ))}
         </div>
+
+        {/* Enterprise Plan - Bottom Section */}
+        {PLANS.filter(plan => plan.id === 'enterprise').map((plan) => (
+          <div key={plan.id} className="mb-8 bg-white rounded-xl p-4 border-2 border-gray-light shadow-lg">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              {/* Left: Plan Info */}
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-orange-dark mb-1">
+                  {plan.name}
+                </h3>
+                <p className="text-xs text-gray-slate font-light mb-3">
+                  {plan.description}
+                </p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                  {plan.features.map((feature, index) => (
+                    <div key={index} className="flex items-start">
+                      <svg
+                        className="w-4 h-4 text-orange mr-2 flex-shrink-0 mt-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span className="text-xs text-gray-slate font-regular">
+                        {feature}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Button */}
+              <div className="flex-shrink-0 md:w-48">
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="w-full"
+                  onClick={() => handleSelectPlan(plan.id)}
+                >
+                  Contact Sales
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
 
         {/* FAQ Section */}
         <div className="mt-8 max-w-3xl mx-auto">
@@ -169,8 +249,7 @@ function PricingContent() {
                 Is there a free trial?
               </h3>
               <p className="text-sm text-gray-slate font-regular">
-                Our Free plan is available forever with no credit card required.
-                For paid plans, we offer a 14-day money-back guarantee.
+                Our Free plan is available forever with no credit card required. It&apos;s a great way to get started and see real results before choosing a paid plan.
               </p>
             </div>
           </div>
@@ -182,7 +261,10 @@ function PricingContent() {
         isOpen={showOrgModal}
         onClose={() => {
           setShowOrgModal(false);
-          setSelectedPlanForOrg(null);
+          // Clear selected plan after animation completes
+          setTimeout(() => {
+            setSelectedPlanForOrg(null);
+          }, 250);
         }}
         onSuccess={handleOrgCreated}
         selectedPlan={selectedPlanForOrg}

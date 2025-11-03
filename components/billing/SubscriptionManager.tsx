@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { UsageMeter } from './UsageMeter';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
 import { formatLimit } from '@/types/billing';
@@ -23,11 +23,7 @@ export function SubscriptionManager({
   const [subscription, setSubscription] = useState<CurrentSubscriptionResponse | null>(null);
   const [usage, setUsage] = useState<OrgUsageWithLimits | null>(null);
 
-  useEffect(() => {
-    fetchSubscriptionData();
-  }, [orgId]);
-
-  const fetchSubscriptionData = async () => {
+  const fetchSubscriptionData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -86,7 +82,11 @@ export function SubscriptionManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId]);
+
+  useEffect(() => {
+    fetchSubscriptionData();
+  }, [fetchSubscriptionData]);
 
   if (loading) {
     return (
@@ -139,7 +139,7 @@ export function SubscriptionManager({
           <div className="mb-4 pb-4 border-b border-gray-light">
             <div className="flex items-baseline">
               <span className="text-3xl font-black text-orange-dark">
-                ${subscription.plan.metadata.price}
+                ${Number(subscription.plan.metadata.price).toFixed(2)}
               </span>
               <span className="text-gray-slate ml-2">
                 /{subscription.plan.billing_interval || 'month'}
@@ -158,7 +158,7 @@ export function SubscriptionManager({
               </span>
             </div>
             {subscription.subscription.cancel_at_period_end && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 w-fit">
                 <p className="text-xs text-yellow-800">
                   Your subscription will be canceled on {new Date(subscription.subscription.current_period_end).toLocaleDateString()}
                 </p>
@@ -180,7 +180,7 @@ export function SubscriptionManager({
           {onManageBilling && (
             <button
               onClick={onManageBilling}
-              className="px-4 py-2 border border-gray-light text-orange-dark rounded-md font-medium hover:bg-orange-light transition-colors"
+              className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
             >
               Manage Billing
             </button>

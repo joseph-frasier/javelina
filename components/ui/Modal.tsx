@@ -9,11 +9,12 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   size?: 'small' | 'medium' | 'large' | 'xlarge';
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'medium' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medium' }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -136,32 +137,39 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium' }: Mod
           className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-light">
-            <h3
-              id="modal-title"
-              className="text-xl font-semibold text-orange-dark dark:text-white"
-            >
-              {title}
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-gray-slate hover:text-orange-dark dark:hover:text-white transition-colors"
-              aria-label="Close modal"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="p-6 border-b border-gray-light">
+            <div className="flex items-center justify-between">
+              <h3
+                id="modal-title"
+                className="text-xl font-semibold text-orange-dark dark:text-white"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+                {title}
+              </h3>
+              <button
+                onClick={onClose}
+                className="text-gray-slate hover:text-orange-dark dark:hover:text-white transition-colors"
+                aria-label="Close modal"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            {subtitle && (
+              <p className="text-sm text-gray-slate dark:text-gray-400 mt-2">
+                {subtitle}
+              </p>
+            )}
           </div>
 
           {/* Body */}
