@@ -180,7 +180,7 @@ export function SubscriptionManager({
           {onManageBilling && (
             <button
               onClick={onManageBilling}
-              className="px-4 py-2 border border-gray-light text-orange-dark rounded-md font-medium hover:bg-orange-light transition-colors"
+              className="px-4 py-2 border-2 border-orange text-orange-dark dark:text-orange rounded-md font-medium hover:bg-orange hover:text-white hover:border-orange transition-colors"
             >
               Manage Billing
             </button>
