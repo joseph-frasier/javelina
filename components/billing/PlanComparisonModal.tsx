@@ -135,7 +135,7 @@ export function PlanComparisonModal({
             return (
               <div
                 key={plan.code}
-                className={`relative rounded-lg border-2 p-4 transition-all ${
+                className={`relative rounded-lg border-2 p-4 transition-all flex flex-col ${
                   isCurrent
                     ? 'border-orange bg-orange-light'
                     : plan.isPopular
@@ -179,7 +179,7 @@ export function PlanComparisonModal({
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-2 mb-4 min-h-[200px]">
+                <ul className="space-y-2 mb-4 flex-1">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start text-xs">
                       <svg
@@ -204,7 +204,7 @@ export function PlanComparisonModal({
                 <Button
                   variant={isCurrent ? 'outline' : isUpgrade ? 'primary' : 'outline'}
                   size="md"
-                  className="w-full"
+                  className="w-full mt-auto"
                   disabled={isCurrent}
                   onClick={() => handleSelectPlan(plan)}
                 >
