@@ -261,7 +261,10 @@ function PricingContent() {
         isOpen={showOrgModal}
         onClose={() => {
           setShowOrgModal(false);
-          setSelectedPlanForOrg(null);
+          // Clear selected plan after animation completes
+          setTimeout(() => {
+            setSelectedPlanForOrg(null);
+          }, 250);
         }}
         onSuccess={handleOrgCreated}
         selectedPlan={selectedPlanForOrg}
