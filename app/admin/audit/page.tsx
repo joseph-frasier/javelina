@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
@@ -54,15 +54,7 @@ export default function AdminAuditPage() {
     }
   };
 
-  useEffect(() => {
-    fetchAuditLogs();
-  }, []);
-
-  useEffect(() => {
-    filterLogs();
-  }, [logs, searchQuery, sortKey, sortDirection]);
-
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = useCallback(async () => {
     try {
       const client = createServiceRoleClient();
       
@@ -87,9 +79,9 @@ export default function AdminAuditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
-  const filterLogs = () => {
+  const filterLogs = useCallback(() => {
     let filtered = logs;
 
     // Search across all columns
@@ -147,7 +139,15 @@ export default function AdminAuditPage() {
     }
 
     setFilteredLogs(filtered);
-  };
+  }, [logs, searchQuery, sortKey, sortDirection]);
+
+  useEffect(() => {
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
+
+  useEffect(() => {
+    filterLogs();
+  }, [filterLogs]);
 
   // Calculate stats
   const stats = {

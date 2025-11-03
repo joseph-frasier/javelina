@@ -12,7 +12,7 @@ import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
 import { createClient } from '@/lib/supabase/client';
 import { useToastStore } from '@/lib/toast-store';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SettingsPage() {
@@ -66,13 +66,6 @@ export default function SettingsPage() {
   useEffect(() => {
     checkOAuthConnections();
   }, []);
-
-  // Fetch billing data when billing section is active
-  useEffect(() => {
-    if (activeSection === 'billing') {
-      fetchBillingOrganizations();
-    }
-  }, [activeSection]);
 
   const checkOAuthConnections = async () => {
     try {
@@ -165,7 +158,7 @@ export default function SettingsPage() {
     );
   };
 
-  const fetchBillingOrganizations = async () => {
+  const fetchBillingOrganizations = useCallback(async () => {
     setBillingLoading(true);
     try {
       const supabase = createClient();
@@ -241,7 +234,14 @@ export default function SettingsPage() {
     } finally {
       setBillingLoading(false);
     }
-  };
+  }, [user?.id, addToast]);
+
+  // Fetch billing data when billing section is active
+  useEffect(() => {
+    if (activeSection === 'billing') {
+      fetchBillingOrganizations();
+    }
+  }, [activeSection, fetchBillingOrganizations]);
 
   const handleManageBilling = (orgId: string) => {
     router.push(`/settings/billing/${orgId}`);

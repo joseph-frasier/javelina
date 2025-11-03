@@ -334,6 +334,10 @@ export async function updateSubscriptionStatus(
 export async function syncSubscriptionFromStripe(
   subscriptionId: string
 ): Promise<Subscription | null> {
+  if (!stripe) {
+    throw new Error('Stripe is not configured');
+  }
+
   try {
     // Fetch from Stripe
     const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);

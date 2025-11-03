@@ -26,8 +26,18 @@ export async function POST(request: NextRequest) {
 
     let event: Stripe.Event;
 
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured' },
+        { status: 500 }
+      );
+    }
+
+    // At this point, stripe is guaranteed to be non-null
+    const stripeClient = stripe;
+
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = stripeClient.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message);
       return NextResponse.json(
@@ -39,12 +49,12 @@ export async function POST(request: NextRequest) {
     // Handle the event
     switch (event.type) {
       case 'invoice.payment_succeeded':
-        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice, stripeClient);
         break;
 
       case 'invoice.paid':
         // Treat as alias of payment_succeeded
-        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice, stripeClient);
         break;
 
       case 'invoice.payment_failed':
@@ -52,11 +62,11 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'customer.subscription.created':
-        await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+        await handleSubscriptionCreated(event.data.object as Stripe.Subscription, stripeClient);
         break;
 
       case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription, stripeClient);
         break;
 
       case 'customer.subscription.deleted':
@@ -89,7 +99,7 @@ export async function POST(request: NextRequest) {
  * Handle invoice.payment_succeeded
  * This is the CRITICAL event that activates subscriptions
  */
-async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripeClient: Stripe) {
   console.log('💰 Invoice payment succeeded:', invoice.id);
 
   const resolveSubscriptionId = async (): Promise<string | null> => {
@@ -113,7 +123,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
     // 3) Refetch invoice with expansion
     try {
-      const full = await stripe.invoices.retrieve(invoice.id, {
+      const full = await stripeClient.invoices.retrieve(invoice.id, {
         expand: ['subscription', 'lines.data.subscription'],
       });
       const fullAny = full as any;
@@ -137,7 +147,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     // 4) Last resort: infer from customer's subscriptions matching invoice price
     try {
       if (invoice.customer && typeof invoice.customer === 'string') {
-        const subs = await stripe.subscriptions.list({
+        const subs = await stripeClient.subscriptions.list({
           customer: invoice.customer,
           status: 'all',
           limit: 10,
@@ -176,7 +186,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       console.log('✅ Subscription activated:', subscriptionId);
     } else {
       // Fetch full subscription from Stripe and create record
-      const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const stripeSubscription = await stripeClient.subscriptions.retrieve(subscriptionId);
       const orgId = stripeSubscription.metadata?.org_id;
 
       if (orgId) {
@@ -221,7 +231,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 /**
  * Handle customer.subscription.created
  */
-async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+async function handleSubscriptionCreated(subscription: Stripe.Subscription, stripeClient: Stripe) {
   console.log('✅ Subscription created:', subscription.id);
 
   try {
@@ -260,7 +270,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
           if (oldSub.stripe_subscription_id) {
             try {
               console.log(`🗑️ Canceling old subscription in Stripe: ${oldSub.stripe_subscription_id}`);
-              await stripe.subscriptions.cancel(oldSub.stripe_subscription_id);
+              await stripeClient.subscriptions.cancel(oldSub.stripe_subscription_id);
               console.log(`✅ Successfully canceled old subscription: ${oldSub.stripe_subscription_id}`);
             } catch (cancelError: any) {
               console.error(`❌ Error canceling old subscription ${oldSub.stripe_subscription_id}:`, cancelError.message);
@@ -288,7 +298,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 /**
  * Handle customer.subscription.updated
  */
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription, stripeClient: Stripe) {
   console.log('🔄 Subscription updated:', subscription.id);
 
   try {

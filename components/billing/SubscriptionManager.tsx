@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { UsageMeter } from './UsageMeter';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
 import { formatLimit } from '@/types/billing';
@@ -23,11 +23,7 @@ export function SubscriptionManager({
   const [subscription, setSubscription] = useState<CurrentSubscriptionResponse | null>(null);
   const [usage, setUsage] = useState<OrgUsageWithLimits | null>(null);
 
-  useEffect(() => {
-    fetchSubscriptionData();
-  }, [orgId]);
-
-  const fetchSubscriptionData = async () => {
+  const fetchSubscriptionData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -86,7 +82,11 @@ export function SubscriptionManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId]);
+
+  useEffect(() => {
+    fetchSubscriptionData();
+  }, [fetchSubscriptionData]);
 
   if (loading) {
     return (

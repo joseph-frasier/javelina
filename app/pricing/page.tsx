@@ -249,7 +249,7 @@ function PricingContent() {
                 Is there a free trial?
               </h3>
               <p className="text-sm text-gray-slate font-regular">
-                Our Free plan is available forever with no credit card required. It's a great way to get started and see real results before choosing a paid plan.
+                Our Free plan is available forever with no credit card required. It&apos;s a great way to get started and see real results before choosing a paid plan.
               </p>
             </div>
           </div>
