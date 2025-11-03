@@ -201,21 +201,27 @@ export function PlanComparisonModal({
                 </ul>
 
                 {/* Action Button */}
-                <Button
-                  variant={isCurrent ? 'outline' : isUpgrade ? 'primary' : 'outline'}
-                  size="md"
-                  className="w-full mt-auto"
-                  disabled={isCurrent}
-                  onClick={() => handleSelectPlan(plan)}
-                >
-                  {isCurrent
-                    ? 'Current Plan'
-                    : isUpgrade
-                    ? 'Upgrade'
-                    : plan.code === 'enterprise_monthly'
-                    ? 'Contact Sales'
-                    : 'Downgrade'}
-                </Button>
+                {isCurrent ? (
+                  <button
+                    disabled
+                    className="w-full mt-auto px-4 py-2 text-base rounded-md font-medium border-2 border-orange text-orange-dark cursor-not-allowed opacity-60"
+                  >
+                    Current Plan
+                  </button>
+                ) : (
+                  <Button
+                    variant={isUpgrade ? 'primary' : 'outline'}
+                    size="md"
+                    className="w-full mt-auto"
+                    onClick={() => handleSelectPlan(plan)}
+                  >
+                    {isUpgrade
+                      ? 'Upgrade'
+                      : plan.code === 'enterprise_monthly'
+                      ? 'Contact Sales'
+                      : 'Downgrade'}
+                  </Button>
+                )}
               </div>
             );
           })}
