@@ -4,6 +4,14 @@ import { stripe } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Billing is not configured. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
     const supabase = await createClient();
     
     // Get authenticated user
