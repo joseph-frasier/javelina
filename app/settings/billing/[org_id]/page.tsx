@@ -227,7 +227,7 @@ export default function OrganizationBillingPage() {
       <ProtectedRoute>
       <SettingsLayout 
         activeSection="billing"
-        onSectionChange={(sectionId) => router.push('/settings')}
+        onSectionChange={(sectionId) => router.push(`/settings?section=${sectionId}`)}
       >
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
@@ -241,13 +241,13 @@ export default function OrganizationBillingPage() {
     <ProtectedRoute>
       <SettingsLayout 
         activeSection="billing"
-        onSectionChange={(sectionId) => router.push('/settings')}
+        onSectionChange={(sectionId) => router.push(`/settings?section=${sectionId}`)}
       >
         <div>
           {/* Header with Back Button */}
           <div className="mb-6">
             <button
-              onClick={() => router.push('/settings')}
+              onClick={() => router.push('/settings?section=billing')}
               className="flex items-center text-gray-slate hover:text-orange-dark mb-4 transition-colors"
             >
               <svg

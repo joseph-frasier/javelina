@@ -13,10 +13,11 @@ import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
 import { createClient } from '@/lib/supabase/client';
 import { useToastStore } from '@/lib/toast-store';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const { 
@@ -32,6 +33,14 @@ export default function SettingsPage() {
   } = useSettingsStore();
   
   const [activeSection, setActiveSection] = useState('general');
+  
+  // Read section from URL query parameter
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
   
   // Modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
