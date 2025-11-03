@@ -24,7 +24,7 @@ export function PricingCard({
       className={clsx(
         'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all hover:shadow-xl',
         highlighted
-          ? 'border-orange scale-105'
+          ? 'border-orange'
           : 'border-gray-light hover:border-orange/50',
         disabled && 'opacity-60 pointer-events-none'
       )}
