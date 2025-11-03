@@ -55,7 +55,7 @@ export const listDNSRecordsByZone = async (
   }
 
   const { data, error } = await supabaseAdmin
-    .from("dns_records")
+    .from("zone_records")
     .select("*")
     .eq("zone_id", zoneId)
     .order("name");
@@ -83,7 +83,7 @@ export const getDNSRecord = async (
   }
 
   const { data: record, error } = await supabaseAdmin
-    .from("dns_records")
+    .from("zone_records")
     .select(
       `
       *,
@@ -124,7 +124,7 @@ export const createDNSRecord = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
-  const { zone_id, name, type, value, ttl, priority, status } = req.body;
+  const { zone_id, name, type, value, ttl, priority, active } = req.body;
   const userId = req.user!.id;
 
   validateRequired({ zone_id, name, type, value, ttl }, [
@@ -181,7 +181,7 @@ export const createDNSRecord = async (
   }
 
   const { data, error } = await supabaseAdmin
-    .from("dns_records")
+    .from("zone_records")
     .insert({
       zone_id,
       name,
@@ -189,7 +189,7 @@ export const createDNSRecord = async (
       value,
       ttl,
       priority: priority || null,
-      status: status || "active",
+      active: active !== undefined ? active : true,
     })
     .select()
     .single();
@@ -218,7 +218,7 @@ export const updateDNSRecord = async (
 
   // Get record and check permissions
   const { data: record } = await supabaseAdmin
-    .from("dns_records")
+    .from("zone_records")
     .select(
       `
       zone_id,
@@ -252,7 +252,7 @@ export const updateDNSRecord = async (
     );
   }
 
-  const { name, type, value, ttl, priority, status } = req.body;
+  const { name, type, value, ttl, priority, active } = req.body;
   const updates: any = {};
 
   if (name !== undefined) updates.name = name;
@@ -270,10 +270,10 @@ export const updateDNSRecord = async (
     updates.ttl = ttl;
   }
   if (priority !== undefined) updates.priority = priority;
-  if (status !== undefined) updates.status = status;
+  if (active !== undefined) updates.active = active;
 
   const { data, error } = await supabaseAdmin
-    .from("dns_records")
+    .from("zone_records")
     .update(updates)
     .eq("id", id)
     .select()
@@ -303,7 +303,7 @@ export const deleteDNSRecord = async (
 
   // Get record and check permissions
   const { data: record } = await supabaseAdmin
-    .from("dns_records")
+    .from("zone_records")
     .select(
       `
       zone_id,
@@ -338,7 +338,7 @@ export const deleteDNSRecord = async (
   }
 
   const { error } = await supabaseAdmin
-    .from("dns_records")
+    .from("zone_records")
     .delete()
     .eq("id", id);
 

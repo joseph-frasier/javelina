@@ -235,7 +235,7 @@ export function generateMockAuditLogs(zoneId: string, zoneName: string, count: n
 
     logs.push({
       id: `audit-${i}-${Date.now()}`,
-      table_name: 'dns_records',
+      table_name: 'zone_records',
       record_id: `record-${i}`,
       action,
       old_data,
