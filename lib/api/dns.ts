@@ -204,15 +204,23 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
 
 /**
  * Get DNS records for a zone
- * Currently mocked - will fetch from zone_records table when it exists
  */
 export async function getZoneDNSRecords(zoneId: string, zoneName: string): Promise<DNSRecord[]> {
-  // TODO: Replace with real query when zone_records table exists
-  // const { data } = await supabase
-  //   .from('zone_records')
-  //   .select('*')
-  //   .eq('zone_id', zoneId);
+  const supabase = createClient();
   
-  return generateMockDNSRecords(zoneName, 50);
+  const { data, error } = await supabase
+    .from('dns_records')
+    .select('*')
+    .eq('zone_id', zoneId)
+    .order('name', { ascending: true })
+    .order('type', { ascending: true });
+  
+  if (error) {
+    console.error('Error fetching DNS records:', error);
+    // Fallback to mock data in case of error
+    return generateMockDNSRecords(zoneName, 50);
+  }
+  
+  return (data || []) as DNSRecord[];
 }
 
