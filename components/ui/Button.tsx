@@ -29,14 +29,17 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  loading?: boolean;
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  ({ className, variant, size, loading, disabled, ...props }, ref) => {
     return (
       <button
         ref={ref}
         className={clsx(buttonVariants({ variant, size }), className)}
+        disabled={disabled || loading}
         {...props}
       />
     );
