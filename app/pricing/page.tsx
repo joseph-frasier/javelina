@@ -223,7 +223,6 @@ function PricingContent() {
               </h3>
               <p className="text-sm text-gray-slate font-regular">
                 Our Free plan is available forever with no credit card required.
-                For paid plans, we offer a 14-day money-back guarantee.
               </p>
             </div>
           </div>
