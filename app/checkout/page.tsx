@@ -189,7 +189,7 @@ function CheckoutContent() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-orange-dark">
-                          ${checkoutData.plan_price}
+                          ${Number(checkoutData.plan_price).toFixed(2)}
                         </p>
                         <p className="text-sm text-gray-slate font-light">
                           /{checkoutData.billing_interval}
@@ -207,7 +207,7 @@ function CheckoutContent() {
                       Total due today
                     </span>
                     <span className="text-2xl font-black text-orange-dark">
-                      ${checkoutData.plan_price}
+                      ${Number(checkoutData.plan_price).toFixed(2)}
                     </span>
                   </div>
 
@@ -218,31 +218,6 @@ function CheckoutContent() {
                       {checkoutData.billing_interval}. You can cancel anytime from your
                       account settings.
                     </p>
-                  </div>
-
-                  {/* Money Back Guarantee */}
-                  <div className="flex items-start space-x-2 p-3 bg-orange-light rounded-lg">
-                    <svg
-                      className="w-5 h-5 text-orange flex-shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                    <div className="text-sm text-gray-slate font-regular">
-                      <p className="font-bold text-orange-dark mb-1">
-                        14-Day Money-Back Guarantee
-                      </p>
-                      <p className="font-light">
-                        Not satisfied? Get a full refund within 14 days.
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
