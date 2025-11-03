@@ -70,8 +70,6 @@ export async function POST(request: NextRequest) {
         organization_id: organization.id,
         user_id: user.id,
         role: 'SuperAdmin',
-        environments_count: 0,
-        zones_count: 0
       });
 
     if (memberError) {

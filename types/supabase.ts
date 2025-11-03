@@ -115,24 +115,18 @@ export interface Database {
           organization_id: string
           user_id: string
           role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          environments_count: number
-          zones_count: number
           created_at: string
         }
         Insert: {
           organization_id: string
           user_id: string
           role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          environments_count?: number
-          zones_count?: number
           created_at?: string
         }
         Update: {
           organization_id?: string
           user_id?: string
           role?: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          environments_count?: number
-          zones_count?: number
           created_at?: string
         }
         Relationships: [

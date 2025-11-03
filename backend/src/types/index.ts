@@ -98,8 +98,6 @@ export interface OrganizationMember {
   organization_id: string;
   user_id: string;
   role: OrganizationRole;
-  environments_count: number;
-  zones_count: number;
   created_at: string;
 }
 

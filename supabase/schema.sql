@@ -64,8 +64,6 @@ create table if not exists public.organization_members (
   organization_id uuid references public.organizations on delete cascade,
   user_id uuid references auth.users on delete cascade,
   role text not null check (role in ('SuperAdmin', 'Admin', 'Editor', 'Viewer')),
-  environments_count int default 0,
-  zones_count int default 0,
   created_at timestamp with time zone default now(),
   primary key (organization_id, user_id)
 );

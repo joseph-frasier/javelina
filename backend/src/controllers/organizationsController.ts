@@ -131,8 +131,6 @@ export const createOrganization = async (
       organization_id: org.id,
       user_id: userId,
       role: "SuperAdmin",
-      environments_count: 0,
-      zones_count: 0,
     });
 
   if (memberError) {
