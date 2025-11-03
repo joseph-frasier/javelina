@@ -123,12 +123,13 @@ export function PlanComparisonModal({
       size="xlarge"
     >
       <div className="py-4">
-        <p className="text-sm text-gray-slate mb-6">
+        <p className="text-sm text-gray-slate dark:text-gray-400 mb-6">
           Choose the plan that best fits your needs. You can upgrade or downgrade at any time.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {AVAILABLE_PLANS.map((plan) => {
+        {/* Top 3 Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {AVAILABLE_PLANS.filter(plan => plan.code !== 'enterprise_monthly').map((plan) => {
             const isCurrent = plan.code === currentPlanCode;
             const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
 
@@ -226,6 +227,86 @@ export function PlanComparisonModal({
             );
           })}
         </div>
+
+        {/* Enterprise Plan - Separate at Bottom */}
+        {(() => {
+          const plan = AVAILABLE_PLANS.find(p => p.code === 'enterprise_monthly');
+          if (!plan) return null;
+          
+          const isCurrent = plan.code === currentPlanCode;
+          const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
+
+          return (
+            <div className="border-2 border-gray-light dark:border-gray-700 rounded-lg p-6 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                {/* Left Side - Plan Info */}
+                <div className="flex-1">
+                  <div className="mb-4">
+                    <h3 className="text-2xl font-bold text-orange-dark dark:text-orange mb-2">
+                      {plan.name}
+                    </h3>
+                    <p className="text-sm text-gray-slate dark:text-gray-400 mb-4">
+                      For large-scale applications running Internet scale workloads.
+                    </p>
+                    <div className="flex items-baseline">
+                      <span className="text-3xl font-black text-orange-dark dark:text-orange">
+                        ${plan.price}
+                      </span>
+                      {plan.billing_interval && (
+                        <span className="text-gray-slate dark:text-gray-400 ml-1 text-sm">
+                          /{plan.billing_interval}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Features in columns */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                    {plan.features.map((feature, index) => (
+                      <div key={index} className="flex items-start text-sm">
+                        <svg
+                          className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span className="text-gray-slate dark:text-gray-300">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right Side - Action Button */}
+                <div className="flex-shrink-0 md:w-48">
+                  {isCurrent ? (
+                    <button
+                      disabled
+                      className="w-full px-4 py-2 text-base rounded-md font-medium border-2 border-orange text-orange-dark dark:text-orange cursor-not-allowed opacity-60"
+                    >
+                      Current Plan
+                    </button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="md"
+                      className="w-full"
+                      onClick={() => handleSelectPlan(plan)}
+                    >
+                      Contact Sales
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </Modal>
   );
