@@ -128,17 +128,69 @@ function PricingContent() {
           </p>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {PLANS.map((plan) => (
+        {/* Pricing Cards Grid - Top 3 Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {PLANS.filter(plan => plan.id !== 'enterprise').map((plan) => (
             <PricingCard
               key={plan.id}
               plan={plan}
               highlighted={plan.popular}
               onSelect={handleSelectPlan}
+              hidePrice={true}
             />
           ))}
         </div>
+
+        {/* Enterprise Plan - Bottom Section */}
+        {PLANS.filter(plan => plan.id === 'enterprise').map((plan) => (
+          <div key={plan.id} className="mb-8 bg-gray-50 rounded-xl p-4 border-2 border-gray-light">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              {/* Left: Plan Info */}
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-orange-dark mb-1">
+                  {plan.name}
+                </h3>
+                <p className="text-xs text-gray-slate font-light mb-3">
+                  {plan.description}
+                </p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                  {plan.features.map((feature, index) => (
+                    <div key={index} className="flex items-start">
+                      <svg
+                        className="w-4 h-4 text-orange mr-2 flex-shrink-0 mt-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span className="text-xs text-gray-slate font-regular">
+                        {feature}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Button */}
+              <div className="flex-shrink-0 md:w-48">
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="w-full"
+                  onClick={() => handleSelectPlan(plan.id)}
+                >
+                  Contact Sales
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
 
         {/* FAQ Section */}
         <div className="mt-8 max-w-3xl mx-auto">

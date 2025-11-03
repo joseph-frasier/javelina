@@ -9,6 +9,7 @@ interface PricingCardProps {
   highlighted?: boolean;
   onSelect: (planId: string) => void;
   disabled?: boolean;
+  hidePrice?: boolean;
 }
 
 export function PricingCard({
@@ -16,6 +17,7 @@ export function PricingCard({
   highlighted = false,
   onSelect,
   disabled = false,
+  hidePrice = false,
 }: PricingCardProps) {
   return (
     <div
@@ -42,18 +44,20 @@ export function PricingCard({
         <p className="text-xs text-gray-slate font-light">{plan.description}</p>
       </div>
 
-      <div className="mb-4">
-        <div className="flex items-baseline">
-          <span className="text-4xl font-black text-orange-dark">
-            ${plan.price}
-          </span>
-          {plan.price > 0 && (
-            <span className="ml-2 text-sm text-gray-slate font-light">
-              /{plan.interval}
+      {!hidePrice && (
+        <div className="mb-4">
+          <div className="flex items-baseline">
+            <span className="text-4xl font-black text-orange-dark">
+              ${plan.price}
             </span>
-          )}
+            {plan.price > 0 && (
+              <span className="ml-2 text-sm text-gray-slate font-light">
+                /{plan.interval}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <Button
         variant={highlighted ? 'primary' : 'outline'}
