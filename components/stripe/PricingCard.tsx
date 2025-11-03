@@ -48,7 +48,7 @@ export function PricingCard({
         <div className="mb-4">
           <div className="flex items-baseline">
             <span className="text-4xl font-black text-orange-dark">
-              ${plan.price}
+              {plan.price === 0 ? '$0.00' : `$${Number(plan.price).toFixed(2)}`}
             </span>
             {plan.price > 0 && (
               <span className="ml-2 text-sm text-gray-slate font-light">

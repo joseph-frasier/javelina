@@ -137,7 +137,7 @@ function PricingContent() {
               plan={plan}
               highlighted={plan.popular}
               onSelect={handleSelectPlan}
-              hidePrice={true}
+              hidePrice={false}
             />
           ))}
         </div>
