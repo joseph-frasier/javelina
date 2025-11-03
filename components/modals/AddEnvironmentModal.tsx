@@ -114,12 +114,16 @@ export function AddEnvironmentModal({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setName('');
-      setSelectedEnvironment('production');
-      setLocation('');
-      setDescription('');
-      setErrors({});
+      // Call onClose first to start the animation
       onClose();
+      // Clear form state after animation completes (200ms)
+      setTimeout(() => {
+        setName('');
+        setSelectedEnvironment('production');
+        setLocation('');
+        setDescription('');
+        setErrors({});
+      }, 250);
     }
   };
 

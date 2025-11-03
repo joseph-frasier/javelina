@@ -109,11 +109,15 @@ export function AddZoneModal({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setName('');
-      setZoneType('primary');
-      setDescription('');
-      setErrors({});
+      // Call onClose first to start the animation
       onClose();
+      // Clear form state after animation completes (200ms)
+      setTimeout(() => {
+        setName('');
+        setZoneType('primary');
+        setDescription('');
+        setErrors({});
+      }, 250);
     }
   };
 

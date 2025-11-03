@@ -133,10 +133,14 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setName('');
-      setDescription('');
-      setErrors({});
+      // Call onClose first to start the animation
       onClose();
+      // Clear form state after animation completes (200ms)
+      setTimeout(() => {
+        setName('');
+        setDescription('');
+        setErrors({});
+      }, 250);
     }
   };
 
