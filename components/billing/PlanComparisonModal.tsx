@@ -164,19 +164,9 @@ export function PlanComparisonModal({
 
                 {/* Plan Header */}
                 <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-orange-dark mb-2">
+                  <h3 className="text-lg font-bold text-orange-dark">
                     {plan.name}
                   </h3>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-3xl font-black text-orange-dark">
-                      ${plan.price}
-                    </span>
-                    {plan.billing_interval && (
-                      <span className="text-gray-slate ml-1 text-sm">
-                        /{plan.billing_interval}
-                      </span>
-                    )}
-                  </div>
                 </div>
 
                 {/* Features */}
@@ -245,19 +235,9 @@ export function PlanComparisonModal({
                     <h3 className="text-xl font-bold text-orange-dark dark:text-orange mb-1">
                       {plan.name}
                     </h3>
-                    <p className="text-xs text-gray-slate dark:text-gray-400 mb-2">
+                    <p className="text-xs text-gray-slate dark:text-gray-400">
                       For large-scale applications running Internet scale workloads.
                     </p>
-                    <div className="flex items-baseline">
-                      <span className="text-2xl font-black text-orange-dark dark:text-orange">
-                        ${plan.price}
-                      </span>
-                      {plan.billing_interval && (
-                        <span className="text-gray-slate dark:text-gray-400 ml-1 text-xs">
-                          /{plan.billing_interval}
-                        </span>
-                      )}
-                    </div>
                   </div>
 
                   {/* Features in columns */}
