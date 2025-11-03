@@ -215,18 +215,24 @@ export default function OrganizationBillingPage() {
   if (loading || !hasAccess) {
     return (
       <ProtectedRoute>
-        <SettingsLayout>
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-          </div>
-        </SettingsLayout>
+      <SettingsLayout 
+        activeSection="billing"
+        onSectionChange={(sectionId) => router.push('/settings')}
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+        </div>
+      </SettingsLayout>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
-      <SettingsLayout>
+      <SettingsLayout 
+        activeSection="billing"
+        onSectionChange={(sectionId) => router.push('/settings')}
+      >
         <div>
           {/* Header with Back Button */}
           <div className="mb-6">
