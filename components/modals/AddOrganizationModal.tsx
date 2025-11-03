@@ -171,7 +171,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                 <p className="text-xs text-gray-slate mt-1">
                   {selectedPlan.description}
                   {selectedPlan.monthly && selectedPlan.monthly.amount > 0 && (
-                    <> • ${selectedPlan.monthly.amount}/month</>
+                    <> • ${selectedPlan.monthly.amount.toFixed(2)}/month</>
                   )}
                   {selectedPlan.monthly && selectedPlan.monthly.amount === 0 && (
                     <> • Free forever</>
