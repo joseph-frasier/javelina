@@ -8,6 +8,7 @@
 -- =====================================================
 
 -- Add soa_serial column to zones table (starts at 1 for new zones)
+-- Zones table is created by base_schema migration (20250101000000_base_schema.sql)
 alter table public.zones
   add column if not exists soa_serial integer not null default 1;
 
@@ -18,6 +19,7 @@ create index if not exists zones_soa_serial_idx on public.zones(soa_serial);
 -- 2. Create DNS Records Table
 -- =====================================================
 
+-- Zones table is created by base_schema migration (20250101000000_base_schema.sql)
 create table if not exists public.dns_records (
   id uuid default gen_random_uuid() primary key,
   zone_id uuid references public.zones on delete cascade not null,
@@ -52,6 +54,8 @@ create index if not exists dns_records_created_by_idx on public.dns_records(crea
 
 -- =====================================================
 -- 4. Create Functions
+-- Functions can be created even if tables don't exist
+-- They will only fail when called if the tables are missing
 -- =====================================================
 
 -- Function to update zone records count
