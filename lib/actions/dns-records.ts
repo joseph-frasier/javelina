@@ -50,7 +50,7 @@ export async function createDNSRecord(
   
   // Create the record
   const { data, error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .insert({
       zone_id: zoneId,
       name: normalizedName,
@@ -94,7 +94,7 @@ export async function updateDNSRecord(
   
   // Get the record to find zone_id
   const { data: existingRecord } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('zone_id')
     .eq('id', recordId)
     .single();
@@ -108,7 +108,7 @@ export async function updateDNSRecord(
   
   // Update the record
   const { data, error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .update({
       name: normalizedName,
       value: recordData.value.trim(),
@@ -148,7 +148,7 @@ export async function deleteDNSRecord(recordId: string): Promise<void> {
   
   // Get the record to find zone_id before deletion
   const { data: record } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('zone_id, type')
     .eq('id', recordId)
     .single();
@@ -164,7 +164,7 @@ export async function deleteDNSRecord(recordId: string): Promise<void> {
   
   // Delete the record
   const { error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .delete()
     .eq('id', recordId);
   
@@ -200,7 +200,7 @@ export async function bulkDeleteDNSRecords(recordIds: string[]): Promise<{
   
   // Get all records to check types and zone_ids
   const { data: records } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('id, zone_id, type')
     .in('id', recordIds);
   
@@ -224,7 +224,7 @@ export async function bulkDeleteDNSRecords(recordIds: string[]): Promise<{
   
   // Delete records
   const { error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .delete()
     .in('id', deletableRecords.map(r => r.id));
   
@@ -266,7 +266,7 @@ export async function duplicateDNSRecord(
   
   // Get the original record
   const { data: originalRecord, error: fetchError } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('*')
     .eq('id', recordId)
     .single();
@@ -279,7 +279,7 @@ export async function duplicateDNSRecord(
   const normalizedName = newName.trim() || '@';
   
   const { data, error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .insert({
       zone_id: originalRecord.zone_id,
       name: normalizedName,
@@ -320,7 +320,7 @@ export async function toggleDNSRecordStatus(recordId: string): Promise<DNSRecord
   
   // Get current status and zone_id
   const { data: record } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('active, zone_id')
     .eq('id', recordId)
     .single();
@@ -331,7 +331,7 @@ export async function toggleDNSRecordStatus(recordId: string): Promise<DNSRecord
   
   // Toggle status
   const { data, error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .update({
       active: !record.active,
       updated_at: new Date().toISOString(),
@@ -373,13 +373,13 @@ export async function bulkToggleDNSRecordStatus(
   
   // Get zone_ids for affected records
   const { data: records } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('zone_id')
     .in('id', recordIds);
   
   // Update status
   const { error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .update({
       active,
       updated_at: new Date().toISOString(),
@@ -407,7 +407,7 @@ export async function getDNSRecords(zoneId: string): Promise<DNSRecord[]> {
   const supabase = await createClient();
   
   const { data, error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('*')
     .eq('zone_id', zoneId)
     .order('name', { ascending: true })

@@ -209,7 +209,7 @@ export async function getZoneDNSRecords(zoneId: string, zoneName: string): Promi
   const supabase = createClient();
   
   const { data, error } = await supabase
-    .from('dns_records')
+    .from('zone_records')
     .select('*')
     .eq('zone_id', zoneId)
     .order('name', { ascending: true })
