@@ -237,23 +237,23 @@ export function PlanComparisonModal({
           const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
 
           return (
-            <div className="border-2 border-gray-light dark:border-gray-700 rounded-lg p-6 bg-gray-50 dark:bg-gray-800/50">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="border-2 border-gray-light dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 {/* Left Side - Plan Info */}
                 <div className="flex-1">
-                  <div className="mb-4">
-                    <h3 className="text-2xl font-bold text-orange-dark dark:text-orange mb-2">
+                  <div className="mb-3">
+                    <h3 className="text-xl font-bold text-orange-dark dark:text-orange mb-1">
                       {plan.name}
                     </h3>
-                    <p className="text-sm text-gray-slate dark:text-gray-400 mb-4">
+                    <p className="text-xs text-gray-slate dark:text-gray-400 mb-2">
                       For large-scale applications running Internet scale workloads.
                     </p>
                     <div className="flex items-baseline">
-                      <span className="text-3xl font-black text-orange-dark dark:text-orange">
+                      <span className="text-2xl font-black text-orange-dark dark:text-orange">
                         ${plan.price}
                       </span>
                       {plan.billing_interval && (
-                        <span className="text-gray-slate dark:text-gray-400 ml-1 text-sm">
+                        <span className="text-gray-slate dark:text-gray-400 ml-1 text-xs">
                           /{plan.billing_interval}
                         </span>
                       )}
@@ -261,7 +261,7 @@ export function PlanComparisonModal({
                   </div>
 
                   {/* Features in columns */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5">
                     {plan.features.map((feature, index) => (
                       <div key={index} className="flex items-start text-sm">
                         <svg
