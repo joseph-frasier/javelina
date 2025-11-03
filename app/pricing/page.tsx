@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
@@ -12,6 +12,7 @@ import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { getPlanById } from '@/lib/plans-config';
 import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
+import { gsap } from 'gsap';
 
 function PricingContent() {
   const router = useRouter();
@@ -22,9 +23,35 @@ function PricingContent() {
   const addToast = useToastStore((state) => state.addToast);
   const user = useAuthStore((state) => state.user);
   
+  // Refs for GSAP animation
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isInitialMount, setIsInitialMount] = useState(true);
+  
   // Modal state
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [selectedPlanForOrg, setSelectedPlanForOrg] = useState<Plan | null>(null);
+  
+  // GSAP page transition animation on mount
+  useEffect(() => {
+    if (contentRef.current && isInitialMount) {
+      gsap.fromTo(
+        contentRef.current,
+        {
+          opacity: 0,
+          x: 30,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          onComplete: () => {
+            setIsInitialMount(false);
+          }
+        }
+      );
+    }
+  }, [isInitialMount]);
 
   const handleSelectPlan = async (planId: string) => {
     // Check if user is authenticated
@@ -87,7 +114,7 @@ function PricingContent() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Onboarding Welcome Banner */}
         {isOnboarding && (
           <div className="mb-8 bg-gradient-to-r from-orange to-orange-dark rounded-xl shadow-lg border border-orange p-6">
