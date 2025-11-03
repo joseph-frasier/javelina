@@ -165,6 +165,18 @@ export function PlanComparisonModal({
                   <h3 className="text-lg font-bold text-orange-dark">
                     {plan.name}
                   </h3>
+                  <div className="mt-2">
+                    {plan.code === 'free' ? (
+                      <p className="text-2xl font-bold text-gray-slate">$0.00</p>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold text-gray-slate">
+                          ${plan.price.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-400">per month</p>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Features */}
