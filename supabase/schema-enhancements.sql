@@ -199,14 +199,14 @@ begin
 end;
 $$;
 
--- Function to update zone records count (prepared for future dns_records table)
+-- Function to update zone records count (prepared for future zone_records table)
 create or replace function public.update_zone_records_count()
 returns trigger
 language plpgsql
 security definer
 as $$
 begin
-  -- This function is a placeholder for when dns_records table is added
+  -- This function is a placeholder for when zone_records table is added
   -- Currently it just ensures the count is set to 0 for new zones
   if TG_OP = 'INSERT' then
     NEW.records_count := 0;

@@ -1,6 +1,7 @@
 -- =====================================================
--- Javelina DNS Management - Database Schema (Fixed)
--- Run this in Supabase SQL Editor
+-- Base Schema Migration
+-- Creates all foundational tables, functions, triggers, and RLS policies
+-- This must run before any other migrations that depend on these tables
 -- =====================================================
 
 -- =====================================================
@@ -104,7 +105,8 @@ create table if not exists public.zones (
   active boolean default true,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now(),
-  created_by uuid references auth.users on delete set null
+  created_by uuid references auth.users on delete set null,
+  records_count integer default 0
 );
 
 -- Enable Row Level Security
@@ -135,10 +137,107 @@ create index if not exists audit_logs_user_id_idx on public.audit_logs(user_id);
 create index if not exists audit_logs_created_at_idx on public.audit_logs(created_at);
 
 -- =====================================================
--- RLS POLICIES (Drop existing first, then recreate)
+-- 7. FUNCTIONS
 -- =====================================================
 
--- Drop all existing policies
+-- Function to handle new user creation
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, name, email, last_login)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    new.email,
+    now()
+  );
+  return new;
+end;
+$$;
+
+-- Function to update updated_at timestamp
+create or replace function public.handle_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+-- Function to handle audit logging
+create or replace function public.handle_audit_log()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.audit_logs (table_name, record_id, action, old_data, new_data, user_id)
+  values (
+    TG_TABLE_NAME,
+    coalesce(NEW.id, OLD.id),
+    TG_OP,
+    case when TG_OP = 'DELETE' then to_jsonb(OLD) else null end,
+    case when TG_OP in ('INSERT', 'UPDATE') then to_jsonb(NEW) else null end,
+    auth.uid()
+  );
+  return coalesce(NEW, OLD);
+end;
+$$;
+
+-- =====================================================
+-- 8. TRIGGERS
+-- =====================================================
+
+-- Profile creation trigger
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- Updated_at triggers
+drop trigger if exists profiles_updated_at on public.profiles;
+create trigger profiles_updated_at
+  before update on public.profiles
+  for each row execute procedure public.handle_updated_at();
+
+drop trigger if exists organizations_updated_at on public.organizations;
+create trigger organizations_updated_at
+  before update on public.organizations
+  for each row execute procedure public.handle_updated_at();
+
+drop trigger if exists environments_updated_at on public.environments;
+create trigger environments_updated_at
+  before update on public.environments
+  for each row execute procedure public.handle_updated_at();
+
+drop trigger if exists zones_updated_at on public.zones;
+create trigger zones_updated_at
+  before update on public.zones
+  for each row execute procedure public.handle_updated_at();
+
+-- Audit triggers
+drop trigger if exists organizations_audit on public.organizations;
+create trigger organizations_audit after insert or update or delete on public.organizations
+  for each row execute function public.handle_audit_log();
+
+drop trigger if exists environments_audit on public.environments;
+create trigger environments_audit after insert or update or delete on public.environments
+  for each row execute function public.handle_audit_log();
+
+drop trigger if exists zones_audit on public.zones;
+create trigger zones_audit after insert or update or delete on public.zones
+  for each row execute function public.handle_audit_log();
+
+-- =====================================================
+-- 9. RLS POLICIES
+-- =====================================================
+
+-- Drop all existing policies if they exist
 drop policy if exists "Users can view their organizations" on public.organizations;
 drop policy if exists "Users can view their memberships" on public.organization_members;
 drop policy if exists "Authenticated users can create organization memberships" on public.organization_members;
@@ -146,7 +245,6 @@ drop policy if exists "Users can view environments in their organizations" on pu
 drop policy if exists "Users can view zones in their organizations" on public.zones;
 drop policy if exists "Authenticated users can create organizations" on public.organizations;
 drop policy if exists "SuperAdmin and Admin can update their organizations" on public.organizations;
-drop policy if exists "SuperAdmin can delete their organizations" on public.organizations;
 drop policy if exists "SuperAdmin and Admin can delete their organizations" on public.organizations;
 drop policy if exists "SuperAdmin and Admin can create environments" on public.environments;
 drop policy if exists "SuperAdmin, Admin, and Editor can update environments" on public.environments;
@@ -200,10 +298,6 @@ create policy "Users can view zones in their organizations"
       and om.user_id = auth.uid()
     )
   );
-
--- =====================================================
--- WRITE OPERATIONS RLS POLICIES
--- =====================================================
 
 -- Organizations: INSERT
 create policy "Authenticated users can create organizations"
@@ -348,110 +442,6 @@ create policy "Users can view audit logs for their organizations"
   );
 
 -- =====================================================
--- 7. AUTOMATIC PROFILE CREATION TRIGGER
--- =====================================================
-
--- Function to handle new user creation
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-begin
-  insert into public.profiles (id, name, email, last_login)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    new.email,
-    now()
-  );
-  return new;
-end;
-$$;
-
--- Trigger to call the function on user creation
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
-
--- =====================================================
--- 8. UPDATE TIMESTAMP FUNCTION
--- =====================================================
-
-create or replace function public.handle_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
-
--- Apply to profiles table
-drop trigger if exists profiles_updated_at on public.profiles;
-create trigger profiles_updated_at
-  before update on public.profiles
-  for each row execute procedure public.handle_updated_at();
-
--- Apply to organizations table
-drop trigger if exists organizations_updated_at on public.organizations;
-create trigger organizations_updated_at
-  before update on public.organizations
-  for each row execute procedure public.handle_updated_at();
-
--- Apply to environments table
-drop trigger if exists environments_updated_at on public.environments;
-create trigger environments_updated_at
-  before update on public.environments
-  for each row execute procedure public.handle_updated_at();
-
--- Apply to zones table
-drop trigger if exists zones_updated_at on public.zones;
-create trigger zones_updated_at
-  before update on public.zones
-  for each row execute procedure public.handle_updated_at();
-
--- =====================================================
--- 9. AUDIT LOG FUNCTION
--- =====================================================
-
-create or replace function public.handle_audit_log()
-returns trigger
-language plpgsql
-security definer
-as $$
-begin
-  insert into public.audit_logs (table_name, record_id, action, old_data, new_data, user_id)
-  values (
-    TG_TABLE_NAME,
-    coalesce(NEW.id, OLD.id),
-    TG_OP,
-    case when TG_OP = 'DELETE' then to_jsonb(OLD) else null end,
-    case when TG_OP in ('INSERT', 'UPDATE') then to_jsonb(NEW) else null end,
-    auth.uid()
-  );
-  return coalesce(NEW, OLD);
-end;
-$$;
-
--- Apply audit triggers to organizations
-drop trigger if exists organizations_audit on public.organizations;
-create trigger organizations_audit after insert or update or delete on public.organizations
-  for each row execute function public.handle_audit_log();
-
--- Apply audit triggers to environments
-drop trigger if exists environments_audit on public.environments;
-create trigger environments_audit after insert or update or delete on public.environments
-  for each row execute function public.handle_audit_log();
-
--- Apply audit triggers to zones
-drop trigger if exists zones_audit on public.zones;
-create trigger zones_audit after insert or update or delete on public.zones
-  for each row execute function public.handle_audit_log();
-
--- =====================================================
 -- 10. INDEXES FOR PERFORMANCE
 -- =====================================================
 
@@ -464,14 +454,6 @@ create index if not exists zones_environment_id_idx on public.zones(environment_
 create index if not exists zones_created_by_idx on public.zones(created_by);
 
 -- =====================================================
--- SETUP COMPLETE
+-- BASE SCHEMA MIGRATION COMPLETE
 -- =====================================================
 
--- Verify tables were created
-select 
-  table_name,
-  (select count(*) from information_schema.columns where columns.table_name = tables.table_name) as column_count
-from information_schema.tables
-where table_schema = 'public'
-  and table_name in ('profiles', 'organizations', 'organization_members', 'environments', 'zones', 'audit_logs')
-order by table_name;

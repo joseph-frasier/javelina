@@ -82,7 +82,7 @@ export type DNSRecordType =
   | "SOA"
   | "SRV"
   | "CAA";
-export type RecordStatus = "active" | "inactive";
+// Removed RecordStatus - using active boolean instead
 export type AuditAction = "INSERT" | "UPDATE" | "DELETE";
 
 export interface Organization {
@@ -98,8 +98,6 @@ export interface OrganizationMember {
   organization_id: string;
   user_id: string;
   role: OrganizationRole;
-  environments_count: number;
-  zones_count: number;
   created_at: string;
 }
 
@@ -130,6 +128,7 @@ export interface Zone {
   nameservers?: string[] | null;
   ttl?: number | null;
   records_count?: number | null;
+  soa_serial?: number;
   metadata?: any;
   created_at: string;
   updated_at: string;
@@ -144,7 +143,10 @@ export interface DNSRecord {
   value: string;
   ttl: number;
   priority: number | null;
-  status: RecordStatus;
+  active: boolean;
+  comment: string | null;
+  metadata: any;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }

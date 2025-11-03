@@ -103,7 +103,7 @@ export const getSystemStats = async (
       .select("*", { count: "exact", head: true }),
     supabaseAdmin.from("zones").select("*", { count: "exact", head: true }),
     supabaseAdmin
-      .from("dns_records")
+      .from("zone_records")
       .select("*", { count: "exact", head: true }),
   ]);
 

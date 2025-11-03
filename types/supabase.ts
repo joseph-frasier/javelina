@@ -115,24 +115,18 @@ export interface Database {
           organization_id: string
           user_id: string
           role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          environments_count: number
-          zones_count: number
           created_at: string
         }
         Insert: {
           organization_id: string
           user_id: string
           role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          environments_count?: number
-          zones_count?: number
           created_at?: string
         }
         Update: {
           organization_id?: string
           user_id?: string
           role?: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
-          environments_count?: number
-          zones_count?: number
           created_at?: string
         }
         Relationships: [
@@ -215,6 +209,7 @@ export interface Database {
           nameservers: string[] | null
           ttl: number | null
           records_count: number | null
+          soa_serial: number
           metadata: Json | null
           created_at: string
           updated_at: string
@@ -232,6 +227,7 @@ export interface Database {
           nameservers?: string[] | null
           ttl?: number | null
           records_count?: number | null
+          soa_serial?: number
           metadata?: Json | null
           created_at?: string
           updated_at?: string
@@ -249,6 +245,7 @@ export interface Database {
           nameservers?: string[] | null
           ttl?: number | null
           records_count?: number | null
+          soa_serial?: number
           metadata?: Json | null
           created_at?: string
           updated_at?: string
@@ -305,7 +302,7 @@ export interface Database {
         }
         Relationships: []
       }
-      dns_records: {
+      zone_records: {
         Row: {
           id: string
           zone_id: string
@@ -314,7 +311,10 @@ export interface Database {
           value: string
           ttl: number
           priority: number | null
-          status: 'active' | 'inactive'
+          active: boolean
+          comment: string | null
+          metadata: Json | null
+          created_by: string | null
           created_at: string
           updated_at: string
         }
@@ -326,7 +326,10 @@ export interface Database {
           value: string
           ttl: number
           priority?: number | null
-          status?: 'active' | 'inactive'
+          active?: boolean
+          comment?: string | null
+          metadata?: Json | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -338,13 +341,16 @@ export interface Database {
           value?: string
           ttl?: number
           priority?: number | null
-          status?: 'active' | 'inactive'
+          active?: boolean
+          comment?: string | null
+          metadata?: Json | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: 'dns_records_zone_id_fkey'
+            foreignKeyName: 'zone_records_zone_id_fkey'
             columns: ['zone_id']
             referencedRelation: 'zones'
             referencedColumns: ['id']
@@ -538,7 +544,7 @@ export type OrganizationMember = Database['public']['Tables']['organization_memb
 export type Environment = Database['public']['Tables']['environments']['Row']
 export type Zone = Database['public']['Tables']['zones']['Row']
 export type AuditLog = Database['public']['Tables']['audit_logs']['Row']
-export type DNSRecord = Database['public']['Tables']['dns_records']['Row']
+export type DNSRecord = Database['public']['Tables']['zone_records']['Row']
 export type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row']
 export type OrganizationSubscription = Database['public']['Tables']['organization_subscriptions']['Row']
 export type UsageTracking = Database['public']['Tables']['usage_tracking']['Row']

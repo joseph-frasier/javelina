@@ -266,24 +266,40 @@ export const useAuthStore = create<AuthState>()(
             .select(
               `
               role,
-              environments_count,
-              zones_count,
               organizations:organization_id (
                 id,
-                name
+                name,
+                environments_count
               )
             `
             )
             .eq('user_id', supabaseUser.id)
 
-          const organizations: Organization[] =
-            memberships?.map((m: any) => ({
-              id: m.organizations.id,
-              name: m.organizations.name,
-              role: m.role,
-              environments_count: m.environments_count || 0,
-              zones_count: m.zones_count,
-            })) || []
+          // Fetch zones_count for each organization from environments table
+          const organizations: Organization[] = await Promise.all(
+            (memberships || []).map(async (m: any) => {
+              const orgId = m.organizations.id
+              
+              // Get total zones count by summing zones_count from all environments
+              const { data: environments } = await supabase
+                .from('environments')
+                .select('zones_count')
+                .eq('organization_id', orgId)
+              
+              const zones_count = environments?.reduce(
+                (sum: number, env: any) => sum + (env.zones_count || 0),
+                0
+              ) || 0
+              
+              return {
+                id: m.organizations.id,
+                name: m.organizations.name,
+                role: m.role,
+                environments_count: m.organizations.environments_count || 0,
+                zones_count,
+              }
+            })
+          )
 
           set({
             user: {

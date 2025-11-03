@@ -22,7 +22,7 @@ export interface ZoneSummary {
 
 /**
  * Get zone summary with aggregated data for visualizations
- * Currently mocked - will be replaced with real API when dns_records table exists
+ * Currently mocked - will be replaced with real API when zone_records table exists
  */
 export async function getZoneSummary(zoneId: string, zoneName: string, recordsCount: number = 50): Promise<ZoneSummary> {
   const supabase = createClient();
@@ -204,12 +204,12 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
 
 /**
  * Get DNS records for a zone
- * Currently mocked - will fetch from dns_records table when it exists
+ * Currently mocked - will fetch from zone_records table when it exists
  */
 export async function getZoneDNSRecords(zoneId: string, zoneName: string): Promise<DNSRecord[]> {
-  // TODO: Replace with real query when dns_records table exists
+  // TODO: Replace with real query when zone_records table exists
   // const { data } = await supabase
-  //   .from('dns_records')
+  //   .from('zone_records')
   //   .select('*')
   //   .eq('zone_id', zoneId);
   
