@@ -434,8 +434,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         onSelectAll={() => setSelectedRecords(dnsRecords.map(r => r.id))}
         onClearSelection={() => setSelectedRecords([])}
         onDelete={handleBulkDelete}
-        selectedItems={dnsRecords.filter(r => selectedRecords.includes(r.id))}
-        exportFilename={`${zone.name}-dns-records`}
       />
 
       {/* Action Buttons */}

@@ -1,8 +1,6 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import { exportData } from '@/lib/admin-export';
-import { useToastStore } from '@/lib/toast-store';
 
 interface BulkActionBarProps {
   selectedCount: number;
@@ -12,9 +10,6 @@ interface BulkActionBarProps {
   onDelete?: () => void;
   onSuspend?: () => void;
   onEnable?: () => void;
-  onExport?: () => void;
-  selectedItems?: any[];
-  exportFilename?: string;
 }
 
 export function BulkActionBar({
@@ -24,27 +19,9 @@ export function BulkActionBar({
   onClearSelection,
   onDelete,
   onSuspend,
-  onEnable,
-  onExport,
-  selectedItems = [],
-  exportFilename = 'export'
+  onEnable
 }: BulkActionBarProps) {
-  const { addToast } = useToastStore();
-
   if (selectedCount === 0) return null;
-
-  const handleExport = () => {
-    if (onExport) {
-      onExport();
-    } else if (selectedItems.length > 0) {
-      try {
-        exportData(selectedItems, 'csv', exportFilename);
-        addToast('success', `Exported ${selectedItems.length} selected items`);
-      } catch (error) {
-        addToast('error', 'Export failed');
-      }
-    }
-  };
 
   return (
     <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom duration-300">
@@ -113,18 +90,6 @@ export function BulkActionBar({
                 Suspend
               </Button>
             )}
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleExport}
-              className="!text-white hover:!bg-white/10 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Export
-            </Button>
 
             {onDelete && (
               <Button
