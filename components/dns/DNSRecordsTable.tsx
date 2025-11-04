@@ -307,14 +307,14 @@ export function DNSRecordsTable({
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Status Filter */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Status
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {['Active', 'Inactive'].map(status => (
                     <label
                       key={status}
@@ -336,10 +336,10 @@ export function DNSRecordsTable({
 
               {/* Priority Filter */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Priority
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {availablePriorityRanges.map(range => (
                     <label
                       key={range.key}
