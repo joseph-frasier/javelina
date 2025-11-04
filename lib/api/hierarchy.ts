@@ -185,6 +185,7 @@ export async function createZone(data: CreateZoneData) {
     .select('id')
     .eq('environment_id', data.environment_id)
     .eq('name', data.name)
+    .is('deleted_at', null)
     .limit(1);
 
   if (checkError) {
@@ -270,6 +271,7 @@ export async function fetchEnvironmentZones(environmentId: string) {
     .from('zones')
     .select('*')
     .eq('environment_id', environmentId)
+    .is('deleted_at', null)
     .order('name');
 
   if (error) {

@@ -78,7 +78,9 @@ alter table public.zones
   add column if not exists last_verified_at timestamp with time zone,
   add column if not exists verification_status text default 'pending' 
     check (verification_status in ('verified', 'pending', 'failed')),
-  add column if not exists records_count integer default 0;
+  add column if not exists records_count integer default 0,
+  add column if not exists live boolean default true,
+  add column if not exists deleted_at timestamp with time zone;
 
 -- Add composite index for verification status filtering
 create index if not exists zones_verification_status_env_idx 
@@ -87,6 +89,14 @@ create index if not exists zones_verification_status_env_idx
 -- Add index for last_verified_at for monitoring
 create index if not exists zones_last_verified_idx 
   on public.zones(last_verified_at);
+
+-- Add index for deleted zones filtering
+create index if not exists zones_deleted_at_idx 
+  on public.zones(deleted_at);
+
+-- Add index for live flag filtering
+create index if not exists zones_live_idx 
+  on public.zones(live);
 
 -- =====================================================
 -- 5. PROFILES TABLE ENHANCEMENTS
@@ -222,6 +232,49 @@ create trigger zones_records_count_init
   for each row
   execute function public.update_zone_records_count();
 
+-- Function to soft delete zones
+create or replace function public.soft_delete_zone(zone_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update public.zones
+  set deleted_at = now(),
+      updated_at = now()
+  where id = zone_id;
+end;
+$$;
+
+-- Function to restore soft-deleted zones
+create or replace function public.restore_zone(zone_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update public.zones
+  set deleted_at = null,
+      updated_at = now()
+  where id = zone_id;
+end;
+$$;
+
+-- Function to check if a zone name exists globally (excluding deleted zones)
+create or replace function public.check_zone_name_exists(zone_name text)
+returns boolean
+language plpgsql
+security definer
+as $$
+begin
+  return exists(
+    select 1 from public.zones
+    where name = zone_name
+      and deleted_at is null
+  );
+end;
+$$;
+
 -- =====================================================
 -- 8. VERIFICATION QUERY
 -- =====================================================
@@ -253,7 +306,7 @@ select
   exists(select 1 from information_schema.columns 
     where table_name = 'zones' and column_name = 'verification_status') as has_verification,
   exists(select 1 from information_schema.columns 
-    where table_name = 'zones' and column_name = 'nameservers') as has_nameservers
+    where table_name = 'zones' and column_name = 'live') as has_live
 union all
 select 
   'profiles' as table_name,
