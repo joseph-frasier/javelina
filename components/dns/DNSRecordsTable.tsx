@@ -318,7 +318,7 @@ export function DNSRecordsTable({
                   {['Active', 'Inactive'].map(status => (
                     <label
                       key={status}
-                      className="inline-flex items-center gap-2 cursor-pointer group"
+                      className="flex items-center gap-2 group"
                     >
                       <input
                         type="checkbox"
@@ -326,7 +326,7 @@ export function DNSRecordsTable({
                         onChange={() => handleStatusFilter(status)}
                         className="w-4 h-4 text-orange bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors cursor-pointer">
                         {status}
                       </span>
                     </label>
@@ -343,7 +343,7 @@ export function DNSRecordsTable({
                   {availablePriorityRanges.map(range => (
                     <label
                       key={range.key}
-                      className="inline-flex items-center gap-2 cursor-pointer group"
+                      className="flex items-center gap-2 group"
                     >
                       <input
                         type="checkbox"
@@ -351,7 +351,7 @@ export function DNSRecordsTable({
                         onChange={() => handlePriorityFilter(range.key)}
                         className="w-4 h-4 text-orange bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors cursor-pointer">
                         {range.label}
                       </span>
                     </label>
