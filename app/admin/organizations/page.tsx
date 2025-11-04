@@ -765,8 +765,6 @@ export default function AdminOrganizationsPage() {
           onSelectAll={selectAll}
           onClearSelection={clearSelection}
           onDelete={handleBulkDelete}
-          selectedItems={getSelectedOrgs()}
-          exportFilename="selected-organizations"
         />
 
         {/* Confirmation Modal */}
