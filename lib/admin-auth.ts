@@ -3,6 +3,10 @@
 import { cookies } from 'next/headers';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+// TODO: This file uses hardcoded credentials for admin authentication.
+// Future enhancement: Integrate with profiles.superadmin flag for database-backed admin auth
+// Currently this provides a separate admin interface from regular user authentication
+
 // Use __Host- prefix only in production (requires HTTPS)
 // In development, use regular cookie name
 const ADMIN_COOKIE_NAME = process.env.NODE_ENV === 'production' 

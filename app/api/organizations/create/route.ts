@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get authenticated user
+    // Use getUser() which properly authenticates and sets auth.uid() for RLS
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     console.log('Auth check:', { 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       .insert({
         organization_id: organization.id,
         user_id: user.id,
-        role: 'SuperAdmin',
+        role: 'Admin',
       });
 
     if (memberError) {
