@@ -2,10 +2,10 @@
 
 import { cookies } from 'next/headers';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 
-// TODO: This file uses hardcoded credentials for admin authentication.
-// Future enhancement: Integrate with profiles.superadmin flag for database-backed admin auth
-// Currently this provides a separate admin interface from regular user authentication
+// Admin authentication using Supabase with superadmin flag verification
+// Only users with profiles.superadmin = true can access the admin panel
 
 // Use __Host- prefix only in production (requires HTTPS)
 // In development, use regular cookie name
@@ -13,17 +13,18 @@ const ADMIN_COOKIE_NAME = process.env.NODE_ENV === 'production'
   ? '__Host-admin_session' 
   : 'admin_session';
 const SESSION_DURATION = 3600; // 1 hour
-const ADMIN_EMAIL = 'admin@irongrove.com';
-const ADMIN_PASSWORD = 'admin123';
 
-// In-memory store for valid admin sessions (development use only)
+// In-memory store for valid admin sessions with user data
 // Use global to persist across module reloads in development
 declare global {
-  var __adminSessions: Set<string> | undefined;
+  var __adminSessions: Map<string, { id: string; email: string; name: string | null }> | undefined;
 }
 
-const validAdminSessions = global.__adminSessions || new Set<string>();
-global.__adminSessions = validAdminSessions;
+// Ensure we always have a Map (not a Set from old code)
+if (!global.__adminSessions || !(global.__adminSessions instanceof Map)) {
+  global.__adminSessions = new Map<string, { id: string; email: string; name: string | null }>();
+}
+const validAdminSessions = global.__adminSessions;
 
 export async function loginAdmin(
   email: string,
@@ -31,17 +32,47 @@ export async function loginAdmin(
   ip?: string,
   userAgent?: string
 ) {
-  // Hardcoded admin credentials check
-  if (email.toLowerCase() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+  const supabase = await createClient();
+
+  // Authenticate with Supabase
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (authError || !authData.user) {
     return { error: 'Invalid credentials' };
+  }
+
+  // Check if user has superadmin flag
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, email, name, superadmin')
+    .eq('id', authData.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    // Sign out the user since they can't access admin panel
+    await supabase.auth.signOut();
+    return { error: 'Failed to verify admin status' };
+  }
+
+  if (!profile.superadmin) {
+    // Sign out the user since they're not a superadmin
+    await supabase.auth.signOut();
+    return { error: 'Access denied: SuperAdmin privileges required' };
   }
 
   // Create session token
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + SESSION_DURATION * 1000);
 
-  // Store token in memory
-  validAdminSessions.add(token);
+  // Store token with user data in memory
+  validAdminSessions.set(token, {
+    id: profile.id,
+    email: profile.email,
+    name: profile.name,
+  });
 
   // Set cookie
   const cookieStore = await cookies();
@@ -55,7 +86,7 @@ export async function loginAdmin(
 
   return {
     success: true,
-    admin: { id: 'admin-user', email: ADMIN_EMAIL, name: 'Admin User' }
+    admin: { id: profile.id, email: profile.email, name: profile.name || 'Admin User' }
   };
 }
 
@@ -64,14 +95,15 @@ export async function getAdminSession() {
   const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
   if (!token) return null;
 
-  // Check if token exists in memory
-  if (validAdminSessions.has(token)) {
+  // Check if token exists in memory and get user data
+  const userData = validAdminSessions.get(token);
+  if (userData) {
     return {
       token,
       admin_users: {
-        id: 'admin-user',
-        email: ADMIN_EMAIL,
-        name: 'Admin User'
+        id: userData.id,
+        email: userData.email,
+        name: userData.name || 'Admin User'
       }
     };
   }
