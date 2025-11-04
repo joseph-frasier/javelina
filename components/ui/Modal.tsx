@@ -60,22 +60,36 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
           ease: 'power3.out'
         }
       );
-    } else if (!isOpen && modalRef.current && overlayRef.current) {
+    }
+  }, [isOpen, mounted, shouldRender]);
+
+  // Handle closing animation separately
+  useEffect(() => {
+    if (!mounted || !shouldRender) return;
+    if (isOpen) return; // Only handle closing
+
+    if (modalRef.current && overlayRef.current) {
+      // Kill any existing animations
+      gsap.killTweensOf([modalRef.current, overlayRef.current]);
+
       // Closing animation
-      gsap.to(overlayRef.current, {
+      const tl = gsap.timeline({
+        onComplete: () => setShouldRender(false)
+      });
+
+      tl.to(overlayRef.current, {
         opacity: 0,
         duration: 0.2,
         ease: 'power2.in'
       });
 
-      gsap.to(modalRef.current, {
+      tl.to(modalRef.current, {
         scale: 0.95,
         opacity: 0,
         y: 20,
         duration: 0.2,
-        ease: 'power2.in',
-        onComplete: () => setShouldRender(false)
-      });
+        ease: 'power2.in'
+      }, 0); // Start at same time as overlay
     }
   }, [isOpen, mounted, shouldRender]);
 
