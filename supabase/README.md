@@ -122,6 +122,39 @@ These files are kept for historical reference but should not be used for new bra
 4. **Use transactions** - Wrap DDL changes when possible
 5. **Document breaking changes** - In the migration file and in PR descriptions
 
+## SuperAdmin Setup
+
+The admin panel (`/admin`) is restricted to users with the `superadmin` flag set to `true` in their profile.
+
+### Setting up a SuperAdmin User
+
+1. **Create a regular user account:**
+   - Sign up through the normal application signup flow (`/signup`)
+   - Or create the user through the Supabase dashboard
+   - Example: `admin@irongrove.com` with password `admin123`
+
+2. **Promote the user to SuperAdmin:**
+   - Open the Supabase SQL editor
+   - Run the `seed-superadmin.sql` script
+   - Update the email in the script to match your test user
+   - Execute the script
+
+3. **Verify SuperAdmin status:**
+   ```sql
+   SELECT id, email, name, superadmin, created_at
+   FROM public.profiles
+   WHERE superadmin = true;
+   ```
+
+### SuperAdmin Privileges
+
+Users with `superadmin = true` have:
+- Full access to the admin panel (`/admin`)
+- Bypass all RLS (Row Level Security) policies
+- Read/write access to all organizations, environments, zones, and records
+- Ability to manage all users and their permissions
+- Automatic membership in all organizations with SuperAdmin role
+
 ## Useful Commands
 
 ### Check branch status
