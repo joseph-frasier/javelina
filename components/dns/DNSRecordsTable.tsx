@@ -26,6 +26,11 @@ export function DNSRecordsTable({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<keyof DNSRecord | null>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Filter states
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set());
+  const [priorityFilters, setPriorityFilters] = useState<Set<string>>(new Set());
 
   // Handle select all checkbox
   const handleSelectAll = useCallback((checked: boolean) => {
@@ -45,18 +50,58 @@ export function DNSRecordsTable({
     }
   }, [selectedRecords, onSelectionChange]);
 
-  // Filter records based on search query
+  // Get unique priority values from records
+  const uniquePriorities = useMemo(() => {
+    const priorities = new Set<string>();
+    records.forEach(record => {
+      if (record.priority !== null && record.priority !== undefined) {
+        priorities.add(record.priority.toString());
+      } else {
+        priorities.add('N/A');
+      }
+    });
+    return Array.from(priorities).sort((a, b) => {
+      if (a === 'N/A') return 1;
+      if (b === 'N/A') return -1;
+      return parseInt(a) - parseInt(b);
+    });
+  }, [records]);
+
+  // Filter records based on search query, status, and priority
   const filteredRecords = useMemo(() => {
-    if (!searchQuery.trim()) return records;
+    let filtered = records;
     
-    const query = searchQuery.toLowerCase();
-    return records.filter(record => 
-      record.name.toLowerCase().includes(query) ||
-      record.type.toLowerCase().includes(query) ||
-      record.value.toLowerCase().includes(query) ||
-      (record.comment && record.comment.toLowerCase().includes(query))
-    );
-  }, [records, searchQuery]);
+    // Apply search query filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(record => 
+        record.name.toLowerCase().includes(query) ||
+        record.type.toLowerCase().includes(query) ||
+        record.value.toLowerCase().includes(query) ||
+        (record.comment && record.comment.toLowerCase().includes(query))
+      );
+    }
+    
+    // Apply status filter (if any status is selected)
+    if (statusFilters.size > 0) {
+      filtered = filtered.filter(record => {
+        const status = record.active ? 'Active' : 'Inactive';
+        return statusFilters.has(status);
+      });
+    }
+    
+    // Apply priority filter (if any priority is selected)
+    if (priorityFilters.size > 0) {
+      filtered = filtered.filter(record => {
+        const priority = record.priority !== null && record.priority !== undefined
+          ? record.priority.toString()
+          : 'N/A';
+        return priorityFilters.has(priority);
+      });
+    }
+    
+    return filtered;
+  }, [records, searchQuery, statusFilters, priorityFilters]);
 
   // Sort records
   const filteredAndSortedRecords = useMemo(() => {
@@ -99,6 +144,41 @@ export function DNSRecordsTable({
       setSortDirection('asc');
     }
   }, [sortKey, sortDirection]);
+
+  // Handle status filter toggle
+  const handleStatusFilter = useCallback((status: string) => {
+    setStatusFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
+  }, []);
+
+  // Handle priority filter toggle
+  const handlePriorityFilter = useCallback((priority: string) => {
+    setPriorityFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(priority)) {
+        next.delete(priority);
+      } else {
+        next.add(priority);
+      }
+      return next;
+    });
+  }, []);
+
+  // Clear all filters
+  const handleClearFilters = useCallback(() => {
+    setStatusFilters(new Set());
+    setPriorityFilters(new Set());
+  }, []);
+
+  // Calculate active filter count
+  const activeFilterCount = statusFilters.size + priorityFilters.size;
 
   // Check if all visible records are selected
   const allSelected = filteredAndSortedRecords.length > 0 && 
@@ -166,6 +246,100 @@ export function DNSRecordsTable({
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
+      </div>
+
+      {/* Filters */}
+      <div className="space-y-3">
+        {/* Filter Toggle Button */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <svg 
+              className={clsx(
+                "w-4 h-4 transition-transform",
+                showFilters && "rotate-180"
+              )}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="px-2 py-0.5 text-xs font-semibold text-white bg-orange rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          {activeFilterCount > 0 && (
+            <button
+              onClick={handleClearFilters}
+              className="text-sm text-orange hover:text-orange-dark transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Status Filter */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Status
+                </h4>
+                <div className="space-y-2">
+                  {['Active', 'Inactive'].map(status => (
+                    <label
+                      key={status}
+                      className="flex items-center gap-2 cursor-pointer group"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={statusFilters.has(status)}
+                        onChange={() => handleStatusFilter(status)}
+                        className="w-4 h-4 text-orange bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors">
+                        {status}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Priority Filter */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Priority
+                </h4>
+                <div className="space-y-2">
+                  {uniquePriorities.map(priority => (
+                    <label
+                      key={priority}
+                      className="flex items-center gap-2 cursor-pointer group"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={priorityFilters.has(priority)}
+                        onChange={() => handlePriorityFilter(priority)}
+                        className="w-4 h-4 text-orange bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors">
+                        {priority}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Desktop Table */}
@@ -354,9 +528,10 @@ export function DNSRecordsTable({
       </div>
 
       {/* Results count */}
-      {filteredAndSortedRecords.length !== records.length && (
+      {(filteredAndSortedRecords.length !== records.length || activeFilterCount > 0) && (
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           Showing {filteredAndSortedRecords.length} of {records.length} records
+          {activeFilterCount > 0 && ` (${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} applied)`}
         </div>
       )}
     </div>
