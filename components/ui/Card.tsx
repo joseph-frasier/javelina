@@ -7,6 +7,7 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   icon?: React.ReactNode;
+  action?: React.ReactNode;
 }
 
 export function Card({
@@ -15,6 +16,7 @@ export function Card({
   children,
   className,
   icon,
+  action,
 }: CardProps) {
   return (
     <div
@@ -23,7 +25,7 @@ export function Card({
         className
       )}
     >
-      {(title || icon) && (
+      {(title || icon || action) && (
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             {title && (
@@ -35,7 +37,10 @@ export function Card({
               </p>
             )}
           </div>
-          {icon && <div className="ml-4">{icon}</div>}
+          <div className="flex items-center gap-2">
+            {icon && <div>{icon}</div>}
+            {action && <div>{action}</div>}
+          </div>
         </div>
       )}
       <div className="text-gray-slate dark:text-gray-100 font-light">{children}</div>

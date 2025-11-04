@@ -93,7 +93,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
         <span
           onMouseEnter={() => setIsVisible(true)}
           onMouseLeave={() => setIsVisible(false)}
-          className="cursor-help inline-flex"
+          className="inline-flex"
         >
           {children}
         </span>

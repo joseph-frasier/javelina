@@ -4,11 +4,11 @@ import {
   calculateRecordTypeCounts,
   calculateTTLDistribution,
   generateMockAuditLogs,
-  DNSRecord,
   RecordTypeCount,
   TTLBucket,
   AuditLog,
 } from '@/lib/mock-dns-data';
+import type { DNSRecord } from '@/types/dns';
 
 export interface ZoneSummary {
   recordTypeCounts: RecordTypeCount[];
@@ -204,15 +204,22 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
 
 /**
  * Get DNS records for a zone
- * Currently mocked - will fetch from zone_records table when it exists
  */
 export async function getZoneDNSRecords(zoneId: string, zoneName: string): Promise<DNSRecord[]> {
-  // TODO: Replace with real query when zone_records table exists
-  // const { data } = await supabase
-  //   .from('zone_records')
-  //   .select('*')
-  //   .eq('zone_id', zoneId);
+  const supabase = createClient();
   
-  return generateMockDNSRecords(zoneName, 50);
+  const { data, error } = await supabase
+    .from('zone_records')
+    .select('*')
+    .eq('zone_id', zoneId)
+    .order('name', { ascending: true })
+    .order('type', { ascending: true });
+  
+  if (error) {
+    console.error('Error fetching DNS records:', error);
+    return [];
+  }
+  
+  return (data || []) as DNSRecord[];
 }
 

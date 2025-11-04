@@ -777,8 +777,6 @@ export default function AdminUsersPage() {
           onDelete={handleBulkDelete}
           onSuspend={handleBulkSuspend}
           onEnable={handleBulkEnable}
-          selectedItems={getSelectedUsers()}
-          exportFilename="selected-users"
         />
 
         {/* Confirmation Modal */}

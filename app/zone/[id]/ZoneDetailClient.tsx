@@ -26,7 +26,21 @@ import {
   getZoneDNSRecords,
   ZoneSummary
 } from '@/lib/api/dns';
-import { AuditLog, DNSRecord } from '@/lib/mock-dns-data';
+import { AuditLog } from '@/lib/mock-dns-data';
+import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
+import { DNSRecordsTable } from '@/components/dns/DNSRecordsTable';
+import { ManageDNSRecordModal } from '@/components/modals/ManageDNSRecordModal';
+import { DNSRecordDetailModal } from '@/components/modals/DNSRecordDetailModal';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { 
+  createDNSRecord,
+  updateDNSRecord,
+  deleteDNSRecord,
+  bulkDeleteDNSRecords,
+  duplicateDNSRecord,
+  getDNSRecords,
+} from '@/lib/actions/dns-records';
 
 interface ZoneDetailClientProps {
   zone: any;
@@ -48,10 +62,16 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  // DNS Records search and sort
-  const [dnsSearchQuery, setDnsSearchQuery] = useState('');
-  const [dnsSortKey, setDnsSortKey] = useState<string | null>(null);
-  const [dnsSortDirection, setDnsSortDirection] = useState<'asc' | 'desc' | null>(null);
+  // DNS Records state
+  const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
+  const [showAddRecordModal, setShowAddRecordModal] = useState(false);
+  const [showEditRecordModal, setShowEditRecordModal] = useState(false);
+  const [showRecordDetailModal, setShowRecordDetailModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<DNSRecord | null>(null);
+  const [recordToEdit, setRecordToEdit] = useState<DNSRecord | null>(null);
+  const [showDeleteRecordConfirm, setShowDeleteRecordConfirm] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<DNSRecord | null>(null);
+  const [isRecordLoading, setIsRecordLoading] = useState(false);
   
   // Edit form state
   const [editFormData, setEditFormData] = useState({
@@ -81,66 +101,103 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     loadData();
   }, [zoneId, zone.name, zone.records_count]);
 
-  // Filter and sort DNS records
-  useEffect(() => {
-    let filtered = [...dnsRecords];
-
-    // Apply search
-    if (dnsSearchQuery.trim()) {
-      const query = dnsSearchQuery.toLowerCase();
-      filtered = filtered.filter((record) => {
-        return (
-          record.name?.toLowerCase().includes(query) ||
-          record.type?.toLowerCase().includes(query) ||
-          record.value?.toLowerCase().includes(query) ||
-          record.ttl?.toString().includes(query)
-        );
-      });
+  // DNS Record handlers
+  const refreshDNSRecords = async () => {
+    try {
+      const records = await getDNSRecords(zoneId);
+      setDnsRecords(records);
+    } catch (error) {
+      console.error('Error refreshing DNS records:', error);
+      addToast('error', 'Failed to refresh DNS records');
     }
+  };
 
-    // Apply sorting
-    if (dnsSortKey && dnsSortDirection) {
-      filtered = [...filtered].sort((a, b) => {
-        let aValue: any = a[dnsSortKey as keyof DNSRecord];
-        let bValue: any = b[dnsSortKey as keyof DNSRecord];
+  const handleRecordClick = (record: DNSRecord) => {
+    setSelectedRecord(record);
+    setShowRecordDetailModal(true);
+  };
 
-        // Handle null/undefined
-        if (aValue == null && bValue == null) return 0;
-        if (aValue == null) return 1;
-        if (bValue == null) return -1;
-
-        // Handle numbers (TTL)
-        if (typeof aValue === 'number' && typeof bValue === 'number') {
-          return dnsSortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-        }
-
-        // Handle strings
-        const aStr = String(aValue).toLowerCase();
-        const bStr = String(bValue).toLowerCase();
-        if (dnsSortDirection === 'asc') {
-          return aStr.localeCompare(bStr);
-        }
-        return bStr.localeCompare(aStr);
-      });
+  const handleAddRecord = async (formData: DNSRecordFormData) => {
+    try {
+      await createDNSRecord(zoneId, formData);
+      addToast('success', 'DNS record created successfully');
+      await refreshDNSRecords();
+      router.refresh();
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to create DNS record');
+      throw error;
     }
+  };
 
-    setFilteredDnsRecords(filtered);
-  }, [dnsRecords, dnsSearchQuery, dnsSortKey, dnsSortDirection]);
+  const handleEditRecord = async (formData: DNSRecordFormData) => {
+    if (!recordToEdit) return;
+    try {
+      await updateDNSRecord(recordToEdit.id, formData);
+      addToast('success', 'DNS record updated successfully');
+      await refreshDNSRecords();
+      router.refresh();
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to update DNS record');
+      throw error;
+    }
+  };
 
-  // Handle DNS records sorting
-  const handleDnsSort = (key: string) => {
-    if (dnsSortKey === key) {
-      // Same column: cycle through asc -> desc -> null
-      if (dnsSortDirection === 'asc') {
-        setDnsSortDirection('desc');
-      } else if (dnsSortDirection === 'desc') {
-        setDnsSortKey(null);
-        setDnsSortDirection(null);
+  const handleDeleteRecord = async (record: DNSRecord) => {
+    setRecordToDelete(record);
+    setShowDeleteRecordConfirm(true);
+  };
+
+  const confirmDeleteRecord = async () => {
+    if (!recordToDelete) return;
+    setIsRecordLoading(true);
+    try {
+      await deleteDNSRecord(recordToDelete.id);
+      addToast('success', 'DNS record deleted successfully');
+      await refreshDNSRecords();
+      setShowDeleteRecordConfirm(false);
+      setRecordToDelete(null);
+      router.refresh();
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to delete DNS record');
+    } finally {
+      setIsRecordLoading(false);
+    }
+  };
+
+  const handleDuplicateRecord = (record: DNSRecord) => {
+    setRecordToEdit({
+      ...record,
+      id: '', // Clear ID for new record
+      name: `${record.name}-copy`,
+    } as DNSRecord);
+    setShowEditRecordModal(true);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedRecords.length === 0) return;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedRecords.length} DNS record(s)?`
+    );
+    
+    if (!confirmed) return;
+
+    setIsRecordLoading(true);
+    try {
+      const result = await bulkDeleteDNSRecords(selectedRecords);
+      if (result.success > 0) {
+        addToast('success', `Successfully deleted ${result.success} record(s)`);
       }
-    } else {
-      // New column: start with asc
-      setDnsSortKey(key);
-      setDnsSortDirection('asc');
+      if (result.errors.length > 0) {
+        result.errors.forEach(error => addToast('error', error));
+      }
+      setSelectedRecords([]);
+      await refreshDNSRecords();
+      router.refresh();
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to delete records');
+    } finally {
+      setIsRecordLoading(false);
     }
   };
 
@@ -325,13 +382,14 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </div>
 
       {/* Verification Checklist */}
-      <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
+      {/* TODO: Re-enable when nameserver verification feature is ready */}
+      {/* <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
         <VerificationChecklist
           nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
           verificationStatus={zoneSummary.verificationStatus}
           lastVerifiedAt={zoneSummary.lastVerifiedAt}
         />
-      </Card>
+      </Card> */}
 
       {/* Audit Timeline */}
       <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
@@ -342,159 +400,41 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </Card>
 
       {/* DNS Records Table */}
-      <Card title="DNS Records" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        {/* Search */}
-        <div className="mb-4">
-          <div className="relative">
-            <input
-              type="search"
-              placeholder="Search DNS records..."
-              value={dnsSearchQuery}
-              onChange={(e) => setDnsSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
-            />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
+      <Card 
+        title="DNS Records" 
+        className="p-4 sm:p-6 mb-6 sm:mb-8"
+        action={
+          <Button
+            size="sm"
+            onClick={() => setShowAddRecordModal(true)}
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-          </div>
-        </div>
-
-        {/* Mobile Card View - Below 640px */}
-        <div className="sm:hidden space-y-3">
-          {filteredDnsRecords.slice(0, 10).map((record) => (
-            <div key={record.id} className="p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-              <div className="flex items-start justify-between mb-3">
-                <div className="font-semibold text-orange-dark dark:text-orange break-words flex-1 text-sm">{record.name}</div>
-                <span className="ml-2 px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded text-xs font-medium flex-shrink-0">
-                  {record.type}
-                </span>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">Value:</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-mono text-xs break-all text-right">{record.value}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">TTL:</span>
-                  <span className="text-gray-900 dark:text-gray-100">{record.ttl}s</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    record.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                  }`}>
-                    {record.status}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-          {filteredDnsRecords.length > 10 && (
-            <div className="mt-4 text-center text-sm text-gray-slate dark:text-gray-400">
-              Showing 10 of {filteredDnsRecords.length} records
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Table - 640px+ */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-light dark:border-gray-700">
-                <th 
-                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                    dnsSortKey === 'name' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
-                  }`}
-                  onClick={() => handleDnsSort('name')}
-                >
-                  <div className="flex items-center gap-2">
-                    Name
-                    {dnsSortKey === 'name' && (
-                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
-                </th>
-                <th 
-                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                    dnsSortKey === 'type' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
-                  }`}
-                  onClick={() => handleDnsSort('type')}
-                >
-                  <div className="flex items-center gap-2">
-                    Type
-                    {dnsSortKey === 'type' && (
-                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
-                </th>
-                <th 
-                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                    dnsSortKey === 'value' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
-                  }`}
-                  onClick={() => handleDnsSort('value')}
-                >
-                  <div className="flex items-center gap-2">
-                    Value
-                    {dnsSortKey === 'value' && (
-                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
-                </th>
-                <th 
-                  className={`text-left py-3 px-4 text-sm font-medium cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                    dnsSortKey === 'ttl' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
-                  }`}
-                  onClick={() => handleDnsSort('ttl')}
-                >
-                  <div className="flex items-center gap-2">
-                    TTL
-                    {dnsSortKey === 'ttl' && (
-                      <span className="text-orange">{dnsSortDirection === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-slate dark:text-gray-400">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDnsRecords.slice(0, 10).map((record) => (
-                <tr key={record.id} className="border-b border-gray-light dark:border-gray-700 hover:bg-gray-light/30 dark:hover:bg-gray-700/30 transition-colors">
-                  <td className="py-3 px-4 text-sm font-medium text-orange-dark dark:text-orange">{record.name}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded text-xs font-medium">
-                      {record.type}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300 font-mono truncate max-w-md">{record.value}</td>
-                  <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300">{record.ttl}s</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      record.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
-                      {record.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filteredDnsRecords.length > 10 && (
-            <div className="mt-4 text-center text-sm text-gray-slate dark:text-gray-400">
-              Showing 10 of {filteredDnsRecords.length} records
-            </div>
-          )}
-        </div>
+            Add Record
+          </Button>
+        }
+      >
+        <DNSRecordsTable
+          records={dnsRecords}
+          selectedRecords={selectedRecords}
+          onSelectionChange={setSelectedRecords}
+          onRecordClick={handleRecordClick}
+          zoneName={zone.name}
+          nameservers={zone.nameservers}
+          soaSerial={zone.soa_serial}
+          defaultTTL={zone.ttl}
+        />
       </Card>
+
+      {/* Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={selectedRecords.length}
+        totalCount={dnsRecords.length}
+        onSelectAll={() => setSelectedRecords(dnsRecords.map(r => r.id))}
+        onClearSelection={() => setSelectedRecords([])}
+        onDelete={handleBulkDelete}
+      />
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 pb-6 sm:pb-8">
@@ -691,6 +631,59 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           onClose={() => setSelectedLog(null)}
         />
       )}
+
+      {/* DNS Record Modals */}
+      <ManageDNSRecordModal
+        isOpen={showAddRecordModal}
+        onClose={() => setShowAddRecordModal(false)}
+        onSubmit={handleAddRecord}
+        mode="add"
+        zoneName={zone.name}
+        existingRecords={dnsRecords}
+      />
+
+      <ManageDNSRecordModal
+        isOpen={showEditRecordModal}
+        onClose={() => {
+          setShowEditRecordModal(false);
+          setRecordToEdit(null);
+        }}
+        onSubmit={handleEditRecord}
+        mode="edit"
+        record={recordToEdit || undefined}
+        zoneName={zone.name}
+        existingRecords={dnsRecords}
+      />
+
+      <DNSRecordDetailModal
+        isOpen={showRecordDetailModal}
+        onClose={() => {
+          setShowRecordDetailModal(false);
+          setSelectedRecord(null);
+        }}
+        record={selectedRecord}
+        zoneName={zone.name}
+        onEdit={(record) => {
+          setRecordToEdit(record);
+          setShowEditRecordModal(true);
+        }}
+        onDuplicate={handleDuplicateRecord}
+        onDelete={handleDeleteRecord}
+      />
+
+      <ConfirmationModal
+        isOpen={showDeleteRecordConfirm}
+        onClose={() => {
+          setShowDeleteRecordConfirm(false);
+          setRecordToDelete(null);
+        }}
+        onConfirm={confirmDeleteRecord}
+        title="Delete DNS Record"
+        message={`Are you sure you want to delete the ${recordToDelete?.type} record for "${recordToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete Record"
+        variant="danger"
+        isLoading={isRecordLoading}
+      />
     </div>
   );
 }
