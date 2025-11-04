@@ -29,9 +29,6 @@ export function BulkActionBar({
         <div className="flex items-center gap-4 px-6 py-4">
           {/* Selection Info */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold">
-              {selectedCount}
-            </div>
             <span className="font-medium">
               {selectedCount === 1 ? '1 item' : `${selectedCount} items`} selected
             </span>
