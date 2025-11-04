@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -29,13 +29,22 @@ export function DNSRecordDetailModal({
   onDelete,
 }: DNSRecordDetailModalProps) {
   const [copied, setCopied] = useState<string | null>(null);
+  const [displayRecord, setDisplayRecord] = useState<DNSRecord | null>(null);
 
-  if (!record) return null;
+  // Keep record in state during closing animation
+  // This prevents the component from unmounting before the animation completes
+  useEffect(() => {
+    if (record) {
+      setDisplayRecord(record);
+    }
+  }, [record]);
 
-  const typeInfo = RECORD_TYPE_INFO[record.type];
-  const fqdn = getFQDN(record.name, zoneName);
-  const createdDate = formatDateWithRelative(record.created_at);
-  const updatedDate = formatDateWithRelative(record.updated_at);
+  if (!displayRecord) return null;
+
+  const typeInfo = RECORD_TYPE_INFO[displayRecord.type];
+  const fqdn = getFQDN(displayRecord.name, zoneName);
+  const createdDate = formatDateWithRelative(displayRecord.created_at);
+  const updatedDate = formatDateWithRelative(displayRecord.updated_at);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -73,14 +82,14 @@ export function DNSRecordDetailModal({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="px-3 py-1.5 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded-lg text-sm font-semibold">
-              {record.type}
+              {displayRecord.type}
             </span>
             <span className={`px-2 py-1 rounded text-xs font-medium ${
-              record.active
+              displayRecord.active
                 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                 : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
             }`}>
-              {record.active ? 'Active' : 'Inactive'}
+              {displayRecord.active ? 'Active' : 'Inactive'}
             </span>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -97,9 +106,9 @@ export function DNSRecordDetailModal({
             </label>
             <div className="flex items-center gap-2">
               <span className="text-sm font-mono text-gray-900 dark:text-gray-100">
-                {record.name || '@'}
+                {displayRecord.name || '@'}
               </span>
-              <CopyButton text={record.name || '@'} label="name" />
+              <CopyButton text={displayRecord.name || '@'} label="name" />
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               FQDN: {fqdn}
@@ -114,10 +123,10 @@ export function DNSRecordDetailModal({
             <div className="flex items-start gap-2">
               <div className="flex-1 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-3">
                 <code className="text-sm text-gray-900 dark:text-gray-100 break-all">
-                  {record.value}
+                  {displayRecord.value}
                 </code>
               </div>
-              <CopyButton text={record.value} label="value" />
+              <CopyButton text={displayRecord.value} label="value" />
             </div>
           </div>
 
@@ -129,9 +138,9 @@ export function DNSRecordDetailModal({
               </label>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-900 dark:text-gray-100">
-                  {record.ttl} seconds
+                  {displayRecord.ttl} seconds
                 </span>
-                <CopyButton text={record.ttl.toString()} label="ttl" />
+                <CopyButton text={displayRecord.ttl.toString()} label="ttl" />
               </div>
             </div>
 
@@ -142,22 +151,22 @@ export function DNSRecordDetailModal({
                 </label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-900 dark:text-gray-100">
-                    {record.priority ?? 'N/A'}
+                    {displayRecord.priority ?? 'N/A'}
                   </span>
-                  {record.priority && <CopyButton text={record.priority.toString()} label="priority" />}
+                  {displayRecord.priority && <CopyButton text={displayRecord.priority.toString()} label="priority" />}
                 </div>
               </div>
             )}
           </div>
 
           {/* Comment */}
-          {record.comment && (
+          {displayRecord.comment && (
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                 Comment
               </label>
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                {record.comment}
+                {displayRecord.comment}
               </p>
             </div>
           )}
@@ -172,13 +181,13 @@ export function DNSRecordDetailModal({
             <div>
               <span className="text-gray-500 dark:text-gray-400">Record ID:</span>
               <div className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all mt-1">
-                {record.id}
+                {displayRecord.id}
               </div>
             </div>
             <div>
               <span className="text-gray-500 dark:text-gray-400">Zone ID:</span>
               <div className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all mt-1">
-                {record.zone_id}
+                {displayRecord.zone_id}
               </div>
             </div>
             <div>
@@ -205,7 +214,7 @@ export function DNSRecordDetailModal({
           <Button
             variant="ghost"
             onClick={() => {
-              onDelete(record);
+              onDelete(displayRecord);
               onClose();
             }}
             className="!text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/20"
@@ -219,7 +228,7 @@ export function DNSRecordDetailModal({
             <Button
               variant="outline"
               onClick={() => {
-                onDuplicate(record);
+                onDuplicate(displayRecord);
                 onClose();
               }}
             >
@@ -230,7 +239,7 @@ export function DNSRecordDetailModal({
             </Button>
             <Button
               onClick={() => {
-                onEdit(record);
+                onEdit(displayRecord);
                 onClose();
               }}
             >
