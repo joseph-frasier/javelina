@@ -11,9 +11,24 @@ interface ExportButtonProps {
   disabled?: boolean;
   label?: string;
   className?: string;
+  // BIND-specific options
+  zoneName?: string;
+  nameservers?: string[];
+  soaSerial?: number;
+  defaultTTL?: number;
 }
 
-export function ExportButton({ data, filename, disabled = false, label = 'Export', className = '' }: ExportButtonProps) {
+export function ExportButton({ 
+  data, 
+  filename, 
+  disabled = false, 
+  label = 'Export', 
+  className = '',
+  zoneName,
+  nameservers,
+  soaSerial,
+  defaultTTL
+}: ExportButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { addToast } = useToastStore();
@@ -23,6 +38,12 @@ export function ExportButton({ data, filename, disabled = false, label = 'Export
     
     if (!data || data.length === 0) {
       addToast('error', 'No data to export');
+      return;
+    }
+
+    // BIND export requires zoneName
+    if (format === 'bind' && !zoneName) {
+      addToast('error', 'Zone name is required for BIND export');
       return;
     }
 
@@ -37,8 +58,16 @@ export function ExportButton({ data, filename, disabled = false, label = 'Export
 
     try {
       await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for UX
-      exportData(data, format, filename);
-      addToast('success', `Exported ${data.length} rows as ${format.toUpperCase()}`);
+      
+      // Pass BIND-specific options if format is BIND
+      const options = format === 'bind' && zoneName
+        ? { zoneName, nameservers, soaSerial, defaultTTL }
+        : {};
+      
+      exportData(data, format, filename, options);
+      
+      const formatLabel = format === 'bind' ? 'BIND zone file' : format.toUpperCase();
+      addToast('success', `Exported ${data.length} records as ${formatLabel}`);
     } catch (error) {
       console.error('Export failed:', error);
       addToast('error', 'Export failed. Please try again.');
@@ -126,10 +155,25 @@ export function ExportButton({ data, filename, disabled = false, label = 'Export
                   <div className="text-xs text-gray-500 dark:text-gray-400">XLSX with formatting</div>
                 </div>
               </button>
+
+              {zoneName && (
+                <button
+                  onClick={() => handleExport('bind')}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                  </svg>
+                  <div>
+                    <div className="font-medium">Export as BIND Zone File</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Industry standard format</div>
+                  </div>
+                </button>
+              )}
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-              {data.length.toLocaleString()} rows to export
+              {data.length.toLocaleString()} {zoneName ? 'records' : 'rows'} to export
             </div>
           </div>
         </>

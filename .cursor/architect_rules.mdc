@@ -190,6 +190,20 @@ async function fetchUser(id) {
 
 - Follow **Conventional Commits**: `feat:`, `fix:`, `chore:`, `docs:`, etc.
 - Be descriptive: `feat: add user authentication with NextAuth`
+- **Do not include emojis** in commit messages — keep messages clean, consistent, and machine-readable.
+
+### Partial Fixes & WIP Commits
+
+- It's acceptable to commit partial progress or debugging changes **if they move the issue forward** or provide useful context.
+- Use clear and honest messages such as:
+  - `chore(debug): add extra logging to trace auth error`
+  - `fix(ui): partial fix for dropdown flicker (still investigating)`
+  - `wip(api): refactor endpoint to isolate timeout issue`
+- Avoid misleading phrases like **“fixes”** or **“closes”** unless the issue is fully resolved.
+- Ensure all partial commits are safe to merge and do not break existing functionality.
+- Prefer creating these commits on a feature or fix branch rather than `main`.
+- Before merging, **squash or reword** WIP commits into a clear, final message describing the actual fix.
+
 
 ---
 

@@ -5,6 +5,7 @@ import { clsx } from 'clsx';
 import type { DNSRecord } from '@/types/dns';
 import { RECORD_TYPE_INFO } from '@/types/dns';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { ExportButton } from '@/components/admin/ExportButton';
 
 interface DNSRecordsTableProps {
   records: DNSRecord[];
@@ -13,6 +14,10 @@ interface DNSRecordsTableProps {
   onRecordClick: (record: DNSRecord) => void;
   loading?: boolean;
   zoneName: string;
+  // Zone metadata for BIND export
+  nameservers?: string[];
+  soaSerial?: number;
+  defaultTTL?: number;
 }
 
 export function DNSRecordsTable({
@@ -22,6 +27,9 @@ export function DNSRecordsTable({
   onRecordClick,
   loading = false,
   zoneName,
+  nameservers,
+  soaSerial,
+  defaultTTL,
 }: DNSRecordsTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<keyof DNSRecord | null>('name');
@@ -269,40 +277,53 @@ export function DNSRecordsTable({
         </svg>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Export */}
       <div className="space-y-3">
-        {/* Filter Toggle Button */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <svg 
-              className={clsx(
-                "w-4 h-4 transition-transform",
-                showFilters && "rotate-180"
-              )}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-            Filters
-            {activeFilterCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-semibold text-white bg-orange rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-          {activeFilterCount > 0 && (
+        {/* Filter Toggle Button and Export Button */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleClearFilters}
-              className="text-sm text-orange hover:text-orange-dark transition-colors"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              Clear Filters
+              <svg 
+                className={clsx(
+                  "w-4 h-4 transition-transform",
+                  showFilters && "rotate-180"
+                )}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="px-2 py-0.5 text-xs font-semibold text-white bg-orange rounded-full">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-          )}
+            {activeFilterCount > 0 && (
+              <button
+                onClick={handleClearFilters}
+                className="text-sm text-orange hover:text-orange-dark transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          {/* Export Button */}
+          <ExportButton
+            data={filteredAndSortedRecords}
+            filename={`${zoneName}-dns-records`}
+            label="Export Records"
+            zoneName={zoneName}
+            nameservers={nameservers}
+            soaSerial={soaSerial}
+            defaultTTL={defaultTTL}
+          />
         </div>
 
         {/* Filter Panel */}

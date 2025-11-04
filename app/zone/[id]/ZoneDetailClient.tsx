@@ -421,6 +421,9 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           onSelectionChange={setSelectedRecords}
           onRecordClick={handleRecordClick}
           zoneName={zone.name}
+          nameservers={zone.nameservers}
+          soaSerial={zone.soa_serial}
+          defaultTTL={zone.ttl}
         />
       </Card>
 
