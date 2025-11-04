@@ -307,7 +307,7 @@ export function DNSRecordsTable({
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="inline-block bg-gray-50 dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg p-3 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex flex-col md:flex-row md:gap-8 gap-3">
               {/* Status Filter */}
               <div>
