@@ -37,7 +37,7 @@ export function DNSRecordDetailModal({
     if (record) {
       setDisplayRecord(record);
     }
-  }, [record]);
+  }, [record?.id]);
 
   if (!displayRecord) return null;
 
