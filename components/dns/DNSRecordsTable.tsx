@@ -242,7 +242,7 @@ export function DNSRecordsTable({
                   </td>
                   <td className="py-3 px-4">
                     <Tooltip content={fqdn}>
-                      <span className="text-sm font-medium text-orange-dark dark:text-orange cursor-help">
+                      <span className="text-sm font-medium text-orange-dark dark:text-orange">
                         {record.name || '@'}
                       </span>
                     </Tooltip>
@@ -254,7 +254,7 @@ export function DNSRecordsTable({
                   </td>
                   <td className="py-3 px-4">
                     <Tooltip content={record.value}>
-                      <span className="text-sm text-gray-slate dark:text-gray-300 font-mono truncate block max-w-md cursor-help">
+                      <span className="text-sm text-gray-slate dark:text-gray-300 font-mono truncate block max-w-md">
                         {record.value}
                       </span>
                     </Tooltip>
