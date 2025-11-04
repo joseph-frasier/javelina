@@ -19,9 +19,9 @@ interface AuditEntry {
   id: string;
   created_at: string;
   action: string;
-  resource_type: string;
-  admin_users: { name: string; email: string };
-  details: Record<string, any>;
+  table_name: string;
+  profiles: { name: string; email: string };
+  metadata: Record<string, any>;
 }
 
 interface TrendData {
@@ -275,19 +275,19 @@ export default function AdminDashboard() {
                     key={entry.id}
                     className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                   >
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {entry.admin_users?.name || 'Unknown'} • <span className="text-gray-slate">{entry.action}</span>
-                      </p>
-                      <p className="text-xs text-gray-slate mt-1">
-                        {entry.resource_type} • {formatDate(entry.created_at)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span className="inline-block px-3 py-1 bg-orange-light text-orange-dark text-xs font-medium rounded-full">
-                        {entry.resource_type}
-                      </span>
-                    </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      {entry.profiles?.name || 'Unknown'} • <span className="text-gray-slate">{entry.action}</span>
+                    </p>
+                    <p className="text-xs text-gray-slate mt-1">
+                      {entry.table_name} • {formatDate(entry.created_at)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-block px-3 py-1 bg-orange-light text-orange-dark text-xs font-medium rounded-full">
+                      {entry.table_name}
+                    </span>
+                  </div>
                   </div>
                 ))}
               </div>

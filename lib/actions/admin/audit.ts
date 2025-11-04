@@ -21,12 +21,13 @@ export async function logAdminAction({
 }) {
   try {
     const serviceClient = createServiceRoleClient();
-    await serviceClient.from('admin_audit_logs').insert({
-      actor_user_id: actorId,
+    // Log to the regular audit_logs table (admin_audit_logs has been deprecated)
+    await serviceClient.from('audit_logs').insert({
+      user_id: actorId,
       action,
-      resource_type: resourceType,
-      resource_id: resourceId,
-      details,
+      table_name: resourceType,
+      record_id: resourceId,
+      metadata: details,
       ip_address: ip,
       user_agent: userAgent
     });

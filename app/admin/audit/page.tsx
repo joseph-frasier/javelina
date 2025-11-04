@@ -18,11 +18,11 @@ interface AuditLog {
   id: string;
   created_at: string;
   action: string;
-  resource_type: string;
-  resource_id?: string;
-  details?: Record<string, any>;
+  table_name: string;
+  record_id?: string;
+  metadata?: Record<string, any>;
   ip_address?: string;
-  admin_users: { name: string; email: string };
+  profiles: { name: string; email: string };
 }
 
 export default function AdminAuditPage() {
@@ -74,8 +74,8 @@ export default function AdminAuditPage() {
       }
       
       const { data, error } = await client
-        .from('admin_audit_logs')
-        .select('*, admin_users(name, email)')
+        .from('audit_logs')
+        .select('*, profiles:user_id(name, email)')
         .order('created_at', { ascending: false })
         .limit(1000);
 
@@ -98,12 +98,12 @@ export default function AdminAuditPage() {
       filtered = filtered.filter((log) => {
         return (
           log.action?.toLowerCase().includes(query) ||
-          log.resource_type?.toLowerCase().includes(query) ||
-          log.resource_id?.toLowerCase().includes(query) ||
-          log.admin_users?.name?.toLowerCase().includes(query) ||
-          log.admin_users?.email?.toLowerCase().includes(query) ||
+          log.table_name?.toLowerCase().includes(query) ||
+          log.record_id?.toLowerCase().includes(query) ||
+          log.profiles?.name?.toLowerCase().includes(query) ||
+          log.profiles?.email?.toLowerCase().includes(query) ||
           log.ip_address?.toLowerCase().includes(query) ||
-          JSON.stringify(log.details).toLowerCase().includes(query)
+          JSON.stringify(log.metadata).toLowerCase().includes(query)
         );
       });
     }
@@ -114,9 +114,9 @@ export default function AdminAuditPage() {
         let aValue: any;
         let bValue: any;
 
-        if (sortKey === 'admin_users') {
-          aValue = a.admin_users?.name || '';
-          bValue = b.admin_users?.name || '';
+        if (sortKey === 'profiles') {
+          aValue = a.profiles?.name || '';
+          bValue = b.profiles?.name || '';
         } else {
           aValue = a[sortKey as keyof AuditLog];
           bValue = b[sortKey as keyof AuditLog];
@@ -283,17 +283,17 @@ export default function AdminAuditPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
                               <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {log.admin_users?.name || 'Unknown'}
+                                {log.profiles?.name || 'Unknown'}
                               </span>
                               <span className="text-sm text-gray-slate dark:text-gray-400">
-                                {log.admin_users?.email}
+                                {log.profiles?.email}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm flex-wrap">
                               <span className="font-medium text-gray-900 dark:text-gray-100">{log.action}</span>
                               <span className="text-gray-slate dark:text-gray-400">•</span>
                               <span className="px-2 py-0.5 bg-orange-light dark:bg-orange-900/30 text-orange-dark dark:text-orange-400 text-xs rounded">
-                                {log.resource_type}
+                                {log.table_name}
                               </span>
                               <span className="text-gray-slate dark:text-gray-400">•</span>
                               <Tooltip content={logDate.absolute}>
@@ -310,11 +310,11 @@ export default function AdminAuditPage() {
                       {expandedId === log.id && (
                         <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border-t border-orange-100 dark:border-orange-900/30 rounded-b-lg mt-1">
                           <div className="space-y-3 text-sm">
-                            {log.resource_id && (
+                            {log.record_id && (
                               <div>
-                                <p className="text-gray-slate dark:text-gray-400">Resource ID</p>
+                                <p className="text-gray-slate dark:text-gray-400">Record ID</p>
                                 <p className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all">
-                                  {log.resource_id}
+                                  {log.record_id}
                                 </p>
                               </div>
                             )}
@@ -324,11 +324,11 @@ export default function AdminAuditPage() {
                                 <p className="text-gray-900 dark:text-gray-100">{log.ip_address}</p>
                               </div>
                             )}
-                            {log.details && Object.keys(log.details).length > 0 && (
+                            {log.metadata && Object.keys(log.metadata).length > 0 && (
                               <div>
-                                <p className="text-gray-slate dark:text-gray-400 mb-2">Details</p>
+                                <p className="text-gray-slate dark:text-gray-400 mb-2">Metadata</p>
                                 <pre className="bg-white dark:bg-gray-800 p-3 rounded text-xs overflow-x-auto border border-gray-light dark:border-gray-600 text-gray-900 dark:text-gray-100">
-                                  {JSON.stringify(log.details, null, 2)}
+                                  {JSON.stringify(log.metadata, null, 2)}
                                 </pre>
                               </div>
                             )}

@@ -124,13 +124,13 @@ export const createOrganization = async (
     throw new Error(`Failed to create organization: ${orgError.message}`);
   }
 
-  // Create membership for current user as SuperAdmin
+  // Create membership for current user as Admin
   const { error: memberError } = await supabaseAdmin
     .from("organization_members")
     .insert({
       organization_id: org.id,
       user_id: userId,
-      role: "SuperAdmin",
+      role: "Admin",
     });
 
   if (memberError) {

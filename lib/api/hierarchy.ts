@@ -22,7 +22,7 @@ export interface CreateZoneData {
 
 /**
  * Create a new organization
- * Also creates a membership for the current user as SuperAdmin
+ * Also creates a membership for the current user as Admin
  */
 export async function createOrganization(data: CreateOrganizationData) {
   const supabase = createClient();
@@ -68,13 +68,13 @@ export async function createOrganization(data: CreateOrganizationData) {
     throw new Error(`Failed to create organization: ${orgError.message}`);
   }
 
-  // Create membership for current user as SuperAdmin
+  // Create membership for current user as Admin
   const { error: memberError } = await supabase
     .from('organization_members')
     .insert({
       organization_id: org.id,
       user_id: user.id,
-      role: 'SuperAdmin',
+      role: 'Admin',
       environments_count: 0,
       zones_count: 0
     });

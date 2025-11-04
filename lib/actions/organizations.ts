@@ -29,13 +29,13 @@ export async function createOrganization(formData: {
     return { error: orgError.message }
   }
   
-  // Add creator as SuperAdmin
+  // Add creator as Admin
   const { error: memberError } = await supabase
     .from('organization_members')
     .insert({
       organization_id: org.id,
       user_id: user.id,
-      role: 'SuperAdmin',
+      role: 'Admin',
       environments_count: 0,
       zones_count: 0
     })
