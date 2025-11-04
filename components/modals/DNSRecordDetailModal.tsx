@@ -66,7 +66,7 @@ export function DNSRecordDetailModal({
       isOpen={isOpen}
       onClose={onClose}
       title="DNS Record Details"
-      maxWidth="2xl"
+      size="large"
     >
       <div className="space-y-6">
         {/* Header with Type Badge */}
