@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import Button from './Button';
 
 interface ConfirmationModalProps {
@@ -28,13 +30,83 @@ export function ConfirmationModal({
   isLoading = false,
 }: ConfirmationModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
-  if (!isOpen || !mounted) return null;
+  // Handle opening/closing with animation
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    }
+  }, [isOpen]);
+
+  // GSAP Opening Animation
+  useGSAP(() => {
+    if (!mounted || !shouldRender) return;
+
+    if (isOpen && modalRef.current && overlayRef.current) {
+      // Opening animation - Scale + Fade
+      gsap.fromTo(
+        overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+      );
+
+      gsap.fromTo(
+        modalRef.current,
+        { 
+          scale: 0.95, 
+          opacity: 0,
+          y: 20
+        },
+        { 
+          scale: 1, 
+          opacity: 1,
+          y: 0,
+          duration: 0.4, 
+          ease: 'power3.out'
+        }
+      );
+    }
+  }, [isOpen, mounted, shouldRender]);
+
+  // Handle closing animation separately
+  useEffect(() => {
+    if (!mounted || !shouldRender) return;
+    if (isOpen) return; // Only handle closing
+
+    if (modalRef.current && overlayRef.current) {
+      // Kill any existing animations
+      gsap.killTweensOf([modalRef.current, overlayRef.current]);
+
+      // Closing animation
+      const tl = gsap.timeline({
+        onComplete: () => setShouldRender(false)
+      });
+
+      tl.to(overlayRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in'
+      });
+
+      tl.to(modalRef.current, {
+        scale: 0.95,
+        opacity: 0,
+        y: 20,
+        duration: 0.2,
+        ease: 'power2.in'
+      }, 0); // Start at same time as overlay
+    }
+  }, [isOpen, mounted, shouldRender]);
+
+  if (!shouldRender || !mounted) return null;
 
   const variantClasses = {
     danger: 'text-red-600',
@@ -64,12 +136,16 @@ export function ConfirmationModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
+        ref={overlayRef}
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+      <div 
+        ref={modalRef}
+        className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4"
+      >
         <div className="p-6">
           {/* Icon & Title */}
           <div className="flex items-start gap-4">
