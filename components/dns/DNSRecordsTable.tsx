@@ -316,7 +316,10 @@ export function DNSRecordsTable({
           
           {/* Export Button */}
           <ExportButton
-            data={filteredAndSortedRecords}
+            data={selectedRecords.length > 0 
+              ? filteredAndSortedRecords.filter(r => selectedRecords.includes(r.id))
+              : filteredAndSortedRecords
+            }
             filename={`${zoneName}-dns-records`}
             label="Export Records"
             zoneName={zoneName}
