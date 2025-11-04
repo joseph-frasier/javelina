@@ -157,7 +157,7 @@ export function ManageDNSRecordModal({
       isOpen={isOpen}
       onClose={onClose}
       title={mode === 'add' ? 'Add DNS Record' : 'Edit DNS Record'}
-      maxWidth="2xl"
+      size="xlarge"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* General Error */}
@@ -191,7 +191,6 @@ export function ManageDNSRecordModal({
               options={recordTypeOptions}
               value={formData.type}
               onChange={(value) => handleTypeChange(value as DNSRecordType)}
-              disabled={mode === 'edit'} // Don't allow changing type on edit
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {typeInfo.description}
@@ -207,7 +206,7 @@ export function ManageDNSRecordModal({
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               error={errors.name}
               placeholder="@ or subdomain"
-              hint={`FQDN: ${fqdn}`}
+              helperText={`FQDN: ${fqdn}`}
             />
           </div>
 
@@ -222,7 +221,6 @@ export function ManageDNSRecordModal({
                 ]}
                 value={formData.ttl.toString()}
                 onChange={handleTTLChange}
-                error={errors.ttl}
               />
             ) : (
               <div>
@@ -329,7 +327,7 @@ export function ManageDNSRecordModal({
               onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
               error={errors.value}
               placeholder={typeInfo.placeholder}
-              hint={typeInfo.hint}
+              helperText={typeInfo.hint}
             />
           </div>
 

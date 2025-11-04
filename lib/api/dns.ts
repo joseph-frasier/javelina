@@ -4,11 +4,11 @@ import {
   calculateRecordTypeCounts,
   calculateTTLDistribution,
   generateMockAuditLogs,
-  DNSRecord,
   RecordTypeCount,
   TTLBucket,
   AuditLog,
 } from '@/lib/mock-dns-data';
+import type { DNSRecord } from '@/types/dns';
 
 export interface ZoneSummary {
   recordTypeCounts: RecordTypeCount[];
@@ -217,8 +217,7 @@ export async function getZoneDNSRecords(zoneId: string, zoneName: string): Promi
   
   if (error) {
     console.error('Error fetching DNS records:', error);
-    // Fallback to mock data in case of error
-    return generateMockDNSRecords(zoneName, 50);
+    return [];
   }
   
   return (data || []) as DNSRecord[];

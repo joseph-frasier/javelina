@@ -60,11 +60,11 @@ export function ExportButton({
       await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for UX
       
       // Pass BIND-specific options if format is BIND
-      const options = format === 'bind' && zoneName
-        ? { zoneName, nameservers, soaSerial, defaultTTL }
-        : {};
-      
-      exportData(data, format, filename, options);
+      if (format === 'bind' && zoneName) {
+        exportData(data, format, filename, { zoneName, nameservers, soaSerial, defaultTTL });
+      } else {
+        exportData(data, format, filename);
+      }
       
       const formatLabel = format === 'bind' ? 'BIND zone file' : format.toUpperCase();
       addToast('success', `Exported ${data.length} records as ${formatLabel}`);

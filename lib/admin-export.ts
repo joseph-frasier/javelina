@@ -366,7 +366,7 @@ export function exportData(
   data: any[],
   format: ExportFormat,
   basename: string,
-  options: ExportOptions = {}
+  options: ExportOptions | BINDExportOptions = {}
 ): void {
   try {
     switch (format) {

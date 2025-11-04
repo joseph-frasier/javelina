@@ -26,7 +26,8 @@ import {
   getZoneDNSRecords,
   ZoneSummary
 } from '@/lib/api/dns';
-import { AuditLog, DNSRecord } from '@/lib/mock-dns-data';
+import { AuditLog } from '@/lib/mock-dns-data';
+import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
 import { DNSRecordsTable } from '@/components/dns/DNSRecordsTable';
 import { ManageDNSRecordModal } from '@/components/modals/ManageDNSRecordModal';
 import { DNSRecordDetailModal } from '@/components/modals/DNSRecordDetailModal';
@@ -40,7 +41,6 @@ import {
   duplicateDNSRecord,
   getDNSRecords,
 } from '@/lib/actions/dns-records';
-import type { DNSRecordFormData } from '@/types/dns';
 
 interface ZoneDetailClientProps {
   zone: any;
@@ -681,7 +681,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         title="Delete DNS Record"
         message={`Are you sure you want to delete the ${recordToDelete?.type} record for "${recordToDelete?.name}"? This action cannot be undone.`}
         confirmText="Delete Record"
-        confirmVariant="danger"
+        variant="danger"
         isLoading={isRecordLoading}
       />
     </div>
