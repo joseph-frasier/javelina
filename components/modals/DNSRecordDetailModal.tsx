@@ -192,19 +192,19 @@ export function DNSRecordDetailModal({
             </div>
             <div>
               <Tooltip content={createdDate.absolute}>
-                <span className="text-gray-500 dark:text-gray-400 cursor-help">Created:</span>
-                <div className="text-gray-900 dark:text-gray-100 mt-1">
-                  {createdDate.relative}
-                </div>
+                <span className="text-gray-500 dark:text-gray-400">Created:</span>
               </Tooltip>
+              <div className="text-gray-900 dark:text-gray-100 mt-1">
+                {createdDate.relative}
+              </div>
             </div>
             <div>
               <Tooltip content={updatedDate.absolute}>
-                <span className="text-gray-500 dark:text-gray-400 cursor-help">Last Updated:</span>
-                <div className="text-gray-900 dark:text-gray-100 mt-1">
-                  {updatedDate.relative}
-                </div>
+                <span className="text-gray-500 dark:text-gray-400">Last Updated:</span>
               </Tooltip>
+              <div className="text-gray-900 dark:text-gray-100 mt-1">
+                {updatedDate.relative}
+              </div>
             </div>
           </div>
         </div>
