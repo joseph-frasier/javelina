@@ -369,7 +369,7 @@ export function ManageDNSRecordModal({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-light dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 pt-4 -mx-6 px-6 border-t border-gray-light dark:border-gray-700">
           <Button
             type="button"
             variant="outline"
