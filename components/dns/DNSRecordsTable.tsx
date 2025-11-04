@@ -318,7 +318,7 @@ export function DNSRecordsTable({
                   {['Active', 'Inactive'].map(status => (
                     <label
                       key={status}
-                      className="flex items-center gap-2 cursor-pointer group"
+                      className="inline-flex items-center gap-2 cursor-pointer group"
                     >
                       <input
                         type="checkbox"
@@ -343,7 +343,7 @@ export function DNSRecordsTable({
                   {availablePriorityRanges.map(range => (
                     <label
                       key={range.key}
-                      className="flex items-center gap-2 cursor-pointer group"
+                      className="inline-flex items-center gap-2 cursor-pointer group"
                     >
                       <input
                         type="checkbox"
