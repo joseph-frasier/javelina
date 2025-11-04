@@ -50,21 +50,32 @@ export function DNSRecordsTable({
     }
   }, [selectedRecords, onSelectionChange]);
 
-  // Get unique priority values from records
-  const uniquePriorities = useMemo(() => {
-    const priorities = new Set<string>();
-    records.forEach(record => {
-      if (record.priority !== null && record.priority !== undefined) {
-        priorities.add(record.priority.toString());
-      } else {
-        priorities.add('N/A');
-      }
+  // Define priority ranges for filtering
+  const priorityRanges = [
+    { key: 'high', label: 'High Priority (0-10)', min: 0, max: 10 },
+    { key: 'medium', label: 'Medium Priority (11-30)', min: 11, max: 30 },
+    { key: 'low', label: 'Low Priority (31+)', min: 31, max: 65535 },
+    { key: 'na', label: 'N/A', min: null, max: null },
+  ];
+
+  // Check which priority ranges have records
+  const availablePriorityRanges = useMemo(() => {
+    const hasRecordsInRange = new Map<string, boolean>();
+    
+    priorityRanges.forEach(range => {
+      const hasRecords = records.some(record => {
+        if (range.key === 'na') {
+          return record.priority === null || record.priority === undefined;
+        }
+        return record.priority !== null && 
+               record.priority !== undefined && 
+               record.priority >= range.min! && 
+               record.priority <= range.max!;
+      });
+      hasRecordsInRange.set(range.key, hasRecords);
     });
-    return Array.from(priorities).sort((a, b) => {
-      if (a === 'N/A') return 1;
-      if (b === 'N/A') return -1;
-      return parseInt(a) - parseInt(b);
-    });
+    
+    return priorityRanges.filter(range => hasRecordsInRange.get(range.key));
   }, [records]);
 
   // Filter records based on search query, status, and priority
@@ -90,13 +101,23 @@ export function DNSRecordsTable({
       });
     }
     
-    // Apply priority filter (if any priority is selected)
+    // Apply priority filter (if any priority range is selected)
     if (priorityFilters.size > 0) {
       filtered = filtered.filter(record => {
-        const priority = record.priority !== null && record.priority !== undefined
-          ? record.priority.toString()
-          : 'N/A';
-        return priorityFilters.has(priority);
+        // Check if record matches any selected priority range
+        return Array.from(priorityFilters).some(rangeKey => {
+          const range = priorityRanges.find(r => r.key === rangeKey);
+          if (!range) return false;
+          
+          if (range.key === 'na') {
+            return record.priority === null || record.priority === undefined;
+          }
+          
+          return record.priority !== null && 
+                 record.priority !== undefined && 
+                 record.priority >= range.min! && 
+                 record.priority <= range.max!;
+        });
       });
     }
     
@@ -319,19 +340,19 @@ export function DNSRecordsTable({
                   Priority
                 </h4>
                 <div className="space-y-2">
-                  {uniquePriorities.map(priority => (
+                  {availablePriorityRanges.map(range => (
                     <label
-                      key={priority}
+                      key={range.key}
                       className="flex items-center gap-2 cursor-pointer group"
                     >
                       <input
                         type="checkbox"
-                        checked={priorityFilters.has(priority)}
-                        onChange={() => handlePriorityFilter(priority)}
+                        checked={priorityFilters.has(range.key)}
+                        onChange={() => handlePriorityFilter(range.key)}
                         className="w-4 h-4 text-orange bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors">
-                        {priority}
+                        {range.label}
                       </span>
                     </label>
                   ))}
