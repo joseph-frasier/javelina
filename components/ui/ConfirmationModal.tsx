@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Button from './Button';
 
 interface ConfirmationModalProps {
@@ -26,7 +27,14 @@ export function ConfirmationModal({
   variant = 'danger',
   isLoading = false,
 }: ConfirmationModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const variantClasses = {
     danger: 'text-red-600',
@@ -52,7 +60,7 @@ export function ConfirmationModal({
     ),
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
@@ -100,5 +108,7 @@ export function ConfirmationModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
