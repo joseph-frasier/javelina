@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { clsx } from 'clsx';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -250,23 +251,77 @@ export function ManageDNSRecordModal({
 
           {/* Priority (for MX and SRV) */}
           {typeInfo.requiresPriority && (
-            <div>
-              <Input
-                label="Priority"
-                type="number"
-                value={formData.priority ?? ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value, 10) || undefined }))}
-                error={errors.priority}
-                placeholder="10"
-                min={0}
-                max={65535}
-                hint="Lower values have higher priority"
-              />
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Priority <span className="text-red-500">*</span>
+              </label>
+              <div className="space-y-3">
+                {/* Quick Select Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 self-center mr-2">Quick select:</span>
+                  {[10, 20, 30, 40, 50].map(val => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, priority: val }))}
+                      className={clsx(
+                        "px-3 py-1 text-xs font-medium rounded-md transition-colors",
+                        formData.priority === val
+                          ? "bg-orange text-white"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-orange/20 dark:hover:bg-orange/20"
+                      )}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Input Field */}
+                <Input
+                  type="number"
+                  value={formData.priority ?? ''}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      priority: isNaN(val) ? undefined : Math.max(0, Math.min(65535, val))
+                    }));
+                  }}
+                  error={errors.priority}
+                  placeholder="10"
+                  min={0}
+                  max={65535}
+                />
+                
+                {/* Helper Text */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                  <p className="text-xs text-blue-800 dark:text-blue-400 font-medium mb-1">
+                    Best Practices for {formData.type} Records:
+                  </p>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                    <li>Lower numbers = higher priority (0 is highest)</li>
+                    <li>Use increments of 10 (10, 20, 30) for flexibility</li>
+                    {formData.type === 'MX' && (
+                      <>
+                        <li>Primary mail server: 10, Backup: 20, 30...</li>
+                        <li>Same priority = automatic load balancing</li>
+                      </>
+                    )}
+                    {formData.type === 'SRV' && (
+                      <>
+                        <li>Use weight field to distribute load at same priority</li>
+                        <li>Example: Primary (10), Secondary (20), Backup (30)</li>
+                      </>
+                    )}
+                    <li>Valid range: 0-65535</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Value */}
-          <div className={typeInfo.requiresPriority ? 'md:col-span-1' : 'md:col-span-2'}>
+          <div className="md:col-span-2">
             <Input
               label="Value"
               type="text"
