@@ -382,13 +382,14 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </div>
 
       {/* Verification Checklist */}
-      <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
+      {/* TODO: Re-enable when nameserver verification feature is ready */}
+      {/* <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
         <VerificationChecklist
           nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
           verificationStatus={zoneSummary.verificationStatus}
           lastVerifiedAt={zoneSummary.lastVerifiedAt}
         />
-      </Card>
+      </Card> */}
 
       {/* Audit Timeline */}
       <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
