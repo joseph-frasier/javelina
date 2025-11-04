@@ -307,7 +307,7 @@ export function DNSRecordsTable({
             {activeFilterCount > 0 && (
               <button
                 onClick={handleClearFilters}
-                className="text-sm text-orange hover:text-orange-dark transition-colors"
+                className="text-sm text-orange hover:text-orange-dark dark:hover:text-orange-light transition-colors"
               >
                 Clear Filters
               </button>
