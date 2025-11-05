@@ -1,6 +1,5 @@
 'use server'
 
-import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { verifyAdminAndGetClient, logAdminAction } from '@/lib/admin-auth'
 
 /**
@@ -300,11 +299,6 @@ export async function getFlaggedZones() {
             id,
             name
           )
-        ),
-        profiles:created_by(
-          id,
-          name,
-          email
         )
       `)
       .eq('live', false)

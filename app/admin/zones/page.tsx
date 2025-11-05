@@ -19,6 +19,7 @@ interface FlaggedZone {
   name: string;
   zone_type: string;
   created_at: string;
+  created_by: string;
   environments: {
     id: string;
     name: string;
@@ -27,11 +28,6 @@ interface FlaggedZone {
       id: string;
       name: string;
     };
-  };
-  profiles: {
-    id: string;
-    name: string;
-    email: string;
   };
 }
 
@@ -235,7 +231,7 @@ export default function AdminZonesPage() {
                           <strong>Environment:</strong> {zone.environments?.name || 'Unknown'} ({zone.environments?.environment_type || 'Unknown'})
                         </p>
                         <p className="text-sm text-gray-600 mb-1">
-                          <strong>Created by:</strong> {zone.profiles?.name || 'Unknown'} ({zone.profiles?.email || 'N/A'})
+                          <strong>Created by:</strong> {zone.created_by || 'Unknown'}
                         </p>
                         <p className="text-xs text-gray-500">
                           Created: {formatDate(zone.created_at)}

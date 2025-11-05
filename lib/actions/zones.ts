@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { revalidatePath } from 'next/cache'
 import { canCreateResource } from '@/lib/entitlements'
 
@@ -60,11 +61,32 @@ export async function createZone(formData: {
     return { error: 'Zone name is required' }
   }
   
-  // Check for global zone name uniqueness
-  const { data: nameExists } = await supabase
-    .rpc('check_zone_name_exists', { zone_name: formData.name.trim() })
+  // Check for global zone name uniqueness using service role to bypass RLS
+  const serviceClient = createServiceRoleClient()
+  const { data: existingZones, error: checkError } = await serviceClient
+    .from('zones')
+    .select('id')
+    .eq('name', formData.name.trim())
+    .is('deleted_at', null)
+    .limit(1)
   
+  console.log('=== ZONE UNIQUENESS CHECK ===')
+  console.log('Zone name:', formData.name.trim())
+  console.log('Check error:', checkError)
+  console.log('Existing zones found:', existingZones)
+  console.log('Existing zones length:', existingZones?.length)
+  
+  if (checkError) {
+    console.error('Error checking zone name uniqueness:', checkError)
+    return { error: 'Failed to check zone name uniqueness' }
+  }
+  
+  const nameExists = existingZones && existingZones.length > 0
   const isLive = !nameExists
+  
+  console.log('Name exists:', nameExists)
+  console.log('Is live:', isLive)
+  console.log('==============================')
   
   // Create the zone
   const { data, error } = await supabase

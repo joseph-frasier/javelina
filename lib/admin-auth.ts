@@ -131,7 +131,10 @@ export async function verifyAdminAndGetClient(): Promise<{
   if (!session) {
     throw new Error('Not authenticated as admin');
   }
-  return { client: null, admin: session.admin_users };
+  
+  // Use regular authenticated client - admins have access to all orgs via RLS
+  const client = await createClient();
+  return { client, admin: session.admin_users };
 }
 
 export async function getAdminUser() {
@@ -143,4 +146,27 @@ export async function getAdminUser() {
 // Helper function to check if a token is valid (for API routes)
 export async function isValidAdminToken(token: string): Promise<boolean> {
   return validAdminSessions.has(token);
+}
+
+// Log admin action to audit_logs table
+export async function logAdminAction(params: {
+  actorId: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  details?: any;
+}) {
+  try {
+    const client = await createClient();
+
+    await client.from('audit_logs').insert({
+      table_name: params.resourceType,
+      record_id: params.resourceId,
+      action: params.action,
+      user_id: params.actorId,
+      metadata: params.details || {},
+    });
+  } catch (error) {
+    console.error('Failed to log admin action:', error);
+  }
 }
