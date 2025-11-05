@@ -68,7 +68,8 @@ export default async function OrganizationPage({
       const { count: zonesCount } = await supabase
         .from('zones')
         .select('id', { count: 'exact', head: true })
-        .eq('environment_id', env.id);
+        .eq('environment_id', env.id)
+        .is('deleted_at', null);
       
       return {
         ...env,
@@ -82,7 +83,8 @@ export default async function OrganizationPage({
   const { count: zonesCount } = await supabase
     .from('zones')
     .select('id', { count: 'exact', head: true })
-    .in('environment_id', environments?.map(e => e.id) || []);
+    .in('environment_id', environments?.map(e => e.id) || [])
+    .is('deleted_at', null);
 
   // Fetch recent activity from audit logs
   const auditLogs = await getOrganizationAuditLogs(orgId, 10);

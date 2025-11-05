@@ -10,16 +10,16 @@ import { sendSuccess, sendPaginated } from "../utils/response";
 import { validateUUID } from "../utils/validation";
 
 /**
- * Check if user is a superuser
+ * Check if user is a superadmin
  */
 const checkSuperuser = async (userId: string): Promise<boolean> => {
   const { data } = await supabaseAdmin
     .from("profiles")
-    .select("role")
+    .select("superadmin")
     .eq("id", userId)
     .single();
 
-  return data?.role === "superuser";
+  return data?.superadmin === true;
 };
 
 /**

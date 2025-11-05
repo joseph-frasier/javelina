@@ -32,6 +32,7 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
     .from('zones')
     .select('verification_status, last_verified_at, metadata')
     .eq('id', zoneId)
+    .is('deleted_at', null)
     .single();
 
   // Fetch environment data for health_status and last_deployed_at
@@ -39,6 +40,7 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
     .from('zones')
     .select('environment_id')
     .eq('id', zoneId)
+    .is('deleted_at', null)
     .single();
 
   let healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown' = 'unknown';
@@ -179,6 +181,7 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
     .from('zones')
     .select('*')
     .eq('id', zoneId)
+    .is('deleted_at', null)
     .single();
 
   // Generate mock records for export

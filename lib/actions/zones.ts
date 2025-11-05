@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { revalidatePath } from 'next/cache'
 import { canCreateResource } from '@/lib/entitlements'
 
@@ -60,6 +61,34 @@ export async function createZone(formData: {
     return { error: 'Zone name is required' }
   }
   
+  // Check for global zone name uniqueness using service role to bypass RLS
+  const serviceClient = createServiceRoleClient()
+  const { data: existingZones, error: checkError } = await serviceClient
+    .from('zones')
+    .select('id')
+    .eq('name', formData.name.trim())
+    .is('deleted_at', null)
+    .limit(1)
+  
+  console.log('=== ZONE UNIQUENESS CHECK ===')
+  console.log('Zone name:', formData.name.trim())
+  console.log('Check error:', checkError)
+  console.log('Existing zones found:', existingZones)
+  console.log('Existing zones length:', existingZones?.length)
+  
+  if (checkError) {
+    console.error('Error checking zone name uniqueness:', checkError)
+    return { error: 'Failed to check zone name uniqueness' }
+  }
+  
+  const nameExists = existingZones && existingZones.length > 0
+  const isLive = !nameExists
+  
+  console.log('Name exists:', nameExists)
+  console.log('Is live:', isLive)
+  console.log('==============================')
+  
+  // Create the zone
   const { data, error } = await supabase
     .from('zones')
     .insert({
@@ -68,6 +97,7 @@ export async function createZone(formData: {
       zone_type: formData.zone_type,
       description: formData.description?.trim() || null,
       active: true,
+      live: isLive,
       created_by: user.id
     })
     .select('*, environments(organization_id, org_id)')
@@ -77,10 +107,28 @@ export async function createZone(formData: {
     return { error: error.message }
   }
   
+  // If zone was flagged for review (live=false), create audit log entry
+  if (!isLive) {
+    await supabase
+      .from('audit_logs')
+      .insert({
+        table_name: 'zones',
+        record_id: data.id,
+        action: 'zone.flagged_for_review',
+        new_data: data,
+        user_id: user.id,
+        metadata: {
+          reason: 'duplicate_name',
+          zone_name: formData.name.trim(),
+          flagged_at: new Date().toISOString()
+        }
+      })
+  }
+  
   const returnedOrgId = data.environments?.organization_id || data.environments?.org_id
   revalidatePath(`/organization/${returnedOrgId}`)
   revalidatePath(`/organization/${returnedOrgId}/environment/${formData.environment_id}`)
-  return { data }
+  return { data, flagged: !isLive }
 }
 
 export async function updateZone(
@@ -132,15 +180,42 @@ export async function updateZone(
 
 export async function deleteZone(id: string, environmentId: string, organizationId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   
-  const { error } = await supabase
+  if (!user) {
+    return { error: 'Not authenticated' }
+  }
+  
+  // Soft delete the zone by setting deleted_at timestamp
+  const { data, error } = await supabase
     .from('zones')
-    .delete()
+    .update({ 
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
     .eq('id', id)
+    .select()
+    .single()
   
   if (error) {
     return { error: error.message }
   }
+  
+  // Create audit log entry for zone archival
+  await supabase
+    .from('audit_logs')
+    .insert({
+      table_name: 'zones',
+      record_id: id,
+      action: 'zone.archived',
+      old_data: data,
+      user_id: user.id,
+      metadata: {
+        archived_at: new Date().toISOString(),
+        environment_id: environmentId,
+        organization_id: organizationId
+      }
+    })
   
   revalidatePath(`/organization/${organizationId}`)
   revalidatePath(`/organization/${organizationId}/environment/${environmentId}`)
