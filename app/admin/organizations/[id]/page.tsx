@@ -85,7 +85,8 @@ export default function AdminOrganizationDetailPage() {
       const { data: zonesData } = await client
         .from('zones')
         .select('id', { count: 'exact' })
-        .in('environment_id', (envsData || []).map((e: Environment) => e.id));
+        .in('environment_id', (envsData || []).map((e: Environment) => e.id))
+        .is('deleted_at', null);
 
       setZones(zonesData || []);
     } catch (error) {

@@ -16,7 +16,7 @@ import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
 import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';
 import Dropdown from '@/components/ui/Dropdown';
-import { updateZone } from '@/lib/actions/zones';
+import { updateZone, deleteZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
 import { 
   getZoneSummary, 
@@ -275,9 +275,27 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     }
   };
 
-  const handleDeleteZone = () => {
-    alert(`Zone ${zone.name} deleted successfully! (Mock operation)\nIn a real app, you would be redirected to the zones list.`);
-    setShowDeleteModal(false);
+  const handleDeleteZone = async () => {
+    try {
+      const result = await deleteZone(zone.id, zone.environment_id, organization?.id || '');
+      
+      if (result.error) {
+        addToast('error', `Failed to delete zone: ${result.error}`);
+        return;
+      }
+      
+      addToast('success', `Zone ${zone.name} archived successfully`);
+      setShowDeleteModal(false);
+      
+      // Redirect to environment page
+      if (organization && environment) {
+        router.push(`/organization/${organization.id}/environment/${environment.id}`);
+      } else {
+        router.push('/');
+      }
+    } catch (error) {
+      addToast('error', `Error deleting zone: ${error}`);
+    }
   };
 
   // Build breadcrumb items

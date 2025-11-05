@@ -7,10 +7,18 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get authenticated user
+    // Use getUser() which properly authenticates and sets auth.uid() for RLS
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
+    console.log('Auth check:', { 
+      hasUser: !!user, 
+      userId: user?.id, 
+      email: user?.email,
+      authError: authError?.message 
+    });
+    
     if (authError || !user) {
+      console.error('Authentication failed:', authError);
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -46,6 +54,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create organization
+    console.log('Attempting to create org with:', { name, owner_id: user.id });
+    
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .insert({
@@ -56,9 +66,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (orgError || !organization) {
-      console.error('Error creating organization:', orgError);
+      console.error('Error creating organization:', {
+        code: orgError?.code,
+        message: orgError?.message,
+        details: orgError?.details,
+        hint: orgError?.hint,
+      });
       return NextResponse.json(
-        { error: 'Failed to create organization' },
+        { error: 'Failed to create organization', details: orgError },
         { status: 500 }
       );
     }
@@ -69,7 +84,7 @@ export async function POST(request: NextRequest) {
       .insert({
         organization_id: organization.id,
         user_id: user.id,
-        role: 'SuperAdmin',
+        role: 'Admin',
       });
 
     if (memberError) {

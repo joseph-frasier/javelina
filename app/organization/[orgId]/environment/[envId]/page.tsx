@@ -63,6 +63,7 @@ export default async function EnvironmentPage({
     .from('zones')
     .select('*')
     .eq('environment_id', envId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   // Prepare data for client component
