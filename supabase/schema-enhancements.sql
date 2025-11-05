@@ -323,6 +323,42 @@ select
     where table_name = 'audit_logs' and column_name = 'metadata') as has_metadata;
 
 -- =====================================================
+-- 8. SOA SERIAL BUMP ON ZONE UPDATES
+-- =====================================================
+
+-- Function to bump SOA serial when zone properties change
+create or replace function public.bump_zone_soa_on_update()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  -- Only bump serial if significant zone properties changed
+  if (OLD.name IS DISTINCT FROM NEW.name OR
+      OLD.active IS DISTINCT FROM NEW.active OR
+      OLD.zone_type IS DISTINCT FROM NEW.zone_type OR
+      OLD.nameservers IS DISTINCT FROM NEW.nameservers OR
+      OLD.ttl IS DISTINCT FROM NEW.ttl) then
+    
+    -- Increment SOA serial
+    NEW.soa_serial = OLD.soa_serial + 1;
+    NEW.updated_at = now();
+  end if;
+  
+  return NEW;
+end;
+$$;
+
+-- Drop trigger if it exists
+drop trigger if exists zones_bump_soa_on_update on public.zones;
+
+-- Create trigger to bump SOA serial when zone is updated
+create trigger zones_bump_soa_on_update
+  before update on public.zones
+  for each row
+  execute function public.bump_zone_soa_on_update();
+
+-- =====================================================
 -- ENHANCEMENTS COMPLETE
 -- =====================================================
 -- To rollback these changes, run: schema-enhancements-rollback.sql
