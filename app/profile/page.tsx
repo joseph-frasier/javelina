@@ -124,30 +124,6 @@ export default function ProfilePage() {
                 </div>
               </Card>
             )}
-
-            {/* Billing Card */}
-            <Card className="p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-orange-dark dark:text-orange mb-3 sm:mb-4 text-center">
-                Billing
-              </h3>
-              <div className="space-y-2 sm:space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate dark:text-gray-400">Plan</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Pro</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate dark:text-gray-400">Seats Used</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">6 / 10</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-slate dark:text-gray-400">Next Invoice</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Nov 1, 2025</span>
-                </div>
-                <Button variant="outline" size="sm" className="w-full justify-center">
-                  Manage Billing
-                </Button>
-              </div>
-            </Card>
           </div>
 
           {/* Main Content */}
