@@ -86,7 +86,7 @@ export function PricingCard({
       </div>
 
       <Button
-        variant={highlighted ? 'primary' : 'outline'}
+        variant="outline"
         size="md"
         className="w-full mt-auto"
         onClick={() => onSelect(plan.id)}
