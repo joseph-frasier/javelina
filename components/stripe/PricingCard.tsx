@@ -22,7 +22,7 @@ export function PricingCard({
   return (
     <div
       className={clsx(
-        'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all hover:shadow-xl',
+        'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all hover:shadow-xl flex flex-col',
         highlighted
           ? 'border-orange'
           : 'border-gray-light hover:border-orange/50',
@@ -59,7 +59,7 @@ export function PricingCard({
         </div>
       )}
 
-      <div className="space-y-2.5 mb-5">
+      <div className="space-y-2.5 mb-5 flex-grow">
         <p className="text-xs font-medium text-orange-dark mb-3">
           What&apos;s included:
         </p>
@@ -88,7 +88,7 @@ export function PricingCard({
       <Button
         variant={highlighted ? 'primary' : 'outline'}
         size="md"
-        className="w-full"
+        className="w-full mt-auto"
         onClick={() => onSelect(plan.id)}
         disabled={disabled}
       >
