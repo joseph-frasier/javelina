@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api", routes);
 
 // Root endpoint
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.json({
     name: "Javelina DNS Management API",
     version: "1.0.0",
