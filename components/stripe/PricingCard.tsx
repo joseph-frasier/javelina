@@ -59,17 +59,7 @@ export function PricingCard({
         </div>
       )}
 
-      <Button
-        variant={highlighted ? 'primary' : 'outline'}
-        size="md"
-        className="w-full mb-5"
-        onClick={() => onSelect(plan.id)}
-        disabled={disabled}
-      >
-        {plan.price === 0 ? 'Get Started Free' : 'Select Plan'}
-      </Button>
-
-      <div className="space-y-2.5">
+      <div className="space-y-2.5 mb-5">
         <p className="text-xs font-medium text-orange-dark mb-3">
           What&apos;s included:
         </p>
@@ -94,6 +84,16 @@ export function PricingCard({
           </div>
         ))}
       </div>
+
+      <Button
+        variant={highlighted ? 'primary' : 'outline'}
+        size="md"
+        className="w-full"
+        onClick={() => onSelect(plan.id)}
+        disabled={disabled}
+      >
+        {plan.price === 0 ? 'Get Started Free' : 'Select Plan'}
+      </Button>
     </div>
   );
 }
