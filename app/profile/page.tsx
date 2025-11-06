@@ -5,11 +5,12 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { AvatarUpload } from '@/components/ui/AvatarUpload';
+import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { useState } from 'react';
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuthStore();
-  const [isEditing, setIsEditing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   if (!user) return null;
 
@@ -88,10 +89,10 @@ export default function ProfilePage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => setShowEditModal(true)}
                     className="flex-1 sm:flex-none"
                   >
-                    {isEditing ? 'Cancel' : 'Edit Profile'}
+                    Edit Profile
                   </Button>
                 </div>
               </div>
@@ -276,6 +277,12 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+      />
     </ProtectedRoute>
   );
 }
