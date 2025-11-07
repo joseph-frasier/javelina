@@ -108,14 +108,30 @@ export default function DashboardPage() {
       const { data: auditLogs } = await supabase
         .from('audit_logs')
         .select('*')
-        .in('table_name', ['zones', 'zone_records', 'environments', 'organizations'])
+        .in('table_name', ['zones', 'zone_records', 'dns_records', 'environments', 'organizations'])
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
       
-      // Filter to only show logs related to user's orgs/environments
-      const filteredLogs = auditLogs?.slice(0, 4) || [];
+      // Prioritize meaningful actions (delete/insert) over environment updates
+      const prioritizedLogs = auditLogs?.sort((a, b) => {
+        // Prioritize DELETE actions first
+        if (a.action === 'DELETE' && b.action !== 'DELETE') return -1;
+        if (b.action === 'DELETE' && a.action !== 'DELETE') return 1;
+        
+        // Then INSERT actions
+        if (a.action === 'INSERT' && b.action !== 'INSERT') return -1;
+        if (b.action === 'INSERT' && a.action !== 'INSERT') return 1;
+        
+        // Deprioritize environment updates
+        if (a.table_name === 'environments' && a.action === 'UPDATE' && b.table_name !== 'environments') return 1;
+        if (b.table_name === 'environments' && b.action === 'UPDATE' && a.table_name !== 'environments') return -1;
+        
+        // Otherwise keep chronological order
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }) || [];
       
-      setRecentActivity(filteredLogs);
+      // Take top 4 most meaningful activities
+      setRecentActivity(prioritizedLogs.slice(0, 4));
       setLoadingActivity(false);
     };
     
@@ -124,27 +140,30 @@ export default function DashboardPage() {
 
   // Format audit log into human-readable activity
   const formatActivity = (log: AuditLog) => {
-    const zoneName = log.new_data?.name || log.old_data?.name || 'Unknown';
+    const name = log.new_data?.name || log.old_data?.name || 'Unknown';
     const recordType = log.new_data?.type || log.old_data?.type;
     
     switch (log.table_name) {
       case 'zones':
-        if (log.action === 'INSERT') return `Zone created: ${zoneName}`;
-        if (log.action === 'UPDATE') return `Zone updated: ${zoneName}`;
-        if (log.action === 'DELETE') return `Zone deleted: ${zoneName}`;
+        if (log.action === 'INSERT') return `Zone created: ${name}`;
+        if (log.action === 'UPDATE') return `Zone updated: ${name}`;
+        if (log.action === 'DELETE') return `Zone deleted: ${name}`;
         break;
       case 'zone_records':
-        if (log.action === 'INSERT') return `Record added: ${recordType} record in ${zoneName}`;
-        if (log.action === 'UPDATE') return `Record updated: ${recordType} record in ${zoneName}`;
-        if (log.action === 'DELETE') return `Record deleted: ${recordType} record in ${zoneName}`;
+      case 'dns_records':
+        if (log.action === 'INSERT') return `DNS record added: ${recordType} record`;
+        if (log.action === 'UPDATE') return `DNS record updated: ${recordType} record`;
+        if (log.action === 'DELETE') return `DNS record deleted: ${recordType} record`;
         break;
       case 'environments':
-        if (log.action === 'INSERT') return `Environment created: ${zoneName}`;
-        if (log.action === 'UPDATE') return `Environment updated: ${zoneName}`;
+        if (log.action === 'INSERT') return `Environment created: ${name}`;
+        if (log.action === 'UPDATE') return `Environment updated: ${name}`;
+        if (log.action === 'DELETE') return `Environment deleted: ${name}`;
         break;
       case 'organizations':
-        if (log.action === 'INSERT') return `Organization created`;
-        if (log.action === 'UPDATE') return `Organization updated`;
+        if (log.action === 'INSERT') return `Organization created: ${name}`;
+        if (log.action === 'UPDATE') return `Organization updated: ${name}`;
+        if (log.action === 'DELETE') return `Organization deleted: ${name}`;
         break;
     }
     return `${log.table_name} ${log.action.toLowerCase()}`;
