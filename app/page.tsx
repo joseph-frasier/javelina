@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { useAuthStore } from '@/lib/auth-store';
-import { createClient } from '@/lib/supabase/client';
+import { environmentsApi, zonesApi } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
@@ -22,35 +22,34 @@ export default function DashboardPage() {
     const fetchCounts = async () => {
       if (organizations.length === 0) return;
       
-      const supabase = createClient();
-      const orgIds = organizations.map(org => org.id);
-      
-      // Count environments
-      const { count: envCount } = await supabase
-        .from('environments')
-        .select('*', { count: 'exact', head: true })
-        .in('organization_id', orgIds);
-      
-      // Get environment IDs to count zones
-      const { data: environments } = await supabase
-        .from('environments')
-        .select('id')
-        .in('organization_id', orgIds);
-      
-      const envIds = environments?.map(env => env.id) || [];
-      
-      // Count zones
-      const { count: zoneCount } = await supabase
-        .from('zones')
-        .select('*', { count: 'exact', head: true })
-        .in('environment_id', envIds)
-        .is('deleted_at', null);
-      
-      setAggregateStats({
-        totalOrgs: organizations.length,
-        totalEnvironments: envCount || 0,
-        totalZones: zoneCount || 0
-      });
+      try {
+        const orgIds = organizations.map(org => org.id);
+        
+        // Fetch environments for all user's organizations
+        const environmentsData = await Promise.all(
+          orgIds.map(orgId => environmentsApi.list(orgId).catch(() => []))
+        );
+        const allEnvironments = environmentsData.flat();
+        const envCount = allEnvironments.length;
+        
+        // Fetch zones for all environments
+        const zonesData = await Promise.all(
+          allEnvironments.map(env => 
+            zonesApi.list(env.organization_id, env.id).catch(() => [])
+          )
+        );
+        const allZones = zonesData.flat();
+        const zoneCount = allZones.filter((zone: any) => !zone.deleted_at).length;
+        
+        setAggregateStats({
+          totalOrgs: organizations.length,
+          totalEnvironments: envCount,
+          totalZones: zoneCount
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard counts:', error);
+        // Keep default stats on error
+      }
     };
     
     fetchCounts();

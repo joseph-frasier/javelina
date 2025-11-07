@@ -7,6 +7,14 @@ import { getOrganizationAuditLogs, formatAuditLog } from '@/lib/api/audit';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+/**
+ * NOTE: This server component uses direct Supabase calls for data fetching.
+ * This is acceptable because:
+ * 1. Auth checks (getUser) should remain direct per architecture
+ * 2. Server components provide better initial load performance
+ * 3. All mutations (create/update/delete) go through Express API via server actions
+ */
+
 export default async function OrganizationPage({ 
   params 
 }: { 

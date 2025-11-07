@@ -399,6 +399,13 @@ export const adminApi = {
   listOrganizations: () => {
     return apiClient.get('/admin/organizations');
   },
+
+  /**
+   * Get all audit logs (admin only)
+   */
+  getAuditLogs: () => {
+    return apiClient.get('/admin/audit-logs');
+  },
 };
 
 // Export everything

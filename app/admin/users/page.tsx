@@ -15,7 +15,7 @@ import { ExportButton } from '@/components/admin/ExportButton';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import { adminApi } from '@/lib/api-client';
 import { disableUser, enableUser, sendPasswordResetEmail } from '@/lib/actions/admin/users';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
@@ -73,22 +73,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const client = createServiceRoleClient();
-      
-      // If no client (development mode without backend), use mock data
-      if (!client) {
-        const mockUsers = generateMockUsers(50);
-        setUsers(mockUsers as any);
-        setLoading(false);
-        return;
-      }
-      
-      const { data, error } = await client
-        .from('profiles')
-        .select('*, organization_members(organization_id)')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await adminApi.listUsers();
       setUsers((data || []) as User[]);
     } catch (error) {
       console.error('Failed to fetch users:', error);

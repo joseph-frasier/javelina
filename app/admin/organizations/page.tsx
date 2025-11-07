@@ -15,7 +15,7 @@ import { ExportButton } from '@/components/admin/ExportButton';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import { adminApi } from '@/lib/api-client';
 import { createOrganization, softDeleteOrganization } from '@/lib/actions/admin/organizations';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
@@ -74,22 +74,7 @@ export default function AdminOrganizationsPage() {
 
   const fetchOrganizations = useCallback(async () => {
     try {
-      const client = createServiceRoleClient();
-      
-      // If no client (development mode without backend), use mock data
-      if (!client) {
-        const mockOrgs = generateMockOrganizations(20);
-        setOrgs(mockOrgs as any);
-        setLoading(false);
-        return;
-      }
-      
-      const { data, error } = await client
-        .from('organizations')
-        .select('*, organization_members(organization_id)')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await adminApi.listOrganizations();
       setOrgs((data || []) as Organization[]);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);

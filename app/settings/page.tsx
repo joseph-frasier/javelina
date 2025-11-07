@@ -11,6 +11,7 @@ import { ExportButton } from '@/components/admin/ExportButton';
 import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
 import { createClient } from '@/lib/supabase/client';
+import { subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -161,76 +162,25 @@ function SettingsContent() {
   const fetchBillingOrganizations = useCallback(async () => {
     setBillingLoading(true);
     try {
-      const supabase = createClient();
+      // Get all organizations with their subscription status
+      // The backend will filter to only return orgs where the user is Admin/SuperAdmin
+      const data = await subscriptionsApi.getStatus();
       
-      // Get organizations where user is Admin or SuperAdmin
-      const { data: memberships, error: memberError } = await supabase
-        .from('organization_members')
-        .select(`
-          organization_id,
-          role,
-          organizations!inner(
-            id,
-            name,
-            stripe_customer_id
-          )
-        `)
-        .eq('user_id', user?.id)
-        .in('role', ['Admin', 'SuperAdmin']);
-
-      if (memberError) throw memberError;
-
-      if (!memberships || memberships.length === 0) {
-        setBillingOrgs([]);
-        setBillingLoading(false);
-        return;
-      }
-
-      // Get subscription data for each organization
-      const orgIds = memberships.map(m => m.organization_id);
-      
-      const { data: subscriptions, error: subError } = await supabase
-        .from('subscriptions')
-        .select('org_id, status, current_period_end, plan_id, metadata')
-        .in('org_id', orgIds);
-
-      if (subError) {
-        console.error('Error fetching subscriptions:', subError);
-      }
-
-      // Get all plans to match against
-      const { data: allPlans } = await supabase
-        .from('plans')
-        .select('id, code, name')
-        .eq('is_active', true);
-
-      // Combine data
-      const orgs = memberships.map(m => {
-        const org = (m.organizations as any);
-        const sub = subscriptions?.find(s => s.org_id === m.organization_id);
-        
-        // Try to find plan by plan_id first
-        let plan = sub?.plan_id ? allPlans?.find(p => p.id === sub.plan_id) : null;
-        
-        // Fallback: if no plan found but subscription has metadata with plan_code, try matching by code
-        if (!plan && sub?.metadata?.plan_code && allPlans) {
-          plan = allPlans.find(p => p.code === sub.metadata.plan_code);
-        }
-        
-        return {
-          id: org.id,
-          name: org.name,
-          current_plan: plan?.name || 'Free',
-          plan_status: sub?.status || 'active',
-          next_billing_date: sub?.current_period_end || null,
-          stripe_customer_id: org.stripe_customer_id,
-        };
-      });
+      // Transform the data to match the expected format
+      const orgs = Array.isArray(data) ? data.map((item: any) => ({
+        id: item.org_id,
+        name: item.organization_name || 'Unknown Organization',
+        current_plan: item.plan_name || 'Free',
+        plan_status: item.status || 'active',
+        next_billing_date: item.current_period_end || null,
+        stripe_customer_id: item.stripe_customer_id || null,
+      })) : [];
 
       setBillingOrgs(orgs);
     } catch (error) {
       console.error('Error fetching billing organizations:', error);
       addToast('error', 'Failed to load billing information');
+      setBillingOrgs([]);
     } finally {
       setBillingLoading(false);
     }
