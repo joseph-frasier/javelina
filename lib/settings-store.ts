@@ -262,22 +262,24 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'settings-storage',
+      version: 1, // Increment this to force reset of persisted data
       partialize: (state) => ({
         general: state.general,
         security: state.security,
         access: state.access,
         integrations: state.integrations
       }),
-      merge: (persistedState: any, currentState: SettingsState) => {
-        // Merge persisted state with current state, ensuring new fields have defaults
-        return {
-          ...currentState,
-          ...persistedState,
-          general: {
-            ...mockGeneralSettings, // Start with defaults
-            ...persistedState?.general, // Merge with persisted values
-          },
-        };
+      migrate: (persistedState: any, version: number) => {
+        // Force reset to new defaults by returning current state defaults
+        if (version === 0) {
+          return {
+            general: mockGeneralSettings,
+            security: mockSecuritySettings,
+            access: mockAccessSettings,
+            integrations: mockIntegrationSettings
+          };
+        }
+        return persistedState as any;
       },
     }
   )
