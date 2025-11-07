@@ -112,26 +112,17 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(20);
       
-      // Prioritize meaningful actions (delete/insert) over environment updates
-      const prioritizedLogs = auditLogs?.sort((a, b) => {
-        // Prioritize DELETE actions first
-        if (a.action === 'DELETE' && b.action !== 'DELETE') return -1;
-        if (b.action === 'DELETE' && a.action !== 'DELETE') return 1;
-        
-        // Then INSERT actions
-        if (a.action === 'INSERT' && b.action !== 'INSERT') return -1;
-        if (b.action === 'INSERT' && a.action !== 'INSERT') return 1;
-        
-        // Deprioritize environment updates
-        if (a.table_name === 'environments' && a.action === 'UPDATE' && b.table_name !== 'environments') return 1;
-        if (b.table_name === 'environments' && b.action === 'UPDATE' && a.table_name !== 'environments') return -1;
-        
-        // Otherwise keep chronological order
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      // Filter out environment updates (they're just timestamp changes) but keep meaningful actions
+      // Keep chronological order for everything else
+      const meaningfulLogs = auditLogs?.filter(log => {
+        // Keep all non-environment actions
+        if (log.table_name !== 'environments') return true;
+        // For environments, only keep creates/deletes, not updates
+        return log.action === 'INSERT' || log.action === 'DELETE';
       }) || [];
       
-      // Take top 4 most meaningful activities
-      setRecentActivity(prioritizedLogs.slice(0, 4));
+      // Take top 4 most recent meaningful activities
+      setRecentActivity(meaningfulLogs.slice(0, 4));
       setLoadingActivity(false);
     };
     
