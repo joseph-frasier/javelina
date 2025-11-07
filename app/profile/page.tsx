@@ -25,8 +25,6 @@ export default function ProfilePage() {
   const [recentActivity, setRecentActivity] = useState<AuditLog[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
 
-  if (!user) return null;
-
   const handleAvatarUpdate = (avatarUrl: string | null) => {
     updateProfile({ avatar_url: avatarUrl ?? undefined });
   };
@@ -67,6 +65,8 @@ export default function ProfilePage() {
 
   // Fetch recent activity from audit logs
   useEffect(() => {
+    if (!user) return;
+    
     const fetchRecentActivity = async () => {
       setLoadingActivity(true);
       const supabase = createClient();
@@ -91,7 +91,7 @@ export default function ProfilePage() {
     };
     
     fetchRecentActivity();
-  }, [user.id]);
+  }, [user]);
 
   // Format audit log into human-readable activity
   const formatActivity = (log: AuditLog) => {
@@ -137,6 +137,9 @@ export default function ProfilePage() {
         return 'bg-blue-500 dark:bg-blue-400';
     }
   };
+
+  // Early return after all hooks
+  if (!user) return null;
 
   return (
     <ProtectedRoute>
