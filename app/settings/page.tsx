@@ -674,16 +674,18 @@ function SettingsContent() {
                   <div className="space-y-6">
                     {/* MFA */}
                     <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Multi-Factor Authentication</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Multi-Factor Authentication</h3>
+                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
                         <div>
-                          <p className="font-medium">MFA Status</p>
-                          <p className="text-sm text-gray-slate">
-                            {security.mfa.enabled ? 'Enabled' : 'Disabled'} • {security.mfa.method}
+                          <p className="font-medium text-gray-900 dark:text-gray-100">MFA Status</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {security.mfa.enabled ? 'Enabled' : 'Not configured'}
                           </p>
-                          <p className="text-xs text-gray-slate">
-                            Last verified: {formatDate(security.mfa.last_verified)}
-                          </p>
+                          {security.mfa.enabled && (
+                            <p className="text-xs text-gray-slate dark:text-gray-400">
+                              Method: {security.mfa.method} • Last verified: {formatDate(security.mfa.last_verified)}
+                            </p>
+                          )}
                         </div>
                         <Button
                           variant={security.mfa.enabled ? 'outline' : 'primary'}
@@ -702,16 +704,18 @@ function SettingsContent() {
 
                     {/* SSO */}
                     <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Single Sign-On</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Single Sign-On</h3>
+                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
                         <div>
-                          <p className="font-medium">SSO Status</p>
-                          <p className="text-sm text-gray-slate">
-                            {security.sso.provider} • {security.sso.status}
+                          <p className="font-medium text-gray-900 dark:text-gray-100">SSO Status</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {security.sso.status === 'connected' ? `Connected to ${security.sso.provider}` : 'Not configured'}
                           </p>
-                          <p className="text-xs text-gray-slate">
-                            Last sync: {formatDate(security.sso.last_sync)}
-                          </p>
+                          {security.sso.status === 'connected' && (
+                            <p className="text-xs text-gray-slate dark:text-gray-400">
+                              Last sync: {formatDate(security.sso.last_sync)}
+                            </p>
+                          )}
                         </div>
                         <Button variant="outline" size="sm">
                           {security.sso.status === 'connected' ? 'Disconnect' : 'Connect'} SSO
@@ -924,20 +928,27 @@ function SettingsContent() {
                 <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
                     {/* Slack */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                      <div>
-                        <h3 className="font-medium">Slack Integration</h3>
-                        <p className="text-sm text-gray-slate">
-                          {integrations.slack.status === 'connected' 
-                            ? `Connected to ${integrations.slack.workspace}` 
-                            : 'Not connected'
-                          }
-                        </p>
-                        {integrations.slack.connected_on && (
-                          <p className="text-xs text-gray-slate">
-                            Connected: {formatDate(integrations.slack.connected_on)}
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Slack Integration</h3>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {integrations.slack.status === 'connected' 
+                              ? `Connected to ${integrations.slack.workspace}` 
+                              : 'Not connected'
+                            }
                           </p>
-                        )}
+                          {integrations.slack.connected_on && (
+                            <p className="text-xs text-gray-slate dark:text-gray-400">
+                              Connected: {formatDate(integrations.slack.connected_on)}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <Button 
                         variant={integrations.slack.status === 'connected' ? 'outline' : 'primary'} 
@@ -948,15 +959,23 @@ function SettingsContent() {
                     </div>
 
                     {/* Microsoft Teams */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                      <div>
-                        <h3 className="font-medium">Microsoft Teams</h3>
-                        <p className="text-sm text-gray-slate">
-                          {integrations.microsoft_teams.status === 'connected' 
-                            ? `Connected to ${integrations.microsoft_teams.channel}` 
-                            : 'Not connected'
-                          }
-                        </p>
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.625 8.127c-.563 0-1.022.458-1.022 1.02v4.618c0 .563.459 1.02 1.022 1.02.562 0 1.02-.457 1.02-1.02V9.148c0-.563-.458-1.02-1.02-1.02z"/>
+                            <path d="M13.972 0C11.159 0 8.88 2.279 8.88 5.092v5.617c0 2.813 2.279 5.092 5.092 5.092 2.813 0 5.092-2.279 5.092-5.092V5.092C19.064 2.279 16.785 0 13.972 0zm7.653 14.785c0 .563-.458 1.02-1.02 1.02-.563 0-1.022-.457-1.022-1.02V9.148c0-.563.459-1.02 1.021-1.02.563 0 1.021.457 1.021 1.02v5.637zM7.86 4.858H2.768C1.263 4.858.04 6.081.04 7.586v6.528c0 1.505 1.223 2.728 2.728 2.728H7.86c1.505 0 2.728-1.223 2.728-2.728V7.586c0-1.505-1.223-2.728-2.728-2.728zm-.612 8.978H3.38V9.414h3.868v4.422z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Microsoft Teams</h3>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {integrations.microsoft_teams.status === 'connected' 
+                              ? `Connected to ${integrations.microsoft_teams.channel}` 
+                              : 'Not connected'
+                            }
+                          </p>
+                        </div>
                       </div>
                       <Button 
                         variant={integrations.microsoft_teams.status === 'connected' ? 'outline' : 'primary'} 
@@ -967,15 +986,22 @@ function SettingsContent() {
                     </div>
 
                     {/* PagerDuty */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                      <div>
-                        <h3 className="font-medium">PagerDuty Integration</h3>
-                        <p className="text-sm text-gray-slate">
-                          {integrations.pagerduty.status === 'connected' 
-                            ? `Connected to ${integrations.pagerduty.service_name}` 
-                            : 'Not connected'
-                          }
-                        </p>
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16.965 1.18C15.085.164 13.769 0 10.683 0H3.73v18.434h6.953c2.359 0 4.168-.04 5.872-.853 2.76-1.31 4.347-3.829 4.347-6.902 0-3.208-1.515-5.806-4.338-7.148-.371-.181-.4-.357-.599-.357zm-6.002 13.607H8.41V3.892h2.723c4.105 0 6.222 1.632 6.222 5.408 0 4.283-2.459 5.487-6.392 5.487z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">PagerDuty Integration</h3>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {integrations.pagerduty.status === 'connected' 
+                              ? `Connected to ${integrations.pagerduty.service_name}` 
+                              : 'Not connected'
+                            }
+                          </p>
+                        </div>
                       </div>
                       <Button 
                         variant={integrations.pagerduty.status === 'connected' ? 'outline' : 'primary'} 
