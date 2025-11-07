@@ -407,7 +407,7 @@ export default function AdminUsersPage() {
             </div>
             <div className="flex-shrink-0">
               <ExportButton 
-                data={selectedIds.size > 0 ? getSelectedUsers() : filteredUsers} 
+                data={selectedIds.size > 0 ? getSelectedUsers() : paginatedUsers} 
                 filename="users" 
               />
             </div>
