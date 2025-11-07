@@ -162,18 +162,16 @@ function SettingsContent() {
   const fetchBillingOrganizations = useCallback(async () => {
     setBillingLoading(true);
     try {
-      // Get all organizations with their subscription status
-      // The backend will filter to only return orgs where the user is Admin/SuperAdmin
       const data = await subscriptionsApi.getAllWithSubscriptions();
       
-      // Transform the data to match the expected format
+      // Transform the API response to match the expected format
       const orgs = Array.isArray(data) ? data.map((item: any) => ({
         id: item.org_id,
-        name: item.organization_name || 'Unknown Organization',
+        name: item.organization_name,
         current_plan: item.plan_name || 'Free',
         plan_status: item.status || 'active',
         next_billing_date: item.current_period_end || null,
-        stripe_customer_id: item.stripe_customer_id || null,
+        stripe_customer_id: item.stripe_customer_id,
       })) : [];
 
       setBillingOrgs(orgs);
