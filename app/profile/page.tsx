@@ -341,7 +341,7 @@ export default function ProfilePage() {
                           {formatActivity(log)}
                         </p>
                         <p className="text-xs text-gray-slate dark:text-gray-400">
-                          {formatDateWithRelative(log.created_at)}
+                          {formatDateWithRelative(log.created_at).relative}
                         </p>
                       </div>
                     </div>
