@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       .from('organizations')
       .insert({
         name,
-        // Note: owner_id column doesn't exist yet - user is added as SuperAdmin below
+        owner_id: user.id,
       })
       .select()
       .single();
@@ -90,9 +90,16 @@ export async function POST(request: NextRequest) {
       });
       customerId = customer.id;
 
-      // Note: stripe_customer_id column doesn't exist yet
-      // We'll store the customer ID in metadata for now
-      // TODO: Add stripe_customer_id column to organizations table
+      // Update organization with Stripe customer ID
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ stripe_customer_id: customer.id })
+        .eq('id', organization.id);
+
+      if (updateError) {
+        console.error('Error updating organization with customer ID:', updateError);
+        // Don't fail, we can update it later
+      }
     }
 
     // Create subscription record ONLY for free plan
