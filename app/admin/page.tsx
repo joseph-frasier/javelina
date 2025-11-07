@@ -54,19 +54,17 @@ export default function AdminDashboard() {
         setTrends(trendData);
 
         // Try to fetch real data first
-        const response = await fetch('/api/admin/dashboard', {
-          credentials: 'include',
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
+        try {
+          const { adminApi } = await import('@/lib/api-client');
+          const data = await adminApi.getDashboard();
           setKpis({
             ...data.kpis,
             flaggedZones: data.kpis.flaggedZones || 0
           });
           setRecentAudit(data.recentAudit);
-        } else {
+        } catch (apiError) {
           // Fallback to mock data if API fails
+          console.warn('Using mock data for admin dashboard:', apiError);
           const mockUsers = generateMockUsers(50);
           const activeUsers = mockUsers.filter(u => {
             const daysSince = (Date.now() - new Date(u.last_login).getTime()) / (1000 * 60 * 60 * 24);

@@ -128,19 +128,8 @@ export default function OrganizationBillingPage() {
     }
 
     try {
-      const response = await fetch('/api/stripe/create-portal-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ org_id: orgId }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Failed to create portal session:', response.status, errorText);
-        throw new Error('Failed to create portal session');
-      }
-
-      const data = await response.json();
+      const { stripeApi } = await import('@/lib/api-client');
+      const data = await stripeApi.createPortalSession(orgId);
 
       // Redirect to Stripe Customer Portal
       window.location.href = data.url;
@@ -184,22 +173,8 @@ export default function OrganizationBillingPage() {
       try {
         addToast('info', 'Updating your subscription...');
         
-        const response = await fetch('/api/stripe/update-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            org_id: orgId,
-            new_price_id: priceId,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Failed to update subscription:', response.status, errorText);
-          throw new Error('Failed to update subscription');
-        }
-
-        const data = await response.json();
+        const { stripeApi } = await import('@/lib/api-client');
+        await stripeApi.updateSubscription(orgId, priceId);
 
         addToast('success', 'Subscription updated successfully!');
         
