@@ -21,6 +21,7 @@ export const getCurrentSubscription = async (
     }
 
     // Verify user has access to organization
+    console.log(`[Subscriptions] Checking membership for user ${userId} in org ${org_id}`);
     const { data: member, error: memberError } = await supabaseAdmin
       .from("organization_members")
       .select("role")
@@ -28,7 +29,10 @@ export const getCurrentSubscription = async (
       .eq("user_id", userId)
       .single();
 
+    console.log('[Subscriptions] Membership query result:', { member, memberError });
+
     if (memberError || !member) {
+      console.error(`[Subscriptions] Access denied for user ${userId} to org ${org_id}:`, memberError);
       sendError(res, "Access denied", 403);
       return;
     }
@@ -260,14 +264,18 @@ export const getSubscriptionStatus = async (
     }
 
     // Verify user has access to this organization
+    console.log(`[Subscriptions Status] Checking membership for user ${userId} in org ${org_id}`);
     const { data: membership, error: memberError } = await supabaseAdmin
       .from("organization_members")
-      .select("id")
+      .select("role")
       .eq("organization_id", org_id)
       .eq("user_id", userId)
       .single();
 
+    console.log('[Subscriptions Status] Membership query result:', { membership, memberError });
+
     if (memberError || !membership) {
+      console.error(`[Subscriptions Status] Access denied for user ${userId} to org ${org_id}:`, memberError);
       sendError(res, "You do not have access to this organization", 403);
       return;
     }
