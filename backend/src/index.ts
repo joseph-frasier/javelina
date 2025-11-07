@@ -18,6 +18,12 @@ app.use(corsMiddleware);
 // Request logging
 app.use(requestLogger);
 
+// Special handling for Stripe webhooks - needs raw body
+app.use(
+  "/api/stripe/webhooks",
+  express.raw({ type: "application/json" })
+);
+
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
