@@ -243,6 +243,9 @@ drop policy if exists "Users can view audit logs for their organizations" on pub
 create policy "Users can view audit logs for their organizations"
   on public.audit_logs for select
   using (
+    -- Users can always see their own actions
+    user_id = auth.uid()
+    or
     -- For organizations table
     (table_name = 'organizations' and exists (
       select 1 from public.organization_members
