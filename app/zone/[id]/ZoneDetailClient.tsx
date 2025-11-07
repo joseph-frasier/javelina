@@ -278,8 +278,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const handleDeleteZone = async () => {
     try {
       await deleteZone(zoneId, environment.id, organization.id);
+      
+      // Invalidate zones cache to refresh sidebar
+      queryClient.invalidateQueries({ queryKey: ['zones', environment.id] });
+      
       addToast('success', `Zone ${zone.name} deleted successfully!`);
       setShowDeleteModal(false);
+      
       // Redirect to environment page
       router.push(`/organization/${organization.id}/environment/${environment.id}`);
     } catch (error: any) {
