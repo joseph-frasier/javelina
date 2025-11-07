@@ -124,102 +124,41 @@ const mockGeneralSettings: GeneralSettings = {
 
 const mockSecuritySettings: SecuritySettings = {
   mfa: {
-    enabled: true,
+    enabled: false,
     method: 'authenticator_app',
-    last_verified: '2025-10-06T18:23:41Z'
+    last_verified: new Date().toISOString()
   },
   sso: {
-    provider: 'Okta',
-    status: 'connected',
-    last_sync: '2025-10-07T09:00:00Z'
+    provider: 'Not configured',
+    status: 'disconnected',
+    last_sync: new Date().toISOString()
   },
-  ip_allowlist: [
-    '192.168.1.12/32',
-    '10.0.0.0/24'
-  ],
-  sessions: [
-    {
-      device: 'MacBook Pro 16"',
-      location: 'New York, USA',
-      last_login: '2025-10-07T14:10:22Z',
-      status: 'active'
-    },
-    {
-      device: 'iPhone 15',
-      location: 'Boston, USA',
-      last_login: '2025-10-06T20:32:10Z',
-      status: 'active'
-    }
-  ]
+  ip_allowlist: [],
+  sessions: []
 };
 
 const mockAccessSettings: AccessSettings = {
-  members: [
-    {
-      name: 'John Doe',
-      email: 'john@acme.com',
-      role: 'Admin',
-      last_active: '2025-10-07T11:12:30Z'
-    },
-    {
-      name: 'Sarah Miller',
-      email: 'sarah@acme.com',
-      role: 'Editor',
-      last_active: '2025-10-06T22:00:41Z'
-    },
-    {
-      name: 'Mark Tran',
-      email: 'mark@acme.com',
-      role: 'Viewer',
-      last_active: '2025-10-05T16:42:00Z'
-    }
-  ],
-  environment_overrides: {
-    staging: {
-      role: 'Editor'
-    },
-    production: {
-      role: 'Viewer'
-    }
-  }
+  members: [],
+  environment_overrides: {}
 };
 
 const mockIntegrationSettings: IntegrationSettings = {
   slack: {
-    status: 'connected',
-    workspace: 'Acme DevOps',
-    connected_on: '2025-10-01T10:11:00Z'
+    status: 'disconnected',
+    workspace: null,
+    connected_on: null
   },
   microsoft_teams: {
     status: 'disconnected',
     channel: null
   },
   pagerduty: {
-    status: 'connected',
-    service_name: 'DNS Monitoring Alerts'
+    status: 'disconnected',
+    service_name: null
   }
 };
 
-const mockAuditLogs: AuditLogEntry[] = [
-  {
-    timestamp: '2025-10-07T10:20:30Z',
-    user: 'john@acme.com',
-    category: 'Security',
-    action: 'Enabled MFA'
-  },
-  {
-    timestamp: '2025-10-06T18:45:12Z',
-    user: 'sarah@acme.com',
-    category: 'Access',
-    action: 'Changed role from Viewer to Editor'
-  },
-  {
-    timestamp: '2025-10-05T14:30:00Z',
-    user: 'mark@acme.com',
-    category: 'Integrations',
-    action: 'Connected Slack workspace'
-  }
-];
+const mockAuditLogs: AuditLogEntry[] = [];
 
 export const useSettingsStore = create<SettingsState>()(
   persist(

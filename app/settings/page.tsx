@@ -723,14 +723,37 @@ function SettingsContent() {
                     <div>
                       <h3 className="text-lg font-medium text-orange-dark mb-4">IP Allowlist</h3>
                       <div className="space-y-2">
-                        {security.ip_allowlist.map((ip, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 border border-gray-light rounded">
-                            <span className="font-mono text-sm">{ip}</span>
-                            <Button variant="outline" size="sm" className="text-red-600">
-                              Remove
-                            </Button>
+                        {security.ip_allowlist.length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No IP ranges configured
+                              </p>
+                            </div>
                           </div>
-                        ))}
+                        ) : (
+                          security.ip_allowlist.map((ip, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 border border-gray-light rounded">
+                              <span className="font-mono text-sm">{ip}</span>
+                              <Button variant="outline" size="sm" className="text-red-600">
+                                Remove
+                              </Button>
+                            </div>
+                          ))
+                        )}
                         <Button variant="outline" size="sm">
                           Add IP Range
                         </Button>
@@ -741,27 +764,50 @@ function SettingsContent() {
                     <div>
                       <h3 className="text-lg font-medium text-orange-dark mb-4">Active Sessions</h3>
                       <div className="space-y-3">
-                        {security.sessions.map((session, index) => (
-                          <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                            <div>
-                              <p className="font-medium">{session.device}</p>
-                              <p className="text-sm text-gray-slate">{session.location}</p>
-                              <p className="text-xs text-gray-slate">Last login: {formatDate(session.last_login)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                session.status === 'active' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {session.status}
-                              </span>
-                              <Button variant="outline" size="sm" className="text-red-600">
-                                Revoke
-                              </Button>
+                        {security.sessions.length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No active sessions found
+                              </p>
                             </div>
                           </div>
-                        ))}
+                        ) : (
+                          security.sessions.map((session, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                              <div>
+                                <p className="font-medium">{session.device}</p>
+                                <p className="text-sm text-gray-slate">{session.location}</p>
+                                <p className="text-xs text-gray-slate">Last login: {formatDate(session.last_login)}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  session.status === 'active' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {session.status}
+                                </span>
+                                <Button variant="outline" size="sm" className="text-red-600">
+                                  Revoke
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   </div>
@@ -781,23 +827,46 @@ function SettingsContent() {
                         </Button>
                       </div>
                       <div className="space-y-3">
-                        {access.members.map((member, index) => (
-                          <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                            <div>
-                              <p className="font-medium">{member.name}</p>
-                              <p className="text-sm text-gray-slate">{member.email}</p>
-                              <p className="text-xs text-gray-slate">Last active: {formatDate(member.last_active)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
-                                {member.role}
-                              </span>
-                              <Button variant="outline" size="sm">
-                                Edit Role
-                              </Button>
+                        {access.members.length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No members yet
+                              </p>
                             </div>
                           </div>
-                        ))}
+                        ) : (
+                          access.members.map((member, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                              <div>
+                                <p className="font-medium">{member.name}</p>
+                                <p className="text-sm text-gray-slate">{member.email}</p>
+                                <p className="text-xs text-gray-slate">Last active: {formatDate(member.last_active)}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                                  {member.role}
+                                </span>
+                                <Button variant="outline" size="sm">
+                                  Edit Role
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
 
@@ -805,22 +874,45 @@ function SettingsContent() {
                     <div>
                       <h3 className="text-lg font-medium text-orange-dark mb-4">Environment-Level Overrides</h3>
                       <div className="space-y-3">
-                        {Object.entries(access.environment_overrides).map(([environment, override]) => (
-                          <div key={environment} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                            <div>
-                              <p className="font-medium capitalize">{environment}</p>
-                              <p className="text-sm text-gray-slate">Role override</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
-                                {override.role}
-                              </span>
-                              <Button variant="outline" size="sm">
-                                Edit
-                              </Button>
+                        {Object.keys(access.environment_overrides).length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No environment overrides configured
+                              </p>
                             </div>
                           </div>
-                        ))}
+                        ) : (
+                          Object.entries(access.environment_overrides).map(([environment, override]) => (
+                            <div key={environment} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                              <div>
+                                <p className="font-medium capitalize">{environment}</p>
+                                <p className="text-sm text-gray-slate">Role override</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                                  {override.role}
+                                </span>
+                                <Button variant="outline" size="sm">
+                                  Edit
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   </div>
@@ -899,39 +991,67 @@ function SettingsContent() {
               {/* Audit & Compliance */}
               {activeSection === 'audit' && permissions.canViewAudit && (
                 <Card className="p-4 sm:p-6">
-                  <div className="flex items-center justify-end mb-6">
-                    <ExportButton 
-                      data={auditLogs} 
-                      filename="audit-logs"
-                      label="Export Logs"
-                    />
-                  </div>
+                  {auditLogs.length > 0 && (
+                    <div className="flex items-center justify-end mb-6">
+                      <ExportButton 
+                        data={auditLogs} 
+                        filename="audit-logs"
+                        label="Export Logs"
+                      />
+                    </div>
+                  )}
                   
-                  <div className="space-y-4">
-                    {auditLogs.map((log, index) => (
-                      <div key={index} className="flex items-start gap-4 p-4 border border-gray-light rounded-lg">
-                        <div className="w-2 h-2 bg-orange rounded-full mt-2"></div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium">{log.action}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              log.category === 'Security' 
-                                ? 'bg-red-100 text-red-800'
-                                : log.category === 'Access'
-                                ? 'bg-blue-100 text-blue-800'
-                                : log.category === 'Integrations'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-orange-100 text-orange-800'
-                            }`}>
-                              {log.category}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-slate">{log.user}</p>
-                          <p className="text-xs text-gray-slate">{formatDate(log.timestamp)}</p>
-                        </div>
+                  {auditLogs.length === 0 ? (
+                    <div className="py-12 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600 mb-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                          />
+                        </svg>
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          No audit logs yet
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          Settings changes will appear here
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {auditLogs.map((log, index) => (
+                        <div key={index} className="flex items-start gap-4 p-4 border border-gray-light rounded-lg">
+                          <div className="w-2 h-2 bg-orange rounded-full mt-2"></div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium">{log.action}</p>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                log.category === 'Security' 
+                                  ? 'bg-red-100 text-red-800'
+                                  : log.category === 'Access'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : log.category === 'Integrations'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-orange-100 text-orange-800'
+                              }`}>
+                                {log.category}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-slate">{log.user}</p>
+                            <p className="text-xs text-gray-slate">{formatDate(log.timestamp)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               )}
 
