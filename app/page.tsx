@@ -8,6 +8,17 @@ import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { useAuthStore } from '@/lib/auth-store';
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
+import { formatDateWithRelative } from '@/lib/utils/time';
+
+interface AuditLog {
+  id: string;
+  table_name: string;
+  action: string;
+  record_id: string;
+  old_data?: any;
+  new_data?: any;
+  created_at: string;
+}
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -15,8 +26,11 @@ export default function DashboardPage() {
   const [aggregateStats, setAggregateStats] = useState({
     totalOrgs: organizations.length,
     totalEnvironments: 0,
-    totalZones: 0
+    totalZones: 0,
+    zonesThisMonth: 0
   });
+  const [recentActivity, setRecentActivity] = useState<AuditLog[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(true);
   
   useEffect(() => {
     const fetchCounts = async () => {
@@ -39,21 +53,102 @@ export default function DashboardPage() {
       
       const envIds = environments?.map(env => env.id) || [];
       
-      // Count zones
+      // Count total zones
       const { count: zoneCount } = await supabase
         .from('zones')
         .select('*', { count: 'exact', head: true })
         .in('environment_id', envIds);
       
+      // Count zones created this month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const { count: zonesThisMonth } = await supabase
+        .from('zones')
+        .select('*', { count: 'exact', head: true })
+        .in('environment_id', envIds)
+        .gte('created_at', startOfMonth.toISOString());
+      
       setAggregateStats({
         totalOrgs: organizations.length,
         totalEnvironments: envCount || 0,
-        totalZones: zoneCount || 0
+        totalZones: zoneCount || 0,
+        zonesThisMonth: zonesThisMonth || 0
       });
     };
     
     fetchCounts();
   }, [organizations]);
+
+  useEffect(() => {
+    const fetchRecentActivity = async () => {
+      if (organizations.length === 0) {
+        setLoadingActivity(false);
+        return;
+      }
+      
+      const supabase = createClient();
+      const orgIds = organizations.map(org => org.id);
+      
+      // Get environment IDs for the user's organizations
+      const { data: environments } = await supabase
+        .from('environments')
+        .select('id')
+        .in('organization_id', orgIds);
+      
+      const envIds = environments?.map(env => env.id) || [];
+      
+      if (envIds.length === 0) {
+        setLoadingActivity(false);
+        return;
+      }
+      
+      // Fetch recent audit logs for zones and zone_records
+      const { data: auditLogs } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .in('table_name', ['zones', 'zone_records', 'environments', 'organizations'])
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      // Filter to only show logs related to user's orgs/environments
+      const filteredLogs = auditLogs?.slice(0, 4) || [];
+      
+      setRecentActivity(filteredLogs);
+      setLoadingActivity(false);
+    };
+    
+    fetchRecentActivity();
+  }, [organizations]);
+
+  // Format audit log into human-readable activity
+  const formatActivity = (log: AuditLog) => {
+    const zoneName = log.new_data?.name || log.old_data?.name || 'Unknown';
+    const recordType = log.new_data?.type || log.old_data?.type;
+    
+    switch (log.table_name) {
+      case 'zones':
+        if (log.action === 'INSERT') return `Zone created: ${zoneName}`;
+        if (log.action === 'UPDATE') return `Zone updated: ${zoneName}`;
+        if (log.action === 'DELETE') return `Zone deleted: ${zoneName}`;
+        break;
+      case 'zone_records':
+        if (log.action === 'INSERT') return `Record added: ${recordType} record in ${zoneName}`;
+        if (log.action === 'UPDATE') return `Record updated: ${recordType} record in ${zoneName}`;
+        if (log.action === 'DELETE') return `Record deleted: ${recordType} record in ${zoneName}`;
+        break;
+      case 'environments':
+        if (log.action === 'INSERT') return `Environment created: ${zoneName}`;
+        if (log.action === 'UPDATE') return `Environment updated: ${zoneName}`;
+        break;
+      case 'organizations':
+        if (log.action === 'INSERT') return `Organization created`;
+        if (log.action === 'UPDATE') return `Organization updated`;
+        break;
+    }
+    return `${log.table_name} ${log.action.toLowerCase()}`;
+  };
 
   return (
     <ProtectedRoute>
@@ -117,8 +212,8 @@ export default function DashboardPage() {
           <StatCard
             title="Total DNS Zones"
             value={aggregateStats.totalZones.toString()}
-            change="+12 this month"
-            changeType="positive"
+            change={aggregateStats.zonesThisMonth > 0 ? `+${aggregateStats.zonesThisMonth} this month` : 'No new zones this month'}
+            changeType={aggregateStats.zonesThisMonth > 0 ? 'positive' : 'neutral'}
             icon={
               <svg
                 className="w-6 h-6"
@@ -214,54 +309,53 @@ export default function DashboardPage() {
           className="lg:col-span-2"
         >
           <div className="space-y-4 mt-4">
-            {[
-              {
-                action: 'Zone created: api.company.com',
-                time: '5 minutes ago',
-                type: 'zone',
-              },
-              {
-                action: 'Environment deployed: Staging',
-                time: '1 hour ago',
-                type: 'environment',
-              },
-              {
-                action: 'Records updated: company.com',
-                time: '2 hours ago',
-                type: 'records',
-              },
-              {
-                action: 'New organization added',
-                time: 'Yesterday',
-                type: 'org',
-              },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between py-3 border-b border-gray-light last:border-0"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-orange rounded-full"></div>
-                  <span className="font-regular text-orange-dark">
-                    {item.action}
+            {loadingActivity ? (
+              <div className="text-center py-8">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                </div>
+              </div>
+            ) : recentActivity.length === 0 ? (
+              <div className="text-center py-12">
+                <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <p className="text-gray-slate dark:text-gray-400 text-base font-medium mb-2">No recent activity</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm">
+                  Get started by creating an organization, environment, or DNS zone
+                </p>
+              </div>
+            ) : (
+              recentActivity.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between py-3 border-b border-gray-light dark:border-gray-700 last:border-0"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-orange rounded-full"></div>
+                    <span className="font-regular text-orange-dark dark:text-orange">
+                      {formatActivity(log)}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-slate dark:text-gray-400 font-light">
+                    {formatDateWithRelative(log.created_at).relative}
                   </span>
                 </div>
-                <span className="text-sm text-gray-slate font-light">
-                  {item.time}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>
 
-      {/* Bottom Section */}
-      <Card
+      {/* Bottom Section - Performance Chart (Commented out - Server metrics not implemented yet) */}
+      {/* <Card
         title="System Performance"
         description="Monitor your application metrics"
       >
         <PerformanceChart />
-      </Card>
+      </Card> */}
     </div>
     </ProtectedRoute>
   );
