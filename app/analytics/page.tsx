@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { StatCard, Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import {
   LineChart,
   Line,
@@ -71,8 +71,6 @@ interface Zone {
 }
 
 export default function AnalyticsPage() {
-  const supabase = createClientComponentClient();
-  
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -94,6 +92,7 @@ export default function AnalyticsPage() {
   // Fetch organizations
   useEffect(() => {
     const fetchOrganizations = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -111,11 +110,12 @@ export default function AnalyticsPage() {
     };
 
     fetchOrganizations();
-  }, [supabase]);
+  }, []);
 
   // Fetch environments when organization changes
   useEffect(() => {
     const fetchEnvironments = async () => {
+      const supabase = createClient();
       if (selectedOrg === 'all') {
         // Fetch all environments from all user's orgs
         const orgIds = organizations.map(o => o.id);
@@ -147,11 +147,12 @@ export default function AnalyticsPage() {
     if (organizations.length > 0) {
       fetchEnvironments();
     }
-  }, [selectedOrg, organizations, supabase]);
+  }, [selectedOrg, organizations]);
 
   // Fetch zones when environment changes
   useEffect(() => {
     const fetchZones = async () => {
+      const supabase = createClient();
       if (selectedEnvironment === 'all') {
         // Fetch all zones from filtered environments
         const envIds = environments.map(e => e.id);
@@ -182,7 +183,7 @@ export default function AnalyticsPage() {
     if (environments.length > 0) {
       fetchZones();
     }
-  }, [selectedEnvironment, environments, supabase]);
+  }, [selectedEnvironment, environments]);
 
   // Set mounted state on client
   useEffect(() => {
