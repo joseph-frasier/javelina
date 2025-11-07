@@ -5,6 +5,7 @@ import {
   getCurrentSubscription,
   canCreateResource,
   getSubscriptionStatus,
+  getAllOrganizationsWithSubscriptions,
 } from "../controllers/subscriptionsController";
 
 const router = Router();
@@ -40,6 +41,18 @@ router.get(
   "/status",
   authenticate,
   asyncHandler(getSubscriptionStatus)
+);
+
+/**
+ * GET /api/subscriptions/all
+ * Get all user's organizations with subscription data
+ * Protected route - requires authentication
+ * Used by settings page to show billing for all orgs user has admin access to
+ */
+router.get(
+  "/all",
+  authenticate,
+  asyncHandler(getAllOrganizationsWithSubscriptions)
 );
 
 export default router;

@@ -164,7 +164,7 @@ function SettingsContent() {
     try {
       // Get all organizations with their subscription status
       // The backend will filter to only return orgs where the user is Admin/SuperAdmin
-      const data = await subscriptionsApi.getStatus();
+      const data = await subscriptionsApi.getAllWithSubscriptions();
       
       // Transform the data to match the expected format
       const orgs = Array.isArray(data) ? data.map((item: any) => ({
@@ -184,7 +184,7 @@ function SettingsContent() {
     } finally {
       setBillingLoading(false);
     }
-  }, [user?.id, addToast]);
+  }, [addToast]);
 
   // Fetch billing data when billing section is active
   useEffect(() => {

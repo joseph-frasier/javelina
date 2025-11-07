@@ -192,6 +192,14 @@ export const subscriptionsApi = {
   getStatus: (org_id: string) => {
     return apiClient.get(`/subscriptions/status?org_id=${org_id}`);
   },
+
+  /**
+   * Get all user's organizations with subscription data
+   * (Used by settings page to show billing for all orgs user has admin access to)
+   */
+  getAllWithSubscriptions: () => {
+    return apiClient.get('/subscriptions/all');
+  },
 };
 
 // Entitlements API

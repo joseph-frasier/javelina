@@ -250,6 +250,94 @@ export const canCreateResource = async (
 // GET SUBSCRIPTION STATUS
 // =====================================================
 
+// =====================================================
+// GET ALL USER'S ORGANIZATIONS WITH SUBSCRIPTION DATA
+// =====================================================
+
+export const getAllOrganizationsWithSubscriptions = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+
+    // Get all organizations where user is Admin or SuperAdmin
+    const { data: memberships, error: memberError } = await supabaseAdmin
+      .from("organization_members")
+      .select(`
+        organization_id,
+        role,
+        organizations!inner(
+          id,
+          name,
+          stripe_customer_id
+        )
+      `)
+      .eq("user_id", userId)
+      .in("role", ["Admin", "SuperAdmin"]);
+
+    if (memberError) {
+      console.error("Error fetching memberships:", memberError);
+      sendError(res, "Failed to fetch organizations", 500);
+      return;
+    }
+
+    if (!memberships || memberships.length === 0) {
+      sendSuccess(res, [], "No organizations found");
+      return;
+    }
+
+    // Get subscription data for each organization
+    const orgIds = memberships.map((m) => m.organization_id);
+
+    const { data: subscriptions, error: subError } = await supabaseAdmin
+      .from("subscriptions")
+      .select("org_id, status, current_period_end, plan_id")
+      .in("org_id", orgIds);
+
+    if (subError) {
+      console.error("Error fetching subscriptions:", subError);
+    }
+
+    // Get all plans
+    const { data: allPlans } = await supabaseAdmin
+      .from("plans")
+      .select("id, code, name")
+      .eq("is_active", true);
+
+    // Combine data
+    const orgsWithSubscriptions = memberships.map((m) => {
+      const org = (m.organizations as any);
+      const sub = subscriptions?.find((s) => s.org_id === m.organization_id);
+      const plan = sub?.plan_id
+        ? allPlans?.find((p) => p.id === sub.plan_id)
+        : null;
+
+      return {
+        org_id: org.id,
+        organization_name: org.name,
+        plan_name: plan?.name || "Free",
+        status: sub?.status || "active",
+        current_period_end: sub?.current_period_end || null,
+        stripe_customer_id: org.stripe_customer_id,
+      };
+    });
+
+    sendSuccess(
+      res,
+      orgsWithSubscriptions,
+      "Organizations with subscriptions retrieved successfully"
+    );
+  } catch (error: any) {
+    console.error("Error in get all organizations with subscriptions:", error);
+    sendError(res, error.message || "Internal server error", 500);
+  }
+};
+
+// =====================================================
+// GET SUBSCRIPTION STATUS
+// =====================================================
+
 export const getSubscriptionStatus = async (
   req: AuthenticatedRequest,
   res: Response
