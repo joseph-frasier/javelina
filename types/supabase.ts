@@ -25,6 +25,7 @@ export interface Database {
           bio: string | null
           avatar_url: string | null
           role: 'user' | 'superuser'
+          superadmin: boolean
           mfa_enabled: boolean | null
           sso_connected: boolean | null
           last_login: string | null
@@ -42,6 +43,7 @@ export interface Database {
           bio?: string | null
           avatar_url?: string | null
           role?: 'user' | 'superuser'
+          superadmin?: boolean
           mfa_enabled?: boolean | null
           sso_connected?: boolean | null
           last_login?: string | null
@@ -59,6 +61,7 @@ export interface Database {
           bio?: string | null
           avatar_url?: string | null
           role?: 'user' | 'superuser'
+          superadmin?: boolean
           mfa_enabled?: boolean | null
           sso_connected?: boolean | null
           last_login?: string | null

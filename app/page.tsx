@@ -57,7 +57,8 @@ export default function DashboardPage() {
       const { count: zoneCount } = await supabase
         .from('zones')
         .select('*', { count: 'exact', head: true })
-        .in('environment_id', envIds);
+        .in('environment_id', envIds)
+        .is('deleted_at', null);
       
       // Count zones created this month
       const startOfMonth = new Date();

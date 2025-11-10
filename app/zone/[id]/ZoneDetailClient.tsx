@@ -276,26 +276,25 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   };
 
   const handleDeleteZone = async () => {
-    if (!environment || !organization) {
-      addToast('error', 'Missing environment or organization data');
-      setShowDeleteModal(false);
-      return;
-    }
-
     try {
-      await deleteZone(zoneId, environment.id, organization.id);
+      const result = await deleteZone(zone.id, zone.environment_id, organization?.id || '');
       
-      // Invalidate zones cache to refresh sidebar
-      queryClient.invalidateQueries({ queryKey: ['zones', environment.id] });
+      if (result.error) {
+        addToast('error', `Failed to delete zone: ${result.error}`);
+        return;
+      }
       
-      addToast('success', `Zone ${zone.name} deleted successfully!`);
+      addToast('success', `Zone ${zone.name} archived successfully`);
       setShowDeleteModal(false);
       
       // Redirect to environment page
-      router.push(`/organization/${organization.id}/environment/${environment.id}`);
-    } catch (error: any) {
-      addToast('error', error.message || 'Failed to delete zone');
-      setShowDeleteModal(false);
+      if (organization && environment) {
+        router.push(`/organization/${organization.id}/environment/${environment.id}`);
+      } else {
+        router.push('/');
+      }
+    } catch (error) {
+      addToast('error', `Error deleting zone: ${error}`);
     }
   };
 

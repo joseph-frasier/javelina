@@ -229,16 +229,19 @@ export const useAuthStore = create<AuthState>()(
         const supabase = createClient()
 
         try {
+          // Get the session first to ensure JWT is available
           const {
-            data: { user: supabaseUser },
-          } = await supabase.auth.getUser()
+            data: { session },
+          } = await supabase.auth.getSession()
 
-          if (!supabaseUser) {
+          if (!session?.user) {
             set({ user: null, isAuthenticated: false })
             return
           }
 
-          // Fetch profile from profiles table
+          const supabaseUser = session.user
+
+          // Fetch profile from profiles table (now with valid JWT in session)
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
