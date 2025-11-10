@@ -1,8 +1,10 @@
 'use server';
 
-import { dnsRecordsApi } from '@/lib/api-client';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Create a new DNS record
@@ -12,10 +14,34 @@ export async function createDNSRecord(
   recordData: DNSRecordFormData
 ): Promise<DNSRecord> {
   try {
-    const record = await dnsRecordsApi.create({
-      zone_id: zoneId,
-      ...recordData
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/dns-records`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        zone_id: zoneId,
+        ...recordData
+      }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to create DNS record');
+    }
+
+    const record = data.data || data;
     
     revalidatePath(`/zone/${zoneId}`);
     return record;
@@ -33,7 +59,31 @@ export async function updateDNSRecord(
   recordData: DNSRecordFormData
 ): Promise<DNSRecord> {
   try {
-    const record = await dnsRecordsApi.update(recordId, recordData);
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/dns-records/${recordId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(recordData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to update DNS record');
+    }
+
+    const record = data.data || data;
     
     // Revalidate zone page (we don't have zone_id here, so revalidate broadly)
     revalidatePath('/zone');
@@ -49,7 +99,26 @@ export async function updateDNSRecord(
  */
 export async function deleteDNSRecord(recordId: string): Promise<void> {
   try {
-    await dnsRecordsApi.delete(recordId);
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/dns-records/${recordId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || data.message || 'Failed to delete DNS record');
+    }
     
     revalidatePath('/zone');
   } catch (error: any) {
@@ -74,7 +143,7 @@ export async function bulkDeleteDNSRecords(recordIds: string[]): Promise<{
 
   for (const recordId of recordIds) {
     try {
-      await dnsRecordsApi.delete(recordId);
+      await deleteDNSRecord(recordId);
       results.success++;
     } catch (error: any) {
       results.failed++;
@@ -87,6 +156,35 @@ export async function bulkDeleteDNSRecords(recordIds: string[]): Promise<{
 }
 
 /**
+ * Get a DNS record by ID
+ */
+async function getDNSRecord(recordId: string): Promise<DNSRecord> {
+  // Get session from server-side Supabase client (uses cookies)
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session?.access_token) {
+    throw new Error('Not authenticated');
+  }
+
+  // Make API call with auth token
+  const response = await fetch(`${API_BASE_URL}/api/dns-records/${recordId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to get DNS record');
+  }
+
+  return data.data || data;
+}
+
+/**
  * Duplicate a DNS record
  */
 export async function duplicateDNSRecord(
@@ -95,11 +193,10 @@ export async function duplicateDNSRecord(
 ): Promise<DNSRecord> {
   try {
     // Get the original record first
-    const originalRecord = await dnsRecordsApi.get(recordId);
+    const originalRecord = await getDNSRecord(recordId);
     
     // Create a new record with modified name
-    const duplicatedRecord = await dnsRecordsApi.create({
-      zone_id: originalRecord.zone_id,
+    const duplicatedRecord = await createDNSRecord(originalRecord.zone_id, {
       name: newName.trim() || '@',
       type: originalRecord.type,
       value: originalRecord.value,
@@ -123,10 +220,10 @@ export async function duplicateDNSRecord(
 export async function toggleDNSRecordStatus(recordId: string): Promise<DNSRecord> {
   try {
     // Get current record
-    const record = await dnsRecordsApi.get(recordId);
+    const record = await getDNSRecord(recordId);
     
     // Update with toggled status
-    const updatedRecord = await dnsRecordsApi.update(recordId, {
+    const updatedRecord = await updateDNSRecord(recordId, {
       name: record.name,
       type: record.type,
       value: record.value,
@@ -155,8 +252,8 @@ export async function bulkToggleDNSRecordStatus(
 
   for (const recordId of recordIds) {
     try {
-      const record = await dnsRecordsApi.get(recordId);
-      await dnsRecordsApi.update(recordId, {
+      const record = await getDNSRecord(recordId);
+      await updateDNSRecord(recordId, {
         name: record.name,
         type: record.type,
         value: record.value,
@@ -180,8 +277,29 @@ export async function bulkToggleDNSRecordStatus(
  */
 export async function getDNSRecords(zoneId: string): Promise<DNSRecord[]> {
   try {
-    const records = await dnsRecordsApi.list(zoneId);
-    return records;
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/dns-records/zone/${zoneId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to fetch DNS records');
+    }
+
+    return data.data || data;
   } catch (error: any) {
     console.error('Error fetching DNS records:', error);
     throw new Error(error.message || 'Failed to fetch DNS records');

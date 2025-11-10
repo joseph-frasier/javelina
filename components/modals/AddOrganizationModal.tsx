@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createOrganization } from '@/lib/actions/organizations';
+import { organizationsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { useAuthStore } from '@/lib/auth-store';
 import type { Plan } from '@/lib/plans-config';
@@ -58,28 +59,24 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
       let organizationId: string;
       let organizationName: string;
 
-      // If a plan is selected, use the billing API endpoint
+      // If a plan is selected, create organization with plan through Express API
       if (selectedPlan) {
-        const response = await fetch('/api/organizations/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        try {
+          const data = await organizationsApi.create({
             name: name.trim(),
+            description: description.trim() || undefined,
             plan_code: selectedPlan.code,
-          }),
-        });
+          });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          setErrors({ general: data.error || 'Failed to create organization' });
-          addToast('error', data.error || 'Failed to create organization');
+          organizationId = data.id;
+          organizationName = data.name;
+        } catch (error: any) {
+          const errorMessage = error.message || 'Failed to create organization';
+          setErrors({ general: errorMessage });
+          addToast('error', errorMessage);
           setIsSubmitting(false);
           return;
         }
-
-        organizationId = data.org_id;
-        organizationName = data.name;
       } else {
         // No plan selected - use the standard server action
         const result = await createOrganization({

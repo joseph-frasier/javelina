@@ -160,15 +160,16 @@ export default function OrganizationBillingPage() {
   const handleSelectPlan = async (planCode: string, priceId: string) => {
     setShowPlanModal(false);
 
-    if (planCode === 'free') {
-      // Downgrading to free - handle via customer portal
-      addToast('info', 'Please use the billing portal to downgrade to free');
+    // Check if downgrading to free/starter plan
+    if (planCode === 'free' || planCode === 'starter') {
+      // Downgrading to Starter (free) - handle via customer portal
+      addToast('info', 'Please use the billing portal to downgrade to the Starter plan');
       handleManageBilling();
       return;
     }
 
     // Check if this is an upgrade/downgrade (has existing subscription) or new subscription
-    if (currentPlanCode && currentPlanCode !== 'free') {
+    if (currentPlanCode && currentPlanCode !== 'free' && currentPlanCode !== 'starter') {
       // Existing subscription - update it instead of creating new one
       try {
         addToast('info', 'Updating your subscription...');

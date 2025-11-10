@@ -1,9 +1,14 @@
 /**
- * Plans Configuration
+ * Plans Configuration (Dynamic from Database)
  * 
- * Defines all subscription plans with Stripe price IDs and features
+ * Fetches subscription plans with Stripe price IDs from the database
  * Used by pricing page, checkout flow, and subscription management
+ * 
+ * NOTE: Price IDs are now stored in the database, not hardcoded!
+ * To update prices, run a database migration, not a code deployment.
  */
+
+import { plansApi } from './api-client';
 
 export interface PlanFeature {
   name: string;
@@ -44,196 +49,288 @@ export interface Plan {
   };
 }
 
-/**
- * All available plans
- * Unlimited is represented as -1
- */
-export const PLANS_CONFIG: Plan[] = [
-  {
-    id: 'free',
-    code: 'free',
-    name: 'Free',
-    description: 'Perfect for getting started',
-    monthly: {
-      amount: 0,
-      priceId: 'price_1SL5MCA8kaNOs7rye16c39RS',
-      interval: 'month',
-    },
-    features: [
-      { name: '1 Environment', included: true },
-      { name: '3 DNS Zones', included: true },
-      { name: '100 DNS Records per Zone', included: true },
-      { name: '2 Team Members', included: true },
-      { name: 'Community Support', included: true },
-      { name: 'API Access', included: false },
-      { name: 'Advanced Analytics', included: false },
-      { name: 'Priority Support', included: false },
-    ],
-    limits: {
-      environments: 1,
-      zones: 3,
-      dnsRecords: 100,
-      teamMembers: 2,
-    },
-    booleanFeatures: {
-      apiAccess: false,
-      advancedAnalytics: false,
-      prioritySupport: false,
-      auditLogs: false,
-      customRoles: false,
-      sso: false,
-      bulkOperations: false,
-      exportData: false,
-    },
-  },
-  {
-    id: 'basic',
-    code: 'basic_monthly',
-    name: 'Basic',
-    description: 'Great for small teams',
-    monthly: {
-      amount: 3.50,
-      priceId: 'price_1SL5NJA8kaNOs7rywCjYzPgH',
-      interval: 'month',
-    },
-    annual: {
-      amount: 42.00,
-      priceId: 'price_1SLSWiA8kaNOs7ryllPfcTHx',
-      interval: 'year',
-    },
-    features: [
-      { name: '3 Environments', included: true },
-      { name: '10 DNS Zones', included: true },
-      { name: '500 DNS Records per Zone', included: true },
-      { name: '5 Team Members', included: true },
-      { name: 'Bulk Operations', included: true },
-      { name: 'Export Data', included: true },
-      { name: 'Email Support', included: true },
-      { name: 'API Access', included: false },
-      { name: 'Advanced Analytics', included: false },
-    ],
-    limits: {
-      environments: 3,
-      zones: 10,
-      dnsRecords: 500,
-      teamMembers: 5,
-    },
-    booleanFeatures: {
-      apiAccess: false,
-      advancedAnalytics: false,
-      prioritySupport: false,
-      auditLogs: false,
-      customRoles: false,
-      sso: false,
-      bulkOperations: true,
-      exportData: true,
-    },
-  },
-  {
-    id: 'pro',
-    code: 'pro_monthly',
-    name: 'Pro',
-    description: 'For growing businesses',
-    popular: true,
-    monthly: {
-      amount: 6.70,
-      priceId: 'price_1SLSXKA8kaNOs7ryKJ6hCHd5',
-      interval: 'month',
-    },
-    annual: {
-      amount: 80.40,
-      priceId: 'price_1SLSYMA8kaNOs7ryrJU9oOYL',
-      interval: 'year',
-    },
-    features: [
-      { name: '10 Environments', included: true },
-      { name: '50 DNS Zones', included: true },
-      { name: '5,000 DNS Records per Zone', included: true },
-      { name: '10 Team Members', included: true },
-      { name: 'API Access', included: true },
-      { name: 'Advanced Analytics', included: true },
-      { name: 'Priority Support', included: true },
-      { name: 'Audit Logs', included: true },
-      { name: 'Bulk Operations', included: true },
-      { name: 'Export Data', included: true },
-    ],
-    limits: {
-      environments: 10,
-      zones: 50,
-      dnsRecords: 5000,
-      teamMembers: 10,
-    },
-    booleanFeatures: {
-      apiAccess: true,
-      advancedAnalytics: true,
-      prioritySupport: true,
-      auditLogs: true,
-      customRoles: false,
-      sso: false,
-      bulkOperations: true,
-      exportData: true,
-    },
-  },
-  {
-    id: 'enterprise',
-    code: 'enterprise_monthly',
-    name: 'Enterprise',
-    description: 'For large organizations',
-    monthly: {
-      amount: 450,
-      priceId: 'price_1SLSZFA8kaNOs7rywWLjhQ8b',
-      interval: 'month',
-    },
-    features: [
-      { name: 'Unlimited Environments', included: true },
-      { name: 'Unlimited DNS Zones', included: true },
-      { name: 'Unlimited DNS Records', included: true },
-      { name: 'Unlimited Team Members', included: true },
-      { name: 'Custom Roles', included: true },
-      { name: 'SSO / SAML', included: true },
-      { name: 'Dedicated Support', included: true },
-      { name: 'SLA Guarantee', included: true },
-      { name: 'Custom Integrations', included: true },
-      { name: 'White-label Options', included: true },
-    ],
-    limits: {
-      environments: -1, // Unlimited
-      zones: -1,
-      dnsRecords: -1,
-      teamMembers: -1,
-    },
-    booleanFeatures: {
-      apiAccess: true,
-      advancedAnalytics: true,
-      prioritySupport: true,
-      auditLogs: true,
-      customRoles: true,
-      sso: true,
-      bulkOperations: true,
-      exportData: true,
-    },
-  },
-];
-
-/**
- * Get plan by ID
- */
-export function getPlanById(id: string): Plan | undefined {
-  return PLANS_CONFIG.find((p) => p.id === id);
+// Database plan format (from API)
+interface DbPlan {
+  id: string;
+  code: string;
+  name: string;
+  billing_interval: 'month' | 'year' | null;
+  metadata: {
+    price: number;
+    price_id: string;
+    description?: string;
+  };
+  entitlements: Array<{
+    key: string;
+    value: string;
+    value_type: 'boolean' | 'numeric' | 'text';
+  }>;
 }
 
 /**
- * Get plan by code
+ * Convert database plan format to frontend Plan format
  */
-export function getPlanByCode(code: string): Plan | undefined {
-  return PLANS_CONFIG.find((p) => p.code === code);
+function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
+  // Group plans by their base code (e.g., 'basic_monthly' and 'basic_annual' -> 'basic')
+  const planGroups = new Map<string, { monthly?: DbPlan; annual?: DbPlan; free?: DbPlan }>();
+  
+  dbPlans.forEach(dbPlan => {
+    let baseCode: string;
+    let interval: 'monthly' | 'annual' | 'free';
+    
+    // Handle 'free' code (Starter plan - free tier)
+    if (dbPlan.code === 'free') {
+      baseCode = 'starter'; // Use 'starter' as the normalized code
+      interval = 'free';
+    } else if (dbPlan.code.endsWith('_monthly')) {
+      baseCode = dbPlan.code.replace('_monthly', '');
+      interval = 'monthly';
+    } else if (dbPlan.code.endsWith('_annual')) {
+      baseCode = dbPlan.code.replace('_annual', '');
+      interval = 'annual';
+    } else {
+      baseCode = dbPlan.code;
+      interval = 'monthly'; // default
+    }
+    
+    const group = planGroups.get(baseCode) || {};
+    group[interval] = dbPlan;
+    planGroups.set(baseCode, group);
+  });
+  
+  // Convert each group to a Plan
+  const plans: Plan[] = [];
+  
+  planGroups.forEach((group, baseCode) => {
+    // Use monthly plan as the primary source, or annual if monthly doesn't exist, or free
+    const primary = group.monthly || group.annual || group.free;
+    if (!primary) return;
+    
+    // Extract entitlements
+    const entitlements = new Map(
+      primary.entitlements.map(e => [e.key, e.value])
+    );
+    
+    const getNumericEntitlement = (key: string): number => {
+      const val = entitlements.get(key);
+      return val ? parseInt(val, 10) : 0;
+    };
+    
+    const getBooleanEntitlement = (key: string): boolean => {
+      return entitlements.get(key) === 'true';
+    };
+    
+    // Build Plan object
+    const plan: Plan = {
+      id: baseCode,
+      code: primary.code,
+      name: primary.name.replace(' (Monthly)', '').replace(' (Annual)', ''),
+      description: primary.metadata.description || '',
+      popular: baseCode === 'pro', // Mark Pro as popular
+      limits: {
+        environments: getNumericEntitlement('environments_limit'),
+        zones: getNumericEntitlement('zones_limit'),
+        dnsRecords: getNumericEntitlement('dns_records_limit'),
+        teamMembers: getNumericEntitlement('team_members_limit'),
+      },
+      booleanFeatures: {
+        apiAccess: getBooleanEntitlement('api_access'),
+        advancedAnalytics: getBooleanEntitlement('advanced_analytics'),
+        prioritySupport: getBooleanEntitlement('priority_support'),
+        auditLogs: getBooleanEntitlement('audit_logs'),
+        customRoles: getBooleanEntitlement('custom_roles'),
+        sso: getBooleanEntitlement('sso_enabled'),
+        bulkOperations: getBooleanEntitlement('bulk_operations'),
+        exportData: getBooleanEntitlement('export_data'),
+      },
+      features: buildFeaturesList(baseCode, entitlements),
+    };
+    
+    // Add pricing
+    if (group.monthly) {
+      plan.monthly = {
+        amount: group.monthly.metadata.price,
+        priceId: group.monthly.metadata.price_id,
+        interval: 'month',
+      };
+    }
+    
+    if (group.annual) {
+      plan.annual = {
+        amount: group.annual.metadata.price,
+        priceId: group.annual.metadata.price_id,
+        interval: 'year',
+      };
+    }
+    
+    plans.push(plan);
+  });
+  
+  // Sort plans by order: starter (free), basic, pro, enterprise
+  const order = ['starter', 'free', 'basic', 'pro', 'enterprise'];
+  plans.sort((a, b) => {
+    const aIndex = order.indexOf(a.id);
+    const bIndex = order.indexOf(b.id);
+    return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+  });
+  
+  return plans;
 }
 
 /**
- * Get price ID for a plan and interval
+ * Build features list based on entitlements
  */
-export function getPriceId(planId: string, interval: 'month' | 'year'): string | null {
-  const plan = getPlanById(planId);
+function buildFeaturesList(planId: string, entitlements: Map<string, string>): PlanFeature[] {
+  const features: PlanFeature[] = [];
+  
+  const envLimit = entitlements.get('environments_limit');
+  const zonesLimit = entitlements.get('zones_limit');
+  const dnsLimit = entitlements.get('dns_records_limit');
+  const membersLimit = entitlements.get('team_members_limit');
+  
+  // Add limit features
+  features.push({
+    name: `${envLimit === '-1' ? 'Unlimited' : envLimit} Environment${envLimit === '1' ? '' : 's'}`,
+    included: true,
+  });
+  
+  features.push({
+    name: `${zonesLimit === '-1' ? 'Unlimited' : zonesLimit} DNS Zone${zonesLimit === '1' ? '' : 's'}`,
+    included: true,
+  });
+  
+  features.push({
+    name: `${dnsLimit === '-1' ? 'Unlimited' : dnsLimit} DNS Records per Zone`,
+    included: true,
+  });
+  
+  features.push({
+    name: `${membersLimit === '-1' ? 'Unlimited' : membersLimit} Team Member${membersLimit === '1' ? '' : 's'}`,
+    included: true,
+  });
+  
+  // Add boolean features
+  if (entitlements.get('bulk_operations') === 'true') {
+    features.push({ name: 'Bulk Operations', included: true });
+  }
+  
+  if (entitlements.get('export_data') === 'true') {
+    features.push({ name: 'Export Data', included: true });
+  }
+  
+  if (entitlements.get('api_access') === 'true') {
+    features.push({ name: 'API Access', included: true });
+  } else {
+    features.push({ name: 'API Access', included: false });
+  }
+  
+  if (entitlements.get('advanced_analytics') === 'true') {
+    features.push({ name: 'Advanced Analytics', included: true });
+  } else {
+    features.push({ name: 'Advanced Analytics', included: false });
+  }
+  
+  if (entitlements.get('priority_support') === 'true') {
+    features.push({ name: 'Priority Support', included: true });
+  } else if (planId === 'starter' || planId === 'free') {
+    features.push({ name: 'Community Support', included: true });
+  } else {
+    features.push({ name: 'Email Support', included: true });
+  }
+  
+  if (entitlements.get('audit_logs') === 'true') {
+    features.push({ name: 'Audit Logs', included: true });
+  }
+  
+  if (entitlements.get('custom_roles') === 'true') {
+    features.push({ name: 'Custom Roles', included: true });
+  }
+  
+  if (entitlements.get('sso_enabled') === 'true') {
+    features.push({ name: 'SSO / SAML', included: true });
+  }
+  
+  return features;
+}
+
+// Cache for plans (client-side only)
+let plansCache: Plan[] | null = null;
+let plansCacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Fetch all plans from the API
+ * Uses cache on client-side to avoid repeated API calls
+ */
+export async function fetchPlans(): Promise<Plan[]> {
+  // Check cache (client-side only)
+  if (typeof window !== 'undefined' && plansCache && Date.now() - plansCacheTimestamp < CACHE_TTL) {
+    return plansCache;
+  }
+  
+  try {
+    const dbPlans = await plansApi.getAll() as DbPlan[];
+    const plans = convertDbPlanToPlan(dbPlans);
+    
+    // Update cache (client-side only)
+    if (typeof window !== 'undefined') {
+      plansCache = plans;
+      plansCacheTimestamp = Date.now();
+      // Also update static config for backwards compatibility
+      updateStaticConfig(plans);
+    }
+    
+    return plans;
+  } catch (error) {
+    console.error('Error fetching plans:', error);
+    // Return fallback empty array or could return hardcoded fallback
+    return [];
+  }
+}
+
+/**
+ * Clear plans cache (useful after updating plans)
+ */
+export function clearPlansCache(): void {
+  plansCache = null;
+  plansCacheTimestamp = 0;
+}
+
+// =====================================================
+// STATIC EXPORT FOR BACKWARDS COMPATIBILITY
+// =====================================================
+
+/**
+ * Static plans config for synchronous access (e.g., Zustand stores)
+ * This gets populated after the first fetchPlans() call
+ */
+export let PLANS_CONFIG: Plan[] = [];
+
+/**
+ * Internal helper to populate the static config
+ */
+function updateStaticConfig(plans: Plan[]): void {
+  PLANS_CONFIG = plans;
+}
+
+/**
+ * Helper: Get plan by ID from a plans array
+ */
+export function getPlanById(plans: Plan[], id: string): Plan | undefined {
+  return plans.find((p) => p.id === id);
+}
+
+/**
+ * Helper: Get plan by code from a plans array
+ */
+export function getPlanByCode(plans: Plan[], code: string): Plan | undefined {
+  return plans.find((p) => p.code === code);
+}
+
+/**
+ * Helper: Get price ID for a plan and interval
+ */
+export function getPriceId(plan: Plan, interval: 'month' | 'year'): string | null {
   if (!plan) return null;
 
   if (interval === 'month' && plan.monthly) {
@@ -247,7 +344,7 @@ export function getPriceId(planId: string, interval: 'month' | 'year'): string |
 }
 
 /**
- * Format price for display
+ * Helper: Format price for display
  */
 export function formatPrice(amount: number, interval?: 'month' | 'year'): string {
   if (amount === 0) return 'Free';
@@ -256,7 +353,7 @@ export function formatPrice(amount: number, interval?: 'month' | 'year'): string
 }
 
 /**
- * Calculate annual savings
+ * Helper: Calculate annual savings
  */
 export function calculateAnnualSavings(plan: Plan): number {
   if (!plan.monthly || !plan.annual) return 0;
@@ -266,24 +363,22 @@ export function calculateAnnualSavings(plan: Plan): number {
 }
 
 /**
- * Check if plan has a specific feature
+ * Helper: Check if plan has a specific feature
  */
 export function planHasFeature(
-  planId: string,
+  plan: Plan,
   feature: keyof Plan['booleanFeatures']
 ): boolean {
-  const plan = getPlanById(planId);
   return plan?.booleanFeatures[feature] ?? false;
 }
 
 /**
- * Get plan limit for a resource
+ * Helper: Get plan limit for a resource
  */
 export function getPlanLimit(
-  planId: string,
+  plan: Plan,
   resource: keyof Plan['limits']
 ): number {
-  const plan = getPlanById(planId);
   return plan?.limits[resource] ?? 0;
 }
 

@@ -10,6 +10,7 @@ import adminRoutes from "./admin";
 import stripeRoutes from "./stripe";
 import subscriptionsRoutes from "./subscriptions";
 import entitlementsRoutes from "./entitlements";
+import plansRoutes from "./plans";
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use("/admin", adminRoutes);
 router.use("/stripe", stripeRoutes);
 router.use("/subscriptions", subscriptionsRoutes);
 router.use("/entitlements", entitlementsRoutes);
+router.use("/plans", plansRoutes);
 
 export default router;

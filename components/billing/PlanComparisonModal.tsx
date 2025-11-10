@@ -166,7 +166,7 @@ export function PlanComparisonModal({
                     {plan.name}
                   </h3>
                   <div className="mt-2">
-                    {plan.code === 'free' ? (
+                    {(plan.code === 'free' || plan.code === 'starter') ? (
                       <p className="text-2xl font-bold text-gray-slate">$0.00</p>
                     ) : (
                       <>

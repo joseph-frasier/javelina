@@ -277,12 +277,15 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
   const handleDeleteZone = async () => {
     try {
-      const result = await deleteZone(zone.id, zone.environment_id, organization?.id || '');
+      const result = await deleteZone(zone.id);
       
       if (result.error) {
         addToast('error', `Failed to delete zone: ${result.error}`);
         return;
       }
+      
+      // Invalidate React Query cache to update sidebar immediately
+      queryClient.invalidateQueries({ queryKey: ['zones', zone.environment_id] });
       
       addToast('success', `Zone ${zone.name} archived successfully`);
       setShowDeleteModal(false);

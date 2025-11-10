@@ -212,6 +212,23 @@ export const entitlementsApi = {
   },
 };
 
+// Plans API
+export const plansApi = {
+  /**
+   * Get all active plans with entitlements
+   */
+  getAll: () => {
+    return apiClient.get('/plans');
+  },
+
+  /**
+   * Get a specific plan by code
+   */
+  getByCode: (code: string) => {
+    return apiClient.get(`/plans/${code}`);
+  },
+};
+
 // Organizations API
 export const organizationsApi = {
   /**

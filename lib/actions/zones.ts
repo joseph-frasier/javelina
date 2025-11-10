@@ -1,7 +1,9 @@
 'use server'
 
-import { zonesApi } from '@/lib/api-client'
+import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function createZone(formData: {
   environment_id: string
@@ -10,12 +12,36 @@ export async function createZone(formData: {
   description?: string
 }) {
   try {
-    const zone = await zonesApi.create({
-      name: formData.name,
-      env_id: formData.environment_id,
-      type: formData.zone_type,
-      description: formData.description
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/zones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        environment_id: formData.environment_id,
+        zone_type: formData.zone_type,
+        description: formData.description
+      }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to create zone');
+    }
+
+    const zone = data.data || data;
     
     revalidatePath('/zone')
     revalidatePath('/organization')
@@ -42,11 +68,35 @@ export async function updateZone(
   }
 ) {
   try {
-    const zone = await zonesApi.update(id, {
-      name: formData.name,
-      type: formData.zone_type,
-      description: formData.description
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/zones/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        zone_type: formData.zone_type,
+        description: formData.description
+      }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to update zone');
+    }
+
+    const zone = data.data || data;
     
     revalidatePath(`/zone/${id}`)
     revalidatePath('/zone')
@@ -58,7 +108,26 @@ export async function updateZone(
 
 export async function deleteZone(id: string) {
   try {
-    await zonesApi.delete(id);
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/zones/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || data.message || 'Failed to delete zone');
+    }
     
     revalidatePath('/zone')
     revalidatePath('/organization')

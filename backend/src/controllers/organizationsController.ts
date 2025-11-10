@@ -124,14 +124,19 @@ export const createOrganization = async (
     throw new Error(`Failed to create organization: ${orgError.message}`);
   }
 
-  // Create membership for current user as Admin
+  // Create membership for current user as Admin (upsert to handle retries)
   const { error: memberError } = await supabaseAdmin
     .from("organization_members")
-    .insert({
-      organization_id: org.id,
-      user_id: userId,
-      role: "Admin",
-    });
+    .upsert(
+      {
+        organization_id: org.id,
+        user_id: userId,
+        role: "Admin",
+      },
+      {
+        onConflict: "organization_id,user_id",
+      }
+    );
 
   if (memberError) {
     // Rollback organization creation
