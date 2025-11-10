@@ -276,6 +276,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   };
 
   const handleDeleteZone = async () => {
+    if (!environment || !organization) {
+      addToast('error', 'Missing environment or organization data');
+      setShowDeleteModal(false);
+      return;
+    }
+
     try {
       await deleteZone(zoneId, environment.id, organization.id);
       
