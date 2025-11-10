@@ -105,3 +105,16 @@ Frontend (Next.js) → Express API → Supabase
 - Express API validates JWT tokens and queries Supabase
 - Supabase handles data storage and RLS policies
 
+---
+
+## Additional Setup
+
+### Stripe Webhooks
+
+For billing features to work properly, configure Stripe webhooks. See **[STRIPE_WEBHOOK_SETUP.md](./STRIPE_WEBHOOK_SETUP.md)** for detailed instructions on:
+
+- Setting up webhook endpoints (local development & production)
+- Configuring webhook secrets
+- Testing webhook delivery
+- Monitoring and troubleshooting webhook events
+
