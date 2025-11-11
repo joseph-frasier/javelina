@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
 import Button from '@/components/ui/Button';
-import { useSubscriptionStore } from '@/lib/subscription-store';
+import { useSubscriptionStore, type PlanId } from '@/lib/subscription-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
@@ -91,7 +91,7 @@ function PricingContent() {
     }
 
     // Store selected plan and show organization creation modal
-    selectPlan(planId as 'starter' | 'free' | 'basic' | 'pro');
+    selectPlan(planId as PlanId);
     setSelectedPlanForOrg(plan);
     setShowOrgModal(true);
   };

@@ -201,7 +201,7 @@ export async function duplicateDNSRecord(
       type: originalRecord.type,
       value: originalRecord.value,
       ttl: originalRecord.ttl,
-      priority: originalRecord.priority,
+      priority: originalRecord.priority ?? undefined,
       active: originalRecord.active,
       comment: originalRecord.comment ? `Copy of: ${originalRecord.comment}` : 'Duplicated record',
     });
@@ -228,9 +228,9 @@ export async function toggleDNSRecordStatus(recordId: string): Promise<DNSRecord
       type: record.type,
       value: record.value,
       ttl: record.ttl,
-      priority: record.priority,
+      priority: record.priority ?? undefined,
       active: !record.active,
-      comment: record.comment
+      comment: record.comment ?? undefined
     });
 
     revalidatePath(`/zone/${record.zone_id}`);
@@ -258,9 +258,9 @@ export async function bulkToggleDNSRecordStatus(
         type: record.type,
         value: record.value,
         ttl: record.ttl,
-        priority: record.priority,
+        priority: record.priority ?? undefined,
         active,
-        comment: record.comment
+        comment: record.comment ?? undefined
       });
       results.success++;
     } catch (error) {

@@ -160,6 +160,11 @@ export default function OrganizationBillingPage() {
   const handleSelectPlan = async (planCode: string, priceId: string) => {
     setShowPlanModal(false);
 
+    if (!orgId) {
+      addToast('error', 'Organization ID is required');
+      return;
+    }
+
     // Check if downgrading to free/starter plan
     if (planCode === 'free' || planCode === 'starter') {
       // Downgrading to Starter (free) - handle via customer portal

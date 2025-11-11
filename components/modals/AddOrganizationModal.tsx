@@ -65,7 +65,6 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
           const data = await organizationsApi.create({
             name: name.trim(),
             description: description.trim() || undefined,
-            plan_code: selectedPlan.code,
           });
 
           organizationId = data.id;
