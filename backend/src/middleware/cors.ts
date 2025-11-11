@@ -6,11 +6,6 @@ import { env } from "../config/env";
  */
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or Postman)
-    if (!origin) {
-      return callback(null, true);
-    }
-
     // Build allowed origins based on environment
     const allowedOrigins: string[] = [];
     
@@ -27,11 +22,23 @@ export const corsMiddleware = cors({
       );
     }
 
-    // Log for debugging (remove in production if desired)
+    // Log for debugging in development
     if (env.nodeEnv === "development") {
       console.log(`CORS check: origin=${origin}, allowed=${allowedOrigins.join(", ")}`);
     }
 
+    // Handle requests with no origin header
+    if (!origin) {
+      // In development, allow no-origin requests (for Postman, curl, etc.)
+      if (env.nodeEnv === "development") {
+        return callback(null, true);
+      }
+      // In production, reject no-origin requests for security
+      console.warn('CORS blocked: No origin header in production');
+      return callback(new Error('Origin header required'));
+    }
+
+    // Check if origin is in allowed list
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {

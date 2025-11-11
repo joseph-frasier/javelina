@@ -8,7 +8,10 @@
 import { createClient } from '@/lib/supabase/client';
 
 // API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// In production (Vercel), use relative URLs (same domain via rewrites)
+// In development, use localhost:3001 (Express backend)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
 
 // Error class for API errors
 export class ApiError extends Error {

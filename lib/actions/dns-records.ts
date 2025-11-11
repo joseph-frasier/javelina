@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
 
 /**
  * Create a new DNS record
