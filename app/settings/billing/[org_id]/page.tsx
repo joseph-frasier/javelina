@@ -88,15 +88,9 @@ export default function OrganizationBillingPage() {
     if (!orgId) return;
 
     try {
-      const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
-      
-      if (!response.ok) {
-        console.error('Failed to fetch plan:', response.status, response.statusText);
-        setCurrentPlanCode('free');
-        return;
-      }
-
-      const data = await response.json();
+      // Use the API client to route through the Express backend
+      const { subscriptionsApi } = await import('@/lib/api-client');
+      const data = await subscriptionsApi.getCurrent(orgId);
 
       // Check if we have subscription data with a plan_code
       if (data.subscription && data.subscription.plan_code) {
