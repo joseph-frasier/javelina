@@ -72,25 +72,22 @@ interface DbPlan {
  */
 function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
   // Group plans by their base code (e.g., 'basic_monthly' and 'basic_annual' -> 'basic')
-  const planGroups = new Map<string, { monthly?: DbPlan; annual?: DbPlan; free?: DbPlan }>();
+  const planGroups = new Map<string, { monthly?: DbPlan; annual?: DbPlan }>();
   
   dbPlans.forEach(dbPlan => {
     let baseCode: string;
-    let interval: 'monthly' | 'annual' | 'free';
+    let interval: 'monthly' | 'annual';
     
-    // Handle 'free' code (Starter plan - free tier)
-    if (dbPlan.code === 'free') {
-      baseCode = 'starter'; // Use 'starter' as the normalized code
-      interval = 'free';
-    } else if (dbPlan.code.endsWith('_monthly')) {
+    if (dbPlan.code.endsWith('_monthly')) {
       baseCode = dbPlan.code.replace('_monthly', '');
       interval = 'monthly';
     } else if (dbPlan.code.endsWith('_annual')) {
       baseCode = dbPlan.code.replace('_annual', '');
       interval = 'annual';
     } else {
+      // Fallback for any other format
       baseCode = dbPlan.code;
-      interval = 'monthly'; // default
+      interval = 'monthly';
     }
     
     const group = planGroups.get(baseCode) || {};
@@ -102,8 +99,8 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
   const plans: Plan[] = [];
   
   planGroups.forEach((group, baseCode) => {
-    // Use monthly plan as the primary source, or annual if monthly doesn't exist, or free
-    const primary = group.monthly || group.annual || group.free;
+    // Use monthly plan as the primary source, or annual if monthly doesn't exist
+    const primary = group.monthly || group.annual;
     if (!primary) return;
     
     // Extract entitlements
@@ -166,8 +163,8 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
     plans.push(plan);
   });
   
-  // Sort plans by order: starter (free), basic, pro, enterprise
-  const order = ['starter', 'free', 'basic', 'pro', 'enterprise'];
+  // Sort plans by order: starter, basic, pro, enterprise
+  const order = ['starter', 'basic', 'pro', 'enterprise'];
   plans.sort((a, b) => {
     const aIndex = order.indexOf(a.id);
     const bIndex = order.indexOf(b.id);
@@ -232,8 +229,6 @@ function buildFeaturesList(planId: string, entitlements: Map<string, string>): P
   
   if (entitlements.get('priority_support') === 'true') {
     features.push({ name: 'Priority Support', included: true });
-  } else if (planId === 'starter' || planId === 'free') {
-    features.push({ name: 'Community Support', included: true });
   } else {
     features.push({ name: 'Email Support', included: true });
   }

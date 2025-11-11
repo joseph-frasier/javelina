@@ -100,18 +100,20 @@ function PricingContent() {
     // Organization created successfully
     if (!selectedPlanForOrg) return;
 
-    if (selectedPlanForOrg.id === 'starter' || selectedPlanForOrg.id === 'free') {
-      // Starter (free) plan - redirect to organization dashboard
-      addToast('success', 'Welcome to Javelina Starter!');
-      router.push(`/organization/${orgId}`);
+    if (selectedPlanForOrg.id === 'enterprise') {
+      // Enterprise plan - redirect to contact/sales
+      addToast('info', 'Please contact our sales team for Enterprise pricing');
+      return;
+    }
+
+    // All plans (including Starter) go through checkout
+    const planConfig = PLANS_CONFIG.find(p => p.id === selectedPlanForOrg.id);
+    if (planConfig && planConfig.monthly) {
+      router.push(
+        `/checkout?org_id=${orgId}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=month`
+      );
     } else {
-      // Paid plan - redirect to checkout
-      const planConfig = PLANS_CONFIG.find(p => p.id === selectedPlanForOrg.id);
-      if (planConfig && planConfig.monthly) {
-        router.push(
-          `/checkout?org_id=${orgId}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=month`
-        );
-      }
+      addToast('error', 'Unable to proceed to checkout. Please try again.');
     }
 
     // Clean up
@@ -285,10 +287,10 @@ function PricingContent() {
             </div>
             <div className="bg-white rounded-lg border border-gray-light p-4">
               <h3 className="text-base font-bold text-orange-dark mb-1">
-                Is there a free trial?
+                Do you offer a money-back guarantee?
               </h3>
               <p className="text-sm text-gray-slate font-regular">
-                Our Free plan is available forever with no credit card required. It&apos;s a great way to get started and see real results before choosing a paid plan.
+                Yes! All plans come with a 14-day money-back guarantee. If you&apos;re not satisfied with Javelina, we&apos;ll refund your payment in full, no questions asked.
               </p>
             </div>
           </div>

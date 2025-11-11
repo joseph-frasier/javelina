@@ -165,16 +165,8 @@ export default function OrganizationBillingPage() {
       return;
     }
 
-    // Check if downgrading to free/starter plan
-    if (planCode === 'free' || planCode === 'starter') {
-      // Downgrading to Starter (free) - handle via customer portal
-      addToast('info', 'Please use the billing portal to downgrade to the Starter plan');
-      handleManageBilling();
-      return;
-    }
-
     // Check if this is an upgrade/downgrade (has existing subscription) or new subscription
-    if (currentPlanCode && currentPlanCode !== 'free' && currentPlanCode !== 'starter') {
+    if (currentPlanCode && currentPlanCode !== 'free') {
       // Existing subscription - update it instead of creating new one
       try {
         addToast('info', 'Updating your subscription...');
@@ -192,13 +184,14 @@ export default function OrganizationBillingPage() {
       }
     } else {
       // No existing subscription - redirect to checkout for new subscription
-      const plan = {
-        name: planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        price: planCode === 'basic_monthly' ? 3.50 : planCode === 'pro_monthly' ? 6.70 : 450,
-      };
+      // Get price from PLANS_CONFIG for accuracy
+      const { PLANS_CONFIG } = await import('@/lib/plans-config');
+      const planConfig = PLANS_CONFIG.find(p => p.code === planCode || `${p.id}_monthly` === planCode);
+      const planPrice = planConfig?.monthly?.amount || 0;
+      const planName = planConfig?.name || planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
       router.push(
-        `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
+        `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(planName)}&plan_price=${planPrice}&billing_interval=month`
       );
     }
   };

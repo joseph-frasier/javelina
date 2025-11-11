@@ -123,10 +123,10 @@ export function SubscriptionManager({
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="text-xl font-bold text-orange-dark">
-              {subscription?.plan?.name || 'Free Plan'}
+              {subscription?.plan?.name || 'Current Plan'}
             </h3>
             <p className="text-sm text-gray-slate mt-1">
-              {subscription?.plan?.metadata?.description || 'Perfect for getting started'}
+              {subscription?.plan?.metadata?.description || 'Loading plan details...'}
             </p>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
