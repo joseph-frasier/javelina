@@ -9,11 +9,17 @@ In production, the backend runs as Vercel serverless functions, and all `/api/*`
 
 ## Changes Made
 
-### 1. Updated Vercel Configuration (`vercel.json`)
-- Routes all `/api/*` requests to the Express backend
-- Backend runs as serverless functions via `@vercel/node`
+### 1. Created Next.js API Catch-All Route (`app/api/[...slug]/route.ts`)
+- Wraps the Express backend using `@vendia/serverless-express`
+- Handles all `/api/*` requests as Vercel serverless functions
+- Express app runs in Node.js runtime (not Edge)
 
-### 2. Updated API Client Configuration
+### 2. Updated Backend for Serverless (`backend/src/index.ts`)
+- Only calls `app.listen()` when run directly (not in serverless)
+- Exports Express app for import by Next.js API route
+- Compatible with both traditional server and serverless environments
+
+### 3. Updated API Client Configuration
 The following files now detect production and use relative URLs:
 - `lib/api-client.ts`
 - `lib/actions/zones.ts`
@@ -23,7 +29,7 @@ The following files now detect production and use relative URLs:
 
 **Behavior:**
 - **Development**: Calls `http://localhost:3001/api/*` (Express server)
-- **Production**: Calls `/api/*` (same domain, routed to serverless backend)
+- **Production**: Calls `/api/*` (same domain, routed to Next.js API route → Express)
 
 ## Required Vercel Environment Variables
 
@@ -85,11 +91,15 @@ User Browser
     ↓
 https://javelina-pi.vercel.app/api/environments
     ↓
-Vercel Rewrite (vercel.json)
+Next.js Routing (App Router)
     ↓
-/backend/src/index.ts (Serverless Function)
+/app/api/[...slug]/route.ts (Catch-all API Route)
     ↓
-Express App Handler
+@vendia/serverless-express (Adapter)
+    ↓
+Express App (backend/src/index.ts)
+    ↓
+Express Route Handler
     ↓
 Response
 ```

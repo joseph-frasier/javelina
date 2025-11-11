@@ -48,34 +48,38 @@ app.use(notFoundHandler);
 // Global error handler (must be last)
 app.use(errorHandler);
 
-// Start server
-const PORT = env.port;
-const server = app.listen(PORT, () => {
-  console.log("=".repeat(50));
-  console.log("🚀 Javelina Backend API Server");
-  console.log("=".repeat(50));
-  console.log(`Environment: ${env.nodeEnv}`);
-  console.log(`Port: ${PORT}`);
-  console.log(`URL: http://localhost:${PORT}`);
-  console.log(`Health: http://localhost:${PORT}/api/health`);
-  console.log("=".repeat(50));
-});
-
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM signal received: closing HTTP server");
-  server.close(() => {
-    console.log("HTTP server closed");
-    process.exit(0);
+// Only start server if running directly (not imported as serverless function)
+// In Vercel, this file is imported by the Next.js API route, so we skip the listen()
+if (require.main === module) {
+  const PORT = env.port;
+  const server = app.listen(PORT, () => {
+    console.log("=".repeat(50));
+    console.log("🚀 Javelina Backend API Server");
+    console.log("=".repeat(50));
+    console.log(`Environment: ${env.nodeEnv}`);
+    console.log(`Port: ${PORT}`);
+    console.log(`URL: http://localhost:${PORT}`);
+    console.log(`Health: http://localhost:${PORT}/api/health`);
+    console.log("=".repeat(50));
   });
-});
 
-process.on("SIGINT", () => {
-  console.log("SIGINT signal received: closing HTTP server");
-  server.close(() => {
-    console.log("HTTP server closed");
-    process.exit(0);
+  // Graceful shutdown
+  process.on("SIGTERM", () => {
+    console.log("SIGTERM signal received: closing HTTP server");
+    server.close(() => {
+      console.log("HTTP server closed");
+      process.exit(0);
+    });
   });
-});
 
+  process.on("SIGINT", () => {
+    console.log("SIGINT signal received: closing HTTP server");
+    server.close(() => {
+      console.log("HTTP server closed");
+      process.exit(0);
+    });
+  });
+}
+
+// Export the Express app for use in serverless environments
 export default app;
