@@ -28,13 +28,9 @@ export function SubscriptionManager({
       setLoading(true);
       setError(null);
 
-      // Fetch subscription
-      const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch subscription');
-      }
+      // Fetch subscription via API client to route through Express backend
+      const { subscriptionsApi } = await import('@/lib/api-client');
+      const data = await subscriptionsApi.getCurrent(orgId);
 
       console.log('SubscriptionManager received data:', data);
       console.log('Plan object:', data.plan);
