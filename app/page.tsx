@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const organizations = user?.organizations || [];
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [aggregateStats, setAggregateStats] = useState({
     totalOrgs: organizations.length,
     totalEnvironments: 0,
@@ -20,35 +21,32 @@ export default function DashboardPage() {
   
   useEffect(() => {
     const fetchCounts = async () => {
-      if (organizations.length === 0) return;
+      if (organizations.length === 0) {
+        setIsLoadingStats(false);
+        return;
+      }
       
+      setIsLoadingStats(true);
       try {
-        const orgIds = organizations.map(org => org.id);
+        // Fetch all environments ONCE (backend already filters by user access)
+        const allEnvironments = await environmentsApi.list();
         
-        // Fetch environments for all user's organizations
-        const environmentsData = await Promise.all(
-          orgIds.map(orgId => environmentsApi.list(orgId).catch(() => []))
-        );
-        const allEnvironments = environmentsData.flat();
-        const envCount = allEnvironments.length;
+        // Fetch all zones ONCE (backend already filters by user access)
+        const allZones = await zonesApi.list();
         
-        // Fetch zones for all environments
-        const zonesData = await Promise.all(
-          allEnvironments.map(env => 
-            zonesApi.list(env.organization_id, env.id).catch(() => [])
-          )
-        );
-        const allZones = zonesData.flat();
-        const zoneCount = allZones.filter((zone: any) => !zone.deleted_at).length;
+        // Filter out deleted zones
+        const activeZones = allZones.filter((zone: any) => !zone.deleted_at);
         
         setAggregateStats({
           totalOrgs: organizations.length,
-          totalEnvironments: envCount,
-          totalZones: zoneCount
+          totalEnvironments: allEnvironments.length,
+          totalZones: activeZones.length
         });
       } catch (error) {
         console.error('Error fetching dashboard counts:', error);
         // Keep default stats on error
+      } finally {
+        setIsLoadingStats(false);
       }
     };
     
@@ -72,7 +70,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <StatCard
             title="Total Organizations"
-            value={aggregateStats.totalOrgs.toString()}
+            value={isLoadingStats ? "..." : aggregateStats.totalOrgs.toString()}
             change="Your organizations"
             changeType="neutral"
             icon={
@@ -94,7 +92,7 @@ export default function DashboardPage() {
 
           <StatCard
             title="Total Environments"
-            value={aggregateStats.totalEnvironments.toString()}
+            value={isLoadingStats ? "..." : aggregateStats.totalEnvironments.toString()}
             change="Across all orgs"
             changeType="neutral"
             icon={
@@ -116,7 +114,7 @@ export default function DashboardPage() {
 
           <StatCard
             title="Total DNS Zones"
-            value={aggregateStats.totalZones.toString()}
+            value={isLoadingStats ? "..." : aggregateStats.totalZones.toString()}
             change="+12 this month"
             changeType="positive"
             icon={

@@ -11,17 +11,32 @@ export const corsMiddleware = cors({
       return callback(null, true);
     }
 
-    // List of allowed origins
-    const allowedOrigins = [
-      env.frontendUrl,
-      "http://localhost:3000",
-      "http://localhost:3001",
-    ];
+    // Build allowed origins based on environment
+    const allowedOrigins: string[] = [];
+    
+    // Always add the configured frontend URL
+    allowedOrigins.push(env.frontendUrl);
+    
+    // In development, also allow localhost variants
+    if (env.nodeEnv === "development") {
+      allowedOrigins.push(
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001"
+      );
+    }
 
-    if (allowedOrigins.includes(origin) || env.nodeEnv === "development") {
+    // Log for debugging (remove in production if desired)
+    if (env.nodeEnv === "development") {
+      console.log(`CORS check: origin=${origin}, allowed=${allowedOrigins.join(", ")}`);
+    }
+
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
   credentials: true,

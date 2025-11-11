@@ -215,7 +215,7 @@ export const deleteOrganization = async (
     throw new ValidationError("Invalid organization ID");
   }
 
-  // Check if user has SuperAdmin rights
+  // Check if user has Admin or SuperAdmin rights
   const { data: membership } = await supabaseAdmin
     .from("organization_members")
     .select("role")
@@ -223,8 +223,8 @@ export const deleteOrganization = async (
     .eq("user_id", userId)
     .single();
 
-  if (!membership || membership.role !== "SuperAdmin") {
-    throw new ForbiddenError("Only SuperAdmin can delete organizations");
+  if (!membership || !["SuperAdmin", "Admin"].includes(membership.role)) {
+    throw new ForbiddenError("Only SuperAdmin or Admin can delete organizations");
   }
 
   const { error } = await supabaseAdmin
