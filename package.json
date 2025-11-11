@@ -4,9 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\" --names \"frontend,backend\" --prefix-colors \"cyan,magenta\"",
     "build": "next build",
+    "build:backend": "cd backend && npm run build",
+    "build:full": "npm run build && npm run build:backend",
     "start": "next start",
-    "lint": "next lint"
+    "start:backend": "cd backend && npm run start",
+    "start:full": "concurrently \"npm run start\" \"npm run start:backend\" --names \"frontend,backend\" --prefix-colors \"cyan,magenta\"",
+    "lint": "next lint",
+    "postinstall": "cd backend && npm install"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -35,6 +42,7 @@
     "@types/react-dom": "^19.0.3",
     "@types/stripe": "^8.0.416",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
     "eslint": "^9.37.0",
     "eslint-config-next": "^15.5.4",
     "postcss": "^8.4.49",
