@@ -7,7 +7,7 @@ import { AuthenticatedRequest, AuthError } from "../types";
  */
 export const authenticate = async (
   req: AuthenticatedRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
@@ -52,7 +52,7 @@ export const authenticate = async (
  */
 export const optionalAuthenticate = async (
   req: AuthenticatedRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {

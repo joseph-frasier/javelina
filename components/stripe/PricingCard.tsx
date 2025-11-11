@@ -66,7 +66,7 @@ export function PricingCard({
         onClick={() => onSelect(plan.id)}
         disabled={disabled}
       >
-        {plan.price === 0 ? 'Get Started Free' : 'Select Plan'}
+        Select Plan
       </Button>
 
       <div className="space-y-2.5">

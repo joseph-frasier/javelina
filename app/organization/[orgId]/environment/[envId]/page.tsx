@@ -2,6 +2,14 @@ import { EnvironmentClient } from './EnvironmentClient';
 import { createClient } from '@/lib/supabase/server';
 import { getUserRoleInOrganization } from '@/lib/api/roles';
 
+/**
+ * NOTE: This server component uses direct Supabase calls for data fetching.
+ * This is acceptable because:
+ * 1. Auth checks (getUser) should remain direct per architecture
+ * 2. Server components provide better initial load performance
+ * 3. All mutations (create/update/delete) go through Express API via server actions
+ */
+
 export default async function EnvironmentPage({
   params
 }: {

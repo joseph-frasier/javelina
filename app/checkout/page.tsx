@@ -59,17 +59,8 @@ function CheckoutContent() {
       try {
         setIsLoading(true);
 
-        const response = await fetch('/api/stripe/create-subscription-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ org_id, price_id }),
-        });
-
-        const data: SubscriptionIntent = await response.json();
-
-        if (!response.ok) {
-          throw new Error((data as any).error || 'Failed to create subscription');
-        }
+        const { stripeApi } = await import('@/lib/api-client');
+        const data = await stripeApi.createSubscription(org_id, price_id);
 
         setClientSecret(data.clientSecret);
         setFlow(data.flow);

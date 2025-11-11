@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build:full",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api/backend/:path*",
+      "destination": "/backend/src/:path*"
+    }
+  ]
+}
+

@@ -10,7 +10,7 @@ import Dropdown from '@/components/ui/Dropdown';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { ExportButton } from '@/components/admin/ExportButton';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 
@@ -56,22 +56,7 @@ export default function AdminAuditPage() {
 
   const fetchAuditLogs = useCallback(async () => {
     try {
-      const client = createServiceRoleClient();
-      
-      // If no client (development mode without backend), just show empty data
-      if (!client) {
-        setLogs([]);
-        setLoading(false);
-        return;
-      }
-      
-      const { data, error } = await client
-        .from('audit_logs')
-        .select('*, profiles:user_id(name, email)')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-
-      if (error) throw error;
+      const data = await adminApi.getAuditLogs();
       setLogs((data || []) as AuditLog[]);
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);

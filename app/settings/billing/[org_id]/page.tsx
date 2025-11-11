@@ -88,15 +88,9 @@ export default function OrganizationBillingPage() {
     if (!orgId) return;
 
     try {
-      const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
-      
-      if (!response.ok) {
-        console.error('Failed to fetch plan:', response.status, response.statusText);
-        setCurrentPlanCode('free');
-        return;
-      }
-
-      const data = await response.json();
+      // Use the API client to route through the Express backend
+      const { subscriptionsApi } = await import('@/lib/api-client');
+      const data = await subscriptionsApi.getCurrent(orgId);
 
       // Check if we have subscription data with a plan_code
       if (data.subscription && data.subscription.plan_code) {
@@ -128,19 +122,8 @@ export default function OrganizationBillingPage() {
     }
 
     try {
-      const response = await fetch('/api/stripe/create-portal-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ org_id: orgId }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Failed to create portal session:', response.status, errorText);
-        throw new Error('Failed to create portal session');
-      }
-
-      const data = await response.json();
+      const { stripeApi } = await import('@/lib/api-client');
+      const data = await stripeApi.createPortalSession(orgId);
 
       // Redirect to Stripe Customer Portal
       window.location.href = data.url;
@@ -171,10 +154,8 @@ export default function OrganizationBillingPage() {
   const handleSelectPlan = async (planCode: string, priceId: string) => {
     setShowPlanModal(false);
 
-    if (planCode === 'free') {
-      // Downgrading to free - handle via customer portal
-      addToast('info', 'Please use the billing portal to downgrade to free');
-      handleManageBilling();
+    if (!orgId) {
+      addToast('error', 'Organization ID is required');
       return;
     }
 
@@ -184,22 +165,8 @@ export default function OrganizationBillingPage() {
       try {
         addToast('info', 'Updating your subscription...');
         
-        const response = await fetch('/api/stripe/update-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            org_id: orgId,
-            new_price_id: priceId,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Failed to update subscription:', response.status, errorText);
-          throw new Error('Failed to update subscription');
-        }
-
-        const data = await response.json();
+        const { stripeApi } = await import('@/lib/api-client');
+        await stripeApi.updateSubscription(orgId, priceId);
 
         addToast('success', 'Subscription updated successfully!');
         
@@ -211,13 +178,14 @@ export default function OrganizationBillingPage() {
       }
     } else {
       // No existing subscription - redirect to checkout for new subscription
-      const plan = {
-        name: planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        price: planCode === 'basic_monthly' ? 3.50 : planCode === 'pro_monthly' ? 6.70 : 450,
-      };
+      // Get price from PLANS_CONFIG for accuracy
+      const { PLANS_CONFIG } = await import('@/lib/plans-config');
+      const planConfig = PLANS_CONFIG.find(p => p.code === planCode || `${p.id}_monthly` === planCode);
+      const planPrice = planConfig?.monthly?.amount || 0;
+      const planName = planConfig?.name || planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
       router.push(
-        `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
+        `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(planName)}&plan_price=${planPrice}&billing_interval=month`
       );
     }
   };

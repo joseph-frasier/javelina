@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
 import Button from '@/components/ui/Button';
-import { PLANS, useSubscriptionStore } from '@/lib/subscription-store';
+import { useSubscriptionStore, type PlanId } from '@/lib/subscription-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
-import { getPlanById } from '@/lib/plans-config';
+import { getPlanById, fetchPlans, PLANS_CONFIG } from '@/lib/plans-config';
 import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
 import { gsap } from 'gsap';
@@ -26,10 +26,25 @@ function PricingContent() {
   // Refs for GSAP animation
   const contentRef = useRef<HTMLDivElement>(null);
   const [isInitialMount, setIsInitialMount] = useState(true);
+  const [plansLoaded, setPlansLoaded] = useState(false);
   
   // Modal state
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [selectedPlanForOrg, setSelectedPlanForOrg] = useState<Plan | null>(null);
+  
+  // Fetch plans from database on mount
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        await fetchPlans();
+        setPlansLoaded(true);
+      } catch (error) {
+        console.error('Failed to load plans:', error);
+        addToast('error', 'Failed to load pricing plans');
+      }
+    };
+    loadPlans();
+  }, [addToast]);
   
   // GSAP page transition animation on mount
   useEffect(() => {
@@ -69,14 +84,14 @@ function PricingContent() {
     }
 
     // Get the full plan configuration
-    const plan = getPlanById(planId);
+    const plan = getPlanById(PLANS_CONFIG, planId);
     if (!plan) {
       addToast('error', 'Invalid plan selected');
       return;
     }
 
     // Store selected plan and show organization creation modal
-    selectPlan(planId as 'free' | 'basic' | 'pro');
+    selectPlan(planId as PlanId);
     setSelectedPlanForOrg(plan);
     setShowOrgModal(true);
   };
@@ -85,24 +100,38 @@ function PricingContent() {
     // Organization created successfully
     if (!selectedPlanForOrg) return;
 
-    if (selectedPlanForOrg.id === 'free') {
-      // Free plan - redirect to organization dashboard
-      addToast('success', 'Welcome to Javelina Free!');
-      router.push(`/organization/${orgId}`);
+    if (selectedPlanForOrg.id === 'enterprise') {
+      // Enterprise plan - redirect to contact/sales
+      addToast('info', 'Please contact our sales team for Enterprise pricing');
+      return;
+    }
+
+    // All plans (including Starter) go through checkout
+    const planConfig = PLANS_CONFIG.find(p => p.id === selectedPlanForOrg.id);
+    if (planConfig && planConfig.monthly) {
+      router.push(
+        `/checkout?org_id=${orgId}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=month`
+      );
     } else {
-      // Paid plan - redirect to checkout
-      const plan = PLANS.find(p => p.id === selectedPlanForOrg.id);
-      if (plan) {
-        router.push(
-          `/checkout?org_id=${orgId}&price_id=${plan.priceId}&plan_name=${encodeURIComponent(plan.name)}&plan_price=${plan.price}&billing_interval=month`
-        );
-      }
+      addToast('error', 'Unable to proceed to checkout. Please try again.');
     }
 
     // Clean up
     setShowOrgModal(false);
     setSelectedPlanForOrg(null);
   };
+
+  // Show loading state while plans are being fetched
+  if (!plansLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+          <span className="text-orange-dark">Loading pricing plans...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-orange-light">
@@ -158,19 +187,31 @@ function PricingContent() {
 
         {/* Pricing Cards Grid - Top 3 Plans */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {PLANS.filter(plan => plan.id !== 'enterprise').map((plan) => (
-            <PricingCard
-              key={plan.id}
-              plan={plan}
-              highlighted={plan.popular}
-              onSelect={handleSelectPlan}
-              hidePrice={false}
-            />
-          ))}
+          {PLANS_CONFIG.filter(plan => plan.id !== 'enterprise').map((plan) => {
+            const planForCard = {
+              id: plan.id,
+              name: plan.name,
+              price: plan.monthly?.amount || 0,
+              priceId: plan.monthly?.priceId || '',
+              interval: 'month' as const,
+              features: plan.features.filter(f => f.included).map(f => f.name),
+              description: plan.description,
+              popular: plan.popular,
+            };
+            return (
+              <PricingCard
+                key={plan.id}
+                plan={planForCard}
+                highlighted={plan.popular}
+                onSelect={handleSelectPlan}
+                hidePrice={false}
+              />
+            );
+          })}
         </div>
 
         {/* Enterprise Plan - Bottom Section */}
-        {PLANS.filter(plan => plan.id === 'enterprise').map((plan) => (
+        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (
           <div key={plan.id} className="mb-8 bg-white rounded-xl p-4 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               {/* Left: Plan Info */}
@@ -182,7 +223,7 @@ function PricingContent() {
                   {plan.description}
                 </p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-                  {plan.features.map((feature, index) => (
+                  {plan.features.filter(f => f.included).map((feature, index) => (
                     <div key={index} className="flex items-start">
                       <svg
                         className="w-4 h-4 text-orange mr-2 flex-shrink-0 mt-0.5"
@@ -198,7 +239,7 @@ function PricingContent() {
                         />
                       </svg>
                       <span className="text-xs text-gray-slate font-regular">
-                        {feature}
+                        {feature.name}
                       </span>
                     </div>
                   ))}
@@ -246,10 +287,10 @@ function PricingContent() {
             </div>
             <div className="bg-white rounded-lg border border-gray-light p-4">
               <h3 className="text-base font-bold text-orange-dark mb-1">
-                Is there a free trial?
+                Do you offer a money-back guarantee?
               </h3>
               <p className="text-sm text-gray-slate font-regular">
-                Our Free plan is available forever with no credit card required. It&apos;s a great way to get started and see real results before choosing a paid plan.
+                Yes! All plans come with a 14-day money-back guarantee. If you&apos;re not satisfied with Javelina, we&apos;ll refund your payment in full, no questions asked.
               </p>
             </div>
           </div>

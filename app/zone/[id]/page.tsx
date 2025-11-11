@@ -1,6 +1,14 @@
 import { ZoneDetailClient } from '@/app/zone/[id]/ZoneDetailClient';
 import { createClient } from '@/lib/supabase/server';
 
+/**
+ * NOTE: This server component uses direct Supabase calls for data fetching.
+ * This is acceptable because:
+ * 1. Auth checks should remain direct per architecture
+ * 2. Server components provide better initial load performance
+ * 3. All mutations (create/update/delete) go through Express API via server actions
+ */
+
 // Mock DNS records data
 const mockZoneData: Record<string, any> = {
   'zone_company_prod_1': {

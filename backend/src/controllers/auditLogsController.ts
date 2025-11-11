@@ -26,7 +26,8 @@ export const listAuditLogs = async (
     .eq("user_id", userId);
 
   if (!userOrgs || userOrgs.length === 0) {
-    return sendSuccess(res, []);
+    sendSuccess(res, []);
+    return;
   }
 
   const orgIds = userOrgs.map((o) => o.organization_id);
@@ -88,7 +89,6 @@ export const getResourceAuditLogs = async (
   res: Response
 ): Promise<void> => {
   const { resourceId } = req.params;
-  const userId = req.user!.id;
   const { table_name } = req.query;
 
   if (!validateUUID(resourceId)) {
@@ -147,7 +147,8 @@ export const getUserAuditLogs = async (
     .eq("user_id", userId);
 
   if (!userOrgs || userOrgs.length === 0) {
-    return sendSuccess(res, []);
+    sendSuccess(res, []);
+    return;
   }
 
   const { data, error, count } = await supabaseAdmin

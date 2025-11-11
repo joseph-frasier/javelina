@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -60,6 +61,7 @@ export function EnvironmentClient({
   envId 
 }: EnvironmentClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { selectAndExpand } = useHierarchyStore();
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -152,6 +154,8 @@ export function EnvironmentClient({
   ];
 
   const handleZoneSuccess = (zoneId: string) => {
+    // Invalidate React Query cache to update sidebar immediately
+    queryClient.invalidateQueries({ queryKey: ['zones', envId] });
     // Auto-expand and select
     selectAndExpand(orgId, envId);
     // Navigate to the new zone page

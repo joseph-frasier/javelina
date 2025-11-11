@@ -3,158 +3,117 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 export async function createOrganization(formData: { 
   name: string
   description?: string 
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { error: 'Not authenticated' }
+  try {
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/organizations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        description: formData.description
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to create organization');
+    }
+
+    const org = data.data || data;
+    
+    revalidatePath('/')
+    return { data: org }
+  } catch (error: any) {
+    return { error: error.message || 'Failed to create organization' }
   }
-  
-  // Create organization
-  const { data: org, error: orgError } = await supabase
-    .from('organizations')
-    .insert({ 
-      name: formData.name, 
-      description: formData.description,
-      owner_id: user.id
-    })
-    .select()
-    .single()
-  
-  if (orgError) {
-    return { error: orgError.message }
-  }
-  
-  // Add creator as Admin
-  const { error: memberError } = await supabase
-    .from('organization_members')
-    .insert({
-      organization_id: org.id,
-      user_id: user.id,
-      role: 'Admin',
-      environments_count: 0,
-      zones_count: 0
-    })
-  
-  if (memberError) {
-    return { error: memberError.message }
-  }
-  
-  revalidatePath('/')
-  return { data: org }
 }
 
 export async function updateOrganization(
   id: string, 
   formData: { name: string; description?: string }
 ) {
-  const supabase = await createClient()
-  
-  // First, check if user has permission to update this organization
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-  
-  // Verify user has permission by checking membership
-  const { data: membership, error: memberError } = await supabase
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', id)
-    .eq('user_id', user.id)
-    .single()
-  
-  if (memberError || !membership) {
-    return { error: 'You do not have access to this organization' }
-  }
-  
-  if (!['SuperAdmin', 'Admin'].includes(membership.role)) {
-    return { error: 'You do not have permission to update this organization. Only SuperAdmin and Admin roles can edit organizations.' }
-  }
-  
-  // Perform the update
-  const { data: updateData, error, count } = await supabase
-    .from('organizations')
-    .update({ 
-      name: formData.name, 
-      description: formData.description,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-  
-  if (error) {
-    return { error: error.message }
-  }
-  
-  if (!updateData || updateData.length === 0) {
-    return { error: 'Failed to update organization. Please check your permissions.' }
-  }
-  
-  // Fetch the updated organization
-  const { data: org, error: fetchError } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('id', id)
-    .single()
-  
-  if (fetchError || !org) {
-    // Update succeeded but fetch failed - still return success
+  try {
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/organizations/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        description: formData.description
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to update organization');
+    }
+
+    const org = data.data || data;
+    
     revalidatePath(`/organization/${id}`)
     revalidatePath('/')
-    return { data: { id, name: formData.name, description: formData.description } }
+    return { data: org }
+  } catch (error: any) {
+    return { error: error.message || 'Failed to update organization' }
   }
-  
-  revalidatePath(`/organization/${id}`)
-  revalidatePath('/')
-  return { data: org }
 }
 
 export async function deleteOrganization(id: string) {
-  const supabase = await createClient()
-  
-  // First, check if user has permission
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-  
-  // Verify user has SuperAdmin or Admin permission
-  const { data: membership, error: memberError } = await supabase
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', id)
-    .eq('user_id', user.id)
-    .single()
-  
-  if (memberError || !membership) {
-    return { error: 'You do not have access to this organization' }
-  }
-  
-  if (!['SuperAdmin', 'Admin'].includes(membership.role)) {
-    return { error: 'You do not have permission to delete this organization. Only SuperAdmin and Admin roles can delete organizations.' }
-  }
-  
-  // Attempt to delete the organization
-  const { error, count } = await supabase
-    .from('organizations')
-    .delete({ count: 'exact' })
-    .eq('id', id)
-  
-  if (error) {
-    return { error: error.message }
-  }
-  
-  // Check if any rows were actually deleted
-  if (count === 0) {
-    return { error: 'Failed to delete organization. It may have already been deleted or you lack permission.' }
-  }
-  
-  revalidatePath('/')
-  return { success: true }
-}
+  try {
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
 
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/organizations/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || data.message || 'Failed to delete organization');
+    }
+    
+    revalidatePath('/')
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message || 'Failed to delete organization' }
+  }
+}

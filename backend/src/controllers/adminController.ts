@@ -321,3 +321,191 @@ export const getAllAuditLogs = async (
     total: count || 0,
   });
 };
+
+/**
+ * PUT /api/admin/users/:id/disable
+ * Disable a user (superuser only)
+ */
+export const disableUser = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  if (!validateUUID(id)) {
+    throw new ValidationError("Invalid user ID");
+  }
+
+  const isSuperuser = await checkSuperuser(userId);
+  if (!isSuperuser) {
+    throw new ForbiddenError("This endpoint requires superuser access");
+  }
+
+  // Prevent self-disable
+  if (id === userId) {
+    throw new ValidationError("You cannot disable your own account");
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({ status: "disabled" })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to disable user: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new NotFoundError("User not found");
+  }
+
+  sendSuccess(res, data, "User disabled successfully");
+};
+
+/**
+ * PUT /api/admin/users/:id/enable
+ * Enable a user (superuser only)
+ */
+export const enableUser = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  if (!validateUUID(id)) {
+    throw new ValidationError("Invalid user ID");
+  }
+
+  const isSuperuser = await checkSuperuser(userId);
+  if (!isSuperuser) {
+    throw new ForbiddenError("This endpoint requires superuser access");
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update({ status: "active" })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to enable user: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new NotFoundError("User not found");
+  }
+
+  sendSuccess(res, data, "User enabled successfully");
+};
+
+/**
+ * POST /api/admin/users/password-reset
+ * Send password reset email (superuser only)
+ */
+export const sendPasswordResetEmail = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ValidationError("Email is required");
+  }
+
+  const isSuperuser = await checkSuperuser(userId);
+  if (!isSuperuser) {
+    throw new ForbiddenError("This endpoint requires superuser access");
+  }
+
+  // Generate password reset link using Supabase Admin API
+  const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+    type: "recovery",
+    email: email,
+  });
+
+  if (error) {
+    throw new Error(`Failed to generate password reset link: ${error.message}`);
+  }
+
+  sendSuccess(res, { email, link: data.properties.action_link }, "Password reset email sent successfully");
+};
+
+/**
+ * POST /api/admin/organizations
+ * Create an organization (superuser only)
+ */
+export const createOrganization = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { name, description } = req.body;
+
+  if (!name || !name.trim()) {
+    throw new ValidationError("Organization name is required");
+  }
+
+  const isSuperuser = await checkSuperuser(userId);
+  if (!isSuperuser) {
+    throw new ForbiddenError("This endpoint requires superuser access");
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("organizations")
+    .insert({
+      name: name.trim(),
+      description: description?.trim() || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to create organization: ${error.message}`);
+  }
+
+  sendSuccess(res, data, "Organization created successfully", 201);
+};
+
+/**
+ * PUT /api/admin/organizations/:id/soft-delete
+ * Soft delete an organization (superuser only)
+ */
+export const softDeleteOrganization = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  if (!validateUUID(id)) {
+    throw new ValidationError("Invalid organization ID");
+  }
+
+  const isSuperuser = await checkSuperuser(userId);
+  if (!isSuperuser) {
+    throw new ForbiddenError("This endpoint requires superuser access");
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("organizations")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to soft delete organization: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new NotFoundError("Organization not found");
+  }
+
+  sendSuccess(res, data, "Organization soft deleted successfully");
+};
