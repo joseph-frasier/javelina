@@ -412,24 +412,96 @@ export const adminApi = {
   },
 
   /**
+   * Get system stats
+   */
+  getStats: () => {
+    return apiClient.get('/admin/stats');
+  },
+
+  /**
    * List all users (admin only)
    */
-  listUsers: () => {
-    return apiClient.get('/admin/users');
+  listUsers: (params?: { page?: number; limit?: number; search?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.search) query.append('search', params.search);
+    const queryString = query.toString();
+    return apiClient.get(`/admin/users${queryString ? `?${queryString}` : ''}`);
+  },
+
+  /**
+   * Disable a user
+   */
+  disableUser: (userId: string) => {
+    return apiClient.put(`/admin/users/${userId}/disable`);
+  },
+
+  /**
+   * Enable a user
+   */
+  enableUser: (userId: string) => {
+    return apiClient.put(`/admin/users/${userId}/enable`);
+  },
+
+  /**
+   * Send password reset email
+   */
+  sendPasswordReset: (email: string) => {
+    return apiClient.post('/admin/users/password-reset', { email });
+  },
+
+  /**
+   * Delete a user
+   */
+  deleteUser: (userId: string) => {
+    return apiClient.delete(`/admin/users/${userId}`);
+  },
+
+  /**
+   * Update user role
+   */
+  updateUserRole: (userId: string, role: string) => {
+    return apiClient.put(`/admin/users/${userId}/role`, { role });
   },
 
   /**
    * List all organizations (admin only)
    */
-  listOrganizations: () => {
-    return apiClient.get('/admin/organizations');
+  listOrganizations: (params?: { page?: number; limit?: number; search?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.search) query.append('search', params.search);
+    const queryString = query.toString();
+    return apiClient.get(`/admin/organizations${queryString ? `?${queryString}` : ''}`);
+  },
+
+  /**
+   * Create an organization
+   */
+  createOrganization: (data: { name: string; description?: string }) => {
+    return apiClient.post('/admin/organizations', data);
+  },
+
+  /**
+   * Soft delete an organization
+   */
+  softDeleteOrganization: (orgId: string) => {
+    return apiClient.put(`/admin/organizations/${orgId}/soft-delete`);
   },
 
   /**
    * Get all audit logs (admin only)
    */
-  getAuditLogs: () => {
-    return apiClient.get('/admin/audit-logs');
+  getAuditLogs: (params?: { page?: number; limit?: number; table_name?: string; action?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.table_name) query.append('table_name', params.table_name);
+    if (params?.action) query.append('action', params.action);
+    const queryString = query.toString();
+    return apiClient.get(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`);
   },
 };
 
