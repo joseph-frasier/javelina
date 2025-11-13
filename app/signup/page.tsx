@@ -45,22 +45,19 @@ export default function SignupPage() {
   useLayoutEffect(() => {
     setMounted(true);
     if (window.innerWidth >= 768 && heroRef.current) {
-      // Start with hero covering the entire card (left: 0, width: 100%)
+      // Start with hero covering the entire card from the left
       gsap.set(heroRef.current, {
-        left: 0,
-        right: 'auto',
+        x: 0,
         width: '100%',
-        opacity: 1,
       });
 
-      // Animate to the right side after a brief delay
+      // Slide the hero to the right to reveal the form underneath
       gsap.to(heroRef.current, {
-        left: 'auto',
-        right: 0,
+        x: '40%', // Slides right by 40% (the width of the form section)
         width: '60%',
-        duration: 1,
+        duration: 1.2,
         delay: 0.5,
-        ease: 'power3.out',
+        ease: 'power3.inOut',
       });
     }
   }, []);
@@ -513,15 +510,15 @@ export default function SignupPage() {
           </div>
         </div>
 
-          {/* Hero Section - Right Side (slides over form initially) */}
+          {/* Hero Section - Slides from left to reveal form */}
           <div
             ref={heroRef}
-            className="absolute right-0 top-0 w-3/5 h-full overflow-hidden z-20"
+            className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
             {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark to-red-600 animate-gradient-shift">
-              <div className="absolute inset-0 opacity-30">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-400/40 via-transparent to-red-500/40 animate-gradient-slow"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange/90 via-orange-dark/80 to-orange-dark/90 animate-gradient-shift">
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 via-transparent to-orange/20 animate-gradient-slow"></div>
               </div>
             </div>
 
@@ -557,7 +554,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange via-orange-dark to-red-600',
+                'bg-gradient-to-br from-orange/90 via-orange-dark/80 to-orange-dark/90',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
