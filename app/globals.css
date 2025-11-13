@@ -86,7 +86,7 @@ header {
 
 /* Signup form specific background override */
 .theme-dark .signup-form-bg {
-  background-color: #94a3b8 !important;
+  background-color: #939ba6 !important;
 }
 
 @layer utilities {
