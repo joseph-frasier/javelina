@@ -45,18 +45,21 @@ export default function SignupPage() {
   useLayoutEffect(() => {
     setMounted(true);
     if (window.innerWidth >= 768 && heroRef.current) {
-      // Start with hero covering everything
+      // Start with hero covering the entire card (left: 0, width: 100%)
       gsap.set(heroRef.current, {
-        x: 0,
+        left: 0,
+        right: 'auto',
+        width: '100%',
         opacity: 1,
       });
 
-      // Animate to the right after a brief delay
+      // Animate to the right side after a brief delay
       gsap.to(heroRef.current, {
-        x: 0, // Moves to its natural position (right side)
-        opacity: 1,
+        left: 'auto',
+        right: 0,
+        width: '60%',
         duration: 1,
-        delay: 0.3,
+        delay: 0.5,
         ease: 'power3.out',
       });
     }
@@ -127,10 +130,11 @@ export default function SignupPage() {
   return (
     <>
       {/* Desktop Layout */}
-      <div className="hidden md:flex min-h-screen relative overflow-hidden">
-        {/* Form Section - Left Side */}
-        <div className="w-2/5 flex items-center justify-center px-8 py-12 bg-white dark:bg-gray-900 relative z-10">
-          <div className="w-full max-w-[420px]">
+      <div className="hidden md:flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-gray-900 dark:to-gray-800 px-8 py-12">
+        <div className="relative w-full max-w-6xl h-[700px] rounded-2xl shadow-2xl overflow-hidden">
+          {/* Form Section - Left Side */}
+          <div className="absolute left-0 top-0 w-2/5 h-full flex items-center justify-center px-8 py-12 bg-white dark:bg-gray-900 z-10 overflow-y-auto">
+            <div className="w-full max-w-[420px]">
             {successMessage ? (
               <div className="text-center">
                 <div className="mb-4">
@@ -509,30 +513,31 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* Hero Section - Right Side */}
-        <div
-          ref={heroRef}
-          className="w-3/5 relative overflow-hidden"
-        >
-          {/* Animated Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark to-red-600 animate-gradient-shift">
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-400/40 via-transparent to-red-500/40 animate-gradient-slow"></div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-12">
-            <div className="max-w-xl text-center animate-float">
-              <div className="mb-8">
-                <Logo width={400} height={160} priority className="mx-auto" />
+          {/* Hero Section - Right Side (slides over form initially) */}
+          <div
+            ref={heroRef}
+            className="absolute right-0 top-0 w-3/5 h-full overflow-hidden z-20"
+          >
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark to-red-600 animate-gradient-shift">
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-400/40 via-transparent to-red-500/40 animate-gradient-slow"></div>
               </div>
-              <h1 className="text-5xl font-black mb-6 leading-tight">
-                Take control of your DNS
-              </h1>
-              <p className="text-xl font-light text-white/90 leading-relaxed">
-                Manage zones, records, and environments with confidence
-              </p>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-12">
+              <div className="max-w-xl text-center animate-float">
+                <div className="mb-8">
+                  <Logo width={400} height={160} priority className="mx-auto" />
+                </div>
+                <h1 className="text-5xl font-black mb-6 leading-tight">
+                  Take control of your DNS
+                </h1>
+                <p className="text-xl font-light text-white/90 leading-relaxed">
+                  Manage zones, records, and environments with confidence
+                </p>
+              </div>
             </div>
           </div>
         </div>
