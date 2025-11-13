@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { environmentsApi, zonesApi } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
 import { formatDateWithRelative } from '@/lib/utils/time';
+import { createClient } from '@/lib/supabase/client';
 
 interface AuditLog {
   id: string;
@@ -51,10 +52,19 @@ export default function DashboardPage() {
         // Filter out deleted zones
         const activeZones = allZones.filter((zone: any) => !zone.deleted_at);
         
+        // Count zones created this month
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const zonesThisMonth = activeZones.filter((zone: any) => 
+          new Date(zone.created_at) >= startOfMonth
+        ).length;
+        
         setAggregateStats({
           totalOrgs: organizations.length,
           totalEnvironments: allEnvironments.length,
-          totalZones: activeZones.length
+          totalZones: activeZones.length,
+          zonesThisMonth: zonesThisMonth
         });
       } catch (error) {
         console.error('Error fetching dashboard counts:', error);
