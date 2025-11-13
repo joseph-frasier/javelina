@@ -15,8 +15,7 @@ import { ExportButton } from '@/components/admin/ExportButton';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
-import { disableUser, enableUser, sendPasswordResetEmail } from '@/lib/actions/admin/users';
+import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { generateMockUsers, getActivityStatus, getActivityBadge } from '@/lib/mock-admin-data';
@@ -73,22 +72,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const client = createServiceRoleClient();
-      
-      // If no client (development mode without backend), use mock data
-      if (!client) {
-        const mockUsers = generateMockUsers(50);
-        setUsers(mockUsers as any);
-        setLoading(false);
-        return;
-      }
-      
-      const { data, error } = await client
-        .from('profiles')
-        .select('*, organization_members(organization_id)')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await adminApi.listUsers();
       setUsers((data || []) as User[]);
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -274,15 +258,13 @@ export default function AdminUsersPage() {
     setActioningUserId(userId);
     setConfirmModal({ ...confirmModal, isOpen: false });
     try {
-      const result = await disableUser(userId);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'User disabled successfully');
-        setUsers((prevUsers) =>
-          prevUsers.map((u) => (u.id === userId ? { ...u, status: 'disabled' } : u))
-        );
-      }
+      await adminApi.disableUser(userId);
+      addToast('success', 'User disabled successfully');
+      setUsers((prevUsers) =>
+        prevUsers.map((u) => (u.id === userId ? { ...u, status: 'disabled' } : u))
+      );
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to disable user');
     } finally {
       setActioningUserId(null);
     }
@@ -292,15 +274,13 @@ export default function AdminUsersPage() {
     setActioningUserId(userId);
     setConfirmModal({ ...confirmModal, isOpen: false });
     try {
-      const result = await enableUser(userId);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'User enabled successfully');
-        setUsers((prevUsers) =>
-          prevUsers.map((u) => (u.id === userId ? { ...u, status: 'active' } : u))
-        );
-      }
+      await adminApi.enableUser(userId);
+      addToast('success', 'User enabled successfully');
+      setUsers((prevUsers) =>
+        prevUsers.map((u) => (u.id === userId ? { ...u, status: 'active' } : u))
+      );
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to enable user');
     } finally {
       setActioningUserId(null);
     }
@@ -317,12 +297,10 @@ export default function AdminUsersPage() {
     setActioningUserId(email);
     setConfirmModal({ ...confirmModal, isOpen: false });
     try {
-      const result = await sendPasswordResetEmail(email);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'Password reset email sent');
-      }
+      await adminApi.sendPasswordReset(email);
+      addToast('success', 'Password reset email sent');
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to send password reset email');
     } finally {
       setActioningUserId(null);
     }

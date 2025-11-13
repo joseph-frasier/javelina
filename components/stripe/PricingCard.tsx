@@ -59,7 +59,17 @@ export function PricingCard({
         </div>
       )}
 
-      <div className="space-y-2.5 mb-5 flex-grow">
+      <Button
+        variant={highlighted ? 'primary' : 'outline'}
+        size="md"
+        className="w-full mb-5"
+        onClick={() => onSelect(plan.id)}
+        disabled={disabled}
+      >
+        Select Plan
+      </Button>
+
+      <div className="space-y-2.5">
         <p className="text-xs font-medium text-orange-dark mb-3">
           What&apos;s included:
         </p>

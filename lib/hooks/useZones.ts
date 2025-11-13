@@ -20,6 +20,7 @@ export function useZones(environmentId: string | null) {
         .from('zones')
         .select('*')
         .eq('environment_id', environmentId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
       
       if (error) throw error;

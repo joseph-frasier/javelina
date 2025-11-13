@@ -21,12 +21,17 @@ function validateEnv(): EnvConfig {
     "SUPABASE_SERVICE_ROLE_KEY",
   ];
 
+  // In production, also require FRONTEND_URL
+  if (process.env.NODE_ENV === "production") {
+    required.push("FRONTEND_URL");
+  }
+
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}\n` +
-        "Please copy .env.example to .env and fill in the values."
+        "Please configure these in your environment."
     );
   }
 

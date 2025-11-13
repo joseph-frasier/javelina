@@ -28,13 +28,9 @@ export function SubscriptionManager({
       setLoading(true);
       setError(null);
 
-      // Fetch subscription
-      const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch subscription');
-      }
+      // Fetch subscription via API client to route through Express backend
+      const { subscriptionsApi } = await import('@/lib/api-client');
+      const data = await subscriptionsApi.getCurrent(orgId);
 
       console.log('SubscriptionManager received data:', data);
       console.log('Plan object:', data.plan);
@@ -123,10 +119,10 @@ export function SubscriptionManager({
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="text-xl font-bold text-orange-dark">
-              {subscription?.plan?.name || 'Free Plan'}
+              {subscription?.plan?.name || 'Current Plan'}
             </h3>
             <p className="text-sm text-gray-slate mt-1">
-              {subscription?.plan?.metadata?.description || 'Perfect for getting started'}
+              {subscription?.plan?.metadata?.description || 'Loading plan details...'}
             </p>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>

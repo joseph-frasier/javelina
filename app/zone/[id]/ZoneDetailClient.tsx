@@ -248,7 +248,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         name: editFormData.name,
         zone_type: editFormData.zone_type as 'primary' | 'secondary' | 'redirect',
         description: editFormData.description,
-        active: editFormData.active,
+        status: editFormData.active ? 'active' : 'disabled',
       });
 
       if (result.error) {
@@ -276,26 +276,28 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   };
 
   const handleDeleteZone = async () => {
-    if (!environment || !organization) {
-      addToast('error', 'Missing environment or organization data');
-      setShowDeleteModal(false);
-      return;
-    }
-
     try {
-      await deleteZone(zoneId, environment.id, organization.id);
+      const result = await deleteZone(zone.id);
       
-      // Invalidate zones cache to refresh sidebar
-      queryClient.invalidateQueries({ queryKey: ['zones', environment.id] });
+      if (result.error) {
+        addToast('error', `Failed to delete zone: ${result.error}`);
+        return;
+      }
       
-      addToast('success', `Zone ${zone.name} deleted successfully!`);
+      // Invalidate React Query cache to update sidebar immediately
+      queryClient.invalidateQueries({ queryKey: ['zones', zone.environment_id] });
+      
+      addToast('success', `Zone ${zone.name} archived successfully`);
       setShowDeleteModal(false);
       
       // Redirect to environment page
-      router.push(`/organization/${organization.id}/environment/${environment.id}`);
-    } catch (error: any) {
-      addToast('error', error.message || 'Failed to delete zone');
-      setShowDeleteModal(false);
+      if (organization && environment) {
+        router.push(`/organization/${organization.id}/environment/${environment.id}`);
+      } else {
+        router.push('/');
+      }
+    } catch (error) {
+      addToast('error', `Error deleting zone: ${error}`);
     }
   };
 

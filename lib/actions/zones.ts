@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { canCreateResource } from '@/lib/entitlements'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function createZone(formData: {
   environment_id: string
@@ -10,77 +11,51 @@ export async function createZone(formData: {
   zone_type: 'primary' | 'secondary' | 'redirect'
   description?: string
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-  
-  // Get organization ID from environment
-  const { data: environment, error: envError } = await supabase
-    .from('environments')
-    .select('organization_id, org_id')
-    .eq('id', formData.environment_id)
-    .single()
-  
-  if (envError || !environment) {
-    return { error: 'Environment not found' }
-  }
-  
-  const orgId = environment.organization_id || environment.org_id
-  
-  // Verify user has permission
-  const { data: membership, error: memberError } = await supabase
-    .from('organization_members')
-    .select('role')
-    .eq('org_id', orgId)
-    .eq('user_id', user.id)
-    .single()
-  
-  if (memberError || !membership) {
-    return { error: 'You do not have access to this organization' }
-  }
-  
-  if (!['SuperAdmin', 'Admin', 'Editor'].includes(membership.role)) {
-    return { error: 'You do not have permission to create zones' }
-  }
-  
-  // Check entitlement limits
-  const limitCheck = await canCreateResource(orgId, 'zone')
-  if (!limitCheck.canCreate) {
+  try {
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/zones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        environment_id: formData.environment_id,
+        zone_type: formData.zone_type,
+        description: formData.description
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to create zone');
+    }
+
+    const zone = data.data || data;
+    
+    revalidatePath('/zone')
+    revalidatePath('/organization')
+    return { data: zone }
+  } catch (error: any) {
+    // Check if error message indicates upgrade needed
+    const isLimitError = error.message?.toLowerCase().includes('limit') || 
+                        error.message?.toLowerCase().includes('upgrade');
+    
     return { 
-      error: limitCheck.reason || 'Zone limit reached. Please upgrade your plan to create more zones.',
-      upgrade_required: true 
+      error: error.message || 'Failed to create zone',
+      upgrade_required: isLimitError
     }
   }
-  
-  // Validate zone name
-  if (!formData.name.trim()) {
-    return { error: 'Zone name is required' }
-  }
-  
-  const { data, error } = await supabase
-    .from('zones')
-    .insert({
-      environment_id: formData.environment_id,
-      name: formData.name.trim(),
-      zone_type: formData.zone_type,
-      description: formData.description?.trim() || null,
-      active: true,
-      created_by: user.id
-    })
-    .select('*, environments(organization_id, org_id)')
-    .single()
-  
-  if (error) {
-    return { error: error.message }
-  }
-  
-  const returnedOrgId = data.environments?.organization_id || data.environments?.org_id
-  revalidatePath(`/organization/${returnedOrgId}`)
-  revalidatePath(`/organization/${returnedOrgId}/environment/${formData.environment_id}`)
-  return { data }
 }
 
 export async function updateZone(
@@ -89,61 +64,75 @@ export async function updateZone(
     name: string
     zone_type: 'primary' | 'secondary' | 'redirect'
     description?: string
-    active?: boolean
+    status?: 'active' | 'disabled' | 'archived'
   }
 ) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { error: 'Not authenticated' }
+  try {
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/zones/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        zone_type: formData.zone_type,
+        description: formData.description
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Failed to update zone');
+    }
+
+    const zone = data.data || data;
+    
+    revalidatePath(`/zone/${id}`)
+    revalidatePath('/zone')
+    return { data: zone }
+  } catch (error: any) {
+    return { error: error.message || 'Failed to update zone' }
   }
-  
-  // Validate zone name
-  if (!formData.name.trim()) {
-    return { error: 'Zone name is required' }
-  }
-  
-  // Update zone
-  const { data, error } = await supabase
-    .from('zones')
-    .update({
-      name: formData.name.trim(),
-      zone_type: formData.zone_type,
-      description: formData.description?.trim() || null,
-      active: formData.active ?? true,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select('*, environments(organization_id)')
-    .single()
-  
-  if (error) {
-    return { error: error.message }
-  }
-  
-  const orgId = data.environments?.organization_id
-  revalidatePath(`/organization/${orgId}`)
-  revalidatePath(`/organization/${orgId}/environment/${data.environment_id}`)
-  revalidatePath(`/zone/${id}`)
-  revalidatePath('/')
-  return { data }
 }
 
-export async function deleteZone(id: string, environmentId: string, organizationId: string) {
-  const supabase = await createClient()
-  
-  const { error } = await supabase
-    .from('zones')
-    .delete()
-    .eq('id', id)
-  
-  if (error) {
-    return { error: error.message }
-  }
-  
-  revalidatePath(`/organization/${organizationId}`)
-  revalidatePath(`/organization/${organizationId}/environment/${environmentId}`)
-  return { success: true }
-}
+export async function deleteZone(id: string) {
+  try {
+    // Get session from server-side Supabase client (uses cookies)
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Not authenticated');
+    }
 
+    // Make API call with auth token
+    const response = await fetch(`${API_BASE_URL}/api/zones/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || data.message || 'Failed to delete zone');
+    }
+    
+    revalidatePath('/zone')
+    revalidatePath('/organization')
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message || 'Failed to delete zone' }
+  }
+}

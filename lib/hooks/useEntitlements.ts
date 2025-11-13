@@ -33,12 +33,9 @@ export function useEntitlements(orgId: string | null): UseEntitlementsReturn {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/subscriptions/current?org_id=${orgId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch entitlements');
-      }
+      // Use API client to route through Express backend
+      const { subscriptionsApi } = await import('@/lib/api-client');
+      const data = await subscriptionsApi.getCurrent(orgId);
 
       setEntitlements(data.entitlements || []);
     } catch (err: any) {
@@ -87,15 +84,9 @@ export function useEntitlements(orgId: string | null): UseEntitlementsReturn {
     if (!orgId) return false;
 
     try {
-      const response = await fetch(
-        `/api/subscriptions/can-create?org_id=${orgId}&resource_type=${resource}`
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('Error checking can create:', data.error);
-        return false;
-      }
+      // Use API client to route through Express backend
+      const { subscriptionsApi } = await import('@/lib/api-client');
+      const data = await subscriptionsApi.canCreate(orgId, resource);
 
       return data.can_create === true;
     } catch (error) {
@@ -121,19 +112,9 @@ export function useEntitlements(orgId: string | null): UseEntitlementsReturn {
     }
 
     try {
-      const response = await fetch(
-        `/api/subscriptions/can-create?org_id=${orgId}&resource_type=${resource}`
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          org_id: orgId,
-          resource_type: resource,
-          can_create: false,
-          reason: data.error || 'Failed to check resource limits',
-        };
-      }
+      // Use API client to route through Express backend
+      const { subscriptionsApi } = await import('@/lib/api-client');
+      const data = await subscriptionsApi.canCreate(orgId, resource);
 
       return data;
     } catch (error: any) {

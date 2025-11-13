@@ -15,8 +15,7 @@ import { ExportButton } from '@/components/admin/ExportButton';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
-import { createOrganization, softDeleteOrganization } from '@/lib/actions/admin/organizations';
+import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { generateMockOrganizations } from '@/lib/mock-admin-data';
@@ -74,22 +73,7 @@ export default function AdminOrganizationsPage() {
 
   const fetchOrganizations = useCallback(async () => {
     try {
-      const client = createServiceRoleClient();
-      
-      // If no client (development mode without backend), use mock data
-      if (!client) {
-        const mockOrgs = generateMockOrganizations(20);
-        setOrgs(mockOrgs as any);
-        setLoading(false);
-        return;
-      }
-      
-      const { data, error } = await client
-        .from('organizations')
-        .select('*, organization_members(organization_id)')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await adminApi.listOrganizations();
       setOrgs((data || []) as Organization[]);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
@@ -233,16 +217,17 @@ export default function AdminOrganizationsPage() {
 
     setIsCreating(true);
     try {
-      const result = await createOrganization(createName, createDescription);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'Organization created successfully');
-        setCreateName('');
-        setCreateDescription('');
-        setShowCreateForm(false);
-        await fetchOrganizations();
-      }
+      await adminApi.createOrganization({
+        name: createName,
+        description: createDescription,
+      });
+      addToast('success', 'Organization created successfully');
+      setCreateName('');
+      setCreateDescription('');
+      setShowCreateForm(false);
+      await fetchOrganizations();
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to create organization');
     } finally {
       setIsCreating(false);
     }
@@ -263,17 +248,15 @@ export default function AdminOrganizationsPage() {
     setConfirmModal({ ...confirmModal, isOpen: false });
     
     try {
-      const result = await softDeleteOrganization(orgId);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'Organization deleted successfully');
-        setOrgs((prevOrgs) =>
-          prevOrgs.map((org) =>
-            org.id === orgId ? { ...org, deleted_at: new Date().toISOString() } : org
-          )
-        );
-      }
+      await adminApi.softDeleteOrganization(orgId);
+      addToast('success', 'Organization deleted successfully');
+      setOrgs((prevOrgs) =>
+        prevOrgs.map((org) =>
+          org.id === orgId ? { ...org, deleted_at: new Date().toISOString() } : org
+        )
+      );
+    } catch (error: any) {
+      addToast('error', error.message || 'Failed to delete organization');
     } finally {
       setActioningOrgId(null);
     }

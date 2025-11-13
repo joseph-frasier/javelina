@@ -71,10 +71,11 @@ export default function AdminLoginPage() {
         addToast('success', 'Admin login successful!');
         router.push('/admin');
       } else {
-        addToast('error', 'Invalid email or password');
+        const errorMessage = result.error || 'Invalid email or password';
+        addToast('error', errorMessage);
         setErrors({
-          email: 'Invalid email or password',
-          password: 'Invalid email or password'
+          email: errorMessage,
+          password: errorMessage
         });
       }
     } catch (error) {
@@ -230,6 +231,25 @@ export default function AdminLoginPage() {
           >
             ⚡ Quick Login (Dev)
           </Button>
+          
+          {/* SuperAdmin Setup Note */}
+          <div className="mt-4 p-3 rounded-lg text-xs" style={{
+            backgroundColor: 'rgba(239, 114, 21, 0.05)',
+            borderColor: 'var(--orange)',
+            borderWidth: '1px'
+          }}>
+            <p className="font-medium mb-1" style={{ color: 'var(--orange)' }}>
+              Note: SuperAdmin Access Required
+            </p>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Only users with SuperAdmin privileges can access this panel. 
+              Run <code className="px-1 py-0.5 rounded" style={{ 
+                backgroundColor: 'rgba(0,0,0,0.1)',
+                fontFamily: 'monospace',
+                fontSize: '0.9em'
+              }}>supabase/seed-superadmin.sql</code> to promote a user.
+            </p>
+          </div>
         </form>
 
         <div className="mt-8 pt-8" style={{

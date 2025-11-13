@@ -22,7 +22,7 @@ export interface CreateZoneData {
 
 /**
  * Create a new organization
- * Also creates a membership for the current user as SuperAdmin
+ * Also creates a membership for the current user as Admin
  */
 export async function createOrganization(data: CreateOrganizationData) {
   const supabase = createClient();
@@ -68,13 +68,13 @@ export async function createOrganization(data: CreateOrganizationData) {
     throw new Error(`Failed to create organization: ${orgError.message}`);
   }
 
-  // Create membership for current user as SuperAdmin
+  // Create membership for current user as Admin
   const { error: memberError } = await supabase
     .from('organization_members')
     .insert({
       organization_id: org.id,
       user_id: user.id,
-      role: 'SuperAdmin',
+      role: 'Admin',
       environments_count: 0,
       zones_count: 0
     });
@@ -179,21 +179,29 @@ export async function createZone(data: CreateZoneData) {
     throw new Error('Environment not found');
   }
 
-  // Check if zone with same name already exists in this environment
-  const { data: existingZone, error: checkError } = await supabase
+  // Check for global zone name uniqueness (across all environments and organizations)
+  console.log('🔍 Checking global uniqueness for zone:', data.name);
+  const { data: existingZones, error: checkError } = await supabase
     .from('zones')
     .select('id')
-    .eq('environment_id', data.environment_id)
     .eq('name', data.name)
+    .is('deleted_at', null)
     .limit(1);
 
   if (checkError) {
-    throw new Error(`Failed to check for duplicates: ${checkError.message}`);
+    console.error('❌ Error checking zone name uniqueness:', checkError);
+    throw new Error(`Failed to check zone name uniqueness: ${checkError.message}`);
   }
 
-  if (existingZone && existingZone.length > 0) {
-    throw new Error('A zone with this name already exists in this environment');
-  }
+  const nameExists = existingZones && existingZones.length > 0;
+  const isLive = !nameExists;
+  
+  console.log('📊 Uniqueness check results:', {
+    zoneName: data.name,
+    existingZones: existingZones?.length || 0,
+    nameExists,
+    isLive
+  });
 
   // Create zone
   const { data: zone, error: zoneError } = await supabase
@@ -204,13 +212,36 @@ export async function createZone(data: CreateZoneData) {
       description: data.description || null,
       environment_id: data.environment_id,
       active: true,
+      live: isLive,
       created_by: user.id
     })
     .select()
     .single();
 
   if (zoneError) {
+    console.error('❌ Error creating zone:', zoneError);
     throw new Error(`Failed to create zone: ${zoneError.message}`);
+  }
+
+  console.log('✅ Zone created:', { id: zone.id, name: zone.name, live: zone.live });
+
+  // If zone was flagged for review (live=false), create audit log entry
+  if (!isLive && zone) {
+    console.log('🚩 Creating audit log for flagged zone');
+    await supabase
+      .from('audit_logs')
+      .insert({
+        table_name: 'zones',
+        record_id: zone.id,
+        action: 'zone.flagged_for_review',
+        new_data: zone,
+        user_id: user.id,
+        metadata: {
+          reason: 'duplicate_name',
+          zone_name: data.name,
+          flagged_at: new Date().toISOString()
+        }
+      });
   }
 
   return zone;
@@ -270,6 +301,7 @@ export async function fetchEnvironmentZones(environmentId: string) {
     .from('zones')
     .select('*')
     .eq('environment_id', environmentId)
+    .is('deleted_at', null)
     .order('name');
 
   if (error) {

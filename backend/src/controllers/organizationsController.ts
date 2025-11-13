@@ -124,14 +124,19 @@ export const createOrganization = async (
     throw new Error(`Failed to create organization: ${orgError.message}`);
   }
 
-  // Create membership for current user as SuperAdmin
+  // Create membership for current user as Admin (upsert to handle retries)
   const { error: memberError } = await supabaseAdmin
     .from("organization_members")
-    .insert({
-      organization_id: org.id,
-      user_id: userId,
-      role: "SuperAdmin",
-    });
+    .upsert(
+      {
+        organization_id: org.id,
+        user_id: userId,
+        role: "Admin",
+      },
+      {
+        onConflict: "organization_id,user_id",
+      }
+    );
 
   if (memberError) {
     // Rollback organization creation
@@ -210,7 +215,7 @@ export const deleteOrganization = async (
     throw new ValidationError("Invalid organization ID");
   }
 
-  // Check if user has SuperAdmin rights
+  // Check if user has Admin or SuperAdmin rights
   const { data: membership } = await supabaseAdmin
     .from("organization_members")
     .select("role")
@@ -218,8 +223,8 @@ export const deleteOrganization = async (
     .eq("user_id", userId)
     .single();
 
-  if (!membership || membership.role !== "SuperAdmin") {
-    throw new ForbiddenError("Only SuperAdmin can delete organizations");
+  if (!membership || !["SuperAdmin", "Admin"].includes(membership.role)) {
+    throw new ForbiddenError("Only SuperAdmin or Admin can delete organizations");
   }
 
   const { error } = await supabaseAdmin

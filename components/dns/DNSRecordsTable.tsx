@@ -40,31 +40,13 @@ export function DNSRecordsTable({
   const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set());
   const [priorityFilters, setPriorityFilters] = useState<Set<string>>(new Set());
 
-  // Handle select all checkbox
-  const handleSelectAll = useCallback((checked: boolean) => {
-    if (checked) {
-      onSelectionChange(filteredAndSortedRecords.map(r => r.id));
-    } else {
-      onSelectionChange([]);
-    }
-  }, [onSelectionChange]);
-
-  // Handle individual checkbox
-  const handleSelectRecord = useCallback((recordId: string, checked: boolean) => {
-    if (checked) {
-      onSelectionChange([...selectedRecords, recordId]);
-    } else {
-      onSelectionChange(selectedRecords.filter(id => id !== recordId));
-    }
-  }, [selectedRecords, onSelectionChange]);
-
   // Define priority ranges for filtering
-  const priorityRanges = [
+  const priorityRanges = useMemo(() => [
     { key: 'high', label: 'High Priority (0-10)', min: 0, max: 10 },
     { key: 'medium', label: 'Medium Priority (11-30)', min: 11, max: 30 },
     { key: 'low', label: 'Low Priority (31+)', min: 31, max: 65535 },
     { key: 'na', label: 'N/A', min: null, max: null },
-  ];
+  ], []);
 
   // Check which priority ranges have records
   const availablePriorityRanges = useMemo(() => {
@@ -84,7 +66,7 @@ export function DNSRecordsTable({
     });
     
     return priorityRanges.filter(range => hasRecordsInRange.get(range.key));
-  }, [records]);
+  }, [records, priorityRanges]);
 
   // Filter records based on search query, status, and priority
   const filteredRecords = useMemo(() => {
@@ -130,7 +112,7 @@ export function DNSRecordsTable({
     }
     
     return filtered;
-  }, [records, searchQuery, statusFilters, priorityFilters]);
+  }, [records, searchQuery, statusFilters, priorityFilters, priorityRanges]);
 
   // Sort records
   const filteredAndSortedRecords = useMemo(() => {
@@ -158,6 +140,24 @@ export function DNSRecordsTable({
         : bStr.localeCompare(aStr);
     });
   }, [filteredRecords, sortKey, sortDirection]);
+
+  // Handle select all checkbox
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      onSelectionChange(filteredAndSortedRecords.map(r => r.id));
+    } else {
+      onSelectionChange([]);
+    }
+  }, [onSelectionChange, filteredAndSortedRecords]);
+
+  // Handle individual checkbox
+  const handleSelectRecord = useCallback((recordId: string, checked: boolean) => {
+    if (checked) {
+      onSelectionChange([...selectedRecords, recordId]);
+    } else {
+      onSelectionChange(selectedRecords.filter(id => id !== recordId));
+    }
+  }, [selectedRecords, onSelectionChange]);
 
   // Handle column sort
   const handleSort = useCallback((key: keyof DNSRecord) => {

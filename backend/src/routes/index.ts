@@ -7,6 +7,10 @@ import dnsRecordsRoutes from "./dnsRecords";
 import profilesRoutes from "./profiles";
 import auditLogsRoutes from "./auditLogs";
 import adminRoutes from "./admin";
+import stripeRoutes from "./stripe";
+import subscriptionsRoutes from "./subscriptions";
+import entitlementsRoutes from "./entitlements";
+import plansRoutes from "./plans";
 
 const router = Router();
 
@@ -19,5 +23,9 @@ router.use("/dns-records", dnsRecordsRoutes);
 router.use("/profiles", profilesRoutes);
 router.use("/audit-logs", auditLogsRoutes);
 router.use("/admin", adminRoutes);
+router.use("/stripe", stripeRoutes);
+router.use("/subscriptions", subscriptionsRoutes);
+router.use("/entitlements", entitlementsRoutes);
+router.use("/plans", plansRoutes);
 
 export default router;

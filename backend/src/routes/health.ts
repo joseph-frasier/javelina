@@ -11,7 +11,7 @@ const router = Router();
  * GET /api/health
  * Basic health check
  */
-router.get("/", (req: Request, res: Response) => {
+router.get("/", (_req: Request, res: Response) => {
   sendSuccess(
     res,
     {
@@ -27,7 +27,7 @@ router.get("/", (req: Request, res: Response) => {
  * GET /api/health/ping
  * Simple ping endpoint
  */
-router.get("/ping", (req: Request, res: Response) => {
+router.get("/ping", (_req: Request, res: Response) => {
   sendSuccess(res, { message: "pong" });
 });
 
@@ -37,10 +37,10 @@ router.get("/ping", (req: Request, res: Response) => {
  */
 router.get(
   "/db",
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (_req: Request, res: Response) => {
     try {
       // Simple query to test database connection
-      const { data, error } = await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from("profiles")
         .select("count")
         .limit(1);
