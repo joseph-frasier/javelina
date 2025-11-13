@@ -84,9 +84,82 @@ header {
   background-color: var(--bg-secondary) !important;
 }
 
-/* Signup form specific background override */
+/* Signup form specific styling - ONLY affects signup page */
 .theme-dark .signup-form-bg {
-  background-color: #141c26 !important;
+  background-color: #2d3748 !important;
+}
+
+/* Input boxes */
+.theme-dark .signup-form-bg input {
+  background-color: #1a202c !important;
+  border-color: #4a5568 !important;
+  color: #e2e8f0 !important;
+}
+
+.theme-dark .signup-form-bg input:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 1px #60a5fa !important;
+}
+
+.theme-dark .signup-form-bg input::placeholder {
+  color: #718096 !important;
+}
+
+/* Labels - replace orange with blue */
+.theme-dark .signup-form-bg label,
+.theme-dark .signup-form-bg .text-orange-dark {
+  color: #93c5fd !important;
+}
+
+/* Create Account button - blue instead of orange */
+.theme-dark .signup-form-bg button[type="submit"] {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.theme-dark .signup-form-bg button[type="submit"]:hover {
+  background-color: #2563eb !important;
+}
+
+/* Links - blue instead of orange */
+.theme-dark .signup-form-bg a,
+.theme-dark .signup-form-bg .text-orange {
+  color: #60a5fa !important;
+}
+
+.theme-dark .signup-form-bg a:hover {
+  color: #93c5fd !important;
+}
+
+/* OAuth buttons */
+.theme-dark .signup-form-bg button[type="button"] {
+  border-color: #4a5568 !important;
+  color: #e2e8f0 !important;
+}
+
+.theme-dark .signup-form-bg button[type="button"]:hover {
+  border-color: #60a5fa !important;
+  background-color: #1a202c !important;
+}
+
+/* Headings */
+.theme-dark .signup-form-bg h2 {
+  color: #f7fafc !important;
+}
+
+/* Paragraph text */
+.theme-dark .signup-form-bg p {
+  color: #cbd5e0 !important;
+}
+
+/* Checkbox */
+.theme-dark .signup-form-bg input[type="checkbox"] {
+  border-color: #4a5568 !important;
+}
+
+.theme-dark .signup-form-bg input[type="checkbox"]:checked {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
 }
 
 @layer utilities {
