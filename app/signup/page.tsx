@@ -47,13 +47,15 @@ export default function SignupPage() {
     if (window.innerWidth >= 768 && heroRef.current) {
       // Start with hero covering the entire card from the left
       gsap.set(heroRef.current, {
-        x: 0,
+        left: 0,
+        right: 'auto',
         width: '100%',
       });
 
-      // Slide the hero to the right to reveal the form underneath
+      // Slide the hero to the right side to reveal the form underneath
       gsap.to(heroRef.current, {
-        x: '40%', // Slides right by 40% (the width of the form section)
+        left: '40%',
+        right: 0,
         width: '60%',
         duration: 1.2,
         delay: 0.5,
@@ -515,11 +517,9 @@ export default function SignupPage() {
             ref={heroRef}
             className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
-            {/* Animated Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange/90 via-orange-dark/80 to-orange-dark/90 animate-gradient-shift">
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 via-transparent to-orange/20 animate-gradient-slow"></div>
-              </div>
+            {/* Static Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange/90 via-orange-dark/85 to-orange-dark/90">
+              <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-white/10 via-transparent to-orange/20"></div>
             </div>
 
             {/* Content */}
@@ -900,24 +900,6 @@ export default function SignupPage() {
         .rotate-y-180 {
           transform: rotateY(180deg);
         }
-        @keyframes gradient-shift {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-        @keyframes gradient-slow {
-          0%, 100% {
-            opacity: 0.3;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.5;
-            transform: scale(1.05);
-          }
-        }
         @keyframes float {
           0%, 100% {
             transform: translateY(0px);
@@ -925,13 +907,6 @@ export default function SignupPage() {
           50% {
             transform: translateY(-10px);
           }
-        }
-        .animate-gradient-shift {
-          background-size: 200% 200%;
-          animation: gradient-shift 8s ease infinite;
-        }
-        .animate-gradient-slow {
-          animation: gradient-slow 12s ease-in-out infinite;
         }
         .animate-float {
           animation: float 6s ease-in-out infinite;
