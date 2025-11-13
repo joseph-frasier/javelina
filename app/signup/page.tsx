@@ -518,8 +518,8 @@ export default function SignupPage() {
             className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
             {/* Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-orange-dark animate-subtle-gradient">
-              <div className="absolute inset-0 bg-gradient-to-tr from-orange/40 via-transparent to-orange-dark/40 animate-subtle-glow"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange/80 via-orange-dark/70 to-orange-dark/85 animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-orange/30 via-transparent to-black/20 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
@@ -554,7 +554,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange via-orange to-orange-dark',
+                'bg-gradient-to-br from-orange/80 via-orange-dark/70 to-orange-dark/85',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
