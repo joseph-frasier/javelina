@@ -531,7 +531,7 @@ export default function SignupPage() {
 
             {/* Content */}
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-12">
-              <div className="max-w-xl text-center animate-float">
+              <div className="max-w-xl text-center">
                 <div className="mb-8">
                   <Image
                     src="/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png"
@@ -573,7 +573,7 @@ export default function SignupPage() {
               )}
               style={{ backfaceVisibility: 'hidden' }}
             >
-              <div className="text-center animate-float">
+              <div className="text-center">
                 <div className="mb-8">
                   <Image
                     src="/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png"
