@@ -1,9 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import {
-  generateMockDNSRecords,
   calculateRecordTypeCounts,
   calculateTTLDistribution,
-  generateMockAuditLogs,
   RecordTypeCount,
   TTLBucket,
   AuditLog,
@@ -22,7 +20,7 @@ export interface ZoneSummary {
 
 /**
  * Get zone summary with aggregated data for visualizations
- * Currently mocked - will be replaced with real API when zone_records table exists
+ * Uses real DNS records from zone_records table
  */
 export async function getZoneSummary(zoneId: string, zoneName: string, recordsCount: number = 50): Promise<ZoneSummary> {
   const supabase = createClient();
@@ -30,7 +28,7 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
   // Fetch zone data from Supabase
   const { data: zone } = await supabase
     .from('zones')
-    .select('verification_status, last_verified_at, metadata')
+    .select('verification_status, last_verified_at, metadata, records_count')
     .eq('id', zoneId)
     .is('deleted_at', null)
     .single();
@@ -59,15 +57,20 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
     }
   }
 
-  // Generate mock DNS records (until dns_records table exists)
-  const mockRecords = generateMockDNSRecords(zoneName, recordsCount);
-  const recordTypeCounts = calculateRecordTypeCounts(mockRecords);
-  const ttlDistribution = calculateTTLDistribution(mockRecords);
+  // Fetch real DNS records from zone_records table
+  const { data: dnsRecords } = await supabase
+    .from('zone_records')
+    .select('*')
+    .eq('zone_id', zoneId);
+
+  const realRecords = (dnsRecords || []) as any[];
+  const recordTypeCounts = realRecords.length > 0 ? calculateRecordTypeCounts(realRecords) : [];
+  const ttlDistribution = realRecords.length > 0 ? calculateTTLDistribution(realRecords) : [];
 
   return {
     recordTypeCounts,
     ttlDistribution,
-    totalRecords: mockRecords.length,
+    totalRecords: zone?.records_count || realRecords.length,
     verificationStatus: (zone?.verification_status as any) || 'unverified',
     lastVerifiedAt: zone?.last_verified_at || null,
     healthStatus,
@@ -96,26 +99,25 @@ export async function getZoneAuditLogs(zoneId: string, zoneName: string): Promis
     .order('created_at', { ascending: false })
     .limit(50);
 
-  if (auditLogs && auditLogs.length > 0) {
-    // Transform real audit logs
-    return auditLogs.map(log => ({
-      id: log.id,
-      table_name: log.table_name,
-      record_id: log.record_id,
-      action: log.action as 'INSERT' | 'UPDATE' | 'DELETE',
-      old_data: log.old_data,
-      new_data: log.new_data,
-      user_id: log.user_id,
-      user_name: (log.profiles as any)?.name || 'Unknown User',
-      user_email: (log.profiles as any)?.email || 'unknown@example.com',
-      created_at: log.created_at,
-      ip_address: log.metadata?.ip_address,
-      user_agent: log.metadata?.user_agent,
-    }));
+  if (!auditLogs || auditLogs.length === 0) {
+    return [];
   }
 
-  // Fallback to mock data if no real logs exist
-  return generateMockAuditLogs(zoneId, zoneName, 20);
+  // Transform real audit logs
+  return auditLogs.map(log => ({
+    id: log.id,
+    table_name: log.table_name,
+    record_id: log.record_id,
+    action: log.action as 'INSERT' | 'UPDATE' | 'DELETE',
+    old_data: log.old_data,
+    new_data: log.new_data,
+    user_id: log.user_id,
+    user_name: (log.profiles as any)?.name || 'Unknown User',
+    user_email: (log.profiles as any)?.email || 'unknown@example.com',
+    created_at: log.created_at,
+    ip_address: log.metadata?.ip_address,
+    user_agent: log.metadata?.user_agent,
+  }));
 }
 
 /**
@@ -184,12 +186,15 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
     .is('deleted_at', null)
     .single();
 
-  // Generate mock records for export
-  const mockRecords = generateMockDNSRecords(zoneName, 50);
+  // Fetch real DNS records
+  const { data: dnsRecords } = await supabase
+    .from('zone_records')
+    .select('*')
+    .eq('zone_id', zoneId);
 
   const exportData = {
     zone: zone || {},
-    records: mockRecords,
+    records: dnsRecords || [],
     exported_at: new Date().toISOString(),
   };
 

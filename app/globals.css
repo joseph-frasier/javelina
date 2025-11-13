@@ -84,6 +84,82 @@ header {
   background-color: var(--bg-secondary) !important;
 }
 
+/* Signup form specific styling - ONLY affects signup page */
+.theme-dark .signup-form-bg {
+  background-color: #3d2817 !important;
+}
+
+/* Input boxes */
+.theme-dark .signup-form-bg input {
+  background-color: #2a1a10 !important;
+  border-color: #5a3520 !important;
+  color: #e2e8f0 !important;
+}
+
+.theme-dark .signup-form-bg input:focus {
+  border-color: #EF7215 !important;
+  box-shadow: 0 0 0 1px #EF7215 !important;
+}
+
+.theme-dark .signup-form-bg input::placeholder {
+  color: #8b5a3c !important;
+}
+
+/* Labels - keep orange theme */
+.theme-dark .signup-form-bg label {
+  color: #ff8c5f !important;
+}
+
+/* Create Account button - brand orange */
+.theme-dark .signup-form-bg button[type="submit"] {
+  background-color: #EF7215 !important;
+  border-color: #EF7215 !important;
+}
+
+.theme-dark .signup-form-bg button[type="submit"]:hover {
+  background-color: #ff8c5f !important;
+}
+
+/* Links - orange theme */
+.theme-dark .signup-form-bg a {
+  color: #ff8c5f !important;
+}
+
+.theme-dark .signup-form-bg a:hover {
+  color: #EF7215 !important;
+}
+
+/* OAuth buttons - orange borders */
+.theme-dark .signup-form-bg button[type="button"] {
+  border-color: #EF7215 !important;
+  color: #e2e8f0 !important;
+}
+
+.theme-dark .signup-form-bg button[type="button"]:hover {
+  border-color: #ff8c5f !important;
+  background-color: #2a1a10 !important;
+}
+
+/* Headings */
+.theme-dark .signup-form-bg h2 {
+  color: #f7fafc !important;
+}
+
+/* Paragraph text */
+.theme-dark .signup-form-bg p {
+  color: #cbd5e0 !important;
+}
+
+/* Checkbox - orange when checked */
+.theme-dark .signup-form-bg input[type="checkbox"] {
+  border-color: #5a3520 !important;
+}
+
+.theme-dark .signup-form-bg input[type="checkbox"]:checked {
+  background-color: #EF7215 !important;
+  border-color: #EF7215 !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

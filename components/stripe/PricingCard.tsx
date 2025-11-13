@@ -22,7 +22,7 @@ export function PricingCard({
   return (
     <div
       className={clsx(
-        'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all hover:shadow-xl',
+        'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all hover:shadow-xl flex flex-col',
         highlighted
           ? 'border-orange'
           : 'border-gray-light hover:border-orange/50',
@@ -94,6 +94,16 @@ export function PricingCard({
           </div>
         ))}
       </div>
+
+      <Button
+        variant="outline"
+        size="md"
+        className="w-full mt-auto"
+        onClick={() => onSelect(plan.id)}
+        disabled={disabled}
+      >
+        {plan.price === 0 ? 'Get Started Free' : 'Select Plan'}
+      </Button>
     </div>
   );
 }

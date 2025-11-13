@@ -384,7 +384,10 @@ export default function AdminUsersPage() {
               <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all system users</p>
             </div>
             <div className="flex-shrink-0">
-              <ExportButton data={filteredUsers} filename="users" />
+              <ExportButton 
+                data={selectedIds.size > 0 ? getSelectedUsers() : paginatedUsers} 
+                filename="users" 
+              />
             </div>
           </div>
 

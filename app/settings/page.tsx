@@ -622,16 +622,18 @@ function SettingsContent() {
                   <div className="space-y-6">
                     {/* MFA */}
                     <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Multi-Factor Authentication</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Multi-Factor Authentication</h3>
+                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
                         <div>
-                          <p className="font-medium">MFA Status</p>
-                          <p className="text-sm text-gray-slate">
-                            {security.mfa.enabled ? 'Enabled' : 'Disabled'} • {security.mfa.method}
+                          <p className="font-medium text-gray-900 dark:text-gray-100">MFA Status</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {security.mfa.enabled ? 'Enabled' : 'Not configured'}
                           </p>
-                          <p className="text-xs text-gray-slate">
-                            Last verified: {formatDate(security.mfa.last_verified)}
-                          </p>
+                          {security.mfa.enabled && (
+                            <p className="text-xs text-gray-slate dark:text-gray-400">
+                              Method: {security.mfa.method} • Last verified: {formatDate(security.mfa.last_verified)}
+                            </p>
+                          )}
                         </div>
                         <Button
                           variant={security.mfa.enabled ? 'outline' : 'primary'}
@@ -650,16 +652,18 @@ function SettingsContent() {
 
                     {/* SSO */}
                     <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Single Sign-On</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Single Sign-On</h3>
+                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
                         <div>
-                          <p className="font-medium">SSO Status</p>
-                          <p className="text-sm text-gray-slate">
-                            {security.sso.provider} • {security.sso.status}
+                          <p className="font-medium text-gray-900 dark:text-gray-100">SSO Status</p>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {security.sso.status === 'connected' ? `Connected to ${security.sso.provider}` : 'Not configured'}
                           </p>
-                          <p className="text-xs text-gray-slate">
-                            Last sync: {formatDate(security.sso.last_sync)}
-                          </p>
+                          {security.sso.status === 'connected' && (
+                            <p className="text-xs text-gray-slate dark:text-gray-400">
+                              Last sync: {formatDate(security.sso.last_sync)}
+                            </p>
+                          )}
                         </div>
                         <Button variant="outline" size="sm">
                           {security.sso.status === 'connected' ? 'Disconnect' : 'Connect'} SSO
@@ -671,14 +675,37 @@ function SettingsContent() {
                     <div>
                       <h3 className="text-lg font-medium text-orange-dark mb-4">IP Allowlist</h3>
                       <div className="space-y-2">
-                        {security.ip_allowlist.map((ip, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 border border-gray-light rounded">
-                            <span className="font-mono text-sm">{ip}</span>
-                            <Button variant="outline" size="sm" className="text-red-600">
-                              Remove
-                            </Button>
+                        {security.ip_allowlist.length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No IP ranges configured
+                              </p>
+                            </div>
                           </div>
-                        ))}
+                        ) : (
+                          security.ip_allowlist.map((ip, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 border border-gray-light rounded">
+                              <span className="font-mono text-sm">{ip}</span>
+                              <Button variant="outline" size="sm" className="text-red-600">
+                                Remove
+                              </Button>
+                            </div>
+                          ))
+                        )}
                         <Button variant="outline" size="sm">
                           Add IP Range
                         </Button>
@@ -689,27 +716,50 @@ function SettingsContent() {
                     <div>
                       <h3 className="text-lg font-medium text-orange-dark mb-4">Active Sessions</h3>
                       <div className="space-y-3">
-                        {security.sessions.map((session, index) => (
-                          <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                            <div>
-                              <p className="font-medium">{session.device}</p>
-                              <p className="text-sm text-gray-slate">{session.location}</p>
-                              <p className="text-xs text-gray-slate">Last login: {formatDate(session.last_login)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                session.status === 'active' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {session.status}
-                              </span>
-                              <Button variant="outline" size="sm" className="text-red-600">
-                                Revoke
-                              </Button>
+                        {security.sessions.length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No active sessions found
+                              </p>
                             </div>
                           </div>
-                        ))}
+                        ) : (
+                          security.sessions.map((session, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                              <div>
+                                <p className="font-medium">{session.device}</p>
+                                <p className="text-sm text-gray-slate">{session.location}</p>
+                                <p className="text-xs text-gray-slate">Last login: {formatDate(session.last_login)}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  session.status === 'active' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {session.status}
+                                </span>
+                                <Button variant="outline" size="sm" className="text-red-600">
+                                  Revoke
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   </div>
@@ -729,23 +779,46 @@ function SettingsContent() {
                         </Button>
                       </div>
                       <div className="space-y-3">
-                        {access.members.map((member, index) => (
-                          <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                            <div>
-                              <p className="font-medium">{member.name}</p>
-                              <p className="text-sm text-gray-slate">{member.email}</p>
-                              <p className="text-xs text-gray-slate">Last active: {formatDate(member.last_active)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
-                                {member.role}
-                              </span>
-                              <Button variant="outline" size="sm">
-                                Edit Role
-                              </Button>
+                        {access.members.length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No members yet
+                              </p>
                             </div>
                           </div>
-                        ))}
+                        ) : (
+                          access.members.map((member, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                              <div>
+                                <p className="font-medium">{member.name}</p>
+                                <p className="text-sm text-gray-slate">{member.email}</p>
+                                <p className="text-xs text-gray-slate">Last active: {formatDate(member.last_active)}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                                  {member.role}
+                                </span>
+                                <Button variant="outline" size="sm">
+                                  Edit Role
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
 
@@ -753,22 +826,45 @@ function SettingsContent() {
                     <div>
                       <h3 className="text-lg font-medium text-orange-dark mb-4">Environment-Level Overrides</h3>
                       <div className="space-y-3">
-                        {Object.entries(access.environment_overrides).map(([environment, override]) => (
-                          <div key={environment} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                            <div>
-                              <p className="font-medium capitalize">{environment}</p>
-                              <p className="text-sm text-gray-slate">Role override</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
-                                {override.role}
-                              </span>
-                              <Button variant="outline" size="sm">
-                                Edit
-                              </Button>
+                        {Object.keys(access.environment_overrides).length === 0 ? (
+                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                            <div className="text-center">
+                              <svg
+                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No environment overrides configured
+                              </p>
                             </div>
                           </div>
-                        ))}
+                        ) : (
+                          Object.entries(access.environment_overrides).map(([environment, override]) => (
+                            <div key={environment} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                              <div>
+                                <p className="font-medium capitalize">{environment}</p>
+                                <p className="text-sm text-gray-slate">Role override</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                                  {override.role}
+                                </span>
+                                <Button variant="outline" size="sm">
+                                  Edit
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   </div>
@@ -780,20 +876,27 @@ function SettingsContent() {
                 <Card className="p-4 sm:p-6">
                   <div className="space-y-6">
                     {/* Slack */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                      <div>
-                        <h3 className="font-medium">Slack Integration</h3>
-                        <p className="text-sm text-gray-slate">
-                          {integrations.slack.status === 'connected' 
-                            ? `Connected to ${integrations.slack.workspace}` 
-                            : 'Not connected'
-                          }
-                        </p>
-                        {integrations.slack.connected_on && (
-                          <p className="text-xs text-gray-slate">
-                            Connected: {formatDate(integrations.slack.connected_on)}
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Slack Integration</h3>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {integrations.slack.status === 'connected' 
+                              ? `Connected to ${integrations.slack.workspace}` 
+                              : 'Not connected'
+                            }
                           </p>
-                        )}
+                          {integrations.slack.connected_on && (
+                            <p className="text-xs text-gray-slate dark:text-gray-400">
+                              Connected: {formatDate(integrations.slack.connected_on)}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <Button 
                         variant={integrations.slack.status === 'connected' ? 'outline' : 'primary'} 
@@ -804,15 +907,23 @@ function SettingsContent() {
                     </div>
 
                     {/* Microsoft Teams */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                      <div>
-                        <h3 className="font-medium">Microsoft Teams</h3>
-                        <p className="text-sm text-gray-slate">
-                          {integrations.microsoft_teams.status === 'connected' 
-                            ? `Connected to ${integrations.microsoft_teams.channel}` 
-                            : 'Not connected'
-                          }
-                        </p>
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.625 8.127c-.563 0-1.022.458-1.022 1.02v4.618c0 .563.459 1.02 1.022 1.02.562 0 1.02-.457 1.02-1.02V9.148c0-.563-.458-1.02-1.02-1.02z"/>
+                            <path d="M13.972 0C11.159 0 8.88 2.279 8.88 5.092v5.617c0 2.813 2.279 5.092 5.092 5.092 2.813 0 5.092-2.279 5.092-5.092V5.092C19.064 2.279 16.785 0 13.972 0zm7.653 14.785c0 .563-.458 1.02-1.02 1.02-.563 0-1.022-.457-1.022-1.02V9.148c0-.563.459-1.02 1.021-1.02.563 0 1.021.457 1.021 1.02v5.637zM7.86 4.858H2.768C1.263 4.858.04 6.081.04 7.586v6.528c0 1.505 1.223 2.728 2.728 2.728H7.86c1.505 0 2.728-1.223 2.728-2.728V7.586c0-1.505-1.223-2.728-2.728-2.728zm-.612 8.978H3.38V9.414h3.868v4.422z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Microsoft Teams</h3>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {integrations.microsoft_teams.status === 'connected' 
+                              ? `Connected to ${integrations.microsoft_teams.channel}` 
+                              : 'Not connected'
+                            }
+                          </p>
+                        </div>
                       </div>
                       <Button 
                         variant={integrations.microsoft_teams.status === 'connected' ? 'outline' : 'primary'} 
@@ -823,15 +934,22 @@ function SettingsContent() {
                     </div>
 
                     {/* PagerDuty */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                      <div>
-                        <h3 className="font-medium">PagerDuty Integration</h3>
-                        <p className="text-sm text-gray-slate">
-                          {integrations.pagerduty.status === 'connected' 
-                            ? `Connected to ${integrations.pagerduty.service_name}` 
-                            : 'Not connected'
-                          }
-                        </p>
+                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16.965 1.18C15.085.164 13.769 0 10.683 0H3.73v18.434h6.953c2.359 0 4.168-.04 5.872-.853 2.76-1.31 4.347-3.829 4.347-6.902 0-3.208-1.515-5.806-4.338-7.148-.371-.181-.4-.357-.599-.357zm-6.002 13.607H8.41V3.892h2.723c4.105 0 6.222 1.632 6.222 5.408 0 4.283-2.459 5.487-6.392 5.487z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">PagerDuty Integration</h3>
+                          <p className="text-sm text-gray-slate dark:text-gray-400">
+                            {integrations.pagerduty.status === 'connected' 
+                              ? `Connected to ${integrations.pagerduty.service_name}` 
+                              : 'Not connected'
+                            }
+                          </p>
+                        </div>
                       </div>
                       <Button 
                         variant={integrations.pagerduty.status === 'connected' ? 'outline' : 'primary'} 
@@ -847,39 +965,67 @@ function SettingsContent() {
               {/* Audit & Compliance */}
               {activeSection === 'audit' && permissions.canViewAudit && (
                 <Card className="p-4 sm:p-6">
-                  <div className="flex items-center justify-end mb-6">
-                    <ExportButton 
-                      data={auditLogs} 
-                      filename="audit-logs"
-                      label="Export Logs"
-                    />
-                  </div>
+                  {auditLogs.length > 0 && (
+                    <div className="flex items-center justify-end mb-6">
+                      <ExportButton 
+                        data={auditLogs} 
+                        filename="audit-logs"
+                        label="Export Logs"
+                      />
+                    </div>
+                  )}
                   
-                  <div className="space-y-4">
-                    {auditLogs.map((log, index) => (
-                      <div key={index} className="flex items-start gap-4 p-4 border border-gray-light rounded-lg">
-                        <div className="w-2 h-2 bg-orange rounded-full mt-2"></div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium">{log.action}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              log.category === 'Security' 
-                                ? 'bg-red-100 text-red-800'
-                                : log.category === 'Access'
-                                ? 'bg-blue-100 text-blue-800'
-                                : log.category === 'Integrations'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-orange-100 text-orange-800'
-                            }`}>
-                              {log.category}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-slate">{log.user}</p>
-                          <p className="text-xs text-gray-slate">{formatDate(log.timestamp)}</p>
-                        </div>
+                  {auditLogs.length === 0 ? (
+                    <div className="py-12 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600 mb-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                          />
+                        </svg>
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          No audit logs yet
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          Settings changes will appear here
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {auditLogs.map((log, index) => (
+                        <div key={index} className="flex items-start gap-4 p-4 border border-gray-light rounded-lg">
+                          <div className="w-2 h-2 bg-orange rounded-full mt-2"></div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium">{log.action}</p>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                log.category === 'Security' 
+                                  ? 'bg-red-100 text-red-800'
+                                  : log.category === 'Access'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : log.category === 'Integrations'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-orange-100 text-orange-800'
+                              }`}>
+                                {log.category}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-slate">{log.user}</p>
+                            <p className="text-xs text-gray-slate">{formatDate(log.timestamp)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               )}
 

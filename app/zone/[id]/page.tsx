@@ -208,45 +208,9 @@ export default async function ZonePage({
   const environment = zoneData.environments;
   const organization = environment?.organizations || null;
 
-  // Merge zone data with mock DNS records for now
-  // TODO: Replace with real records from database when records table is implemented
-  const defaultMockData = {
-    name: zoneData.name,
-    serial: '2025100701',
-    lastUpdated: new Date(zoneData.updated_at).toLocaleString() + ' UTC',
-    ttl: 3600,
-    nameservers: ['ns1.example.com', 'ns2.example.com'],
-    soa: {
-      primary: 'ns1.example.com',
-      email: 'admin@example.com',
-      serial: '2025100701',
-      refresh: 3600,
-      retry: 600,
-      expire: 604800,
-      minimum: 86400,
-    },
-    records: [],
-    queryStats: {
-      last24h: 0,
-      last7d: 0,
-      last30d: 0,
-      successRate: 0,
-      qps: 0,
-    },
-    queryTypes: [
-      { type: 'A', count: 0, percentage: 0 },
-      { type: 'AAAA', count: 0, percentage: 0 },
-    ],
-    topQueries: [],
-    recentQueries: [],
-  };
-
-  // Check if we have specific mock data for this zone ID, otherwise use defaults
-  const zone = mockZoneData[id] ? { ...defaultMockData, ...mockZoneData[id] } : defaultMockData;
-
   return (
     <ZoneDetailClient 
-      zone={{...zone, ...zoneData}} 
+      zone={zoneData} 
       zoneId={id}
       organization={organization}
       environment={environment}
