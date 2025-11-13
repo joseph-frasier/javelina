@@ -33,6 +33,7 @@ export default function SignupPage() {
   
   const heroRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
+  const mobileFormRef = useRef<HTMLDivElement>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -40,6 +41,13 @@ export default function SignupPage() {
       router.push('/');
     }
   }, [isAuthenticated, router]);
+
+  // Reset form scroll position when flipping to form side
+  useEffect(() => {
+    if (isFlipped && mobileFormRef.current) {
+      mobileFormRef.current.scrollTop = 0;
+    }
+  }, [isFlipped]);
 
   // GSAP slide animation for desktop - slide both sections apart like cards
   useLayoutEffect(() => {
@@ -606,6 +614,7 @@ export default function SignupPage() {
 
             {/* Back - Form */}
             <div
+              ref={mobileFormRef}
               className={clsx(
                 'absolute inset-0 w-full backface-hidden rotate-y-180',
                 'bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 overflow-y-auto'
