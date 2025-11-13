@@ -595,9 +595,9 @@ export default function SignupPage() {
                 </p>
                 <Button
                   onClick={handleFlip}
-                  variant="outline"
+                  variant="primary"
                   size="lg"
-                  className="bg-white text-orange hover:bg-orange-light border-white"
+                  className="bg-orange hover:bg-orange-dark text-white border-none shadow-lg"
                 >
                   Sign Up
                 </Button>
