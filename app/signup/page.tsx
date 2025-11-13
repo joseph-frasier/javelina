@@ -144,7 +144,7 @@ export default function SignupPage() {
   return (
     <>
       {/* Desktop Layout */}
-      <div className="hidden md:flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-slate-700 dark:to-slate-600 px-8 py-12">
+      <div className="hidden md:flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-orange dark:to-orange-dark px-8 py-12">
         <div className="relative w-full max-w-6xl h-[820px] rounded-2xl shadow-2xl overflow-hidden">
           {/* Form Section - Left Side */}
           <div 
@@ -536,8 +536,8 @@ export default function SignupPage() {
             className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
             {/* Gradient Background - Orange Theme */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark/90 to-red-800 animate-subtle-gradient">
-              <div className="absolute inset-0 bg-gradient-to-tr from-orange/10 via-transparent to-orange-dark/30 animate-subtle-glow"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark to-orange animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-orange-light/20 via-transparent to-orange/30 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
@@ -566,7 +566,7 @@ export default function SignupPage() {
       </div>
 
       {/* Mobile Layout - Flip Card */}
-      <div className="md:hidden min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-orange/80 dark:to-orange-dark/70">
+      <div className="md:hidden min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-orange dark:to-orange-dark">
         <div className="w-full max-w-md perspective-1000">
           <div
             className={clsx(
@@ -579,7 +579,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange via-orange-dark/90 to-red-800',
+                'bg-gradient-to-br from-orange via-orange-dark to-orange',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
