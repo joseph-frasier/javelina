@@ -149,7 +149,10 @@ export default function SignupPage() {
           {/* Form Section - Left Side */}
           <div 
             ref={formRef}
-            className="absolute left-0 top-0 w-2/5 h-full flex items-center justify-center px-8 py-12 bg-white dark:bg-cyan-900 z-10 overflow-y-auto"
+            className="absolute left-0 top-0 w-2/5 h-full flex items-center justify-center px-8 py-12 z-10 overflow-y-auto"
+            style={{
+              backgroundColor: 'var(--bg-primary, #ffffff)',
+            }}
           >
             <div className="w-full max-w-[420px]">
             {successMessage ? (
@@ -617,9 +620,13 @@ export default function SignupPage() {
               ref={mobileFormRef}
               className={clsx(
                 'absolute inset-0 w-full backface-hidden rotate-y-180',
-                'bg-white dark:bg-cyan-900 rounded-2xl shadow-2xl p-6 overflow-y-auto'
+                'rounded-2xl shadow-2xl p-6 overflow-y-auto'
               )}
-              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+              style={{ 
+                backfaceVisibility: 'hidden', 
+                transform: 'rotateY(180deg)',
+                backgroundColor: 'var(--bg-primary, #ffffff)',
+              }}
             >
               {successMessage ? (
                 <div className="text-center py-8">
