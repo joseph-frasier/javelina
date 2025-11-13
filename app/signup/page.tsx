@@ -45,25 +45,25 @@ export default function SignupPage() {
   useLayoutEffect(() => {
     setMounted(true);
     if (window.innerWidth >= 768 && heroRef.current && formRef.current) {
-      // Start with both sections overlapping in center
+      // Start with hero covering form (both at left: 0)
       gsap.set(heroRef.current, {
-        x: '-30%', // Hero starts more to the left
+        x: '0%', // Hero starts at position 0, covering form
       });
       
       gsap.set(formRef.current, {
-        x: '30%', // Form starts more to the right, behind hero
+        x: '0%', // Form also at position 0, but behind hero (z-index 10 vs 20)
       });
 
       // Slide both sections apart after delay
       gsap.to(heroRef.current, {
-        x: '0%', // Hero slides right to its final position
+        x: '66.67%', // Hero slides right (40% of card width / 60% hero width = 66.67%)
         duration: 1.2,
         delay: 0.5,
         ease: 'power3.inOut',
       });
       
       gsap.to(formRef.current, {
-        x: '0%', // Form slides left to its final position
+        x: '0%', // Form stays in place as hero reveals it
         duration: 1.2,
         delay: 0.5,
         ease: 'power3.inOut',
@@ -141,7 +141,8 @@ export default function SignupPage() {
           {/* Form Section - Left Side */}
           <div 
             ref={formRef}
-            className="absolute left-0 top-0 w-2/5 h-full flex items-center justify-center px-8 py-12 bg-white dark:bg-gray-900 z-10 overflow-y-auto">
+            className="absolute left-0 top-0 w-2/5 h-full flex items-center justify-center px-8 py-12 bg-white dark:bg-gray-900 z-10 overflow-y-auto"
+          >
             <div className="w-full max-w-[420px]">
             {successMessage ? (
               <div className="text-center">
@@ -521,14 +522,14 @@ export default function SignupPage() {
           </div>
         </div>
 
-          {/* Hero Section - Right Side */}
+          {/* Hero Section - Starts covering form, then slides right */}
           <div
             ref={heroRef}
-            className="absolute right-0 top-0 w-3/5 h-full overflow-hidden z-20"
+            className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
-            {/* Gradient Background - Rich Coral/Burgundy for contrast */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-dark/95 via-red-600/90 to-red-700/95 animate-subtle-gradient">
-              <div className="absolute inset-0 bg-gradient-to-tr from-orange-dark/20 via-transparent to-red-800/30 animate-subtle-glow"></div>
+            {/* Gradient Background - Rich Slate/Charcoal for contrast */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/20 via-transparent to-slate-900/40 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
@@ -570,7 +571,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange-dark/95 via-red-600/90 to-red-700/95',
+                'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
