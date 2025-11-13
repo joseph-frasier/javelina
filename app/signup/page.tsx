@@ -535,9 +535,9 @@ export default function SignupPage() {
             ref={heroRef}
             className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
-            {/* Gradient Background - Rich Slate/Charcoal for contrast */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 animate-subtle-gradient">
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/20 via-transparent to-slate-900/40 animate-subtle-glow"></div>
+            {/* Gradient Background - Orange Theme */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark/90 to-red-800 animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-orange/10 via-transparent to-orange-dark/30 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
@@ -566,7 +566,7 @@ export default function SignupPage() {
       </div>
 
       {/* Mobile Layout - Flip Card */}
-      <div className="md:hidden min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-slate-700 dark:to-slate-600">
+      <div className="md:hidden min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-orange/80 dark:to-orange-dark/70">
         <div className="w-full max-w-md perspective-1000">
           <div
             className={clsx(
@@ -579,7 +579,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900',
+                'bg-gradient-to-br from-orange via-orange-dark/90 to-red-800',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
