@@ -32,6 +32,7 @@ export default function SignupPage() {
   const [mounted, setMounted] = useState(false);
   
   const heroRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -40,21 +41,29 @@ export default function SignupPage() {
     }
   }, [isAuthenticated, router]);
 
-  // GSAP slide animation for desktop
+  // GSAP slide animation for desktop - slide both sections apart like cards
   useLayoutEffect(() => {
     setMounted(true);
-    if (window.innerWidth >= 768 && heroRef.current) {
-      // Start with hero covering the entire card
+    if (window.innerWidth >= 768 && heroRef.current && formRef.current) {
+      // Start with both sections overlapping in center
       gsap.set(heroRef.current, {
-        x: '0%',
-        width: '100%',
+        x: '-30%', // Hero starts more to the left
+      });
+      
+      gsap.set(formRef.current, {
+        x: '30%', // Form starts more to the right, behind hero
       });
 
-      // Slide the hero to the right, shrinking to 60% width
-      // This reveals the form that was hidden behind it
+      // Slide both sections apart after delay
       gsap.to(heroRef.current, {
-        x: '40%', // Moves right by 40% (form width)
-        width: '60%',
+        x: '0%', // Hero slides right to its final position
+        duration: 1.2,
+        delay: 0.5,
+        ease: 'power3.inOut',
+      });
+      
+      gsap.to(formRef.current, {
+        x: '0%', // Form slides left to its final position
         duration: 1.2,
         delay: 0.5,
         ease: 'power3.inOut',
@@ -130,7 +139,9 @@ export default function SignupPage() {
       <div className="hidden md:flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-gray-900 dark:to-gray-800 px-8 py-12">
         <div className="relative w-full max-w-6xl h-[700px] rounded-2xl shadow-2xl overflow-hidden">
           {/* Form Section - Left Side */}
-          <div className="absolute left-0 top-0 w-2/5 h-full flex items-center justify-center px-8 py-12 bg-white dark:bg-gray-900 z-10 overflow-y-auto">
+          <div 
+            ref={formRef}
+            className="absolute left-0 top-0 w-2/5 h-full flex items-center justify-center px-8 py-12 bg-white dark:bg-gray-900 z-10 overflow-y-auto">
             <div className="w-full max-w-[420px]">
             {successMessage ? (
               <div className="text-center">
@@ -510,14 +521,14 @@ export default function SignupPage() {
           </div>
         </div>
 
-          {/* Hero Section - Starts full width, slides to right */}
+          {/* Hero Section - Right Side */}
           <div
             ref={heroRef}
-            className="absolute left-0 top-0 w-full h-full overflow-hidden z-20"
+            className="absolute right-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
-            {/* Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark to-orange-dark animate-subtle-gradient">
-              <div className="absolute inset-0 bg-gradient-to-tr from-orange/20 via-transparent to-orange-dark/30 animate-subtle-glow"></div>
+            {/* Gradient Background - Brighter Orange */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-orange/95 animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-orange/10 via-transparent to-orange/20 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
@@ -559,7 +570,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange via-orange-dark to-orange-dark',
+                'bg-gradient-to-br from-orange via-orange to-orange/95',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
