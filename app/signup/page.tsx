@@ -459,18 +459,7 @@ export default function SignupPage() {
                   )}
                 </Button>
 
-                <div className="relative pt-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-light"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-white dark:bg-gray-900 text-gray-slate font-light">
-                      or sign up with
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="grid grid-cols-2 gap-3 pt-6">
                   <Button
                     type="button"
                     variant="outline"
@@ -857,18 +846,7 @@ export default function SignupPage() {
                     {isLoading ? 'Creating account...' : 'Create Account'}
                   </Button>
 
-                  <div className="relative pt-2">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-light"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-3 bg-white dark:bg-gray-900 text-gray-slate font-light text-xs">
-                        or sign up with
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 pt-6">
                     <Button
                       type="button"
                       variant="outline"
