@@ -167,13 +167,13 @@ from-slate-700 via-slate-800 to-slate-900
 
 /* Signup form specific styling - ONLY affects signup page */
 .theme-dark .signup-form-bg {
-  background-color: #2d1910 !important;
+  background-color: #3d2817 !important;
 }
 
 /* Input boxes */
 .theme-dark .signup-form-bg input {
-  background-color: #1a0f0a !important;
-  border-color: #4a2515 !important;
+  background-color: #2a1a10 !important;
+  border-color: #5a3520 !important;
   color: #e2e8f0 !important;
 }
 
@@ -218,7 +218,7 @@ from-slate-700 via-slate-800 to-slate-900
 
 .theme-dark .signup-form-bg button[type="button"]:hover {
   border-color: #ff8c5f !important;
-  background-color: #1a0f0a !important;
+  background-color: #2a1a10 !important;
 }
 
 /* Headings */
@@ -233,7 +233,7 @@ from-slate-700 via-slate-800 to-slate-900
 
 /* Checkbox - orange when checked */
 .theme-dark .signup-form-bg input[type="checkbox"] {
-  border-color: #4a2515 !important;
+  border-color: #5a3520 !important;
 }
 
 .theme-dark .signup-form-bg input[type="checkbox"]:checked {
