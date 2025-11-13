@@ -9,7 +9,6 @@ import gsap from 'gsap';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
-import { Logo } from '@/components/ui/Logo';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -518,15 +517,22 @@ export default function SignupPage() {
             className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
             {/* Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange/80 via-orange-dark/70 to-orange-dark/85 animate-subtle-gradient">
-              <div className="absolute inset-0 bg-gradient-to-tr from-orange/30 via-transparent to-black/20 animate-subtle-glow"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange/90 via-orange-dark/60 to-orange-dark/70 animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-orange/20 via-transparent to-orange-dark/30 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-12">
               <div className="max-w-xl text-center animate-float">
                 <div className="mb-8">
-                  <Logo width={400} height={160} priority className="mx-auto" />
+                  <Image
+                    src="/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png"
+                    alt="Javelina - Take control of your DNS"
+                    width={400}
+                    height={160}
+                    priority
+                    className="mx-auto"
+                  />
                 </div>
                 <h1 className="text-5xl font-black mb-6 leading-tight">
                   Take control of your DNS
@@ -554,14 +560,21 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange/80 via-orange-dark/70 to-orange-dark/85',
+                'bg-gradient-to-br from-orange/90 via-orange-dark/60 to-orange-dark/70',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
             >
               <div className="text-center animate-float">
                 <div className="mb-8">
-                  <Logo width={280} height={112} priority className="mx-auto" />
+                  <Image
+                    src="/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png"
+                    alt="Javelina - Take control of your DNS"
+                    width={280}
+                    height={112}
+                    priority
+                    className="mx-auto"
+                  />
                 </div>
                 <h1 className="text-4xl font-black mb-4 leading-tight">
                   Take control of your DNS
