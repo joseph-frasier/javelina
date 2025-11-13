@@ -144,7 +144,7 @@ export default function SignupPage() {
   return (
     <>
       {/* Desktop Layout */}
-      <div className="hidden md:flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-light to-orange-light/50 dark:bg-orange-dark px-8 py-12">
+      <div className="hidden md:flex min-h-screen items-center justify-center bg-orange-dark px-8 py-12">
         <div className="relative w-full max-w-6xl h-[820px] rounded-2xl shadow-2xl overflow-hidden">
           {/* Form Section - Left Side */}
           <div 
@@ -555,7 +555,7 @@ export default function SignupPage() {
       </div>
 
       {/* Mobile Layout - Flip Card */}
-      <div className="md:hidden min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-light to-orange-light/50 dark:bg-orange-dark">
+      <div className="md:hidden min-h-screen flex items-center justify-center p-4 bg-orange-dark">
         <div className="w-full max-w-md perspective-1000">
           <div
             className={clsx(
