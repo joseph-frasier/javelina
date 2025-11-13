@@ -44,17 +44,16 @@ export default function SignupPage() {
   useLayoutEffect(() => {
     setMounted(true);
     if (window.innerWidth >= 768 && heroRef.current) {
-      // Start with hero covering the entire card from the left
+      // Start with hero covering the entire card
       gsap.set(heroRef.current, {
-        left: 0,
-        right: 'auto',
+        x: '0%',
         width: '100%',
       });
 
-      // Slide the hero to the right side to reveal the form underneath
+      // Slide the hero to the right, shrinking to 60% width
+      // This reveals the form that was hidden behind it
       gsap.to(heroRef.current, {
-        left: '40%',
-        right: 0,
+        x: '40%', // Moves right by 40% (form width)
         width: '60%',
         duration: 1.2,
         delay: 0.5,
@@ -511,13 +510,13 @@ export default function SignupPage() {
           </div>
         </div>
 
-          {/* Hero Section - Slides from left to reveal form */}
+          {/* Hero Section - Starts full width, slides to right */}
           <div
             ref={heroRef}
-            className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
+            className="absolute left-0 top-0 w-full h-full overflow-hidden z-20"
           >
             {/* Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange/90 via-orange-dark/60 to-orange-dark/70 animate-subtle-gradient">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange-dark to-orange-dark animate-subtle-gradient">
               <div className="absolute inset-0 bg-gradient-to-tr from-orange/20 via-transparent to-orange-dark/30 animate-subtle-glow"></div>
             </div>
 
@@ -560,7 +559,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange/90 via-orange-dark/60 to-orange-dark/70',
+                'bg-gradient-to-br from-orange via-orange-dark to-orange-dark',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
