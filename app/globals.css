@@ -86,60 +86,58 @@ header {
 
 /* Signup form specific styling - ONLY affects signup page */
 .theme-dark .signup-form-bg {
-  background-color: #2d3748 !important;
+  background-color: #1e293b !important;
 }
 
 /* Input boxes */
 .theme-dark .signup-form-bg input {
-  background-color: #1a202c !important;
-  border-color: #4a5568 !important;
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
   color: #e2e8f0 !important;
 }
 
 .theme-dark .signup-form-bg input:focus {
-  border-color: #60a5fa !important;
-  box-shadow: 0 0 0 1px #60a5fa !important;
+  border-color: #EF7215 !important;
+  box-shadow: 0 0 0 1px #EF7215 !important;
 }
 
 .theme-dark .signup-form-bg input::placeholder {
-  color: #718096 !important;
+  color: #64748b !important;
 }
 
-/* Labels - replace orange with blue */
-.theme-dark .signup-form-bg label,
-.theme-dark .signup-form-bg .text-orange-dark {
-  color: #93c5fd !important;
+/* Labels - keep orange theme */
+.theme-dark .signup-form-bg label {
+  color: #EF7215 !important;
 }
 
-/* Create Account button - blue instead of orange */
+/* Create Account button - brand orange */
 .theme-dark .signup-form-bg button[type="submit"] {
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background-color: #EF7215 !important;
+  border-color: #EF7215 !important;
 }
 
 .theme-dark .signup-form-bg button[type="submit"]:hover {
-  background-color: #2563eb !important;
+  background-color: #d64f1c !important;
 }
 
-/* Links - blue instead of orange */
-.theme-dark .signup-form-bg a,
-.theme-dark .signup-form-bg .text-orange {
-  color: #60a5fa !important;
+/* Links - orange theme */
+.theme-dark .signup-form-bg a {
+  color: #ff8c5f !important;
 }
 
 .theme-dark .signup-form-bg a:hover {
-  color: #93c5fd !important;
+  color: #EF7215 !important;
 }
 
-/* OAuth buttons */
+/* OAuth buttons - orange borders */
 .theme-dark .signup-form-bg button[type="button"] {
-  border-color: #4a5568 !important;
+  border-color: #EF7215 !important;
   color: #e2e8f0 !important;
 }
 
 .theme-dark .signup-form-bg button[type="button"]:hover {
-  border-color: #60a5fa !important;
-  background-color: #1a202c !important;
+  border-color: #ff8c5f !important;
+  background-color: #0f172a !important;
 }
 
 /* Headings */
@@ -152,14 +150,14 @@ header {
   color: #cbd5e0 !important;
 }
 
-/* Checkbox */
+/* Checkbox - orange when checked */
 .theme-dark .signup-form-bg input[type="checkbox"] {
-  border-color: #4a5568 !important;
+  border-color: #334155 !important;
 }
 
 .theme-dark .signup-form-bg input[type="checkbox"]:checked {
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background-color: #EF7215 !important;
+  border-color: #EF7215 !important;
 }
 
 @layer utilities {
