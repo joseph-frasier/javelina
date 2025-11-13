@@ -526,9 +526,9 @@ export default function SignupPage() {
             ref={heroRef}
             className="absolute right-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
-            {/* Gradient Background - Brighter Orange */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-orange/95 animate-subtle-gradient">
-              <div className="absolute inset-0 bg-gradient-to-tr from-orange/10 via-transparent to-orange/20 animate-subtle-glow"></div>
+            {/* Gradient Background - Rich Coral/Burgundy for contrast */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-dark/95 via-red-600/90 to-red-700/95 animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-orange-dark/20 via-transparent to-red-800/30 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
@@ -570,7 +570,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange via-orange to-orange/95',
+                'bg-gradient-to-br from-orange-dark/95 via-red-600/90 to-red-700/95',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
