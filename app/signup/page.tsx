@@ -145,7 +145,7 @@ export default function SignupPage() {
     <>
       {/* Desktop Layout */}
       <div className="hidden md:flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-light to-orange-light/50 dark:from-slate-700 dark:to-slate-600 px-8 py-12">
-        <div className="relative w-full max-w-6xl h-[700px] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="relative w-full max-w-6xl h-[820px] rounded-2xl shadow-2xl overflow-hidden">
           {/* Form Section - Left Side */}
           <div 
             ref={formRef}
