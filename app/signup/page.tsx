@@ -517,9 +517,9 @@ export default function SignupPage() {
             ref={heroRef}
             className="absolute left-0 top-0 w-3/5 h-full overflow-hidden z-20"
           >
-            {/* Static Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange/90 via-orange-dark/85 to-orange-dark/90">
-              <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-white/10 via-transparent to-orange/20"></div>
+            {/* Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-orange-dark animate-subtle-gradient">
+              <div className="absolute inset-0 bg-gradient-to-tr from-orange/40 via-transparent to-orange-dark/40 animate-subtle-glow"></div>
             </div>
 
             {/* Content */}
@@ -554,7 +554,7 @@ export default function SignupPage() {
             <div
               className={clsx(
                 'absolute inset-0 w-full backface-hidden',
-                'bg-gradient-to-br from-orange/90 via-orange-dark/80 to-orange-dark/90',
+                'bg-gradient-to-br from-orange via-orange to-orange-dark',
                 'rounded-2xl shadow-2xl p-8 flex flex-col items-center justify-center text-white'
               )}
               style={{ backfaceVisibility: 'hidden' }}
@@ -908,8 +908,30 @@ export default function SignupPage() {
             transform: translateY(-10px);
           }
         }
+        @keyframes subtle-gradient {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.95;
+          }
+        }
+        @keyframes subtle-glow {
+          0%, 100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
         .animate-float {
           animation: float 6s ease-in-out infinite;
+        }
+        .animate-subtle-gradient {
+          animation: subtle-gradient 8s ease-in-out infinite;
+        }
+        .animate-subtle-glow {
+          animation: subtle-glow 6s ease-in-out infinite;
         }
       `}</style>
     </>
