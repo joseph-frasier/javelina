@@ -1,0 +1,286 @@
+---
+alwaysApply: true
+---
+
+============================================================
+1. ROLE & PURPOSE
+============================================================
+
+You are the coding assistant for the Javelina Monorepo.  
+
+Your job:
+- Modify and extend the codebase safely.
+- Respect architecture boundaries.
+- Prefer minimal, precise edits (not refactors) unless asked.
+- Never break existing conventions or folder structure.
+- Always output full updated files or clear diffs.
+
+This is a production-grade app. Stability > cleverness.
+
+============================================================
+2. TECH STACK (Authoritative)
+============================================================
+
+### FRONTEND
+- Next.js 15.5.4 (App Router)
+- React 19
+- TypeScript 5.7
+- Tailwind CSS 3.4
+- Zustand
+- @tanstack/react-query
+- GSAP
+- clsx + CVA
+
+### BACKEND
+- Express.js (Node + TS)
+- Helmet
+- Morgan
+- CORS
+
+### DATABASE & AUTH
+- Supabase (PostgreSQL)
+- supabase-js client library
+- Supabase Auth (email/password + OAuth)
+
+### PAYMENTS
+- Stripe
+- @stripe/stripe-js + @stripe/react-stripe-js
+- Stripe webhook handling in backend
+
+### DEPLOYMENT
+- Vercel (frontend + backend)
+- Monorepo: frontend at port 3000, backend at 3001
+
+============================================================
+3. ARCHITECTURE RULES (MANDATORY)
+============================================================
+
+### FRONTEND RESPONSIBILITIES
+- UI rendering
+- User interactions
+- React Query API calls to backend
+- Client-side auth session reading (Supabase)
+- Stripe Elements
+
+Frontend MUST NOT:
+- Directly read/write Supabase tables
+- Access Supabase service role keys
+- Use Stripe secret keys
+- Perform CRUD operations locally
+- Call external services directly
+
+### BACKEND RESPONSIBILITIES
+- ALL business logic
+- ALL CRUD operations
+- ALL data validation & permission checks
+- ALL Supabase access (using service role key)
+- ALL Stripe secret operations
+- ALL webhook handling
+- API response shaping
+
+Backend MUST:
+- Query Supabase securely
+- Store env vars safely
+- Follow existing folder structure (routes, controllers, services)
+
+### DATABASE (SUPABASE)
+Supabase is ONLY accessed through backend service modules.  
+
+Frontend uses Supabase ONLY for:
+- Auth sessions
+- Getting currently logged-in user via browser-side client
+
+### STRIPE
+Frontend:
+- Uses stripe-js for UI
+
+Backend:
+- Creates PaymentIntents
+- Manages subscriptions
+- Processes webhooks
+- Validates whsec signatures
+- Handles refunds/charges (+$1 / -$1)
+
+Frontend NEVER:
+- Uses secret keys
+- Handles webhook signatures
+
+============================================================
+4. CRUD & DATA FLOW RULES
+============================================================
+
+### CORRECT FLOW
+Frontend → Backend API → Supabase  
+Frontend → Backend API → Stripe  
+Frontend → Backend API → External services
+
+### INCORRECT FLOW (NEVER DO)
+Frontend → Supabase (insert/update/delete)  
+Frontend → Stripe secret ops  
+Frontend → SQL queries  
+Frontend → Any direct DB or service access
+
+If asked to modify data logic:
+- Update backend routes/controllers/services
+- Update Supabase queries in backend
+- Update frontend API calls accordingly
+
+============================================================
+5. SUPABASE USAGE RULES
+============================================================
+
+Backend:
+- Uses service role key via environment variables
+- Owns CRUD fully
+- Uses a reusable service pattern for each table
+
+Frontend:
+- Uses public anon key ONLY
+- Only for auth/session
+- Never writes to tables
+
+If code violates this, correct it automatically.
+
+============================================================
+6. AUTH & ADMIN PORTAL EXCEPTIONS (REQUIRED)
+============================================================
+
+There are exactly TWO cases where direct frontend calls to Supabase
+ARE allowed. These are intentional design choices and MUST NOT be
+"corrected" or rewritten.
+
+### 1. SUPABASE AUTH (CLIENT-SIDE)
+
+Frontend must continue using Supabase Auth directly via:
+
+- `supabase.auth.getSession()`
+- `supabase.auth.signInWithPassword()`
+- `supabase.auth.signInWithOAuth()`
+- `supabase.auth.signOut()`
+- `createBrowserSupabaseClient()` or equivalent
+
+These calls MUST NOT be moved to the backend.
+They are required for cookie/session/token handling.
+
+### 2. ADMIN PORTAL DIRECT SUPABASE ACCESS
+
+The Admin Portal is a **private, access-controlled, staff-only page**
+with restricted access. It is NOT part of the public application.
+
+The admin UI is allowed to:
+
+- Query Supabase directly
+- Insert/update/delete records directly
+- Use Supabase's JS client for CRUD operations
+
+Conditions that MUST be preserved:
+
+- Admin pages must remain protected behind auth
+- Admin pages must never be exposed to the public frontend
+- Admin logic must not be moved to the backend unless explicitly asked
+- Admin components must remain isolated (no sharing with public pages)
+
+### RULES FOR THESE EXCEPTIONS
+
+When working on code inside these two exceptions:
+
+- DO NOT rewrite admin CRUD to backend API endpoints
+- DO NOT enforce backend-only CRUD rules on admin pages
+- DO NOT attempt to "fix," "harden," migrate, or refactor these into
+  backend code unless I explicitly command it
+- DO remove direct Supabase queries from public-facing pages
+
+These two exceptions override general architectural rules.
+
+### GENERAL FLOW REMAINS UNCHANGED
+
+Outside of Auth and Admin Portal:
+Frontend → Backend → Supabase
+
+Inside Auth and Admin Portal:
+Frontend → Supabase (direct, allowed)
+
+============================================================
+7. STRIPE USAGE RULES
+============================================================
+
+Frontend:
+- Collects payment info with Stripe Elements
+
+Backend:
+- Uses secret API keys
+- Creates PaymentIntents
+- Handles refunds, subscriptions, webhooks
+
+ALL webhook verification must be done in backend using:
+- `whsec_...` signing secret
+
+Frontend must never know this secret.
+
+============================================================
+8. WHEN I ASK FOR CHANGES
+============================================================
+
+When I (the user) ask for changes:
+1. Determine if it belongs in frontend, backend, or database.
+2. Propose smallest safe set of edits.
+3. Respect the architecture rules.
+4. Output:
+   - File paths
+   - Full updated code blocks
+5. Explain ONLY what's necessary.
+
+NEVER:
+- Rewrite large amounts of code
+- Move logic across layers unless asked
+- Introduce new dependencies without permission
+
+============================================================
+9. COMMUNICATION RULES
+============================================================
+
+- If something is unclear from the code, make a reasonable assumption and state it.
+- Stay code-focused and concrete.
+- Follow established naming, types, formatting, and folder structure.
+- Use TypeScript strictly.
+
+============================================================
+10. SECURITY RULES
+============================================================
+
+- Never expose secrets (DB URL, stripe secret key, service role key, webhook key)
+- All secrets must be environment variables
+- Never log sensitive info
+- Never leak stack traces in API responses
+
+============================================================
+11. STYLE & FILE STRUCTURE
+============================================================
+
+Follow existing conventions:
+- Next.js App Router structure (`app/...`)
+- Express: `/routes`, `/controllers`, `/services`, `/middleware`
+- Supabase queries in `/services/supabase/`
+- React components in `/components`
+- React Query hooks in `/hooks`
+- Zustand stores in `/stores`
+
+When adding code:
+- Place files where similar code already lives
+- Name things consistently
+- Maintain type safety
+
+============================================================
+12. SUMMARY (HARD CONSTRAINTS)
+============================================================
+
+- Frontend = UI + API calls only  
+- Backend = ALL logic + ALL CRUD + ALL integrations  
+- Supabase = access ONLY through backend  
+- Stripe = secret operations ONLY in backend
+
+EXCEPTIONS:
+- Supabase Auth methods (client-side) are allowed in frontend
+- Admin Portal can query Supabase directly (protected, staff-only)
+
+Always produce changes that reinforce this architecture.
