@@ -57,12 +57,9 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
     }
   }
 
-  // Fetch real DNS records from zone_records table
-  const { data: dnsRecords } = await supabase
-    .from('zone_records')
-    .select('*')
-    .eq('zone_id', zoneId);
-
+  // Fetch DNS records through Express API for consistency
+  const dnsRecords = await getZoneDNSRecords(zoneId, zoneName);
+  
   const realRecords = (dnsRecords || []) as any[];
   const recordTypeCounts = realRecords.length > 0 ? calculateRecordTypeCounts(realRecords) : [];
   const ttlDistribution = realRecords.length > 0 ? calculateTTLDistribution(realRecords) : [];
@@ -186,11 +183,8 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
     .is('deleted_at', null)
     .single();
 
-  // Fetch real DNS records
-  const { data: dnsRecords } = await supabase
-    .from('zone_records')
-    .select('*')
-    .eq('zone_id', zoneId);
+  // Fetch DNS records through Express API for consistency
+  const dnsRecords = await getZoneDNSRecords(zoneId, zoneName);
 
   const exportData = {
     zone: zone || {},
@@ -212,22 +206,38 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
 
 /**
  * Get DNS records for a zone
+ * Routes through Express API for consistent authorization and error handling
  */
 export async function getZoneDNSRecords(zoneId: string, zoneName: string): Promise<DNSRecord[]> {
-  const supabase = createClient();
-  
-  const { data, error } = await supabase
-    .from('zone_records')
-    .select('*')
-    .eq('zone_id', zoneId)
-    .order('name', { ascending: true })
-    .order('type', { ascending: true });
-  
-  if (error) {
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      console.error('Not authenticated');
+      return [];
+    }
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    
+    const response = await fetch(`${API_BASE_URL}/api/dns-records/zone/${zoneId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      cache: 'no-store', // Ensure fresh data
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch DNS records:', response.statusText);
+      return [];
+    }
+
+    const result = await response.json();
+    return (result.data || result || []) as DNSRecord[];
+  } catch (error) {
     console.error('Error fetching DNS records:', error);
     return [];
   }
-  
-  return (data || []) as DNSRecord[];
 }
 

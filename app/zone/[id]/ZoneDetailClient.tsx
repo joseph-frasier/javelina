@@ -23,7 +23,6 @@ import {
   getZoneAuditLogs, 
   verifyZoneNameservers, 
   exportZoneJSON,
-  getZoneDNSRecords,
   ZoneSummary
 } from '@/lib/api/dns';
 import { AuditLog } from '@/lib/mock-dns-data';
@@ -91,7 +90,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       const [summary, logs, records] = await Promise.all([
         getZoneSummary(zoneId, zone.name, zone.records_count || 50),
         getZoneAuditLogs(zoneId, zone.name),
-        getZoneDNSRecords(zoneId, zone.name),
+        getDNSRecords(zoneId), // Use server action for consistency - routes through Express API
       ]);
       setZoneSummary(summary);
       setAuditLogs(logs);
