@@ -213,7 +213,7 @@ export interface StripeCheckoutMetadata {
  */
 export interface CreateCheckoutSessionRequest {
   org_id: string;
-  price_id: string;
+  plan_code: string;
   success_url?: string;
   cancel_url?: string;
 }

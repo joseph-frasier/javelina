@@ -109,8 +109,10 @@ function PricingContent() {
     // All plans (including Starter) go through checkout
     const planConfig = PLANS_CONFIG.find(p => p.id === selectedPlanForOrg.id);
     if (planConfig && planConfig.monthly) {
+      // Generate plan code: planId + "_monthly" (e.g., "starter_monthly", "basic_monthly", "pro_monthly")
+      const planCode = `${planConfig.id}_monthly`;
       router.push(
-        `/checkout?org_id=${orgId}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=month`
+        `/checkout?org_id=${orgId}&plan_code=${planCode}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=month`
       );
     } else {
       addToast('error', 'Unable to proceed to checkout. Please try again.');

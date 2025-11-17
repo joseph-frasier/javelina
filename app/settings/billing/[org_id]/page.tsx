@@ -151,7 +151,7 @@ export default function OrganizationBillingPage() {
     }
   };
 
-  const handleSelectPlan = async (planCode: string, priceId: string) => {
+  const handleSelectPlan = async (planCode: string) => {
     setShowPlanModal(false);
 
     if (!orgId) {
@@ -166,7 +166,7 @@ export default function OrganizationBillingPage() {
         addToast('info', 'Updating your subscription...');
         
         const { stripeApi } = await import('@/lib/api-client');
-        await stripeApi.updateSubscription(orgId, priceId);
+        await stripeApi.updateSubscription(orgId, planCode);
 
         addToast('success', 'Subscription updated successfully!');
         
@@ -185,7 +185,7 @@ export default function OrganizationBillingPage() {
       const planName = planConfig?.name || planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
       router.push(
-        `/checkout?org_id=${orgId}&price_id=${priceId}&plan_name=${encodeURIComponent(planName)}&plan_price=${planPrice}&billing_interval=month`
+        `/checkout?org_id=${orgId}&plan_code=${planCode}&plan_name=${encodeURIComponent(planName)}&plan_price=${planPrice}&billing_interval=month`
       );
     }
   };
