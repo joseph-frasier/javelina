@@ -195,7 +195,7 @@ function PricingContent() {
               name: plan.name,
               price: plan.monthly?.amount || 0,
               priceId: plan.monthly?.priceId || '',
-              interval: 'month' as const,
+              interval: 'lifetime' as const,
               features: plan.features.filter(f => f.included).map(f => f.name),
               description: plan.description,
               popular: plan.popular,

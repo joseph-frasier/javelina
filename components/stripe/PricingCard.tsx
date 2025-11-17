@@ -46,13 +46,13 @@ export function PricingCard({
 
       {!hidePrice && (
         <div className="mb-4">
-          <div className="flex items-baseline">
+          <div className="flex flex-col">
             <span className="text-4xl font-black text-orange-dark">
-              {plan.price === 0 ? '$0.00' : `$${Number(plan.price).toFixed(2)}`}
+              {plan.price === 0 ? '$0.00' : `$${Number(plan.price).toFixed(0)}`}
             </span>
             {plan.price > 0 && (
-              <span className="ml-2 text-sm text-gray-slate font-light">
-                /{plan.interval}
+              <span className="text-xs text-gray-slate font-light uppercase tracking-wide mt-1">
+                {plan.interval === 'lifetime' ? 'ONE-TIME' : `/${plan.interval}`}
               </span>
             )}
           </div>
