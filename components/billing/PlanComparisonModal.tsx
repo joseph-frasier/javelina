@@ -10,7 +10,6 @@ interface Plan {
   price: number;
   billing_interval: 'month' | 'year' | null;
   features: string[];
-  priceId: string;
   isCurrent?: boolean;
   isPopular?: boolean;
 }
@@ -19,17 +18,17 @@ interface PlanComparisonModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentPlanCode: string;
-  onSelectPlan: (planCode: string, priceId: string) => void;
+  onSelectPlan: (planCode: string) => void;
 }
 
 // Plan definitions (should match your actual plans)
+// Note: These are fallback definitions. Real pricing is fetched from the database via PLANS_CONFIG
 const AVAILABLE_PLANS: Plan[] = [
   {
-    code: 'free',
-    name: 'Free',
+    code: 'starter_monthly',
+    name: 'Starter',
     price: 0,
-    billing_interval: null,
-    priceId: 'price_1SL5MCA8kaNOs7rye16c39RS',
+    billing_interval: 'month',
     features: [
       '1 Environment',
       '3 DNS Zones',
@@ -43,7 +42,6 @@ const AVAILABLE_PLANS: Plan[] = [
     name: 'Basic',
     price: 3.50,
     billing_interval: 'month',
-    priceId: 'price_1SL5NJA8kaNOs7rywCjYzPgH',
     features: [
       '3 Environments',
       '10 DNS Zones',
@@ -59,7 +57,6 @@ const AVAILABLE_PLANS: Plan[] = [
     name: 'Pro',
     price: 6.70,
     billing_interval: 'month',
-    priceId: 'price_1SLSXKA8kaNOs7ryKJ6hCHd5',
     isPopular: true,
     features: [
       '10 Environments',
@@ -79,7 +76,6 @@ const AVAILABLE_PLANS: Plan[] = [
     name: 'Enterprise',
     price: 450,
     billing_interval: 'month',
-    priceId: 'price_1SLSZFA8kaNOs7rywWLjhQ8b',
     features: [
       'Unlimited Everything',
       'Custom Roles',
@@ -112,7 +108,7 @@ export function PlanComparisonModal({
     }
 
     setSelectedPlan(plan.code);
-    onSelectPlan(plan.code, plan.priceId);
+    onSelectPlan(plan.code);
   };
 
   return (

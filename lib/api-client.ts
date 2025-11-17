@@ -151,8 +151,8 @@ export const stripeApi = {
   /**
    * Create a subscription intent
    */
-  createSubscription: (org_id: string, price_id: string) => {
-    return apiClient.post('/stripe/subscriptions', { org_id, price_id });
+  createSubscription: (org_id: string, plan_code: string) => {
+    return apiClient.post('/stripe/subscriptions', { org_id, plan_code });
   },
 
   /**
@@ -165,8 +165,8 @@ export const stripeApi = {
   /**
    * Update a subscription
    */
-  updateSubscription: (org_id: string, new_price_id: string) => {
-    return apiClient.post('/stripe/subscriptions/update', { org_id, new_price_id });
+  updateSubscription: (org_id: string, new_plan_code: string) => {
+    return apiClient.post('/stripe/subscriptions/update', { org_id, new_plan_code });
   },
 };
 

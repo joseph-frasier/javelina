@@ -10,7 +10,7 @@ import { useToastStore } from '@/lib/toast-store';
 
 interface CheckoutData {
   org_id: string;
-  price_id: string;
+  plan_code: string;
   plan_name?: string;
   plan_price?: number;
   billing_interval?: string;
@@ -34,9 +34,9 @@ function CheckoutContent() {
 
   useEffect(() => {
     const org_id = searchParams.get('org_id');
-    const price_id = searchParams.get('price_id');
+    const plan_code = searchParams.get('plan_code');
 
-    if (!org_id || !price_id) {
+    if (!org_id || !plan_code) {
       addToast('error', 'Invalid checkout parameters');
       router.push('/pricing');
       return;
@@ -44,7 +44,7 @@ function CheckoutContent() {
 
     setCheckoutData({
       org_id,
-      price_id,
+      plan_code,
       plan_name: searchParams.get('plan_name') || 'Selected Plan',
       plan_price: parseFloat(searchParams.get('plan_price') || '0'),
       billing_interval: searchParams.get('billing_interval') || 'month',
@@ -60,7 +60,7 @@ function CheckoutContent() {
         setIsLoading(true);
 
         const { stripeApi } = await import('@/lib/api-client');
-        const data = await stripeApi.createSubscription(org_id, price_id);
+        const data = await stripeApi.createSubscription(org_id, plan_code);
 
         setClientSecret(data.clientSecret);
         setFlow(data.flow);
