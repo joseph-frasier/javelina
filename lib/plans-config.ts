@@ -163,8 +163,8 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
     plans.push(plan);
   });
   
-  // Sort plans by order: starter, basic, pro, enterprise
-  const order = ['starter', 'basic', 'pro', 'enterprise'];
+  // Sort plans by order: starter, pro, premium, enterprise
+  const order = ['starter_lifetime', 'pro_lifetime', 'premium_lifetime', 'enterprise_lifetime'];
   plans.sort((a, b) => {
     const aIndex = order.indexOf(a.id);
     const bIndex = order.indexOf(b.id);
