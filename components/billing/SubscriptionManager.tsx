@@ -133,12 +133,12 @@ export function SubscriptionManager({
         {/* Price */}
         {subscription?.plan?.metadata?.price && (
           <div className="mb-4 pb-4 border-b border-gray-light">
-            <div className="flex items-baseline">
+            <div className="flex flex-col">
               <span className="text-3xl font-black text-orange-dark">
                 ${Number(subscription.plan.metadata.price).toFixed(2)}
               </span>
-              <span className="text-gray-slate ml-2">
-                /{subscription.plan.billing_interval || 'month'}
+              <span className="text-xs text-gray-slate font-light uppercase tracking-wide mt-1">
+                {subscription.plan.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
               </span>
             </div>
           </div>
