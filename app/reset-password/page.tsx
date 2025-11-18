@@ -98,9 +98,11 @@ export default function ResetPasswordPage() {
       // Immediately sign out the user so they must login with new password
       await supabase.auth.signOut();
 
-      // Redirect to login after 2 seconds
+      // Redirect to login after 2 seconds using hard redirect
+      // Use window.location.href instead of router.push() for reliable production behavior
       setTimeout(() => {
-        router.push('/login');
+        console.log('Redirecting to login page...');
+        window.location.href = '/login';
       }, 2000);
     } catch (error: any) {
       console.error('Password reset error:', error);
