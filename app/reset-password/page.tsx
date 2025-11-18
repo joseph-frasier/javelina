@@ -23,18 +23,40 @@ export default function ResetPasswordPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [tokenError, setTokenError] = useState('');
 
-  // Check for token on mount
+  // Check for token and establish session on mount
   useEffect(() => {
-    // Get token from URL hash (Supabase sends it as #access_token=...)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const token = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    const initializeSession = async () => {
+      // Get token from URL hash (Supabase sends it as #access_token=...)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
 
-    if (!token || type !== 'recovery') {
-      setTokenError(
-        'Invalid or missing reset token. Please request a new password reset link.'
-      );
-    }
+      if (!accessToken || type !== 'recovery') {
+        setTokenError(
+          'Invalid or missing reset token. Please request a new password reset link.'
+        );
+        return;
+      }
+
+      // Establish the session using the tokens from the URL
+      const supabase = createClient();
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+      });
+
+      if (error) {
+        console.error('Failed to establish session:', error);
+        setTokenError(
+          'Failed to establish session. Please request a new password reset link.'
+        );
+      } else {
+        console.log('Session established successfully for password reset');
+      }
+    };
+
+    initializeSession();
   }, []);
 
   const validateForm = (): boolean => {
