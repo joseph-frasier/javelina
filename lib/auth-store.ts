@@ -443,7 +443,8 @@ export const useAuthStore = create<AuthState>()(
         const supabase = createClient()
 
         try {
-          const resetUrl = `${window.location.origin}/reset-password`
+          // Use auth callback route which will handle the code exchange and redirect to reset-password
+          const resetUrl = `${window.location.origin}/auth/callback?type=recovery`
           console.log('Sending password reset email to:', email)
           console.log('Reset URL:', resetUrl)
 
