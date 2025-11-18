@@ -151,8 +151,8 @@ export const stripeApi = {
   /**
    * Create a subscription intent
    */
-  createSubscription: (org_id: string, plan_code: string) => {
-    return apiClient.post('/stripe/subscriptions', { org_id, plan_code });
+  createSubscription: (org_id: string, plan_code: string, price_id?: string) => {
+    return apiClient.post('/stripe/subscriptions', { org_id, plan_code, price_id });
   },
 
   /**

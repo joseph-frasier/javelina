@@ -21,27 +21,27 @@ interface PlanComparisonModalProps {
   onSelectPlan: (planCode: string) => void;
 }
 
-// Plan definitions (should match your actual plans)
-// Note: These are fallback definitions. Real pricing is fetched from the database via PLANS_CONFIG
+// Plan definitions (Founder Tier Lifetime Plans)
 const AVAILABLE_PLANS: Plan[] = [
   {
-    code: 'starter_monthly',
+    code: 'starter_lifetime',
     name: 'Starter',
-    price: 0,
-    billing_interval: 'month',
+    price: 238.80,
+    billing_interval: null,
     features: [
       '1 Environment',
       '3 DNS Zones',
       '100 DNS Records per Zone',
       '2 Team Members',
-      'Community Support',
+      'Email Support',
     ],
   },
   {
-    code: 'basic_monthly',
-    name: 'Basic',
-    price: 3.50,
-    billing_interval: 'month',
+    code: 'pro_lifetime',
+    name: 'Pro',
+    price: 1198.80,
+    billing_interval: null,
+    isPopular: true,
     features: [
       '3 Environments',
       '10 DNS Zones',
@@ -49,15 +49,15 @@ const AVAILABLE_PLANS: Plan[] = [
       '5 Team Members',
       'Bulk Operations',
       'Export Data',
+      'API Access',
       'Email Support',
     ],
   },
   {
-    code: 'pro_monthly',
-    name: 'Pro',
-    price: 6.70,
-    billing_interval: 'month',
-    isPopular: true,
+    code: 'premium_lifetime',
+    name: 'Premium',
+    price: 4776.00,
+    billing_interval: null,
     features: [
       '10 Environments',
       '50 DNS Zones',
@@ -72,10 +72,10 @@ const AVAILABLE_PLANS: Plan[] = [
     ],
   },
   {
-    code: 'enterprise_monthly',
+    code: 'enterprise_lifetime',
     name: 'Enterprise',
-    price: 450,
-    billing_interval: 'month',
+    price: 0,
+    billing_interval: null,
     features: [
       'Unlimited Everything',
       'Custom Roles',
@@ -101,7 +101,7 @@ export function PlanComparisonModal({
       return; // Already on this plan
     }
 
-    if (plan.code === 'enterprise_monthly') {
+    if (plan.code === 'enterprise_lifetime') {
       // Contact sales for enterprise
       window.location.href = 'mailto:sales@javelina.com?subject=Enterprise Plan Inquiry';
       return;
@@ -123,7 +123,7 @@ export function PlanComparisonModal({
 
         {/* Top 3 Plans */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {AVAILABLE_PLANS.filter(plan => plan.code !== 'enterprise_monthly').map((plan) => {
+          {AVAILABLE_PLANS.filter(plan => plan.code !== 'enterprise_lifetime').map((plan) => {
             const isCurrent = plan.code === currentPlanCode;
             const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
 
@@ -162,16 +162,10 @@ export function PlanComparisonModal({
                     {plan.name}
                   </h3>
                   <div className="mt-2">
-                    {plan.code === 'free' ? (
-                      <p className="text-2xl font-bold text-gray-slate">$0.00</p>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold text-gray-slate">
-                          ${plan.price.toFixed(2)}
-                        </p>
-                        <p className="text-xs text-gray-400">per month</p>
-                      </>
-                    )}
+                    <p className="text-2xl font-bold text-gray-slate">
+                      ${plan.price.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-400 uppercase">ONE-TIME</p>
                   </div>
                 </div>
 
@@ -214,7 +208,7 @@ export function PlanComparisonModal({
                   >
                     {isUpgrade
                       ? 'Upgrade'
-                      : plan.code === 'enterprise_monthly'
+                      : plan.code === 'enterprise_lifetime'
                       ? 'Contact Sales'
                       : 'Downgrade'}
                   </Button>
@@ -226,7 +220,7 @@ export function PlanComparisonModal({
 
         {/* Enterprise Plan - Separate at Bottom */}
         {(() => {
-          const plan = AVAILABLE_PLANS.find(p => p.code === 'enterprise_monthly');
+          const plan = AVAILABLE_PLANS.find(p => p.code === 'enterprise_lifetime');
           if (!plan) return null;
           
           const isCurrent = plan.code === currentPlanCode;
