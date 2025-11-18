@@ -170,23 +170,23 @@ export function SubscriptionManager({
             <>
               {subscription?.plan?.billing_interval === null ? (
                 // Lifetime plan - disabled button with tooltip
-                <div className="relative inline-block">
+                <div 
+                  className="relative inline-block group"
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                >
                   <button
                     disabled
-                    onMouseEnter={() => setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
                     className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md font-medium cursor-not-allowed"
                   >
                     Change Plan
                   </button>
-                  {showTooltip && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap z-10">
-                      Contact sales
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                        <div className="border-4 border-transparent border-t-gray-900"></div>
-                      </div>
+                  <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap transition-opacity duration-200 pointer-events-none ${showTooltip ? 'opacity-100 z-50' : 'opacity-0 -z-10'}`}>
+                    Contact sales
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                      <div className="border-4 border-transparent border-t-gray-900"></div>
                     </div>
-                  )}
+                  </div>
                 </div>
               ) : (
                 // Regular plan - active button
