@@ -17,18 +17,13 @@ A modern DNS management platform built with Next.js, offering enterprise-grade D
 
 ## 🛠 Tech Stack
 
-### Frontend
 - **Framework**: Next.js 14+ (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **State Management**: Zustand
 - **UI Components**: Custom component library with Radix UI primitives
-- **Authentication**: Supabase Auth
-
-### Backend
-- **API**: Express.js (Node.js)
 - **Database**: PostgreSQL (via Supabase)
-- **Authentication**: Supabase
+- **Authentication**: Supabase Auth
 - **Payment Processing**: Stripe
 - **Deployment**: Vercel
 
@@ -48,19 +43,12 @@ A modern DNS management platform built with Next.js, offering enterprise-grade D
    cd javelina
    ```
 
-2. **Install frontend dependencies**
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. **Install backend dependencies**
-   ```bash
-   cd backend
-   npm install
-   cd ..
-   ```
-
-4. **Set up environment variables**
+3. **Set up environment variables**
 
    Create a `.env.local` file in the root directory:
    ```env
@@ -70,21 +58,12 @@ A modern DNS management platform built with Next.js, offering enterprise-grade D
 
    # Stripe
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   STRIPE_SECRET_KEY=your_stripe_secret_key
-   STRIPE_WEBHOOK_SECRET=your_webhook_secret
 
-   # Backend API
-   NEXT_PUBLIC_API_URL=http://localhost:3001
+   # Backend API (External)
+   NEXT_PUBLIC_API_URL=your_backend_api_url
 
    # App Configuration
    NEXT_PUBLIC_MOCK_MODE=false
-   ```
-
-   Create a `.env` file in the `backend` directory:
-   ```env
-   PORT=3001
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    ```
 
 ## 🗄 Database Setup
@@ -93,31 +72,20 @@ A modern DNS management platform built with Next.js, offering enterprise-grade D
 
 ## 🚀 Quick Start
 
-### Run Both Frontend & Backend (Recommended)
-```bash
-npm run dev:full
-```
-
-That's it! Both services will start automatically:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001
-
-### Individual Services
-
-**Backend only**:
-```bash
-npm run dev:backend
-```
-
-**Frontend only**:
+### Development Mode
 ```bash
 npm run dev
 ```
 
-### Other Useful Commands
+The frontend will start at:
+- **Frontend**: http://localhost:3000
+
+**Note**: This frontend connects to an external backend API. Make sure `NEXT_PUBLIC_API_URL` is configured in your `.env.local` file.
+
+### Production Build
 ```bash
-npm run build:full       # Build both for production
-npm run start:full       # Run both in production mode
+npm run build       # Build for production
+npm run start       # Run in production mode
 ```
 
 📖 See [DEV_SCRIPTS_README.md](./DEV_SCRIPTS_README.md) for detailed development documentation.
@@ -141,13 +109,6 @@ javelina/
 │   ├── auth/                # Authentication flows
 │   ├── organization/        # Organization management
 │   ├── zone/                # DNS zone management
-│   └── ...
-├── backend/                 # Express.js backend
-│   ├── src/
-│   │   ├── controllers/     # Route controllers
-│   │   ├── routes/          # API routes
-│   │   ├── middleware/      # Express middleware
-│   │   └── config/          # Configuration files
 │   └── ...
 ├── components/              # React components
 │   ├── admin/              # Admin-specific components
@@ -214,16 +175,10 @@ psql -h your_host -U postgres -d postgres -f supabase/seed-admin-user.sql
 
 ## 📊 Available Scripts
 
-### Frontend
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
-
-### Backend
-- `npm run dev` - Start with nodemon (auto-reload)
-- `npm run build` - Compile TypeScript
-- `npm start` - Start production server
 
 ### Utilities
 - `./scripts/switch-env.sh` - Switch between development environments
@@ -234,18 +189,15 @@ Access the test API page at `/test-api` to verify backend connectivity and API f
 
 ## 🌐 Deployment
 
-### Frontend (Vercel)
+### Vercel Deployment
 1. Connect your repository to Vercel
-2. Configure environment variables
+2. Configure environment variables (including `NEXT_PUBLIC_API_URL` for your backend)
 3. Deploy
 
-### Backend (Vercel/Railway/Heroku)
-1. Set up environment variables
-2. Configure build settings (TypeScript compilation)
-3. Deploy
+Configuration file provided:
+- `vercel.json`
 
-Configuration files are provided:
-- `vercel.json` (root and backend)
+**Note**: Backend is deployed separately. Update `NEXT_PUBLIC_API_URL` to point to your production backend API.
 
 ## 🤝 Contributing
 
