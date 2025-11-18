@@ -76,7 +76,7 @@ function PricingContent() {
       return;
     }
 
-    if (planId === 'enterprise') {
+    if (planId === 'enterprise_lifetime') {
       // Enterprise plan - redirect to contact/sales
       addToast('info', 'Please contact our sales team for Enterprise pricing');
       // In a real app, this would go to a contact form
@@ -100,7 +100,7 @@ function PricingContent() {
     // Organization created successfully
     if (!selectedPlanForOrg) return;
 
-    if (selectedPlanForOrg.id === 'enterprise') {
+    if (selectedPlanForOrg.id === 'enterprise_lifetime') {
       // Enterprise plan - redirect to contact/sales
       addToast('info', 'Please contact our sales team for Enterprise pricing');
       return;
@@ -109,10 +109,8 @@ function PricingContent() {
     // All plans (including Starter) go through checkout
     const planConfig = PLANS_CONFIG.find(p => p.id === selectedPlanForOrg.id);
     if (planConfig && planConfig.monthly) {
-      // Generate plan code: planId + "_monthly" (e.g., "starter_monthly", "basic_monthly", "pro_monthly")
-      const planCode = `${planConfig.id}_monthly`;
       router.push(
-        `/checkout?org_id=${orgId}&plan_code=${planCode}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=month`
+        `/checkout?org_id=${orgId}&plan_code=${planConfig.code}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=lifetime`
       );
     } else {
       addToast('error', 'Unable to proceed to checkout. Please try again.');
