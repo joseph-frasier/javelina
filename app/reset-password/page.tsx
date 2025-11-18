@@ -23,18 +23,23 @@ export default function ResetPasswordPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [tokenError, setTokenError] = useState('');
 
-  // Check for token on mount
+  // Check for valid session on mount
   useEffect(() => {
-    // Get token from URL hash (Supabase sends it as #access_token=...)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const token = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    const checkSession = async () => {
+      const supabase = createClient();
+      const { data: { session }, error } = await supabase.auth.getSession();
 
-    if (!token || type !== 'recovery') {
-      setTokenError(
-        'Invalid or missing reset token. Please request a new password reset link.'
-      );
-    }
+      if (error || !session) {
+        setTokenError(
+          'Invalid or expired reset session. Please request a new password reset link.'
+        );
+        return;
+      }
+
+      console.log('Valid password reset session detected');
+    };
+
+    checkSession();
   }, []);
 
   const validateForm = (): boolean => {
@@ -71,7 +76,8 @@ export default function ResetPasswordPage() {
     try {
       const supabase = createClient();
 
-      // Update the user's password
+      // Session is already established from the callback route
+      // Just update the password
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
@@ -86,11 +92,18 @@ export default function ResetPasswordPage() {
 
       setSuccessMessage('Password reset successful!');
 
+      // Clear the password reset required cookie on server-side
+      await fetch('/api/auth/clear-reset-cookie', { method: 'POST' });
+
+      // Immediately sign out the user so they must login with new password
+      await supabase.auth.signOut();
+
       // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push('/login');
       }, 2000);
     } catch (error: any) {
+      console.error('Password reset error:', error);
       setErrors({
         password: 'An error occurred. Please try again.',
       });

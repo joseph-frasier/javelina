@@ -73,6 +73,28 @@ export async function middleware(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
+    // Check if user is in password reset flow (must complete password reset before accessing anything else)
+    // BUT allow navigation to login page (user can abandon reset and login normally)
+    const passwordResetRequired = request.cookies.get('password_reset_required')?.value === 'true'
+    const isLoginPage = request.nextUrl.pathname === '/login'
+    
+    if (passwordResetRequired && !isLoginPage && request.nextUrl.pathname !== '/reset-password') {
+      console.log('[Middleware] Password reset required - redirecting to reset-password page')
+      return NextResponse.redirect(new URL('/reset-password?recovery=true', request.url))
+    }
+    
+    // If user navigates to login during password reset, clear the reset cookie
+    if (passwordResetRequired && isLoginPage) {
+      console.log('[Middleware] User navigated to login during password reset - clearing cookie')
+      response.cookies.set('password_reset_required', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 0,
+        path: '/'
+      })
+    }
+
     // Public routes that don't require authentication
     const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
     const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
