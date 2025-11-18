@@ -687,7 +687,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           setRecordToEdit(record);
           setShowEditRecordModal(true);
         }}
-        onDuplicate={handleDuplicateRecord}
         onDelete={handleDeleteRecord}
       />
 

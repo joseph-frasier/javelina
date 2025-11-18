@@ -15,7 +15,6 @@ interface DNSRecordDetailModalProps {
   record: DNSRecord | null;
   zoneName: string;
   onEdit: (record: DNSRecord) => void;
-  onDuplicate: (record: DNSRecord) => void;
   onDelete: (record: DNSRecord) => void;
 }
 
@@ -25,7 +24,6 @@ export function DNSRecordDetailModal({
   record,
   zoneName,
   onEdit,
-  onDuplicate,
   onDelete,
 }: DNSRecordDetailModalProps) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -223,18 +221,6 @@ export function DNSRecordDetailModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
               Edit
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                onDuplicate(displayRecord);
-                onClose();
-              }}
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Duplicate
             </Button>
           </div>
           <Button
