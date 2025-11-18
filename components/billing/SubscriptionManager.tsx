@@ -22,7 +22,6 @@ export function SubscriptionManager({
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<CurrentSubscriptionResponse | null>(null);
   const [usage, setUsage] = useState<OrgUsageWithLimits | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
 
   const fetchSubscriptionData = useCallback(async () => {
     try {
@@ -165,55 +164,57 @@ export function SubscriptionManager({
         )}
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3">
-          {onChangePlan && (
-            <>
-              {subscription?.plan?.billing_interval === null ? (
-                // Lifetime plan - disabled button with tooltip
-                <div 
-                  className="relative inline-block group"
-                  onMouseEnter={() => setShowTooltip(true)}
-                  onMouseLeave={() => setShowTooltip(false)}
-                >
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            {onChangePlan && (
+              <>
+                {subscription?.plan?.billing_interval === null ? (
+                  // Lifetime plan - disabled button
                   <button
                     disabled
                     className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md font-medium cursor-not-allowed"
                   >
                     Change Plan
                   </button>
-                  <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap transition-opacity duration-200 pointer-events-none ${showTooltip ? 'opacity-100 z-50' : 'opacity-0 -z-10'}`}>
-                    Contact sales
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                      <div className="border-4 border-transparent border-t-gray-900"></div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                // Regular plan - active button
-                <button
-                  onClick={onChangePlan}
-                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-                >
-                  Change Plan
-                </button>
-              )}
-            </>
-          )}
-          {onManageBilling && (
-            <button
-              onClick={onManageBilling}
-              className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-            >
-              Manage Billing
-            </button>
-          )}
-          {onCancelSubscription && subscription?.subscription?.status === 'active' && (
-            <button
-              onClick={onCancelSubscription}
-              className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
-            >
-              Cancel Subscription
-            </button>
+                ) : (
+                  // Regular plan - active button
+                  <button
+                    onClick={onChangePlan}
+                    className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                  >
+                    Change Plan
+                  </button>
+                )}
+              </>
+            )}
+            {onManageBilling && (
+              <button
+                onClick={onManageBilling}
+                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+              >
+                Manage Billing
+              </button>
+            )}
+            {onCancelSubscription && subscription?.subscription?.status === 'active' && (
+              <button
+                onClick={onCancelSubscription}
+                className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
+              >
+                Cancel Subscription
+              </button>
+            )}
+          </div>
+          
+          {/* Lifetime plan message */}
+          {subscription?.plan?.billing_interval === null && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <p className="text-sm text-blue-900">
+                <strong>Lifetime plan changes:</strong> To upgrade, downgrade, or modify your lifetime plan, please contact our sales team at{' '}
+                <a href="mailto:sales@javelina.io" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                  sales@javelina.io
+                </a>
+              </p>
+            </div>
           )}
         </div>
       </div>
