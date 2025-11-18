@@ -23,40 +23,23 @@ export default function ResetPasswordPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [tokenError, setTokenError] = useState('');
 
-  // Check for token and establish session on mount
+  // Check for valid session on mount
   useEffect(() => {
-    const initializeSession = async () => {
-      // Get token from URL hash (Supabase sends it as #access_token=...)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      const type = hashParams.get('type');
+    const checkSession = async () => {
+      const supabase = createClient();
+      const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (!accessToken || type !== 'recovery') {
+      if (error || !session) {
         setTokenError(
-          'Invalid or missing reset token. Please request a new password reset link.'
+          'Invalid or expired reset session. Please request a new password reset link.'
         );
         return;
       }
 
-      // Establish the session using the tokens from the URL
-      const supabase = createClient();
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken || '',
-      });
-
-      if (error) {
-        console.error('Failed to establish session:', error);
-        setTokenError(
-          'Failed to establish session. Please request a new password reset link.'
-        );
-      } else {
-        console.log('Session established successfully for password reset');
-      }
+      console.log('Valid password reset session detected');
     };
 
-    initializeSession();
+    checkSession();
   }, []);
 
   const validateForm = (): boolean => {
@@ -93,7 +76,8 @@ export default function ResetPasswordPage() {
     try {
       const supabase = createClient();
 
-      // Update the user's password
+      // Session is already established from the callback route
+      // Just update the password
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
@@ -108,11 +92,18 @@ export default function ResetPasswordPage() {
 
       setSuccessMessage('Password reset successful!');
 
+      // Clear the password reset required cookie on server-side
+      await fetch('/api/auth/clear-reset-cookie', { method: 'POST' });
+
+      // Immediately sign out the user so they must login with new password
+      await supabase.auth.signOut();
+
       // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push('/login');
       }, 2000);
     } catch (error: any) {
+      console.error('Password reset error:', error);
       setErrors({
         password: 'An error occurred. Please try again.',
       });

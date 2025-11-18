@@ -47,14 +47,22 @@ export async function GET(request: Request) {
     // User is now authenticated! 
     if (data.user) {
       // Handle password reset flow (type=recovery)
+      // User IS authenticated but we redirect them to reset-password page
+      // Set a flag so middleware knows to restrict access
       if (type === 'recovery') {
-        console.log('[Auth Callback] Password reset flow detected')
-        // Redirect to reset-password page with session token in hash
-        // The session is already established, so the reset-password page can update the password
+        console.log('[Auth Callback] Password reset flow - redirecting to reset-password page')
         const resetUrl = new URL('/reset-password', requestUrl.origin)
-        // Add the session info to the hash so the reset-password page knows it's valid
-        resetUrl.hash = `access_token=${data.session.access_token}&type=recovery&refresh_token=${data.session.refresh_token}`
-        return NextResponse.redirect(resetUrl)
+        resetUrl.searchParams.set('recovery', 'true')
+        
+        // Set a cookie to indicate password reset is required
+        const response = NextResponse.redirect(resetUrl)
+        response.cookies.set('password_reset_required', 'true', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 3600 // 1 hour
+        })
+        return response
       }
 
       // Check if user has any organizations
