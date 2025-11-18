@@ -91,24 +91,36 @@ A modern DNS management platform built with Next.js, offering enterprise-grade D
 
 1.   Project uses supabase cloud DB so just confirm that supabase env vars are correct.
 
-## 🚀 Running the Application
+## 🚀 Quick Start
 
-### Development Mode
+### Run Both Frontend & Backend (Recommended)
+```bash
+npm run dev:full
+```
 
-1. **Start the backend server**
-   ```bash
-   cd backend
-   npm run dev
-   ```
+That's it! Both services will start automatically:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
 
-2. **Start the Next.js frontend** (in a new terminal)
-   ```bash
-   npm run dev
-   ```
+### Individual Services
 
-3. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:3001
+**Backend only**:
+```bash
+npm run dev:backend
+```
+
+**Frontend only**:
+```bash
+npm run dev
+```
+
+### Other Useful Commands
+```bash
+npm run build:full       # Build both for production
+npm run start:full       # Run both in production mode
+```
+
+📖 See [DEV_SCRIPTS_README.md](./DEV_SCRIPTS_README.md) for detailed development documentation.
 
 ### Mock Mode
 
@@ -246,10 +258,10 @@ Configuration files are provided:
 
 Additional documentation can be found in:
 - `documentation/JAVELINA_DOCUMENTATION.md` - Comprehensive platform documentation
+- `DEV_SCRIPTS_README.md` - Development scripts and workflow guide
 - `ENVIRONMENT_SETUP.md` - Environment setup guide
+- `STRIPE_WEBHOOK_SETUP.md` - Stripe webhook integration guide
 - `supabase/README.md` - Database schema and migration info
-- `ADMIN_SUPERADMIN_CHANGES.md` - Admin feature documentation
-- `STRIPE_WEBHOOK_SETUP.md` - Stripe integration guide
 
 ## 🐛 Troubleshooting
 
