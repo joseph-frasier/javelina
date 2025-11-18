@@ -89,8 +89,9 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
         return;
       }
 
+      // Use auth callback route which will handle the code exchange and redirect to reset-password
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
       });
 
       if (error) throw error;

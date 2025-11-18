@@ -4,8 +4,8 @@ import { NextResponse } from 'next/server'
 /**
  * OAuth Callback Handler
  * 
- * This route handles the callback from OAuth providers (Google, GitHub, etc.)
- * and email verification links.
+ * This route handles the callback from OAuth providers (Google, GitHub, etc.),
+ * email verification links, and password reset links.
  * 
  * Flow for Email Verification (NEW):
  * 1. User clicks verification link from email
@@ -19,6 +19,12 @@ import { NextResponse } from 'next/server'
  * 2. User authorizes → Google redirects back to this route with a code
  * 3. We exchange the code for a session
  * 4. Same organization check as email verification
+ * 
+ * Flow for Password Reset:
+ * 1. User clicks reset link from email
+ * 2. Supabase redirects here with code and type=recovery
+ * 3. We exchange the code for a session
+ * 4. Redirect to /reset-password with token in hash for password update
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -38,8 +44,19 @@ export async function GET(request: Request) {
       )
     }
 
-    // User is now authenticated! Check if they've completed onboarding
+    // User is now authenticated! 
     if (data.user) {
+      // Handle password reset flow (type=recovery)
+      if (type === 'recovery') {
+        console.log('[Auth Callback] Password reset flow detected')
+        // Redirect to reset-password page with session token in hash
+        // The session is already established, so the reset-password page can update the password
+        const resetUrl = new URL('/reset-password', requestUrl.origin)
+        // Add the session info to the hash so the reset-password page knows it's valid
+        resetUrl.hash = `access_token=${data.session.access_token}&type=recovery&refresh_token=${data.session.refresh_token}`
+        return NextResponse.redirect(resetUrl)
+      }
+
       // Check if user has any organizations
       const { data: memberships, error: memberError } = await supabase
         .from('organization_members')
@@ -53,7 +70,8 @@ export async function GET(request: Request) {
         userId: data.user.id,
         email: data.user.email,
         hasOrganizations,
-        isEmailVerification: !next
+        isEmailVerification: !next,
+        isPasswordReset: type === 'recovery'
       })
 
       // If they have a specific destination (OAuth with redirect), honor it
