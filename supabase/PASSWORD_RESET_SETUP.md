@@ -4,14 +4,21 @@ This document explains how to configure password reset functionality for the Jav
 
 ## Overview
 
-The password reset flow uses Supabase's PKCE (Proof Key for Code Exchange) authentication flow for enhanced security. When a user requests a password reset:
+The password reset flow uses Supabase's PKCE (Proof Key for Code Exchange) authentication flow with additional security restrictions. When a user requests a password reset:
 
 1. User enters their email on `/forgot-password`
 2. Supabase sends an email with a reset link
 3. Link redirects to `/auth/callback?type=recovery` with a code
-4. The callback route exchanges the code for a session
-5. User is redirected to `/reset-password` with tokens in the hash
-6. User enters new password and it's updated via Supabase
+4. The callback route exchanges the code for a session (user IS authenticated)
+5. **A `password_reset_required` cookie is set** to restrict access
+6. User is redirected to `/reset-password`
+7. **Middleware enforces that the user can ONLY access `/reset-password`** until they reset their password
+8. User enters new password and submits
+9. Password is updated via Supabase
+10. Cookie is cleared
+11. User is **immediately signed out** and redirected to login
+
+**Security Note:** While a session is established during password reset, the user cannot navigate to any other part of the application. Middleware enforces that they must complete the password reset before accessing anything else. After resetting, they must login with their new password.
 
 ## Supabase Dashboard Configuration
 
@@ -167,10 +174,23 @@ additional_redirect_urls = [
 
 ## Security Considerations
 
-1. **PKCE Flow**: Uses authorization code exchange instead of implicit flow for better security
-2. **Session Tokens**: Tokens are passed via URL hash (client-side only, not sent to server)
-3. **Rate Limiting**: Supabase enforces rate limits to prevent abuse
-4. **Token Expiry**: Password reset tokens expire after a short period (configurable in Supabase)
+1. **Access Restriction During Reset**: While a session is established from the reset link, middleware enforces that the user can ONLY access the `/reset-password` page. Any attempt to navigate elsewhere (dashboard, settings, etc.) is blocked and redirected back to the reset page. This prevents unauthorized access to the account via the reset link.
+
+2. **HttpOnly Cookie Enforcement**: The `password_reset_required` cookie is HttpOnly and cannot be modified by JavaScript, preventing client-side tampering.
+
+3. **Mandatory Password Update**: The user cannot access any part of the application until they complete the password reset. The restriction cookie remains until the password is updated.
+
+4. **Immediate Session Termination**: After the password is updated, the session is immediately terminated and the user must login with their new password. This ensures they prove knowledge of the new password.
+
+5. **PKCE Flow**: Uses authorization code exchange instead of implicit flow for better security. The code cannot be intercepted and replayed.
+
+6. **Rate Limiting**: Supabase enforces rate limits to prevent abuse (default: 2 reset emails per hour per email address).
+
+7. **Token Expiry**: Password reset codes expire after a short period (configurable in Supabase, typically 1 hour). The restriction cookie also expires after 1 hour as a failsafe.
+
+8. **Single Use Code**: Once the code is used to establish a session, it becomes invalid and cannot be reused.
+
+9. **No Account Enumeration**: The system doesn't reveal whether an email exists in the database, preventing account enumeration attacks.
 
 ## References
 
