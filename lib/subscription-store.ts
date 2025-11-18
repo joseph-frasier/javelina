@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { PLANS_CONFIG, type Plan as PlanConfig } from './plans-config';
 
-export type PlanId = 'free' | 'basic' | 'pro' | 'enterprise';
+export type PlanId = 'starter' | 'basic' | 'pro' | 'enterprise';
 
 /**
  * Simplified plan interface for selected plan state
