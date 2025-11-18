@@ -165,47 +165,37 @@ export function SubscriptionManager({
 
         {/* Actions */}
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            {onChangePlan && (
-              <>
-                {subscription?.plan?.billing_interval === null ? (
-                  // Lifetime plan - disabled button
-                  <button
-                    disabled
-                    className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md font-medium cursor-not-allowed"
-                  >
-                    Change Plan
-                  </button>
-                ) : (
-                  // Regular plan - active button
-                  <button
-                    onClick={onChangePlan}
-                    className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-                  >
-                    Change Plan
-                  </button>
-                )}
-              </>
-            )}
-            {onManageBilling && (
-              <button
-                onClick={onManageBilling}
-                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-              >
-                Manage Billing
-              </button>
-            )}
-            {onCancelSubscription && subscription?.subscription?.status === 'active' && (
-              <button
-                onClick={onCancelSubscription}
-                className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
-              >
-                Cancel Subscription
-              </button>
-            )}
-          </div>
+          {/* Only show buttons for regular subscription plans */}
+          {subscription?.plan?.billing_interval !== null && (
+            <div className="flex flex-wrap gap-3">
+              {onChangePlan && (
+                <button
+                  onClick={onChangePlan}
+                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                >
+                  Change Plan
+                </button>
+              )}
+              {onManageBilling && (
+                <button
+                  onClick={onManageBilling}
+                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                >
+                  Manage Billing
+                </button>
+              )}
+              {onCancelSubscription && subscription?.subscription?.status === 'active' && (
+                <button
+                  onClick={onCancelSubscription}
+                  className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
+                >
+                  Cancel Subscription
+                </button>
+              )}
+            </div>
+          )}
           
-          {/* Lifetime plan message */}
+          {/* Lifetime plan message - only for lifetime plans */}
           {subscription?.plan?.billing_interval === null && (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <p className="text-sm text-blue-900">
