@@ -4,16 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\" --names \"frontend,backend\" --prefix-colors \"cyan,magenta\"",
     "build": "next build",
-    "build:backend": "cd backend && npm run build",
-    "build:full": "npm run build && npm run build:backend",
     "start": "next start",
-    "start:backend": "cd backend && npm run start",
-    "start:full": "concurrently \"npm run start\" \"npm run start:backend\" --names \"frontend,backend\" --prefix-colors \"cyan,magenta\"",
-    "lint": "next lint",
-    "postinstall": "cd backend && npm install"
+    "lint": "next lint"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

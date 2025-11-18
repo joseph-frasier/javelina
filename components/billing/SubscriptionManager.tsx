@@ -133,12 +133,12 @@ export function SubscriptionManager({
         {/* Price */}
         {subscription?.plan?.metadata?.price && (
           <div className="mb-4 pb-4 border-b border-gray-light">
-            <div className="flex items-baseline">
+            <div className="flex flex-col">
               <span className="text-3xl font-black text-orange-dark">
                 ${Number(subscription.plan.metadata.price).toFixed(2)}
               </span>
-              <span className="text-gray-slate ml-2">
-                /{subscription.plan.billing_interval || 'month'}
+              <span className="text-xs text-gray-slate font-light uppercase tracking-wide mt-1">
+                {subscription.plan.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
               </span>
             </div>
           </div>
@@ -164,30 +164,47 @@ export function SubscriptionManager({
         )}
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3">
-          {onChangePlan && (
-            <button
-              onClick={onChangePlan}
-              className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-            >
-              Change Plan
-            </button>
+        <div className="space-y-4">
+          {/* Only show buttons for regular subscription plans */}
+          {subscription?.plan?.billing_interval !== null && (
+            <div className="flex flex-wrap gap-3">
+              {onChangePlan && (
+                <button
+                  onClick={onChangePlan}
+                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                >
+                  Change Plan
+                </button>
+              )}
+              {onManageBilling && (
+                <button
+                  onClick={onManageBilling}
+                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                >
+                  Manage Billing
+                </button>
+              )}
+              {onCancelSubscription && subscription?.subscription?.status === 'active' && (
+                <button
+                  onClick={onCancelSubscription}
+                  className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
+                >
+                  Cancel Subscription
+                </button>
+              )}
+            </div>
           )}
-          {onManageBilling && (
-            <button
-              onClick={onManageBilling}
-              className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-            >
-              Manage Billing
-            </button>
-          )}
-          {onCancelSubscription && subscription?.subscription?.status === 'active' && (
-            <button
-              onClick={onCancelSubscription}
-              className="px-4 py-2 text-red-600 hover:text-red-700 font-medium"
-            >
-              Cancel Subscription
-            </button>
+          
+          {/* Lifetime plan message - only for lifetime plans */}
+          {subscription?.plan?.billing_interval === null && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <p className="text-sm text-blue-900">
+                <strong>Lifetime plan changes:</strong> To upgrade, downgrade, or modify your lifetime plan, please contact our sales team at{' '}
+                <a href="mailto:sales@javelina.io" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                  sales@javelina.io
+                </a>
+              </p>
+            </div>
           )}
         </div>
       </div>
