@@ -22,6 +22,7 @@ export function SubscriptionManager({
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<CurrentSubscriptionResponse | null>(null);
   const [usage, setUsage] = useState<OrgUsageWithLimits | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const fetchSubscriptionData = useCallback(async () => {
     try {
@@ -166,12 +167,37 @@ export function SubscriptionManager({
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
           {onChangePlan && (
-            <button
-              onClick={onChangePlan}
-              className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-            >
-              Change Plan
-            </button>
+            <>
+              {subscription?.plan?.billing_interval === null ? (
+                // Lifetime plan - disabled button with tooltip
+                <div className="relative inline-block">
+                  <button
+                    disabled
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md font-medium cursor-not-allowed"
+                  >
+                    Change Plan
+                  </button>
+                  {showTooltip && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap z-10">
+                      Contact sales
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                        <div className="border-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Regular plan - active button
+                <button
+                  onClick={onChangePlan}
+                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                >
+                  Change Plan
+                </button>
+              )}
+            </>
           )}
           {onManageBilling && (
             <button
