@@ -310,10 +310,6 @@ export function EnvironmentClient({
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Type:</span>
-                        <span className="text-gray-900 dark:text-gray-100 capitalize">{zone.zone_type}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Last Modified:</span>
                         <span className="text-gray-900 dark:text-gray-100 text-xs">{new Date(zone.updated_at).toLocaleDateString()}</span>
                       </div>
@@ -344,19 +340,6 @@ export function EnvironmentClient({
                         <div className="flex items-center gap-2">
                           Zone Name
                           {zoneSortKey === 'name' && (
-                            <span className="text-orange">{zoneSortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                          zoneSortKey === 'zone_type' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-slate dark:text-gray-400'
-                        }`}
-                        onClick={() => handleZoneSort('zone_type')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Type
-                          {zoneSortKey === 'zone_type' && (
                             <span className="text-orange">{zoneSortDirection === 'asc' ? '↑' : '↓'}</span>
                           )}
                         </div>
@@ -402,9 +385,6 @@ export function EnvironmentClient({
                           >
                             {zone.name}
                           </Link>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate dark:text-gray-300 capitalize">
-                          {zone.zone_type}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <span
