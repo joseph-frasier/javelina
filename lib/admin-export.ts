@@ -266,16 +266,13 @@ export function exportToBIND(
 
   const { zoneName, nameservers = [], soaSerial, defaultTTL = 3600 } = options;
   
-  // Filter only active records
-  const activeRecords = records.filter(r => r.active);
-  
-  // Sort records by type for organized output
+  // Sort records by type for organized output (all records are now active by default)
   const typeOrder: Record<string, number> = {
     'SOA': 1, 'NS': 2, 'A': 3, 'AAAA': 4, 
     'CNAME': 5, 'MX': 6, 'TXT': 7, 'SRV': 8, 'CAA': 9
   };
   
-  const sortedRecords = [...activeRecords].sort((a, b) => {
+  const sortedRecords = [...records].sort((a, b) => {
     const orderA = typeOrder[a.type] || 99;
     const orderB = typeOrder[b.type] || 99;
     if (orderA !== orderB) return orderA - orderB;
@@ -289,7 +286,7 @@ export function exportToBIND(
   lines.push(`;`);
   lines.push(`; BIND Zone File for ${zoneName}`);
   lines.push(`; Exported: ${new Date().toISOString()}`);
-  lines.push(`; Records: ${activeRecords.length}`);
+  lines.push(`; Records: ${sortedRecords.length}`);
   lines.push(`;`);
   lines.push('');
   
@@ -331,11 +328,8 @@ export function exportToBIND(
     const ttl = record.ttl || defaultTTL;
     
     // Format line based on record type
-    if (record.type === 'MX' && record.priority !== null) {
-      lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${record.priority}\t${value}`);
-    } else if (record.type === 'SRV' && record.priority !== null) {
-      lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${record.priority}\t${value}`);
-    } else if (record.type === 'CAA') {
+    // Note: MX and SRV records now have priority embedded in the value field
+    if (record.type === 'CAA') {
       lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${value}`);
     } else {
       lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${value}`);

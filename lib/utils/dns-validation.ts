@@ -84,17 +84,22 @@ export function isValidTTL(ttl: number): { valid: boolean; error?: string } {
 
 /**
  * Validates MX record format
+ * Expected format: "priority hostname" (e.g., "10 mail.example.com")
  */
-export function validateMXRecord(value: string, priority?: number): { valid: boolean; error?: string } {
-  if (priority === undefined || priority === null) {
-    return { valid: false, error: 'Priority is required for MX records' };
+export function validateMXRecord(value: string): { valid: boolean; error?: string } {
+  const parts = value.trim().split(/\s+/);
+  
+  if (parts.length < 2) {
+    return { valid: false, error: 'MX record must include priority and hostname (e.g., "10 mail.example.com")' };
   }
   
-  if (!Number.isInteger(priority) || priority < 0 || priority > 65535) {
-    return { valid: false, error: 'Priority must be between 0 and 65535' };
+  const priority = parseInt(parts[0], 10);
+  if (isNaN(priority) || priority < 0 || priority > 65535) {
+    return { valid: false, error: 'Priority must be a number between 0 and 65535' };
   }
   
-  if (!isValidDomain(value)) {
+  const hostname = parts.slice(1).join(' ').trim();
+  if (!isValidDomain(hostname)) {
     return { valid: false, error: 'Invalid mail server domain' };
   }
   
@@ -103,33 +108,33 @@ export function validateMXRecord(value: string, priority?: number): { valid: boo
 
 /**
  * Validates SRV record format
+ * Expected format: "priority weight port target" (e.g., "10 10 5060 sip.example.com")
  */
-export function validateSRVRecord(value: string, priority?: number): { valid: boolean; error?: string } {
-  if (priority === undefined || priority === null) {
-    return { valid: false, error: 'Priority is required for SRV records' };
-  }
-  
-  if (!Number.isInteger(priority) || priority < 0 || priority > 65535) {
-    return { valid: false, error: 'Priority must be between 0 and 65535' };
-  }
-  
-  // SRV format: weight port target
+export function validateSRVRecord(value: string): { valid: boolean; error?: string } {
   const parts = value.trim().split(/\s+/);
-  if (parts.length !== 3) {
-    return { valid: false, error: 'SRV record must be in format: weight port target' };
+  
+  if (parts.length < 4) {
+    return { valid: false, error: 'SRV record must include priority, weight, port, and target (e.g., "10 10 5060 sip.example.com")' };
   }
   
-  const [weight, port, target] = parts;
+  const [priorityStr, weightStr, portStr, ...targetParts] = parts;
   
-  const weightNum = parseInt(weight, 10);
-  if (isNaN(weightNum) || weightNum < 0 || weightNum > 65535) {
+  const priority = parseInt(priorityStr, 10);
+  if (isNaN(priority) || priority < 0 || priority > 65535) {
+    return { valid: false, error: 'Priority must be a number between 0 and 65535' };
+  }
+  
+  const weight = parseInt(weightStr, 10);
+  if (isNaN(weight) || weight < 0 || weight > 65535) {
     return { valid: false, error: 'Weight must be between 0 and 65535' };
   }
   
-  const portNum = parseInt(port, 10);
-  if (isNaN(portNum) || portNum < 0 || portNum > 65535) {
+  const port = parseInt(portStr, 10);
+  if (isNaN(port) || port < 0 || port > 65535) {
     return { valid: false, error: 'Port must be between 0 and 65535' };
   }
+  
+  const target = targetParts.join(' ').trim();
   
   if (!isValidDomain(target)) {
     return { valid: false, error: 'Invalid target domain' };
@@ -239,7 +244,7 @@ export function validateDNSRecord(
       break;
       
     case 'MX':
-      const mxValidation = validateMXRecord(formData.value, formData.priority);
+      const mxValidation = validateMXRecord(formData.value);
       if (!mxValidation.valid) {
         errors.value = mxValidation.error || 'Invalid MX record';
       }
@@ -272,7 +277,7 @@ export function validateDNSRecord(
       break;
       
     case 'SRV':
-      const srvValidation = validateSRVRecord(formData.value, formData.priority);
+      const srvValidation = validateSRVRecord(formData.value);
       if (!srvValidation.valid) {
         errors.value = srvValidation.error || 'Invalid SRV record';
       }

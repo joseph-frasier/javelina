@@ -15,7 +15,6 @@ export interface CreateEnvironmentData {
 
 export interface CreateZoneData {
   name: string;
-  zone_type: 'primary' | 'secondary' | 'redirect';
   description?: string;
   environment_id: string;
 }
@@ -162,12 +161,6 @@ export async function createZone(data: CreateZoneData) {
     throw new Error('Zone name must be a valid domain name (max 253 characters)');
   }
 
-  // Validate zone_type
-  const validTypes = ['primary', 'secondary', 'redirect'];
-  if (!validTypes.includes(data.zone_type)) {
-    throw new Error('Zone type must be primary, secondary, or redirect');
-  }
-
   // Get environment to find organization_id
   const { data: environment, error: envError } = await supabase
     .from('environments')
@@ -208,7 +201,6 @@ export async function createZone(data: CreateZoneData) {
     .from('zones')
     .insert({
       name: data.name,
-      zone_type: data.zone_type,
       description: data.description || null,
       environment_id: data.environment_id,
       active: true,

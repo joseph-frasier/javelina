@@ -74,14 +74,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   // Edit form state
   const [editFormData, setEditFormData] = useState({
     name: zone.name || '',
-    zone_type: zone.zone_type || 'primary',
     description: zone.description || '',
     active: zone.active ?? true,
     nameservers: zone.nameservers ? zone.nameservers.join('\n') : '',
   });
   const [isEditSaving, setIsEditSaving] = useState(false);
-  const [showTypeChangeConfirm, setShowTypeChangeConfirm] = useState(false);
-  const [newZoneType, setNewZoneType] = useState<string | null>(null);
 
   // Load data
   useEffect(() => {
@@ -171,32 +168,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     setShowEditRecordModal(true);
   };
 
-  const handleToggleStatus = async (record: DNSRecord) => {
-    try {
-      setIsRecordLoading(true);
-      const newStatus = !record.active;
-      
-      await toggleDNSRecordStatus(record.id);
-      
-      // Update local state
-      const updatedRecords = dnsRecords.map(r => 
-        r.id === record.id ? { ...r, active: newStatus } : r
-      );
-      setDnsRecords(updatedRecords);
-      setFilteredDnsRecords(updatedRecords);
-      
-      addToast('success', `DNS record ${newStatus ? 'activated' : 'deactivated'} successfully`);
-      
-      // Refresh zone summary
-      const newSummary = await getZoneSummary(zoneId, zone.name, zone.records_count || 50);
-      setZoneSummary(newSummary);
-    } catch (error: any) {
-      console.error('Error toggling DNS record status:', error);
-      addToast('error', error.message || 'Failed to toggle record status');
-    } finally {
-      setIsRecordLoading(false);
-    }
-  };
+  // Note: Toggle status functionality has been deprecated as 'active' field was removed from schema
+  // const handleToggleStatus = async (record: DNSRecord) => { ... }
 
   const handleBulkDelete = async () => {
     if (selectedRecords.length === 0) return;
@@ -230,21 +203,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     await exportZoneJSON(zoneId, zone.name);
   };
 
-  const handleZoneTypeChange = (newType: string) => {
-    if (newType !== editFormData.zone_type) {
-      setNewZoneType(newType);
-      setShowTypeChangeConfirm(true);
-    }
-  };
-
-  const confirmTypeChange = () => {
-    if (newZoneType) {
-      setEditFormData({ ...editFormData, zone_type: newZoneType });
-    }
-    setShowTypeChangeConfirm(false);
-    setNewZoneType(null);
-  };
-
   const handleSaveZone = async () => {
     setIsEditSaving(true);
     
@@ -259,7 +217,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       // Call the server action to update the zone
       const result = await updateZone(zoneId, {
         name: editFormData.name,
-        zone_type: editFormData.zone_type as 'primary' | 'secondary' | 'redirect',
         description: editFormData.description,
         status: editFormData.active ? 'active' : 'disabled',
       });
@@ -356,6 +313,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               <VerificationStatusBadge status={zoneSummary.verificationStatus} />
               <HealthStatusBadge status={zoneSummary.healthStatus} />
               <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} />
+              {/* SOA Serial Badge */}
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+                Serial: {zone.soa_serial}
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -454,7 +418,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           selectedRecords={selectedRecords}
           onSelectionChange={setSelectedRecords}
           onRecordClick={handleRecordClick}
-          onStatusToggle={handleToggleStatus}
           zoneName={zone.name}
           nameservers={zone.nameservers}
           soaSerial={zone.soa_serial}
@@ -494,32 +457,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </div>
 
       {/* Edit Zone Modal */}
-      {/* Type Change Confirmation Modal */}
-      {showTypeChangeConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-bold text-orange-dark mb-4">Confirm Zone Type Change</h3>
-              <p className="text-gray-slate mb-6">
-                Changing the zone type from <span className="font-semibold">{editFormData.zone_type}</span> to <span className="font-semibold">{newZoneType}</span> may affect DNS resolution. Are you sure?
-              </p>
-              <div className="flex justify-end space-x-3">
-                <Button 
-                  variant="secondary"
-                  onClick={() => { setShowTypeChangeConfirm(false); setNewZoneType(null); }}
-                >
-                  Cancel
-                </Button>
-                <Button variant="primary" onClick={confirmTypeChange}>
-                  Confirm
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Zone Modal */}
       <Modal 
         isOpen={showEditModal} 
         onClose={() => setShowEditModal(false)} 
@@ -535,20 +472,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               value={editFormData.name}
               onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
               placeholder="e.g., example.com"
-            />
-          </div>
-
-          {/* Zone Type */}
-          <div>
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Zone Type <span className="text-red-600">*</span></label>
-            <Dropdown
-              options={[
-                { value: 'primary', label: 'Primary' },
-                { value: 'secondary', label: 'Secondary' },
-                { value: 'redirect', label: 'Redirect' },
-              ]}
-              value={editFormData.zone_type}
-              onChange={(value) => handleZoneTypeChange(value)}
             />
           </div>
 

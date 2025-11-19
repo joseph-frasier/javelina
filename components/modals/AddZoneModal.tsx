@@ -6,8 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Dropdown from '@/components/ui/Dropdown';
-import { createZone } from '@/lib/api/hierarchy';
+import { createZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
 
 interface AddZoneModalProps {
@@ -18,14 +17,6 @@ interface AddZoneModalProps {
   organizationId: string;
   onSuccess?: (zoneId: string) => void;
 }
-
-type ZoneType = 'primary' | 'secondary' | 'redirect';
-
-const zoneTypeOptions = [
-  { value: 'primary', label: 'Primary' },
-  { value: 'secondary', label: 'Secondary' },
-  { value: 'redirect', label: 'Redirect' }
-];
 
 export function AddZoneModal({ 
   isOpen, 
@@ -38,7 +29,6 @@ export function AddZoneModal({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
-  const [zoneType, setZoneType] = useState<ZoneType>('primary');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
@@ -71,12 +61,21 @@ export function AddZoneModal({
     setErrors({});
 
     try {
-      const zone = await createZone({
+      const result = await createZone({
         name: name.trim().toLowerCase(), // Domains are case-insensitive
-        zone_type: zoneType,
         description: description.trim() || undefined,
         environment_id: environmentId
       });
+
+      // Check for error response
+      if (result.error) {
+        setErrors({ general: result.error });
+        addToast('error', result.error);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const zone = result.data;
 
       // Invalidate React Query cache for zones
       await queryClient.invalidateQueries({ queryKey: ['zones', environmentId] });
@@ -88,7 +87,6 @@ export function AddZoneModal({
       
       // Reset form
       setName('');
-      setZoneType('primary');
       setDescription('');
       
       // Call success callback
@@ -114,7 +112,6 @@ export function AddZoneModal({
       // Clear form state after animation completes (200ms)
       setTimeout(() => {
         setName('');
-        setZoneType('primary');
         setDescription('');
         setErrors({});
       }, 250);
@@ -156,17 +153,6 @@ export function AddZoneModal({
           <p className="mt-1 text-xs text-gray-slate">
             Enter a valid domain name. {name.length}/253 characters
           </p>
-        </div>
-
-        <div>
-          <label htmlFor="zone-type" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-            Zone Type <span className="text-red-500">*</span>
-          </label>
-          <Dropdown
-            options={zoneTypeOptions}
-            value={zoneType}
-            onChange={(value) => setZoneType(value as ZoneType)}
-          />
         </div>
 
         <div>

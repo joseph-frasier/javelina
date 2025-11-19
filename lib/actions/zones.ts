@@ -8,7 +8,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export async function createZone(formData: {
   environment_id: string
   name: string
-  zone_type: 'primary' | 'secondary' | 'redirect'
   description?: string
 }) {
   try {
@@ -30,7 +29,6 @@ export async function createZone(formData: {
       body: JSON.stringify({
         name: formData.name,
         environment_id: formData.environment_id,
-        zone_type: formData.zone_type,
         description: formData.description
       }),
     });
@@ -62,7 +60,6 @@ export async function updateZone(
   id: string,
   formData: {
     name: string
-    zone_type: 'primary' | 'secondary' | 'redirect'
     description?: string
     status?: 'active' | 'disabled' | 'archived'
   }
@@ -85,7 +82,6 @@ export async function updateZone(
       },
       body: JSON.stringify({
         name: formData.name,
-        zone_type: formData.zone_type,
         description: formData.description
       }),
     });

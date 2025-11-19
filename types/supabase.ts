@@ -204,16 +204,14 @@ export interface Database {
           id: string
           environment_id: string
           name: string
-          zone_type: 'primary' | 'secondary' | 'redirect'
           description: string | null
           active: boolean
           verification_status: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at: string | null
           nameservers: string[] | null
-          ttl: number | null
-          records_count: number | null
           soa_serial: number
-          metadata: Json | null
+          live: boolean
+          deleted_at: string | null
           created_at: string
           updated_at: string
           created_by: string | null
@@ -222,16 +220,14 @@ export interface Database {
           id?: string
           environment_id: string
           name: string
-          zone_type: 'primary' | 'secondary' | 'redirect'
           description?: string | null
           active?: boolean
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
           nameservers?: string[] | null
-          ttl?: number | null
-          records_count?: number | null
           soa_serial?: number
-          metadata?: Json | null
+          live?: boolean
+          deleted_at?: string | null
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -240,16 +236,14 @@ export interface Database {
           id?: string
           environment_id?: string
           name?: string
-          zone_type?: 'primary' | 'secondary' | 'redirect'
           description?: string | null
           active?: boolean
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
           nameservers?: string[] | null
-          ttl?: number | null
-          records_count?: number | null
           soa_serial?: number
-          metadata?: Json | null
+          live?: boolean
+          deleted_at?: string | null
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -313,8 +307,6 @@ export interface Database {
           type: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA'
           value: string
           ttl: number
-          priority: number | null
-          active: boolean
           comment: string | null
           metadata: Json | null
           created_by: string | null
@@ -328,8 +320,6 @@ export interface Database {
           type: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA'
           value: string
           ttl: number
-          priority?: number | null
-          active?: boolean
           comment?: string | null
           metadata?: Json | null
           created_by?: string | null
@@ -343,8 +333,6 @@ export interface Database {
           type?: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA'
           value?: string
           ttl?: number
-          priority?: number | null
-          active?: boolean
           comment?: string | null
           metadata?: Json | null
           created_by?: string | null
