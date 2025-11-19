@@ -8,18 +8,6 @@ import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { useAuthStore } from '@/lib/auth-store';
 import { environmentsApi, zonesApi } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
-import { formatDateWithRelative } from '@/lib/utils/time';
-import { createClient } from '@/lib/supabase/client';
-
-interface AuditLog {
-  id: string;
-  table_name: string;
-  action: string;
-  record_id: string;
-  old_data?: any;
-  new_data?: any;
-  created_at: string;
-}
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -31,8 +19,6 @@ export default function DashboardPage() {
     totalZones: 0,
     zonesThisMonth: 0
   });
-  const [recentActivity, setRecentActivity] = useState<AuditLog[]>([]);
-  const [loadingActivity, setLoadingActivity] = useState(true);
   
   useEffect(() => {
     const fetchCounts = async () => {
@@ -76,85 +62,6 @@ export default function DashboardPage() {
     
     fetchCounts();
   }, [organizations]);
-
-  useEffect(() => {
-    const fetchRecentActivity = async () => {
-      if (organizations.length === 0) {
-        setLoadingActivity(false);
-        return;
-      }
-      
-      const supabase = createClient();
-      const orgIds = organizations.map(org => org.id);
-      
-      // Get environment IDs for the user's organizations
-      const { data: environments } = await supabase
-        .from('environments')
-        .select('id')
-        .in('organization_id', orgIds);
-      
-      const envIds = environments?.map(env => env.id) || [];
-      
-      if (envIds.length === 0) {
-        setLoadingActivity(false);
-        return;
-      }
-      
-      // Fetch recent audit logs for zones and zone_records
-      const { data: auditLogs } = await supabase
-        .from('audit_logs')
-        .select('*')
-        .in('table_name', ['zones', 'zone_records', 'dns_records', 'environments', 'organizations'])
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      // Filter out environment updates (they're just timestamp changes) but keep meaningful actions
-      // Keep chronological order for everything else
-      const meaningfulLogs = auditLogs?.filter(log => {
-        // Keep all non-environment actions
-        if (log.table_name !== 'environments') return true;
-        // For environments, only keep creates/deletes, not updates
-        return log.action === 'INSERT' || log.action === 'DELETE';
-      }) || [];
-      
-      // Take top 4 most recent meaningful activities
-      setRecentActivity(meaningfulLogs.slice(0, 4));
-      setLoadingActivity(false);
-    };
-    
-    fetchRecentActivity();
-  }, [organizations]);
-
-  // Format audit log into human-readable activity
-  const formatActivity = (log: AuditLog) => {
-    const name = log.new_data?.name || log.old_data?.name || 'Unknown';
-    const recordType = log.new_data?.type || log.old_data?.type;
-    
-    switch (log.table_name) {
-      case 'zones':
-        if (log.action === 'INSERT') return `Zone created: ${name}`;
-        if (log.action === 'UPDATE') return `Zone updated: ${name}`;
-        if (log.action === 'DELETE') return `Zone deleted: ${name}`;
-        break;
-      case 'zone_records':
-      case 'dns_records':
-        if (log.action === 'INSERT') return `DNS record added: ${recordType} record`;
-        if (log.action === 'UPDATE') return `DNS record updated: ${recordType} record`;
-        if (log.action === 'DELETE') return `DNS record deleted: ${recordType} record`;
-        break;
-      case 'environments':
-        if (log.action === 'INSERT') return `Environment created: ${name}`;
-        if (log.action === 'UPDATE') return `Environment updated: ${name}`;
-        if (log.action === 'DELETE') return `Environment deleted: ${name}`;
-        break;
-      case 'organizations':
-        if (log.action === 'INSERT') return `Organization created: ${name}`;
-        if (log.action === 'UPDATE') return `Organization updated: ${name}`;
-        if (log.action === 'DELETE') return `Organization deleted: ${name}`;
-        break;
-    }
-    return `${log.table_name} ${log.action.toLowerCase()}`;
-  };
 
   return (
     <ProtectedRoute>
@@ -314,43 +221,14 @@ export default function DashboardPage() {
           description="Latest updates and changes"
           className="lg:col-span-2"
         >
-          <div className="space-y-4 mt-4">
-            {loadingActivity ? (
-              <div className="text-center py-8">
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-                </div>
-              </div>
-            ) : recentActivity.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <p className="text-gray-slate dark:text-gray-400 text-base font-medium mb-2">No recent activity</p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm">
-                  Get started by creating an organization, environment, or DNS zone
-                </p>
-              </div>
-            ) : (
-              recentActivity.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between py-3 border-b border-gray-light dark:border-gray-700 last:border-0"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-orange rounded-full"></div>
-                    <span className="font-regular text-orange-dark dark:text-orange">
-                      {formatActivity(log)}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-slate dark:text-gray-400 font-light">
-                    {formatDateWithRelative(log.created_at).relative}
-                  </span>
-                </div>
-              ))
-            )}
+          <div className="flex flex-col items-center justify-center py-16">
+            <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-lg font-semibold text-gray-slate dark:text-gray-400 mb-2">Coming Soon</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Activity tracking will be available soon
+            </p>
           </div>
         </Card>
       </div>

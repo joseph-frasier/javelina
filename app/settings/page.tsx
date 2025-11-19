@@ -13,7 +13,7 @@ import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
 import { createClient } from '@/lib/supabase/client';
 import { subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function SettingsContent() {
@@ -23,17 +23,18 @@ function SettingsContent() {
   const { addToast } = useToastStore();
   const { 
     general, 
-    security, 
     access, 
-    integrations, 
     auditLogs,
     updateGeneralSettings,
-    updateSecuritySettings,
-    updateAccessSettings,
-    updateIntegrationSettings
+    updateAccessSettings
   } = useSettingsStore();
   
   const [activeSection, setActiveSection] = useState('general');
+  
+  // Billing pagination state
+  const [billingCurrentPage, setBillingCurrentPage] = useState(1);
+  const billingItemsPerPage = 10;
+  const billingSectionRef = useRef<HTMLDivElement>(null);
   
   // Read section from URL query parameter
   useEffect(() => {
@@ -191,6 +192,29 @@ function SettingsContent() {
     }
   }, [activeSection, fetchBillingOrganizations]);
 
+  // Sort billing orgs by most recent (assuming they have created_at or similar)
+  const sortedBillingOrgs = [...billingOrgs].reverse();
+  
+  // Billing pagination logic
+  const billingTotalPages = Math.ceil(sortedBillingOrgs.length / billingItemsPerPage);
+  const billingStartIndex = (billingCurrentPage - 1) * billingItemsPerPage;
+  const billingEndIndex = billingStartIndex + billingItemsPerPage;
+  const paginatedBillingOrgs = sortedBillingOrgs.slice(billingStartIndex, billingEndIndex);
+
+  // Scroll to top when billing page changes
+  useEffect(() => {
+    if (billingSectionRef.current) {
+      billingSectionRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start'
+      });
+    }
+  }, [billingCurrentPage]);
+
+  const handleBillingPageChange = (page: number) => {
+    setBillingCurrentPage(page);
+  };
+
   const handleManageBilling = (orgId: string) => {
     router.push(`/settings/billing/${orgId}`);
   };
@@ -292,15 +316,6 @@ function SettingsContent() {
         </svg>
       )
     }] : []),
-    { 
-      id: 'integrations', 
-      name: 'Integrations', 
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-      )
-    },
     { 
       id: 'audit', 
       name: 'Audit & Compliance', 
@@ -540,78 +555,6 @@ function SettingsContent() {
                         />
                       </div>
                     </div>
-
-                    {/* Notifications */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Notification Preferences</h3>
-                      <div className="space-y-3">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={general.notifications.email.dns_updates}
-                            onChange={(e) => updateGeneralSettings({
-                              notifications: {
-                                ...general.notifications,
-                                email: {
-                                  ...general.notifications.email,
-                                  dns_updates: e.target.checked
-                                }
-                              }
-                            })}
-                            className="mr-3"
-                          />
-                          Email alerts for DNS record updates
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={general.notifications.email.project_changes}
-                            onChange={(e) => updateGeneralSettings({
-                              notifications: {
-                                ...general.notifications,
-                                email: {
-                                  ...general.notifications.email,
-                                  project_changes: e.target.checked
-                                }
-                              }
-                            })}
-                            className="mr-3"
-                          />
-                          Email alerts for environment changes
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={general.notifications.email.system_alerts}
-                            onChange={(e) => updateGeneralSettings({
-                              notifications: {
-                                ...general.notifications,
-                                email: {
-                                  ...general.notifications.email,
-                                  system_alerts: e.target.checked
-                                }
-                              }
-                            })}
-                            className="mr-3"
-                          />
-                          Email alerts for system messages
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={general.notifications.browser_push}
-                            onChange={(e) => updateGeneralSettings({
-                              notifications: {
-                                ...general.notifications,
-                                browser_push: e.target.checked
-                              }
-                            })}
-                            className="mr-3"
-                          />
-                          Browser push notifications
-                        </label>
-                      </div>
-                    </div>
                   </div>
                 </Card>
               )}
@@ -619,149 +562,26 @@ function SettingsContent() {
               {/* Security Settings */}
               {activeSection === 'security' && permissions.canEdit && (
                 <Card className="p-4 sm:p-6">
-                  <div className="space-y-6">
-                    {/* MFA */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Multi-Factor Authentication</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">MFA Status</p>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">
-                            {security.mfa.enabled ? 'Enabled' : 'Not configured'}
-                          </p>
-                          {security.mfa.enabled && (
-                            <p className="text-xs text-gray-slate dark:text-gray-400">
-                              Method: {security.mfa.method} • Last verified: {formatDate(security.mfa.last_verified)}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          variant={security.mfa.enabled ? 'outline' : 'primary'}
-                          size="sm"
-                          onClick={() => updateSecuritySettings({
-                            mfa: {
-                              ...security.mfa,
-                              enabled: !security.mfa.enabled
-                            }
-                          })}
-                        >
-                          {security.mfa.enabled ? 'Disable' : 'Enable'} MFA
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* SSO */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Single Sign-On</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">SSO Status</p>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">
-                            {security.sso.status === 'connected' ? `Connected to ${security.sso.provider}` : 'Not configured'}
-                          </p>
-                          {security.sso.status === 'connected' && (
-                            <p className="text-xs text-gray-slate dark:text-gray-400">
-                              Last sync: {formatDate(security.sso.last_sync)}
-                            </p>
-                          )}
-                        </div>
-                        <Button variant="outline" size="sm">
-                          {security.sso.status === 'connected' ? 'Disconnect' : 'Connect'} SSO
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* IP Allowlist */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">IP Allowlist</h3>
-                      <div className="space-y-2">
-                        {security.ip_allowlist.length === 0 ? (
-                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
-                            <div className="text-center">
-                              <svg
-                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                                />
-                              </svg>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                No IP ranges configured
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          security.ip_allowlist.map((ip, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 border border-gray-light rounded">
-                              <span className="font-mono text-sm">{ip}</span>
-                              <Button variant="outline" size="sm" className="text-red-600">
-                                Remove
-                              </Button>
-                            </div>
-                          ))
-                        )}
-                        <Button variant="outline" size="sm">
-                          Add IP Range
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Active Sessions */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Active Sessions</h3>
-                      <div className="space-y-3">
-                        {security.sessions.length === 0 ? (
-                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
-                            <div className="text-center">
-                              <svg
-                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                />
-                              </svg>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                No active sessions found
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          security.sessions.map((session, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                              <div>
-                                <p className="font-medium">{session.device}</p>
-                                <p className="text-sm text-gray-slate">{session.location}</p>
-                                <p className="text-xs text-gray-slate">Last login: {formatDate(session.last_login)}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  session.status === 'active' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {session.status}
-                                </span>
-                                <Button variant="outline" size="sm" className="text-red-600">
-                                  Revoke
-                                </Button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <svg
+                      className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                    <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Coming Soon
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-md">
+                      Security settings and features are currently in development
+                    </p>
                   </div>
                 </Card>
               )}
@@ -871,97 +691,6 @@ function SettingsContent() {
                 </Card>
               )}
 
-              {/* Integrations */}
-              {activeSection === 'integrations' && permissions.canEdit && (
-                <Card className="p-4 sm:p-6">
-                  <div className="space-y-6">
-                    {/* Slack */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Slack Integration</h3>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">
-                            {integrations.slack.status === 'connected' 
-                              ? `Connected to ${integrations.slack.workspace}` 
-                              : 'Not connected'
-                            }
-                          </p>
-                          {integrations.slack.connected_on && (
-                            <p className="text-xs text-gray-slate dark:text-gray-400">
-                              Connected: {formatDate(integrations.slack.connected_on)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <Button 
-                        variant={integrations.slack.status === 'connected' ? 'outline' : 'primary'} 
-                        size="sm"
-                      >
-                        {integrations.slack.status === 'connected' ? 'Disconnect' : 'Connect'}
-                      </Button>
-                    </div>
-
-                    {/* Microsoft Teams */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20.625 8.127c-.563 0-1.022.458-1.022 1.02v4.618c0 .563.459 1.02 1.022 1.02.562 0 1.02-.457 1.02-1.02V9.148c0-.563-.458-1.02-1.02-1.02z"/>
-                            <path d="M13.972 0C11.159 0 8.88 2.279 8.88 5.092v5.617c0 2.813 2.279 5.092 5.092 5.092 2.813 0 5.092-2.279 5.092-5.092V5.092C19.064 2.279 16.785 0 13.972 0zm7.653 14.785c0 .563-.458 1.02-1.02 1.02-.563 0-1.022-.457-1.022-1.02V9.148c0-.563.459-1.02 1.021-1.02.563 0 1.021.457 1.021 1.02v5.637zM7.86 4.858H2.768C1.263 4.858.04 6.081.04 7.586v6.528c0 1.505 1.223 2.728 2.728 2.728H7.86c1.505 0 2.728-1.223 2.728-2.728V7.586c0-1.505-1.223-2.728-2.728-2.728zm-.612 8.978H3.38V9.414h3.868v4.422z"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100">Microsoft Teams</h3>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">
-                            {integrations.microsoft_teams.status === 'connected' 
-                              ? `Connected to ${integrations.microsoft_teams.channel}` 
-                              : 'Not connected'
-                            }
-                          </p>
-                        </div>
-                      </div>
-                      <Button 
-                        variant={integrations.microsoft_teams.status === 'connected' ? 'outline' : 'primary'} 
-                        size="sm"
-                      >
-                        {integrations.microsoft_teams.status === 'connected' ? 'Disconnect' : 'Connect'}
-                      </Button>
-                    </div>
-
-                    {/* PagerDuty */}
-                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M16.965 1.18C15.085.164 13.769 0 10.683 0H3.73v18.434h6.953c2.359 0 4.168-.04 5.872-.853 2.76-1.31 4.347-3.829 4.347-6.902 0-3.208-1.515-5.806-4.338-7.148-.371-.181-.4-.357-.599-.357zm-6.002 13.607H8.41V3.892h2.723c4.105 0 6.222 1.632 6.222 5.408 0 4.283-2.459 5.487-6.392 5.487z"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100">PagerDuty Integration</h3>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">
-                            {integrations.pagerduty.status === 'connected' 
-                              ? `Connected to ${integrations.pagerduty.service_name}` 
-                              : 'Not connected'
-                            }
-                          </p>
-                        </div>
-                      </div>
-                      <Button 
-                        variant={integrations.pagerduty.status === 'connected' ? 'outline' : 'primary'} 
-                        size="sm"
-                      >
-                        {integrations.pagerduty.status === 'connected' ? 'Disconnect' : 'Connect'}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              )}
-
               {/* Audit & Compliance */}
               {activeSection === 'audit' && permissions.canViewAudit && (
                 <Card className="p-4 sm:p-6">
@@ -1031,10 +760,16 @@ function SettingsContent() {
 
               {/* Billing & Subscription */}
               {activeSection === 'billing' && (
+                <div ref={billingSectionRef}>
                 <Card className="p-4 sm:p-6">
                   <div className="mb-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-orange-dark dark:text-orange mb-2">
                       Billing & Subscription
+                      {sortedBillingOrgs.length > 0 && (
+                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                          ({billingStartIndex + 1}-{Math.min(billingEndIndex, sortedBillingOrgs.length)} of {sortedBillingOrgs.length})
+                        </span>
+                      )}
                     </h2>
                     <p className="text-sm text-gray-slate dark:text-gray-400">
                       Manage billing for your organizations
@@ -1069,7 +804,7 @@ function SettingsContent() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {billingOrgs.map((org) => (
+                      {paginatedBillingOrgs.map((org) => (
                         <div
                           key={org.id}
                           className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border border-gray-light dark:border-gray-700 rounded-lg hover:border-orange/50 dark:hover:border-orange/50 transition-colors gap-4"
@@ -1114,7 +849,72 @@ function SettingsContent() {
                       ))}
                     </div>
                   )}
+
+                  {/* Pagination Controls */}
+                  {!billingLoading && billingTotalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBillingPageChange(billingCurrentPage - 1)}
+                        disabled={billingCurrentPage === 1}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        {/* Page numbers */}
+                        {Array.from({ length: billingTotalPages }, (_, i) => i + 1).map((page) => {
+                          // Show first page, last page, current page, and pages around current
+                          const showPage = 
+                            page === 1 || 
+                            page === billingTotalPages || 
+                            (page >= billingCurrentPage - 1 && page <= billingCurrentPage + 1);
+                          
+                          const showEllipsis = 
+                            (page === billingCurrentPage - 2 && billingCurrentPage > 3) ||
+                            (page === billingCurrentPage + 2 && billingCurrentPage < billingTotalPages - 2);
+
+                          if (showEllipsis) {
+                            return (
+                              <span key={page} className="text-gray-400 dark:text-gray-600 px-2">
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (!showPage) return null;
+
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handleBillingPageChange(page)}
+                              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                                billingCurrentPage === page
+                                  ? 'bg-orange text-white'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBillingPageChange(billingCurrentPage + 1)}
+                        disabled={billingCurrentPage === billingTotalPages}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </Card>
+                </div>
               )}
 
               {/* Password & Authentication */}

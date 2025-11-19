@@ -12,6 +12,7 @@ interface DNSRecordsTableProps {
   selectedRecords: string[];
   onSelectionChange: (selectedIds: string[]) => void;
   onRecordClick: (record: DNSRecord) => void;
+  onStatusToggle?: (record: DNSRecord) => void;
   loading?: boolean;
   zoneName: string;
   // Zone metadata for BIND export
@@ -25,6 +26,7 @@ export function DNSRecordsTable({
   selectedRecords,
   onSelectionChange,
   onRecordClick,
+  onStatusToggle,
   loading = false,
   zoneName,
   nameservers,
@@ -487,14 +489,24 @@ export function DNSRecordsTable({
                       : 'N/A'}
                   </td>
                   <td className="py-3 px-4">
-                    <span className={clsx(
-                      'px-2 py-1 rounded text-xs font-medium',
-                      record.active
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    )}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStatusToggle?.(record);
+                      }}
+                      disabled={!onStatusToggle}
+                      className={clsx(
+                        'px-2 py-1 rounded text-xs font-medium transition-all',
+                        onStatusToggle && 'cursor-pointer hover:opacity-80 hover:scale-105',
+                        !onStatusToggle && 'cursor-default',
+                        record.active
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      )}
+                      title={onStatusToggle ? `Click to ${record.active ? 'deactivate' : 'activate'}` : undefined}
+                    >
                       {record.active ? 'Active' : 'Inactive'}
-                    </span>
+                    </button>
                   </td>
                 </tr>
               );
@@ -543,14 +555,24 @@ export function DNSRecordsTable({
                   <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded text-xs font-medium">
                     {record.type}
                   </span>
-                  <span className={clsx(
-                    'px-2 py-1 rounded text-xs font-medium',
-                    record.active
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                  )}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStatusToggle?.(record);
+                    }}
+                    disabled={!onStatusToggle}
+                    className={clsx(
+                      'px-2 py-1 rounded text-xs font-medium transition-all',
+                      onStatusToggle && 'cursor-pointer hover:opacity-80 hover:scale-105',
+                      !onStatusToggle && 'cursor-default',
+                      record.active
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    )}
+                    title={onStatusToggle ? `Click to ${record.active ? 'deactivate' : 'activate'}` : undefined}
+                  >
                     {record.active ? 'Active' : 'Inactive'}
-                  </span>
+                  </button>
                 </div>
               </div>
               <div className="space-y-2 text-sm">

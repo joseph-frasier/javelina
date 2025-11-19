@@ -138,7 +138,9 @@ function PricingContent() {
       {/* Header */}
       <div className="border-b border-gray-light bg-white">
         <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1">
-          <Logo width={150} height={60} />
+          <Link href="/" className="inline-block cursor-pointer">
+            <Logo width={150} height={60} />
+          </Link>
         </div>
       </div>
 
