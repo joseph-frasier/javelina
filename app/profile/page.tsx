@@ -31,12 +31,7 @@ export default function ProfilePage() {
 
   // Scroll to top when page changes
   useEffect(() => {
-    console.log('Page changed to:', currentPage);
-    console.log('Ref current:', orgSectionRef.current);
-    
     if (orgSectionRef.current) {
-      console.log('Scrolling...');
-      // Simple approach - just scroll the element into view
       orgSectionRef.current.scrollIntoView({ 
         behavior: 'smooth', 
         block: 'start'
@@ -45,7 +40,6 @@ export default function ProfilePage() {
   }, [currentPage]);
 
   const handlePageChange = (page: number) => {
-    console.log('handlePageChange called with:', page);
     setCurrentPage(page);
   };
 
