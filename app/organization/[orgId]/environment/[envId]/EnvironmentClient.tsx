@@ -84,7 +84,6 @@ export function EnvironmentClient({
       filtered = filtered.filter((zone) => {
         return (
           zone.name?.toLowerCase().includes(query) ||
-          zone.zone_type?.toLowerCase().includes(query) ||
           zone.description?.toLowerCase().includes(query)
         );
       });
