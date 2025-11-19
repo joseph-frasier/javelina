@@ -201,8 +201,6 @@ export async function duplicateDNSRecord(
       type: originalRecord.type,
       value: originalRecord.value,
       ttl: originalRecord.ttl,
-      priority: originalRecord.priority ?? undefined,
-      active: originalRecord.active,
       comment: originalRecord.comment ? `Copy of: ${originalRecord.comment}` : 'Duplicated record',
     });
 
@@ -216,60 +214,21 @@ export async function duplicateDNSRecord(
 
 /**
  * Toggle record active status
+ * NOTE: Active field has been removed from schema. This function is deprecated.
  */
 export async function toggleDNSRecordStatus(recordId: string): Promise<DNSRecord> {
-  try {
-    // Get current record
-    const record = await getDNSRecord(recordId);
-    
-    // Update with toggled status
-    const updatedRecord = await updateDNSRecord(recordId, {
-      name: record.name,
-      type: record.type,
-      value: record.value,
-      ttl: record.ttl,
-      priority: record.priority ?? undefined,
-      active: !record.active,
-      comment: record.comment ?? undefined
-    });
-
-    revalidatePath(`/zone/${record.zone_id}`);
-    return updatedRecord;
-  } catch (error: any) {
-    console.error('Error toggling DNS record status:', error);
-    throw new Error(error.message || 'Failed to toggle record status');
-  }
+  throw new Error('Toggle active status is no longer supported. Active field has been removed from schema.');
 }
 
 /**
  * Bulk toggle record active status
+ * NOTE: Active field has been removed from schema. This function is deprecated.
  */
 export async function bulkToggleDNSRecordStatus(
   recordIds: string[],
   active: boolean
 ): Promise<{ success: number; failed: number }> {
-  const results = { success: 0, failed: 0 };
-
-  for (const recordId of recordIds) {
-    try {
-      const record = await getDNSRecord(recordId);
-      await updateDNSRecord(recordId, {
-        name: record.name,
-        type: record.type,
-        value: record.value,
-        ttl: record.ttl,
-        priority: record.priority ?? undefined,
-        active,
-        comment: record.comment ?? undefined
-      });
-      results.success++;
-    } catch (error) {
-      results.failed++;
-    }
-  }
-
-  revalidatePath('/zone');
-  return results;
+  throw new Error('Bulk toggle active status is no longer supported. Active field has been removed from schema.');
 }
 
 /**

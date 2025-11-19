@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { createZone } from '@/lib/api/hierarchy';
+import { createZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
 
 interface AddZoneModalProps {
@@ -61,11 +61,21 @@ export function AddZoneModal({
     setErrors({});
 
     try {
-      const zone = await createZone({
+      const result = await createZone({
         name: name.trim().toLowerCase(), // Domains are case-insensitive
         description: description.trim() || undefined,
         environment_id: environmentId
       });
+
+      // Check for error response
+      if (result.error) {
+        setErrors({ general: result.error });
+        addToast('error', result.error);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const zone = result.data;
 
       // Invalidate React Query cache for zones
       await queryClient.invalidateQueries({ queryKey: ['zones', environmentId] });
