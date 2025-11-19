@@ -54,18 +54,7 @@ export function DNSRecordsTable({
   const availablePriorityRanges = useMemo(() => {
     const hasRecordsInRange = new Map<string, boolean>();
     
-    priorityRanges.forEach(range => {
-      const hasRecords = records.some(record => {
-        if (range.key === 'na') {
-          return record.priority === null || record.priority === undefined;
-        }
-        return record.priority !== null && 
-               record.priority !== undefined && 
-               record.priority >= range.min! && 
-               record.priority <= range.max!;
-      });
-      hasRecordsInRange.set(range.key, hasRecords);
-    });
+    // Priority range checking removed - priority is now part of the value field
     
     return priorityRanges.filter(range => hasRecordsInRange.get(range.key));
   }, [records, priorityRanges]);
@@ -85,33 +74,9 @@ export function DNSRecordsTable({
       );
     }
     
-    // Apply status filter (if any status is selected)
-    if (statusFilters.size > 0) {
-      filtered = filtered.filter(record => {
-        const status = record.active ? 'Active' : 'Inactive';
-        return statusFilters.has(status);
-      });
-    }
+    // Status filter removed - all DNS records are now active by default (active field removed from schema)
     
-    // Apply priority filter (if any priority range is selected)
-    if (priorityFilters.size > 0) {
-      filtered = filtered.filter(record => {
-        // Check if record matches any selected priority range
-        return Array.from(priorityFilters).some(rangeKey => {
-          const range = priorityRanges.find(r => r.key === rangeKey);
-          if (!range) return false;
-          
-          if (range.key === 'na') {
-            return record.priority === null || record.priority === undefined;
-          }
-          
-          return record.priority !== null && 
-                 record.priority !== undefined && 
-                 record.priority >= range.min! && 
-                 record.priority <= range.max!;
-        });
-      });
-    }
+    // Priority filter removed - priority is now part of the value field (not a separate column)
     
     return filtered;
   }, [records, searchQuery, statusFilters, priorityFilters, priorityRanges]);
@@ -410,8 +375,6 @@ export function DNSRecordsTable({
                 { key: 'type' as const, label: 'Type' },
                 { key: 'value' as const, label: 'Value' },
                 { key: 'ttl' as const, label: 'TTL' },
-                { key: 'priority' as const, label: 'Priority' },
-                { key: 'active' as const, label: 'Status' },
               ].map(column => (
                 <th
                   key={column.key}
@@ -483,31 +446,6 @@ export function DNSRecordsTable({
                   <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300">
                     {record.ttl}s
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300">
-                    {RECORD_TYPE_INFO[record.type].requiresPriority 
-                      ? (record.priority ?? 'N/A')
-                      : 'N/A'}
-                  </td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onStatusToggle?.(record);
-                      }}
-                      disabled={!onStatusToggle}
-                      className={clsx(
-                        'px-2 py-1 rounded text-xs font-medium transition-all',
-                        onStatusToggle && 'cursor-pointer hover:opacity-80 hover:scale-105',
-                        !onStatusToggle && 'cursor-default',
-                        record.active
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                      )}
-                      title={onStatusToggle ? `Click to ${record.active ? 'deactivate' : 'activate'}` : undefined}
-                    >
-                      {record.active ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
                 </tr>
               );
             })}
@@ -555,24 +493,6 @@ export function DNSRecordsTable({
                   <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded text-xs font-medium">
                     {record.type}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStatusToggle?.(record);
-                    }}
-                    disabled={!onStatusToggle}
-                    className={clsx(
-                      'px-2 py-1 rounded text-xs font-medium transition-all',
-                      onStatusToggle && 'cursor-pointer hover:opacity-80 hover:scale-105',
-                      !onStatusToggle && 'cursor-default',
-                      record.active
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    )}
-                    title={onStatusToggle ? `Click to ${record.active ? 'deactivate' : 'activate'}` : undefined}
-                  >
-                    {record.active ? 'Active' : 'Inactive'}
-                  </button>
                 </div>
               </div>
               <div className="space-y-2 text-sm">
@@ -584,9 +504,6 @@ export function DNSRecordsTable({
                 </div>
                 <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                   <span>TTL: {record.ttl}s</span>
-                  {RECORD_TYPE_INFO[record.type].requiresPriority && (
-                    <span>Priority: {record.priority ?? 'N/A'}</span>
-                  )}
                 </div>
               </div>
             </div>

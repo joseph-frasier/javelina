@@ -331,11 +331,8 @@ export function exportToBIND(
     const ttl = record.ttl || defaultTTL;
     
     // Format line based on record type
-    if (record.type === 'MX' && record.priority !== null) {
-      lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${record.priority}\t${value}`);
-    } else if (record.type === 'SRV' && record.priority !== null) {
-      lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${record.priority}\t${value}`);
-    } else if (record.type === 'CAA') {
+    // Note: MX and SRV records now have priority embedded in the value field
+    if (record.type === 'CAA') {
       lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${value}`);
     } else {
       lines.push(`${name}\t${ttl}\tIN\t${record.type}\t${value}`);
