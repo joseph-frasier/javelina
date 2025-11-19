@@ -30,8 +30,20 @@ export default function ProfilePage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of organizations section smoothly
-    document.getElementById('org-membership')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Scroll to top of organizations section after state update
+    setTimeout(() => {
+      const element = document.getElementById('org-membership');
+      if (element) {
+        const offset = 80; // Account for any fixed headers
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 0);
   };
 
   const getRoleBadgeColor = (role: string) => {
