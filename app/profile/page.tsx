@@ -12,6 +12,8 @@ export default function ProfilePage() {
   const { user, updateProfile } = useAuthStore();
   const [showEditModal, setShowEditModal] = useState(false);
   const [isCompactView, setIsCompactView] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleAvatarUpdate = (avatarUrl: string | null) => {
     updateProfile({ avatar_url: avatarUrl ?? undefined });
@@ -19,6 +21,18 @@ export default function ProfilePage() {
 
   // Sort organizations by most recent (reverse order)
   const sortedOrganizations = user?.organizations ? [...user.organizations].reverse() : [];
+  
+  // Pagination logic
+  const totalPages = Math.ceil(sortedOrganizations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrganizations = sortedOrganizations.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of organizations section smoothly
+    document.getElementById('org-membership')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -98,12 +112,12 @@ export default function ProfilePage() {
           {/* Main Content */}
           <div className="flex-1 space-y-4 sm:space-y-6">
             {/* Organization Membership */}
-            <Card className="p-4 sm:p-6">
+            <Card id="org-membership" className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Organization Membership
                   <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                    ({sortedOrganizations.length})
+                    ({startIndex + 1}-{Math.min(endIndex, sortedOrganizations.length)} of {sortedOrganizations.length})
                   </span>
                 </h3>
                 <Button
@@ -116,7 +130,7 @@ export default function ProfilePage() {
                 </Button>
               </div>
               <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-                {sortedOrganizations.map((org) => (
+                {paginatedOrganizations.map((org) => (
                   <div 
                     key={org.id} 
                     className={`border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 ${
@@ -150,6 +164,70 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </Button>
+                  
+                  <div className="flex items-center gap-2">
+                    {/* Page numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage = 
+                        page === 1 || 
+                        page === totalPages || 
+                        (page >= currentPage - 1 && page <= currentPage + 1);
+                      
+                      const showEllipsis = 
+                        (page === currentPage - 2 && currentPage > 3) ||
+                        (page === currentPage + 2 && currentPage < totalPages - 2);
+
+                      if (showEllipsis) {
+                        return (
+                          <span key={page} className="text-gray-400 dark:text-gray-600 px-2">
+                            ...
+                          </span>
+                        );
+                      }
+
+                      if (!showPage) return null;
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                            currentPage === page
+                              ? 'bg-orange text-white'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </Card>
 
           </div>
