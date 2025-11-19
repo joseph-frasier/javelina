@@ -286,7 +286,7 @@ export function exportToBIND(
   lines.push(`;`);
   lines.push(`; BIND Zone File for ${zoneName}`);
   lines.push(`; Exported: ${new Date().toISOString()}`);
-  lines.push(`; Records: ${activeRecords.length}`);
+  lines.push(`; Records: ${sortedRecords.length}`);
   lines.push(`;`);
   lines.push('');
   
