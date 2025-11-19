@@ -184,17 +184,53 @@ export function ManageDNSRecordModal({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Record Type */}
+          {/* Record Type - Visual Selection */}
           <div className="md:col-span-2">
-            <Dropdown
-              label="Record Type"
-              options={recordTypeOptions}
-              value={formData.type}
-              onChange={(value) => handleTypeChange(value as DNSRecordType)}
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {typeInfo.description}
-            </p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Record Type
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {recordTypeOptions.map((option) => {
+                const isSelected = formData.type === option.value;
+                const info = RECORD_TYPE_INFO[option.value as DNSRecordType];
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleTypeChange(option.value as DNSRecordType)}
+                    className={clsx(
+                      'flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all text-center',
+                      isSelected
+                        ? 'border-orange bg-orange/10 dark:bg-orange/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-orange/50 dark:hover:border-orange/50 bg-white dark:bg-gray-800'
+                    )}
+                  >
+                    <div className={clsx(
+                      'text-2xl mb-1',
+                      isSelected ? 'opacity-100' : 'opacity-60'
+                    )}>
+                      {option.value === 'A' && '📍'}
+                      {option.value === 'AAAA' && '🌐'}
+                      {option.value === 'CNAME' && '↪️'}
+                      {option.value === 'MX' && '📧'}
+                      {option.value === 'NS' && '🔀'}
+                      {option.value === 'TXT' && '📝'}
+                      {option.value === 'SRV' && '⚙️'}
+                      {option.value === 'CAA' && '🔒'}
+                    </div>
+                    <div className={clsx(
+                      'text-sm font-semibold mb-0.5',
+                      isSelected ? 'text-orange' : 'text-gray-900 dark:text-gray-100'
+                    )}>
+                      {option.value}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                      {info.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Record Name */}
@@ -205,7 +241,7 @@ export function ManageDNSRecordModal({
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               error={errors.name}
-              placeholder="@ or subdomain"
+              placeholder="@ (root) or subdomain (e.g., www, blog, mail)"
               helperText={`FQDN: ${fqdn}`}
             />
           </div>
@@ -318,10 +354,20 @@ export function ManageDNSRecordModal({
             </div>
           )}
 
-          {/* Value */}
+          {/* Value - Dynamic Label Based on Type */}
           <div className="md:col-span-2">
             <Input
-              label="Value"
+              label={
+                formData.type === 'A' ? 'IPv4 Address' :
+                formData.type === 'AAAA' ? 'IPv6 Address' :
+                formData.type === 'CNAME' ? 'Target Domain' :
+                formData.type === 'MX' ? 'Mail Server' :
+                formData.type === 'NS' ? 'Name Server' :
+                formData.type === 'TXT' ? 'Text Value' :
+                formData.type === 'SRV' ? 'Target' :
+                formData.type === 'CAA' ? 'CAA Value' :
+                'Value'
+              }
               type="text"
               value={formData.value}
               onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
