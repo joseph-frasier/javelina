@@ -82,13 +82,6 @@ export function DNSRecordDetailModal({
             <span className="px-3 py-1.5 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded-lg text-sm font-semibold">
               {displayRecord.type}
             </span>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${
-              displayRecord.active
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-            }`}>
-              {displayRecord.active ? 'Active' : 'Inactive'}
-            </span>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {typeInfo.description}
@@ -142,19 +135,6 @@ export function DNSRecordDetailModal({
               </div>
             </div>
 
-            {typeInfo.requiresPriority && (
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  Priority
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-900 dark:text-gray-100">
-                    {displayRecord.priority ?? 'N/A'}
-                  </span>
-                  {displayRecord.priority && <CopyButton text={displayRecord.priority.toString()} label="priority" />}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Comment */}
