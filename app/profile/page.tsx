@@ -7,8 +7,10 @@ import Button from '@/components/ui/Button';
 import { AvatarUpload } from '@/components/ui/AvatarUpload';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user, updateProfile } = useAuthStore();
   const [showEditModal, setShowEditModal] = useState(false);
   const [isCompactView, setIsCompactView] = useState(false);
@@ -18,6 +20,10 @@ export default function ProfilePage() {
 
   const handleAvatarUpdate = (avatarUrl: string | null) => {
     updateProfile({ avatar_url: avatarUrl ?? undefined });
+  };
+
+  const handleGoToOrg = (orgId: string) => {
+    router.push(`/organization/${orgId}`);
   };
 
   // Sort organizations by most recent (reverse order)
@@ -162,14 +168,14 @@ export default function ProfilePage() {
                       </div>
                     )}
                     <div className={`flex flex-col sm:flex-row gap-2 ${isCompactView ? 'mt-2' : ''}`}>
-                      <Button variant="outline" size="sm" className="justify-center">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="justify-center"
+                        onClick={() => handleGoToOrg(org.id)}
+                      >
                         Go to Org
                       </Button>
-                      {(org.role === 'Admin' || org.role === 'SuperAdmin') && (
-                        <Button variant="outline" size="sm" className="justify-center">
-                          Manage
-                        </Button>
-                      )}
                     </div>
                   </div>
                 ))}
