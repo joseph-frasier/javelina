@@ -13,7 +13,7 @@ import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
 import { createClient } from '@/lib/supabase/client';
 import { subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function SettingsContent() {
@@ -30,6 +30,11 @@ function SettingsContent() {
   } = useSettingsStore();
   
   const [activeSection, setActiveSection] = useState('general');
+  
+  // Billing pagination state
+  const [billingCurrentPage, setBillingCurrentPage] = useState(1);
+  const billingItemsPerPage = 10;
+  const billingSectionRef = useRef<HTMLDivElement>(null);
   
   // Read section from URL query parameter
   useEffect(() => {
@@ -186,6 +191,29 @@ function SettingsContent() {
       fetchBillingOrganizations();
     }
   }, [activeSection, fetchBillingOrganizations]);
+
+  // Sort billing orgs by most recent (assuming they have created_at or similar)
+  const sortedBillingOrgs = [...billingOrgs].reverse();
+  
+  // Billing pagination logic
+  const billingTotalPages = Math.ceil(sortedBillingOrgs.length / billingItemsPerPage);
+  const billingStartIndex = (billingCurrentPage - 1) * billingItemsPerPage;
+  const billingEndIndex = billingStartIndex + billingItemsPerPage;
+  const paginatedBillingOrgs = sortedBillingOrgs.slice(billingStartIndex, billingEndIndex);
+
+  // Scroll to top when billing page changes
+  useEffect(() => {
+    if (billingSectionRef.current) {
+      billingSectionRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start'
+      });
+    }
+  }, [billingCurrentPage]);
+
+  const handleBillingPageChange = (page: number) => {
+    setBillingCurrentPage(page);
+  };
 
   const handleManageBilling = (orgId: string) => {
     router.push(`/settings/billing/${orgId}`);
@@ -732,10 +760,16 @@ function SettingsContent() {
 
               {/* Billing & Subscription */}
               {activeSection === 'billing' && (
+                <div ref={billingSectionRef}>
                 <Card className="p-4 sm:p-6">
                   <div className="mb-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-orange-dark dark:text-orange mb-2">
                       Billing & Subscription
+                      {sortedBillingOrgs.length > 0 && (
+                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                          ({billingStartIndex + 1}-{Math.min(billingEndIndex, sortedBillingOrgs.length)} of {sortedBillingOrgs.length})
+                        </span>
+                      )}
                     </h2>
                     <p className="text-sm text-gray-slate dark:text-gray-400">
                       Manage billing for your organizations
@@ -770,7 +804,7 @@ function SettingsContent() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {billingOrgs.map((org) => (
+                      {paginatedBillingOrgs.map((org) => (
                         <div
                           key={org.id}
                           className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border border-gray-light dark:border-gray-700 rounded-lg hover:border-orange/50 dark:hover:border-orange/50 transition-colors gap-4"
@@ -815,7 +849,72 @@ function SettingsContent() {
                       ))}
                     </div>
                   )}
+
+                  {/* Pagination Controls */}
+                  {!billingLoading && billingTotalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBillingPageChange(billingCurrentPage - 1)}
+                        disabled={billingCurrentPage === 1}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        {/* Page numbers */}
+                        {Array.from({ length: billingTotalPages }, (_, i) => i + 1).map((page) => {
+                          // Show first page, last page, current page, and pages around current
+                          const showPage = 
+                            page === 1 || 
+                            page === billingTotalPages || 
+                            (page >= billingCurrentPage - 1 && page <= billingCurrentPage + 1);
+                          
+                          const showEllipsis = 
+                            (page === billingCurrentPage - 2 && billingCurrentPage > 3) ||
+                            (page === billingCurrentPage + 2 && billingCurrentPage < billingTotalPages - 2);
+
+                          if (showEllipsis) {
+                            return (
+                              <span key={page} className="text-gray-400 dark:text-gray-600 px-2">
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (!showPage) return null;
+
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handleBillingPageChange(page)}
+                              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                                billingCurrentPage === page
+                                  ? 'bg-orange text-white'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBillingPageChange(billingCurrentPage + 1)}
+                        disabled={billingCurrentPage === billingTotalPages}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </Card>
+                </div>
               )}
 
               {/* Password & Authentication */}
