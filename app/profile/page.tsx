@@ -187,45 +187,16 @@ export default function ProfilePage() {
               </div>
             </Card>
 
-            {/* Admin Controls Card */}
-            {(user.role === 'superuser' || user.organizations?.some(org => org.role === 'Admin' || org.role === 'SuperAdmin')) && (
-              <Card className="p-4 sm:p-6">
-                <h3 className="text-base sm:text-lg font-semibold text-orange-dark dark:text-orange mb-3 sm:mb-4 text-center">
-                  Admin Controls
-                </h3>
-                <div className="space-y-2 sm:space-y-3">
-                  <Button variant="outline" size="sm" className="w-full justify-center">
-                    Manage Members
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-center">
-                    Invite Users
-                  </Button>
-                  {user.role === 'superuser' && (
-                    <>
-                      <Button variant="outline" size="sm" className="w-full justify-center">
-                        Set Primary Domain
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-center">
-                        Resolve Conflicts
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </Card>
-            )}
           </div>
 
           {/* Main Content */}
           <div className="flex-1 space-y-4 sm:space-y-6">
             {/* Organization Membership */}
             <Card className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Organization Membership
                 </h3>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto justify-center">
-                  Manage Organizations
-                </Button>
               </div>
               <div className="grid gap-3 sm:gap-4">
                 {user.organizations?.map((org) => (
