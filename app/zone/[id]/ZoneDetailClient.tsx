@@ -337,6 +337,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               <VerificationStatusBadge status={zoneSummary.verificationStatus} />
               <HealthStatusBadge status={zoneSummary.healthStatus} />
               <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} />
+              {/* SOA Serial Badge */}
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+                Serial: {zone.soa_serial}
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">

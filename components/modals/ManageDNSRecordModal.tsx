@@ -378,7 +378,7 @@ export function ManageDNSRecordModal({
                   onChange={(e) => setSOAMetadata(prev => ({ ...prev, primary_nameserver: e.target.value }))}
                   error={errors.primary_nameserver}
                   placeholder="ns1.example.com"
-                  helpText="The primary nameserver for this zone"
+                  helperText="The primary nameserver for this zone"
                 />
               </div>
               
@@ -390,7 +390,7 @@ export function ManageDNSRecordModal({
                   onChange={(e) => setSOAMetadata(prev => ({ ...prev, admin_email: e.target.value }))}
                   error={errors.admin_email}
                   placeholder="admin@example.com"
-                  helpText="Administrative contact email (use @ or DNS format like admin.example.com)"
+                  helperText="Administrative contact email (use @ or DNS format like admin.example.com)"
                 />
               </div>
               
@@ -404,7 +404,7 @@ export function ManageDNSRecordModal({
                   placeholder="3600"
                   min={0}
                   max={86400}
-                  helpText="How long to cache negative responses (NXDOMAIN)"
+                  helperText="How long to cache negative responses (NXDOMAIN)"
                 />
               </div>
               
