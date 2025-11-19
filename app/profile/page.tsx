@@ -31,15 +31,21 @@ export default function ProfilePage() {
 
   // Scroll to top when page changes
   useEffect(() => {
+    console.log('Page changed to:', currentPage);
+    console.log('Ref current:', orgSectionRef.current);
+    
     if (orgSectionRef.current) {
-      const yOffset = -100; // Negative offset to scroll a bit above the element
-      const y = orgSectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      console.log('Scrolling...');
+      // Simple approach - just scroll the element into view
+      orgSectionRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start'
+      });
     }
   }, [currentPage]);
 
   const handlePageChange = (page: number) => {
+    console.log('handlePageChange called with:', page);
     setCurrentPage(page);
   };
 
