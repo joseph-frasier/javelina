@@ -23,11 +23,9 @@ function SettingsContent() {
   const { addToast } = useToastStore();
   const { 
     general, 
-    security, 
     access, 
     auditLogs,
     updateGeneralSettings,
-    updateSecuritySettings,
     updateAccessSettings
   } = useSettingsStore();
   
@@ -608,149 +606,26 @@ function SettingsContent() {
               {/* Security Settings */}
               {activeSection === 'security' && permissions.canEdit && (
                 <Card className="p-4 sm:p-6">
-                  <div className="space-y-6">
-                    {/* MFA */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Multi-Factor Authentication</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">MFA Status</p>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">
-                            {security.mfa.enabled ? 'Enabled' : 'Not configured'}
-                          </p>
-                          {security.mfa.enabled && (
-                            <p className="text-xs text-gray-slate dark:text-gray-400">
-                              Method: {security.mfa.method} • Last verified: {formatDate(security.mfa.last_verified)}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          variant={security.mfa.enabled ? 'outline' : 'primary'}
-                          size="sm"
-                          onClick={() => updateSecuritySettings({
-                            mfa: {
-                              ...security.mfa,
-                              enabled: !security.mfa.enabled
-                            }
-                          })}
-                        >
-                          {security.mfa.enabled ? 'Disable' : 'Enable'} MFA
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* SSO */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark dark:text-orange mb-4">Single Sign-On</h3>
-                      <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">SSO Status</p>
-                          <p className="text-sm text-gray-slate dark:text-gray-400">
-                            {security.sso.status === 'connected' ? `Connected to ${security.sso.provider}` : 'Not configured'}
-                          </p>
-                          {security.sso.status === 'connected' && (
-                            <p className="text-xs text-gray-slate dark:text-gray-400">
-                              Last sync: {formatDate(security.sso.last_sync)}
-                            </p>
-                          )}
-                        </div>
-                        <Button variant="outline" size="sm">
-                          {security.sso.status === 'connected' ? 'Disconnect' : 'Connect'} SSO
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* IP Allowlist */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">IP Allowlist</h3>
-                      <div className="space-y-2">
-                        {security.ip_allowlist.length === 0 ? (
-                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
-                            <div className="text-center">
-                              <svg
-                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                                />
-                              </svg>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                No IP ranges configured
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          security.ip_allowlist.map((ip, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 border border-gray-light rounded">
-                              <span className="font-mono text-sm">{ip}</span>
-                              <Button variant="outline" size="sm" className="text-red-600">
-                                Remove
-                              </Button>
-                            </div>
-                          ))
-                        )}
-                        <Button variant="outline" size="sm">
-                          Add IP Range
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Active Sessions */}
-                    <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Active Sessions</h3>
-                      <div className="space-y-3">
-                        {security.sessions.length === 0 ? (
-                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
-                            <div className="text-center">
-                              <svg
-                                className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                />
-                              </svg>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                No active sessions found
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          security.sessions.map((session, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
-                              <div>
-                                <p className="font-medium">{session.device}</p>
-                                <p className="text-sm text-gray-slate">{session.location}</p>
-                                <p className="text-xs text-gray-slate">Last login: {formatDate(session.last_login)}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  session.status === 'active' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {session.status}
-                                </span>
-                                <Button variant="outline" size="sm" className="text-red-600">
-                                  Revoke
-                                </Button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <svg
+                      className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                    <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Coming Soon
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-md">
+                      Security settings and features are currently in development
+                    </p>
                   </div>
                 </Card>
               )}
