@@ -266,16 +266,13 @@ export function exportToBIND(
 
   const { zoneName, nameservers = [], soaSerial, defaultTTL = 3600 } = options;
   
-  // Filter only active records
-  const activeRecords = records.filter(r => r.active);
-  
-  // Sort records by type for organized output
+  // Sort records by type for organized output (all records are now active by default)
   const typeOrder: Record<string, number> = {
     'SOA': 1, 'NS': 2, 'A': 3, 'AAAA': 4, 
     'CNAME': 5, 'MX': 6, 'TXT': 7, 'SRV': 8, 'CAA': 9
   };
   
-  const sortedRecords = [...activeRecords].sort((a, b) => {
+  const sortedRecords = [...records].sort((a, b) => {
     const orderA = typeOrder[a.type] || 99;
     const orderB = typeOrder[b.type] || 99;
     if (orderA !== orderB) return orderA - orderB;
