@@ -348,7 +348,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
 
           {/* Organizations Section */}
           <div className="mb-2">
-            <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3 mb-2">
+            <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3 mb-2 text-center">
               Organizations
             </h3>
             {renderOrganizations()}
@@ -378,7 +378,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
           {!isCollapsed && (
-            <h2 className="font-bold text-orange-dark dark:text-white">Organizations</h2>
+            <h2 className="font-bold text-orange-dark dark:text-white text-center flex-1">Organizations</h2>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
