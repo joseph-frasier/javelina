@@ -13,6 +13,7 @@ import { getPlanById, fetchPlans, PLANS_CONFIG } from '@/lib/plans-config';
 import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
 import { gsap } from 'gsap';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 function PricingContent() {
   const router = useRouter();
@@ -174,6 +175,15 @@ function PricingContent() {
             </div>
           </div>
         )}
+
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Select Plan' }
+          ]}
+          className="mb-6"
+        />
 
         {/* Hero Section */}
         <div className="text-center mb-12">

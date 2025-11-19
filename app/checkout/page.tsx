@@ -7,6 +7,7 @@ import { Logo } from '@/components/ui/Logo';
 import { StripeProvider } from '@/components/stripe/StripeProvider';
 import { StripePaymentForm } from '@/components/stripe/StripePaymentForm';
 import { useToastStore } from '@/lib/toast-store';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 interface CheckoutData {
   org_id: string;
@@ -98,25 +99,13 @@ function CheckoutContent() {
       <div className="border-b border-gray-light bg-white">
         <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
           <Logo width={150} height={60} />
-          <Link
-            href="/pricing"
-            className="inline-flex items-center text-orange hover:underline font-regular"
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back to pricing
-          </Link>
+          <Breadcrumb 
+            items={[
+              { label: 'Dashboard', href: '/' },
+              { label: 'Select Plan', href: '/pricing' },
+              { label: 'Checkout' }
+            ]}
+          />
         </div>
       </div>
 
