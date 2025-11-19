@@ -13,7 +13,6 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, updateProfile } = useAuthStore();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [isCompactView, setIsCompactView] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const orgSectionRef = useRef<HTMLDivElement>(null);
@@ -129,32 +128,22 @@ export default function ProfilePage() {
             {/* Organization Membership */}
             <div ref={orgSectionRef}>
             <Card className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <div className="mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Organization Membership
                   <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
                     ({startIndex + 1}-{Math.min(endIndex, sortedOrganizations.length)} of {sortedOrganizations.length})
                   </span>
                 </h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsCompactView(!isCompactView)}
-                  className="text-xs"
-                >
-                  {isCompactView ? 'Expanded' : 'Compact'}
-                </Button>
               </div>
               <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
                 {paginatedOrganizations.map((org) => (
                   <div 
                     key={org.id} 
-                    className={`border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 ${
-                      isCompactView ? 'p-2 sm:p-3' : 'p-3 sm:p-4'
-                    }`}
+                    className="border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-3 sm:p-4"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                      <h4 className={`font-medium text-orange-dark dark:text-orange break-words ${isCompactView ? 'text-sm' : ''}`}>
+                      <h4 className="font-medium text-orange-dark dark:text-orange break-words">
                         {org.name}
                       </h4>
                       <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)} flex-shrink-0 self-start sm:self-auto`}>
