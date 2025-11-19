@@ -17,7 +17,6 @@ import { useToastStore } from '@/lib/toast-store';
 interface FlaggedZone {
   id: string;
   name: string;
-  zone_type: string;
   created_at: string;
   created_by: string;
   environments: {
@@ -219,9 +218,6 @@ export default function AdminZonesPage() {
                           </h3>
                           <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
                             Flagged
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded capitalize">
-                            {zone.zone_type}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mb-1">
