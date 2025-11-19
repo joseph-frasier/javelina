@@ -38,6 +38,7 @@ import {
   bulkDeleteDNSRecords,
   duplicateDNSRecord,
   getDNSRecords,
+  toggleDNSRecordStatus,
 } from '@/lib/actions/dns-records';
 
 interface ZoneDetailClientProps {
@@ -168,6 +169,33 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       name: `${record.name}-copy`,
     } as DNSRecord);
     setShowEditRecordModal(true);
+  };
+
+  const handleToggleStatus = async (record: DNSRecord) => {
+    try {
+      setIsRecordLoading(true);
+      const newStatus = !record.active;
+      
+      await toggleDNSRecordStatus(record.id);
+      
+      // Update local state
+      const updatedRecords = dnsRecords.map(r => 
+        r.id === record.id ? { ...r, active: newStatus } : r
+      );
+      setDnsRecords(updatedRecords);
+      setFilteredDnsRecords(updatedRecords);
+      
+      addToast('success', `DNS record ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      
+      // Refresh zone summary
+      const newSummary = await getZoneSummary(zoneId, zone.name, zone.records_count || 50);
+      setZoneSummary(newSummary);
+    } catch (error: any) {
+      console.error('Error toggling DNS record status:', error);
+      addToast('error', error.message || 'Failed to toggle record status');
+    } finally {
+      setIsRecordLoading(false);
+    }
   };
 
   const handleBulkDelete = async () => {
@@ -426,6 +454,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           selectedRecords={selectedRecords}
           onSelectionChange={setSelectedRecords}
           onRecordClick={handleRecordClick}
+          onStatusToggle={handleToggleStatus}
           zoneName={zone.name}
           nameservers={zone.nameservers}
           soaSerial={zone.soa_serial}
