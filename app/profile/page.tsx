@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { AvatarUpload } from '@/components/ui/AvatarUpload';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuthStore();
@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [isCompactView, setIsCompactView] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const orgSectionRef = useRef<HTMLDivElement>(null);
 
   const handleAvatarUpdate = (avatarUrl: string | null) => {
     updateProfile({ avatar_url: avatarUrl ?? undefined });
@@ -28,22 +29,18 @@ export default function ProfilePage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrganizations = sortedOrganizations.slice(startIndex, endIndex);
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (orgSectionRef.current) {
+      const yOffset = -100; // Negative offset to scroll a bit above the element
+      const y = orgSectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }, [currentPage]);
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of organizations section after state update
-    setTimeout(() => {
-      const element = document.getElementById('org-membership');
-      if (element) {
-        const offset = 80; // Account for any fixed headers
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - offset;
-        
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-      }
-    }, 0);
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -124,7 +121,8 @@ export default function ProfilePage() {
           {/* Main Content */}
           <div className="flex-1 space-y-4 sm:space-y-6">
             {/* Organization Membership */}
-            <Card id="org-membership" className="p-4 sm:p-6">
+            <div ref={orgSectionRef}>
+            <Card className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Organization Membership
@@ -241,6 +239,7 @@ export default function ProfilePage() {
                 </div>
               )}
             </Card>
+            </div>
 
           </div>
         </div>
