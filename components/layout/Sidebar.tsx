@@ -355,12 +355,12 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         </nav>
 
         {/* Add Organization Button */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-light">
+        <div className="flex-shrink-0 p-4 border-t border-gray-light flex justify-center">
           <button
             onClick={() => setIsAddOrgModalOpen(true)}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-orange text-white text-sm rounded-md hover:bg-orange-hover transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 bg-orange text-white text-xs rounded hover:bg-orange-hover transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             <span>Add Organization</span>
@@ -402,13 +402,13 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
 
       {/* Add Organization Button */}
       {!isCollapsed && (
-        <div className="flex-shrink-0 px-4 pt-4 pb-2">
+        <div className="flex-shrink-0 px-4 pt-4 pb-2 flex justify-center">
           <button
             onClick={() => router.push('/pricing')}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-orange hover:bg-orange-dark text-white text-sm rounded-md transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 bg-orange hover:bg-orange-dark text-white text-xs rounded transition-colors"
             title="Add Organization"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
