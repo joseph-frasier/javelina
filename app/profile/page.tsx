@@ -153,7 +153,7 @@ export default function ProfilePage() {
                       isCompactView ? 'p-2 sm:p-3' : 'p-3 sm:p-4'
                     }`}
                   >
-                    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${isCompactView ? 'mb-1' : 'mb-2'}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                       <h4 className={`font-medium text-orange-dark dark:text-orange break-words ${isCompactView ? 'text-sm' : ''}`}>
                         {org.name}
                       </h4>
@@ -161,13 +161,7 @@ export default function ProfilePage() {
                         {getRoleDisplayText(org.role)}
                       </span>
                     </div>
-                    {!isCompactView && (
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-slate dark:text-gray-400 mb-3">
-                        <span>{org.environments_count} environments</span>
-                        <span>{org.environments?.reduce((sum, env) => sum + env.zones_count, 0) || 0} zones</span>
-                      </div>
-                    )}
-                    <div className={`flex flex-col sm:flex-row gap-2 ${isCompactView ? 'mt-2' : ''}`}>
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
