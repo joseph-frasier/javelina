@@ -345,14 +345,14 @@ export const zonesApi = {
   /**
    * Create a new zone
    */
-  create: (data: { name: string; env_id: string; type: string; description?: string }) => {
+  create: (data: { name: string; env_id: string; description?: string }) => {
     return apiClient.post('/zones', data);
   },
 
   /**
    * Update a zone
    */
-  update: (id: string, data: { name?: string; type?: string; description?: string }) => {
+  update: (id: string, data: { name?: string; description?: string }) => {
     return apiClient.put(`/zones/${id}`, data);
   },
 

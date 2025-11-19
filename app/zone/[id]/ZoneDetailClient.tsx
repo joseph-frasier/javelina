@@ -74,14 +74,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   // Edit form state
   const [editFormData, setEditFormData] = useState({
     name: zone.name || '',
-    zone_type: zone.zone_type || 'primary',
     description: zone.description || '',
     active: zone.active ?? true,
     nameservers: zone.nameservers ? zone.nameservers.join('\n') : '',
   });
   const [isEditSaving, setIsEditSaving] = useState(false);
-  const [showTypeChangeConfirm, setShowTypeChangeConfirm] = useState(false);
-  const [newZoneType, setNewZoneType] = useState<string | null>(null);
 
   // Load data
   useEffect(() => {
@@ -230,21 +227,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     await exportZoneJSON(zoneId, zone.name);
   };
 
-  const handleZoneTypeChange = (newType: string) => {
-    if (newType !== editFormData.zone_type) {
-      setNewZoneType(newType);
-      setShowTypeChangeConfirm(true);
-    }
-  };
-
-  const confirmTypeChange = () => {
-    if (newZoneType) {
-      setEditFormData({ ...editFormData, zone_type: newZoneType });
-    }
-    setShowTypeChangeConfirm(false);
-    setNewZoneType(null);
-  };
-
   const handleSaveZone = async () => {
     setIsEditSaving(true);
     
@@ -259,7 +241,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       // Call the server action to update the zone
       const result = await updateZone(zoneId, {
         name: editFormData.name,
-        zone_type: editFormData.zone_type as 'primary' | 'secondary' | 'redirect',
         description: editFormData.description,
         status: editFormData.active ? 'active' : 'disabled',
       });
@@ -494,32 +475,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </div>
 
       {/* Edit Zone Modal */}
-      {/* Type Change Confirmation Modal */}
-      {showTypeChangeConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-bold text-orange-dark mb-4">Confirm Zone Type Change</h3>
-              <p className="text-gray-slate mb-6">
-                Changing the zone type from <span className="font-semibold">{editFormData.zone_type}</span> to <span className="font-semibold">{newZoneType}</span> may affect DNS resolution. Are you sure?
-              </p>
-              <div className="flex justify-end space-x-3">
-                <Button 
-                  variant="secondary"
-                  onClick={() => { setShowTypeChangeConfirm(false); setNewZoneType(null); }}
-                >
-                  Cancel
-                </Button>
-                <Button variant="primary" onClick={confirmTypeChange}>
-                  Confirm
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Zone Modal */}
       <Modal 
         isOpen={showEditModal} 
         onClose={() => setShowEditModal(false)} 
@@ -535,20 +490,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               value={editFormData.name}
               onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
               placeholder="e.g., example.com"
-            />
-          </div>
-
-          {/* Zone Type */}
-          <div>
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Zone Type <span className="text-red-600">*</span></label>
-            <Dropdown
-              options={[
-                { value: 'primary', label: 'Primary' },
-                { value: 'secondary', label: 'Secondary' },
-                { value: 'redirect', label: 'Redirect' },
-              ]}
-              value={editFormData.zone_type}
-              onChange={(value) => handleZoneTypeChange(value)}
             />
           </div>
 

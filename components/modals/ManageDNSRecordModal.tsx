@@ -9,6 +9,7 @@ import Dropdown from '@/components/ui/Dropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
 import { validateDNSRecord, getFQDN } from '@/lib/utils/dns-validation';
+import { parseSOAMetadata, validateSOAMetadata, isSOARecord, type SOAMetadata } from '@/lib/utils/soa-helpers';
 
 interface ManageDNSRecordModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface ManageDNSRecordModalProps {
   existingRecords: DNSRecord[];
 }
 
+// SOA is intentionally excluded - it should only be edited, not manually created
 const recordTypeOptions = [
   { value: 'A', label: 'A - IPv4 Address' },
   { value: 'AAAA', label: 'AAAA - IPv6 Address' },
@@ -45,15 +47,22 @@ export function ManageDNSRecordModal({
     type: 'A',
     value: '',
     ttl: 3600,
-    priority: undefined,
-    active: true,
     comment: '',
+  });
+
+  // SOA-specific metadata state
+  const [soaMetadata, setSOAMetadata] = useState<SOAMetadata>({
+    primary_nameserver: 'ns1.example.com',
+    admin_email: 'admin@example.com',
+    negative_ttl: 3600,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const [customTTL, setCustomTTL] = useState(false);
+  
+  const isSOA = formData.type === 'SOA';
 
   // Initialize form data when modal opens or record changes
   useEffect(() => {
@@ -64,10 +73,17 @@ export function ManageDNSRecordModal({
           type: record.type,
           value: record.value,
           ttl: record.ttl,
-          priority: record.priority ?? undefined,
-          active: record.active,
           comment: record.comment ?? '',
         });
+        
+        // Initialize SOA metadata if editing an SOA record
+        if (record.type === 'SOA' && record.metadata) {
+          const parsed = parseSOAMetadata(record.metadata);
+          if (parsed) {
+            setSOAMetadata(parsed);
+          }
+        }
+        
         // Check if TTL is custom
         const isPreset = TTL_PRESETS.some(p => p.value === record.ttl);
         setCustomTTL(!isPreset);
@@ -78,9 +94,12 @@ export function ManageDNSRecordModal({
           type: 'A',
           value: '',
           ttl: 3600,
-          priority: undefined,
-          active: true,
           comment: '',
+        });
+        setSOAMetadata({
+          primary_nameserver: 'ns1.example.com',
+          admin_email: 'admin@example.com',
+          negative_ttl: 3600,
         });
         setCustomTTL(false);
       }
@@ -109,7 +128,6 @@ export function ManageDNSRecordModal({
       ...prev,
       type,
       ttl: typeInfo.defaultTTL,
-      priority: typeInfo.requiresPriority ? (prev.priority || 10) : undefined,
     }));
   };
 
@@ -124,6 +142,15 @@ export function ManageDNSRecordModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // SOA-specific validation
+    if (formData.type === 'SOA') {
+      const soaValidation = validateSOAMetadata(soaMetadata);
+      if (!soaValidation.valid) {
+        setErrors(soaValidation.errors);
+        return;
+      }
+    }
     
     // Final validation
     const validation = validateDNSRecord(
@@ -140,7 +167,12 @@ export function ManageDNSRecordModal({
     setIsSubmitting(true);
     
     try {
-      await onSubmit(formData);
+      // Include SOA metadata if this is an SOA record
+      const submitData = formData.type === 'SOA' 
+        ? { ...formData, metadata: soaMetadata } as any
+        : formData;
+        
+      await onSubmit(submitData);
       onClose();
     } catch (error: any) {
       setErrors({ general: error.message || 'Failed to save record' });
@@ -335,75 +367,59 @@ export function ManageDNSRecordModal({
             )}
           </div>
 
-          {/* Priority (for MX and SRV) */}
-          {typeInfo.requiresPriority && (
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Priority <span className="text-red-500">*</span>
-              </label>
-              <div className="space-y-3">
-                {/* Quick Select Buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 self-center mr-2">Quick select:</span>
-                  {[10, 20, 30, 40, 50].map(val => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, priority: val }))}
-                      className={clsx(
-                        "px-3 py-1 text-xs font-medium rounded-md transition-colors",
-                        formData.priority === val
-                          ? "bg-orange text-white"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-orange/20 dark:hover:bg-orange/20"
-                      )}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Input Field */}
+          {/* SOA-specific fields */}
+          {isSOA && (
+            <>
+              <div>
                 <Input
-                  type="number"
-                  value={formData.priority ?? ''}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      priority: isNaN(val) ? undefined : Math.max(0, Math.min(65535, val))
-                    }));
-                  }}
-                  error={errors.priority}
-                  placeholder="10"
-                  min={0}
-                  max={65535}
+                  label="Primary Nameserver"
+                  type="text"
+                  value={soaMetadata.primary_nameserver}
+                  onChange={(e) => setSOAMetadata(prev => ({ ...prev, primary_nameserver: e.target.value }))}
+                  error={errors.primary_nameserver}
+                  placeholder="ns1.example.com"
+                  helpText="The primary nameserver for this zone"
                 />
-                
-                {/* Helper Text */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                  <p className="text-xs text-blue-800 dark:text-blue-400 font-medium mb-1">
-                    Best Practices for {formData.type} Records:
-                  </p>
-                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
-                    <li>Lower numbers = higher priority (0 is highest)</li>
-                    <li>Use increments of 10 (10, 20, 30) for flexibility</li>
-                    {formData.type === 'MX' && (
-                      <>
-                        <li>Primary mail server: 10, Backup: 20, 30...</li>
-                        <li>Same priority = automatic load balancing</li>
-                      </>
-                    )}
-                    {formData.type === 'SRV' && (
-                      <>
-                        <li>Use weight field to distribute load at same priority</li>
-                        <li>Example: Primary (10), Secondary (20), Backup (30)</li>
-                      </>
-                    )}
-                    <li>Valid range: 0-65535</li>
-                  </ul>
-                </div>
               </div>
-            </div>
+              
+              <div>
+                <Input
+                  label="Admin Email"
+                  type="text"
+                  value={soaMetadata.admin_email}
+                  onChange={(e) => setSOAMetadata(prev => ({ ...prev, admin_email: e.target.value }))}
+                  error={errors.admin_email}
+                  placeholder="admin@example.com"
+                  helpText="Administrative contact email (use @ or DNS format like admin.example.com)"
+                />
+              </div>
+              
+              <div>
+                <Input
+                  label="Negative TTL (seconds)"
+                  type="number"
+                  value={soaMetadata.negative_ttl}
+                  onChange={(e) => setSOAMetadata(prev => ({ ...prev, negative_ttl: parseInt(e.target.value, 10) || 3600 }))}
+                  error={errors.negative_ttl}
+                  placeholder="3600"
+                  min={0}
+                  max={86400}
+                  helpText="How long to cache negative responses (NXDOMAIN)"
+                />
+              </div>
+              
+              <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                <p className="text-xs text-gray-700 dark:text-gray-300 font-medium mb-1">
+                  ℹ️ SOA Record Information:
+                </p>
+                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                  <li>The serial number is automatically managed by the system</li>
+                  <li>Serial increments on any zone or record change</li>
+                  <li>Each zone must have exactly one SOA record</li>
+                  <li>SOA records cannot be deleted, only edited</li>
+                </ul>
+              </div>
+            </>
           )}
 
           {/* Value - Dynamic Label Based on Type */}
@@ -429,34 +445,18 @@ export function ManageDNSRecordModal({
             />
           </div>
 
-          {/* Active Toggle & Comment - Compact Layout */}
-          <div className="md:col-span-2 space-y-3">
-            {/* Active Toggle - Inline */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.active}
-                onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
-                className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
-              />
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                Active
-              </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                (Inactive records are not published)
-              </span>
+          {/* Comment */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Comment
             </label>
-
-            {/* Comment - Single Row */}
-            <div>
-              <textarea
-                value={formData.comment}
-                onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
-                rows={1}
-                className="w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-orange transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                placeholder="Comment (optional)"
-              />
-            </div>
+            <textarea
+              value={formData.comment}
+              onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-orange transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              placeholder="Optional comment or notes about this record"
+            />
           </div>
         </div>
 

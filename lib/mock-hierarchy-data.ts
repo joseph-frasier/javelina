@@ -5,7 +5,6 @@ export interface Zone {
   id: string;
   environment_id: string;
   name: string;
-  zone_type: 'primary' | 'secondary' | 'redirect';
   description: string | null;
   active: boolean;
   created_at: string;

@@ -11,8 +11,6 @@ export interface DNSRecord {
   type: DNSRecordType;
   value: string;
   ttl: number;
-  priority: number | null;
-  active: boolean;
   comment: string | null;
   metadata: any;
   created_by: string | null;
@@ -25,8 +23,6 @@ export interface DNSRecordFormData {
   type: DNSRecordType;
   value: string;
   ttl: number;
-  priority?: number;
-  active: boolean;
   comment?: string;
 }
 
@@ -106,10 +102,10 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
   MX: {
     label: 'MX',
     description: 'Mail Exchange',
-    requiresPriority: true,
+    requiresPriority: false,
     defaultTTL: 3600,
-    placeholder: 'mail.example.com',
-    hint: 'Enter mail server domain. Priority is required (lower = higher priority).',
+    placeholder: '10 mail.example.com',
+    hint: 'Format: priority hostname (e.g., 10 mail.example.com). Lower priority = higher preference.',
   },
   NS: {
     label: 'NS',
@@ -130,10 +126,10 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
   SRV: {
     label: 'SRV',
     description: 'Service Record',
-    requiresPriority: true,
+    requiresPriority: false,
     defaultTTL: 3600,
-    placeholder: '10 5060 sip.example.com',
-    hint: 'Format: weight port target (e.g., 10 5060 sip.example.com). Priority is required.',
+    placeholder: '10 10 5060 sip.example.com',
+    hint: 'Format: priority weight port target (e.g., 10 10 5060 sip.example.com).',
   },
   CAA: {
     label: 'CAA',

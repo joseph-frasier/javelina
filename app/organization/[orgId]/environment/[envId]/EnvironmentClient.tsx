@@ -37,7 +37,6 @@ interface Zone {
   id: string;
   name: string;
   environment_id: string;
-  zone_type: 'primary' | 'secondary' | 'redirect';
   description?: string;
   active: boolean;
   created_at: string;
