@@ -98,6 +98,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
               <Link
                 href={`/organization/${org.id}`}
                 className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
+                title={org.name}
               >
                 <svg
                   className="w-4 h-4 text-orange"
@@ -113,7 +114,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                   />
                 </svg>
                 <span className="text-sm font-medium text-orange-dark dark:text-white">
-                  {org.name}
+                  {truncateName(org.name)}
                 </span>
               </Link>
             </div>
@@ -551,6 +552,7 @@ function EnvironmentsList({
             <Link
               href={`/organization/${orgId}/environment/${environment.id}`}
               className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
+              title={environment.name}
             >
               <svg
                 className="w-4 h-4 text-blue-electric"
@@ -565,7 +567,7 @@ function EnvironmentsList({
                   d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
                 />
               </svg>
-              <span className="text-sm text-gray-slate">{environment.name}</span>
+              <span className="text-sm text-gray-slate">{truncateName(environment.name)}</span>
             </Link>
           </div>
 
@@ -582,8 +584,8 @@ function EnvironmentsList({
   );
 }
 
-// Helper function to truncate long zone names
-function truncateZoneName(name: string, maxLength: number = 20): string {
+// Helper function to truncate long names (orgs, environments, zones)
+function truncateName(name: string, maxLength: number = 20): string {
   if (name.length <= maxLength) return name;
   return name.substring(0, maxLength) + '...';
 }
@@ -642,7 +644,7 @@ function ZonesList({
             />
           </svg>
           <span className="text-sm text-gray-slate group-hover:text-orange truncate">
-            {truncateZoneName(zone.name)}
+            {truncateName(zone.name)}
           </span>
         </Link>
       ))}
