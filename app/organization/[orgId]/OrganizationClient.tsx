@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import { AddEnvironmentModal } from '@/components/modals/AddEnvironmentModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
 import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
+import { subscriptionsApi } from '@/lib/api-client';
 
 interface Environment {
   id: string;
@@ -56,6 +57,8 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isAddEnvModalOpen, setIsAddEnvModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isNewestPlan, setIsNewestPlan] = useState(false);
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const canAddEnvironment = canCreateEnvironment(org.role);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
   const canDeleteOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
@@ -66,6 +69,29 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     // Navigate to the new environment page
     router.push(`/organization/${org.id}/environment/${environmentId}`);
   };
+
+  // Check if this is the newest plan (shown on dashboard)
+  useEffect(() => {
+    const checkIfNewest = async () => {
+      setIsLoadingPlan(true);
+      try {
+        const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
+        
+        if (orgsWithSubscriptions && orgsWithSubscriptions.length > 0) {
+          // Get the most recent org (last in array)
+          const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
+          // Check if current org matches the newest one
+          setIsNewestPlan(mostRecentOrg.org_id === org.id);
+        }
+      } catch (error) {
+        console.error('Error checking newest plan:', error);
+      } finally {
+        setIsLoadingPlan(false);
+      }
+    };
+
+    checkIfNewest();
+  }, [org.id]);
 
   return (
     <>
@@ -103,6 +129,20 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             )}
           </div>
         </div>
+
+        {/* Newest Plan Banner */}
+        {!isLoadingPlan && isNewestPlan && (
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-orange/10 dark:bg-orange/20 border-l-4 border-orange rounded-r-lg px-4 py-3 flex items-center gap-3">
+              <span className="text-2xl">✨</span>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-orange-dark dark:text-orange">
+                  Newest Plan - Shown on your dashboard
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Overview Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
