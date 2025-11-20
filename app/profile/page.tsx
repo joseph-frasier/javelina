@@ -34,6 +34,11 @@ export default function ProfilePage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrganizations = sortedOrganizations.slice(startIndex, endIndex);
 
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Scroll to top when page changes
   useEffect(() => {
     if (orgSectionRef.current) {
