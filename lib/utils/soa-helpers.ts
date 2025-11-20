@@ -1,83 +1,78 @@
 /**
- * SOA Record Management Utilities
- * Helper functions for parsing and constructing SOA record metadata
+ * SOA Management Utilities
+ * Helper functions for generating and validating SOA data from zone properties
  */
 
 export interface SOAMetadata {
   primary_nameserver: string;
   admin_email: string;
   negative_ttl: number;
+  serial: number;
 }
 
-export interface SOARecord {
-  id: string;
-  zone_id: string;
-  name: string;
-  type: 'SOA';
-  value: string;
-  ttl: number;
-  comment: string | null;
-  metadata: SOAMetadata;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
+export interface ZoneSOAData {
+  nameservers?: string[] | null;
+  admin_email: string;
+  negative_caching_ttl: number;
+  soa_serial: number;
 }
 
 /**
- * Parse SOA metadata from a DNS record
+ * Generate SOA data from zone properties
  */
-export function parseSOAMetadata(metadata: any): SOAMetadata | null {
-  if (!metadata || typeof metadata !== 'object') {
-    return null;
-  }
-
-  const { primary_nameserver, admin_email, negative_ttl } = metadata;
-
-  if (!primary_nameserver || !admin_email || typeof negative_ttl !== 'number') {
-    return null;
-  }
-
+export function generateSOAFromZone(zone: ZoneSOAData): SOAMetadata {
   return {
-    primary_nameserver,
-    admin_email,
-    negative_ttl,
+    primary_nameserver: (zone.nameservers && zone.nameservers.length > 0) 
+      ? zone.nameservers[0] 
+      : 'ns1.example.com',
+    admin_email: zone.admin_email || 'admin@example.com',
+    negative_ttl: zone.negative_caching_ttl || 3600,
+    serial: zone.soa_serial || 1,
   };
 }
 
 /**
- * Validate SOA metadata fields
+ * Validate SOA-related zone fields
  */
-export function validateSOAMetadata(metadata: Partial<SOAMetadata>): {
+export function validateSOAFields(fields: {
+  admin_email?: string;
+  negative_caching_ttl?: number;
+}): {
   valid: boolean;
   errors: Record<string, string>;
 } {
   const errors: Record<string, string> = {};
 
-  // Validate primary_nameserver
-  if (!metadata.primary_nameserver || !metadata.primary_nameserver.trim()) {
-    errors.primary_nameserver = 'Primary nameserver is required';
-  } else if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.?$/.test(metadata.primary_nameserver)) {
-    errors.primary_nameserver = 'Invalid nameserver format (e.g., ns1.example.com)';
-  }
-
   // Validate admin_email
-  if (!metadata.admin_email || !metadata.admin_email.trim()) {
-    errors.admin_email = 'Admin email is required';
-  } else {
-    // Convert DNS-style email (admin.example.com) to regular email for validation
-    const emailCheck = metadata.admin_email.replace(/\./, '@');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailCheck) && !metadata.admin_email.includes('@')) {
-      errors.admin_email = 'Invalid email format (use @ or DNS format like admin.example.com)';
+  if (fields.admin_email !== undefined) {
+    if (!fields.admin_email || !fields.admin_email.trim()) {
+      errors.admin_email = 'Admin email is required';
+    } else {
+      // Support both regular email format and DNS format
+      const hasAt = fields.admin_email.includes('@');
+      if (hasAt) {
+        // Regular email validation
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.admin_email)) {
+          errors.admin_email = 'Invalid email format';
+        }
+      } else {
+        // DNS format validation (admin.example.com)
+        if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.?$/.test(fields.admin_email)) {
+          errors.admin_email = 'Invalid email format (use @ or DNS format like admin.example.com)';
+        }
+      }
     }
   }
 
-  // Validate negative_ttl
-  if (metadata.negative_ttl === undefined || metadata.negative_ttl === null) {
-    errors.negative_ttl = 'Negative TTL is required';
-  } else if (typeof metadata.negative_ttl !== 'number') {
-    errors.negative_ttl = 'Negative TTL must be a number';
-  } else if (metadata.negative_ttl < 0 || metadata.negative_ttl > 86400) {
-    errors.negative_ttl = 'Negative TTL must be between 0 and 86400 seconds (24 hours)';
+  // Validate negative_caching_ttl
+  if (fields.negative_caching_ttl !== undefined) {
+    if (fields.negative_caching_ttl === null) {
+      errors.negative_caching_ttl = 'Negative caching TTL is required';
+    } else if (typeof fields.negative_caching_ttl !== 'number') {
+      errors.negative_caching_ttl = 'Negative caching TTL must be a number';
+    } else if (fields.negative_caching_ttl < 0 || fields.negative_caching_ttl > 86400) {
+      errors.negative_caching_ttl = 'Negative caching TTL must be between 0 and 86400 seconds (24 hours)';
+    }
   }
 
   return {
@@ -118,24 +113,17 @@ export function dnsEmailToRegular(dnsEmail: string): string {
  * Format SOA metadata for display
  */
 export function formatSOAForDisplay(metadata: SOAMetadata): string {
-  return `Primary NS: ${metadata.primary_nameserver}, Admin: ${dnsEmailToRegular(metadata.admin_email)}, Negative TTL: ${metadata.negative_ttl}s`;
+  return `Primary NS: ${metadata.primary_nameserver}, Admin: ${dnsEmailToRegular(metadata.admin_email)}, Serial: ${metadata.serial}, Negative TTL: ${metadata.negative_ttl}s`;
 }
 
 /**
  * Get default SOA metadata
  */
-export function getDefaultSOAMetadata(): SOAMetadata {
+export function getDefaultSOAMetadata(): Omit<SOAMetadata, 'serial'> {
   return {
     primary_nameserver: 'ns1.example.com',
     admin_email: 'admin@example.com',
     negative_ttl: 3600, // 1 hour
   };
-}
-
-/**
- * Check if a DNS record is an SOA record
- */
-export function isSOARecord(record: any): record is SOARecord {
-  return record && record.type === 'SOA';
 }
 

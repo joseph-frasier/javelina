@@ -30,13 +30,15 @@ export function AddZoneModal({
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [adminEmail, setAdminEmail] = useState('admin@example.com');
+  const [negativeCachingTTL, setNegativeCachingTTL] = useState(3600);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; admin_email?: string; negative_caching_ttl?: string; general?: string }>({});
 
   const { addToast } = useToastStore();
 
   const validateForm = (): boolean => {
-    const newErrors: { name?: string } = {};
+    const newErrors: { name?: string; admin_email?: string; negative_caching_ttl?: string } = {};
 
     if (!name.trim()) {
       newErrors.name = 'Zone name is required';
@@ -44,6 +46,18 @@ export function AddZoneModal({
       newErrors.name = 'Zone name must be 253 characters or less';
     } else if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(name)) {
       newErrors.name = 'Zone name must be a valid domain name (e.g., example.com or subdomain.example.com)';
+    }
+
+    // Validate admin email
+    if (!adminEmail.trim()) {
+      newErrors.admin_email = 'Admin email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
+      newErrors.admin_email = 'Invalid email format';
+    }
+
+    // Validate negative caching TTL
+    if (negativeCachingTTL < 0 || negativeCachingTTL > 86400) {
+      newErrors.negative_caching_ttl = 'Negative caching TTL must be between 0 and 86400 seconds';
     }
 
     setErrors(newErrors);
@@ -64,7 +78,9 @@ export function AddZoneModal({
       const result = await createZone({
         name: name.trim().toLowerCase(), // Domains are case-insensitive
         description: description.trim() || undefined,
-        environment_id: environmentId
+        environment_id: environmentId,
+        admin_email: adminEmail.trim(),
+        negative_caching_ttl: negativeCachingTTL
       });
 
       // Check for error response
@@ -88,6 +104,8 @@ export function AddZoneModal({
       // Reset form
       setName('');
       setDescription('');
+      setAdminEmail('admin@example.com');
+      setNegativeCachingTTL(3600);
       
       // Call success callback
       if (onSuccess) {
@@ -113,6 +131,8 @@ export function AddZoneModal({
       setTimeout(() => {
         setName('');
         setDescription('');
+        setAdminEmail('admin@example.com');
+        setNegativeCachingTTL(3600);
         setErrors({});
       }, 250);
     }
@@ -172,6 +192,59 @@ export function AddZoneModal({
           <p className="mt-1 text-xs text-gray-slate">
             {description.length}/500 characters
           </p>
+        </div>
+
+        {/* SOA Configuration Section */}
+        <div className="pt-4 border-t border-gray-light">
+          <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">
+            SOA Configuration
+          </h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="admin-email" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                Admin Email <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="admin-email"
+                type="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                placeholder="admin@example.com"
+                disabled={isSubmitting}
+                className={errors.admin_email ? 'border-red-500' : ''}
+              />
+              {errors.admin_email && (
+                <p className="mt-1 text-sm text-red-600">{errors.admin_email}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-slate">
+                Administrative contact email for this zone
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="negative-ttl" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                Negative Caching TTL (seconds) <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="negative-ttl"
+                type="number"
+                value={negativeCachingTTL}
+                onChange={(e) => setNegativeCachingTTL(parseInt(e.target.value, 10) || 0)}
+                placeholder="3600"
+                min={0}
+                max={86400}
+                disabled={isSubmitting}
+                className={errors.negative_caching_ttl ? 'border-red-500' : ''}
+              />
+              {errors.negative_caching_ttl && (
+                <p className="mt-1 text-sm text-red-600">{errors.negative_caching_ttl}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-slate">
+                How long to cache negative DNS responses (0-86400 seconds)
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center justify-end space-x-3 pt-4">

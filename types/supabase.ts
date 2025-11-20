@@ -205,12 +205,14 @@ export interface Database {
           environment_id: string
           name: string
           description: string | null
-          active: boolean
           verification_status: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at: string | null
           nameservers: string[] | null
           soa_serial: number
+          admin_email: string
+          negative_caching_ttl: number
           live: boolean
+          error: string | null
           deleted_at: string | null
           created_at: string
           updated_at: string
@@ -221,12 +223,14 @@ export interface Database {
           environment_id: string
           name: string
           description?: string | null
-          active?: boolean
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
           nameservers?: string[] | null
           soa_serial?: number
+          admin_email?: string
+          negative_caching_ttl?: number
           live?: boolean
+          error?: string | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string
@@ -237,12 +241,14 @@ export interface Database {
           environment_id?: string
           name?: string
           description?: string | null
-          active?: boolean
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
           nameservers?: string[] | null
           soa_serial?: number
+          admin_email?: string
+          negative_caching_ttl?: number
           live?: boolean
+          error?: string | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string
@@ -308,7 +314,6 @@ export interface Database {
           value: string
           ttl: number
           comment: string | null
-          metadata: Json | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -321,7 +326,6 @@ export interface Database {
           value: string
           ttl: number
           comment?: string | null
-          metadata?: Json | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -334,7 +338,6 @@ export interface Database {
           value?: string
           ttl?: number
           comment?: string | null
-          metadata?: Json | null
           created_by?: string | null
           created_at?: string
           updated_at?: string

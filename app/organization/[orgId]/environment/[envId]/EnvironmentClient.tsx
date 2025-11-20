@@ -298,15 +298,6 @@ export function EnvironmentClient({
                       >
                         {zone.name}
                       </Link>
-                      <span
-                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
-                          zone.active
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                        }`}
-                      >
-                        {zone.active ? 'Active' : 'Inactive'}
-                      </span>
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
@@ -387,14 +378,8 @@ export function EnvironmentClient({
                           </Link>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              zone.active
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                            }`}
-                          >
-                            {zone.active ? 'Active' : 'Inactive'}
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            Active
                           </span>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-slate dark:text-gray-300">

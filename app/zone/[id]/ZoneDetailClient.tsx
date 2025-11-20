@@ -75,8 +75,9 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [editFormData, setEditFormData] = useState({
     name: zone.name || '',
     description: zone.description || '',
-    active: zone.active ?? true,
     nameservers: zone.nameservers ? zone.nameservers.join('\n') : '',
+    admin_email: zone.admin_email || 'admin@example.com',
+    negative_caching_ttl: zone.negative_caching_ttl || 3600,
   });
   const [isEditSaving, setIsEditSaving] = useState(false);
 
@@ -218,7 +219,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       const result = await updateZone(zoneId, {
         name: editFormData.name,
         description: editFormData.description,
-        status: editFormData.active ? 'active' : 'disabled',
+        admin_email: editFormData.admin_email,
+        negative_caching_ttl: editFormData.negative_caching_ttl,
       });
 
       if (result.error) {
@@ -310,15 +312,16 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-3 break-words">{zone.name}</h1>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <VerificationStatusBadge status={zoneSummary.verificationStatus} />
-              <HealthStatusBadge status={zoneSummary.healthStatus} />
-              <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} />
+              {/* Temporarily commented out - may be useful in the future */}
+              {/* <VerificationStatusBadge status={zoneSummary.verificationStatus} /> */}
+              {/* <HealthStatusBadge status={zoneSummary.healthStatus} /> */}
+              {/* <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} /> */}
               {/* SOA Serial Badge */}
               <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                 <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                 </svg>
-                Serial: {zone.soa_serial}
+                SOA Serial: {zone.soa_serial}
               </div>
             </div>
           </div>
@@ -499,22 +502,67 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             />
           </div>
 
-          {/* Active Status Toggle */}
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-orange-dark dark:text-white">Active Status <span className="text-red-600">*</span></label>
-            <button
-              onClick={() => setEditFormData({ ...editFormData, active: !editFormData.active })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                editFormData.active ? 'bg-orange' : 'bg-gray-light'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  editFormData.active ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+          {/* SOA Configuration Section */}
+          <div className="pt-4 border-t border-gray-light dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">SOA Configuration</h3>
+            
+            <div className="space-y-4">
+              {/* Primary Nameserver (Read-only, derived) */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                  Primary Nameserver <span className="text-gray-400">(read-only)</span>
+                </label>
+                <Input
+                  type="text"
+                  value={editFormData.nameservers.split('\n')[0] || 'ns1.example.com'}
+                  disabled
+                  className="bg-gray-100 dark:bg-gray-700"
+                />
+                <p className="mt-1 text-xs text-gray-slate">Derived from first nameserver listed above</p>
+              </div>
+
+              {/* Admin Email */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Admin Email</label>
+                <Input
+                  type="email"
+                  value={editFormData.admin_email}
+                  onChange={(e) => setEditFormData({ ...editFormData, admin_email: e.target.value })}
+                  placeholder="admin@example.com"
+                />
+                <p className="mt-1 text-xs text-gray-slate">Administrative contact email for this zone</p>
+              </div>
+
+              {/* Negative Caching TTL */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Negative Caching TTL (seconds)</label>
+                <Input
+                  type="number"
+                  value={editFormData.negative_caching_ttl}
+                  onChange={(e) => setEditFormData({ ...editFormData, negative_caching_ttl: parseInt(e.target.value, 10) || 0 })}
+                  placeholder="3600"
+                  min={0}
+                  max={86400}
+                />
+                <p className="mt-1 text-xs text-gray-slate">How long to cache negative DNS responses (0-86400 seconds)</p>
+              </div>
+
+              {/* SOA Serial (Read-only) */}
+              <div>
+                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                  SOA Serial <span className="text-gray-400">(read-only)</span>
+                </label>
+                <Input
+                  type="text"
+                  value={zone.soa_serial}
+                  disabled
+                  className="bg-gray-100 dark:bg-gray-700"
+                />
+                <p className="mt-1 text-xs text-gray-slate">Auto-increments on any zone or record change</p>
+              </div>
+            </div>
           </div>
+
         </div>
         <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-light">
           <Button 

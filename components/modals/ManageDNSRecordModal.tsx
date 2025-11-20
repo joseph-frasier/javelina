@@ -9,7 +9,6 @@ import Dropdown from '@/components/ui/Dropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
 import { validateDNSRecord, getFQDN } from '@/lib/utils/dns-validation';
-import { parseSOAMetadata, validateSOAMetadata, isSOARecord, type SOAMetadata } from '@/lib/utils/soa-helpers';
 
 interface ManageDNSRecordModalProps {
   isOpen: boolean;
@@ -50,19 +49,10 @@ export function ManageDNSRecordModal({
     comment: '',
   });
 
-  // SOA-specific metadata state
-  const [soaMetadata, setSOAMetadata] = useState<SOAMetadata>({
-    primary_nameserver: 'ns1.example.com',
-    admin_email: 'admin@example.com',
-    negative_ttl: 3600,
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const [customTTL, setCustomTTL] = useState(false);
-  
-  const isSOA = formData.type === 'SOA';
 
   // Initialize form data when modal opens or record changes
   useEffect(() => {
@@ -76,14 +66,6 @@ export function ManageDNSRecordModal({
           comment: record.comment ?? '',
         });
         
-        // Initialize SOA metadata if editing an SOA record
-        if (record.type === 'SOA' && record.metadata) {
-          const parsed = parseSOAMetadata(record.metadata);
-          if (parsed) {
-            setSOAMetadata(parsed);
-          }
-        }
-        
         // Check if TTL is custom
         const isPreset = TTL_PRESETS.some(p => p.value === record.ttl);
         setCustomTTL(!isPreset);
@@ -95,11 +77,6 @@ export function ManageDNSRecordModal({
           value: '',
           ttl: 3600,
           comment: '',
-        });
-        setSOAMetadata({
-          primary_nameserver: 'ns1.example.com',
-          admin_email: 'admin@example.com',
-          negative_ttl: 3600,
         });
         setCustomTTL(false);
       }
@@ -143,15 +120,6 @@ export function ManageDNSRecordModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // SOA-specific validation
-    if (formData.type === 'SOA') {
-      const soaValidation = validateSOAMetadata(soaMetadata);
-      if (!soaValidation.valid) {
-        setErrors(soaValidation.errors);
-        return;
-      }
-    }
-    
     // Final validation
     const validation = validateDNSRecord(
       formData,
@@ -167,12 +135,7 @@ export function ManageDNSRecordModal({
     setIsSubmitting(true);
     
     try {
-      // Include SOA metadata if this is an SOA record
-      const submitData = formData.type === 'SOA' 
-        ? { ...formData, metadata: soaMetadata } as any
-        : formData;
-        
-      await onSubmit(submitData);
+      await onSubmit(formData);
       onClose();
     } catch (error: any) {
       setErrors({ general: error.message || 'Failed to save record' });
@@ -366,61 +329,6 @@ export function ManageDNSRecordModal({
               </div>
             )}
           </div>
-
-          {/* SOA-specific fields */}
-          {isSOA && (
-            <>
-              <div>
-                <Input
-                  label="Primary Nameserver"
-                  type="text"
-                  value={soaMetadata.primary_nameserver}
-                  onChange={(e) => setSOAMetadata(prev => ({ ...prev, primary_nameserver: e.target.value }))}
-                  error={errors.primary_nameserver}
-                  placeholder="ns1.example.com"
-                  helperText="The primary nameserver for this zone"
-                />
-              </div>
-              
-              <div>
-                <Input
-                  label="Admin Email"
-                  type="text"
-                  value={soaMetadata.admin_email}
-                  onChange={(e) => setSOAMetadata(prev => ({ ...prev, admin_email: e.target.value }))}
-                  error={errors.admin_email}
-                  placeholder="admin@example.com"
-                  helperText="Administrative contact email (use @ or DNS format like admin.example.com)"
-                />
-              </div>
-              
-              <div>
-                <Input
-                  label="Negative TTL (seconds)"
-                  type="number"
-                  value={soaMetadata.negative_ttl}
-                  onChange={(e) => setSOAMetadata(prev => ({ ...prev, negative_ttl: parseInt(e.target.value, 10) || 3600 }))}
-                  error={errors.negative_ttl}
-                  placeholder="3600"
-                  min={0}
-                  max={86400}
-                  helperText="How long to cache negative responses (NXDOMAIN)"
-                />
-              </div>
-              
-              <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                <p className="text-xs text-gray-700 dark:text-gray-300 font-medium mb-1">
-                  ℹ️ SOA Record Information:
-                </p>
-                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
-                  <li>The serial number is automatically managed by the system</li>
-                  <li>Serial increments on any zone or record change</li>
-                  <li>Each zone must have exactly one SOA record</li>
-                  <li>SOA records cannot be deleted, only edited</li>
-                </ul>
-              </div>
-            </>
-          )}
 
           {/* Value - Dynamic Label Based on Type */}
           <div className="md:col-span-2">

@@ -9,6 +9,8 @@ export async function createZone(formData: {
   environment_id: string
   name: string
   description?: string
+  admin_email?: string
+  negative_caching_ttl?: number
 }) {
   try {
     // Get session from server-side Supabase client (uses cookies)
@@ -29,7 +31,9 @@ export async function createZone(formData: {
       body: JSON.stringify({
         name: formData.name,
         environment_id: formData.environment_id,
-        description: formData.description
+        description: formData.description,
+        admin_email: formData.admin_email,
+        negative_caching_ttl: formData.negative_caching_ttl
       }),
     });
 
@@ -61,7 +65,8 @@ export async function updateZone(
   formData: {
     name: string
     description?: string
-    status?: 'active' | 'disabled' | 'archived'
+    admin_email?: string
+    negative_caching_ttl?: number
   }
 ) {
   try {
@@ -82,7 +87,9 @@ export async function updateZone(
       },
       body: JSON.stringify({
         name: formData.name,
-        description: formData.description
+        description: formData.description,
+        admin_email: formData.admin_email,
+        negative_caching_ttl: formData.negative_caching_ttl
       }),
     });
 

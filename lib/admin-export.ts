@@ -18,6 +18,8 @@ interface BINDExportOptions extends ExportOptions {
   nameservers?: string[];
   soaSerial?: number;
   defaultTTL?: number;
+  adminEmail?: string;
+  negativeCachingTTL?: number;
 }
 
 /**
@@ -231,24 +233,31 @@ function generateSOARecord(
   zoneName: string,
   nameservers: string[],
   soaSerial?: number,
-  defaultTTL?: number
+  adminEmail?: string,
+  negativeCachingTTL?: number
 ): string {
   const primaryNS = nameservers && nameservers.length > 0 
     ? nameservers[0] 
     : `ns1.${zoneName}.`;
   
-  const adminEmail = `admin.${zoneName}.`;
+  // Convert email to DNS format (admin@example.com -> admin.example.com)
+  const dnsAdminEmail = adminEmail 
+    ? adminEmail.includes('@') 
+      ? adminEmail.replace('@', '.') 
+      : adminEmail
+    : `admin.${zoneName}.`;
+  
   const serial = soaSerial || parseInt(new Date().toISOString().replace(/[-:T]/g, '').substring(0, 10));
-  const ttl = defaultTTL || 3600;
+  const negativeTTL = negativeCachingTTL || 3600;
   
   return `
-; SOA Record
-@\t${ttl}\tIN\tSOA\t${primaryNS} ${adminEmail} (
-\t\t\t${serial}\t; Serial (YYYYMMDDNN)
+; SOA Record (Generated from zone properties)
+@\t86400\tIN\tSOA\t${primaryNS} ${dnsAdminEmail} (
+\t\t\t${serial}\t; Serial (auto-incrementing)
 \t\t\t7200\t\t; Refresh (2 hours)
 \t\t\t3600\t\t; Retry (1 hour)
 \t\t\t1209600\t\t; Expire (14 days)
-\t\t\t${ttl} )\t; Minimum TTL
+\t\t\t${negativeTTL} )\t; Negative caching TTL
 `;
 }
 
@@ -264,20 +273,23 @@ export function exportToBIND(
     throw new Error('No records to export');
   }
 
-  const { zoneName, nameservers = [], soaSerial, defaultTTL = 3600 } = options;
+  const { zoneName, nameservers = [], soaSerial, defaultTTL = 3600, adminEmail, negativeCachingTTL } = options;
   
   // Sort records by type for organized output (all records are now active by default)
+  // SOA records are filtered out since they're generated dynamically
   const typeOrder: Record<string, number> = {
-    'SOA': 1, 'NS': 2, 'A': 3, 'AAAA': 4, 
-    'CNAME': 5, 'MX': 6, 'TXT': 7, 'SRV': 8, 'CAA': 9
+    'NS': 1, 'A': 2, 'AAAA': 3, 
+    'CNAME': 4, 'MX': 5, 'TXT': 6, 'SRV': 7, 'CAA': 8
   };
   
-  const sortedRecords = [...records].sort((a, b) => {
-    const orderA = typeOrder[a.type] || 99;
-    const orderB = typeOrder[b.type] || 99;
-    if (orderA !== orderB) return orderA - orderB;
-    return a.name.localeCompare(b.name);
-  });
+  const sortedRecords = [...records]
+    .filter(r => r.type !== 'SOA') // Filter out SOA records as they're now generated dynamically
+    .sort((a, b) => {
+      const orderA = typeOrder[a.type] || 99;
+      const orderB = typeOrder[b.type] || 99;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.name.localeCompare(b.name);
+    });
   
   // Build zone file content
   const lines: string[] = [];
@@ -286,7 +298,7 @@ export function exportToBIND(
   lines.push(`;`);
   lines.push(`; BIND Zone File for ${zoneName}`);
   lines.push(`; Exported: ${new Date().toISOString()}`);
-  lines.push(`; Records: ${sortedRecords.length}`);
+  lines.push(`; Records: ${sortedRecords.length + 1} (including SOA)`);
   lines.push(`;`);
   lines.push('');
   
@@ -295,27 +307,14 @@ export function exportToBIND(
   lines.push(`$TTL ${defaultTTL}`);
   lines.push('');
   
-  // Check if SOA record exists
-  const soaRecord = sortedRecords.find(r => r.type === 'SOA');
-  if (soaRecord) {
-    // Use existing SOA record
-    lines.push(`; SOA Record (from database)`);
-    const name = formatBINDName(soaRecord.name, zoneName);
-    lines.push(`${name}\t${soaRecord.ttl}\tIN\tSOA\t${soaRecord.value}`);
-    lines.push('');
-  } else {
-    // Generate SOA record
-    lines.push(generateSOARecord(zoneName, nameservers, soaSerial, defaultTTL));
-    lines.push('');
-  }
+  // Always generate SOA record from zone properties
+  lines.push(generateSOARecord(zoneName, nameservers, soaSerial, adminEmail, negativeCachingTTL));
+  lines.push('');
   
   // Group records by type for better organization
   let currentType: string | null = null;
   
   for (const record of sortedRecords) {
-    // Skip SOA if already added
-    if (record.type === 'SOA') continue;
-    
     // Add section headers
     if (record.type !== currentType) {
       if (currentType !== null) lines.push('');
