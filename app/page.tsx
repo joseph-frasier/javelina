@@ -69,7 +69,12 @@ export default function DashboardPage() {
   // Fetch subscription data for current plan display
   useEffect(() => {
     const fetchPlanData = async () => {
+      console.log('🔍 [Plan Fetch] Starting plan data fetch...');
+      console.log('🔍 [Plan Fetch] Organizations count:', organizations.length);
+      console.log('🔍 [Plan Fetch] Organizations data:', organizations);
+      
       if (organizations.length === 0) {
+        console.log('❌ [Plan Fetch] No organizations found, stopping fetch');
         setIsLoadingPlan(false);
         setCurrentPlan(null);
         return;
@@ -80,9 +85,13 @@ export default function DashboardPage() {
 
       try {
         // Fetch all organizations with their subscription data
+        console.log('📡 [Plan Fetch] Calling subscriptionsApi.getAllWithSubscriptions()...');
         const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
+        console.log('✅ [Plan Fetch] API Response:', orgsWithSubscriptions);
+        console.log('✅ [Plan Fetch] Number of orgs returned:', orgsWithSubscriptions?.length);
         
         if (!orgsWithSubscriptions || orgsWithSubscriptions.length === 0) {
+          console.log('❌ [Plan Fetch] No orgs with subscriptions returned');
           setCurrentPlan(null);
           setIsLoadingPlan(false);
           return;
@@ -90,19 +99,26 @@ export default function DashboardPage() {
 
         // Find the most recently created organization (last in array)
         const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
+        console.log('🎯 [Plan Fetch] Most recent org:', mostRecentOrg);
+        console.log('🎯 [Plan Fetch] Subscription data:', mostRecentOrg?.subscription);
+        console.log('🎯 [Plan Fetch] Plan data:', mostRecentOrg?.subscription?.plan);
+        console.log('🎯 [Plan Fetch] Plan name:', mostRecentOrg?.subscription?.plan?.name);
         
         // Extract plan name from subscription
         if (mostRecentOrg?.subscription?.plan?.name) {
+          console.log('✅ [Plan Fetch] Setting plan name:', mostRecentOrg.subscription.plan.name);
           setCurrentPlan(mostRecentOrg.subscription.plan.name);
         } else {
+          console.log('❌ [Plan Fetch] No plan name found, setting to null');
           setCurrentPlan(null);
         }
       } catch (error) {
-        console.error('Error fetching plan data:', error);
+        console.error('❌ [Plan Fetch] Error fetching plan data:', error);
         setPlanError(true);
         setCurrentPlan(null);
       } finally {
         setIsLoadingPlan(false);
+        console.log('🏁 [Plan Fetch] Fetch complete');
       }
     };
 
