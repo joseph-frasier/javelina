@@ -212,6 +212,7 @@ export interface Database {
           admin_email: string
           negative_caching_ttl: number
           live: boolean
+          error: string | null
           deleted_at: string | null
           created_at: string
           updated_at: string
@@ -229,6 +230,7 @@ export interface Database {
           admin_email?: string
           negative_caching_ttl?: number
           live?: boolean
+          error?: string | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string
@@ -246,6 +248,7 @@ export interface Database {
           admin_email?: string
           negative_caching_ttl?: number
           live?: boolean
+          error?: string | null
           deleted_at?: string | null
           created_at?: string
           updated_at?: string
