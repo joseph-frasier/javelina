@@ -153,24 +153,6 @@ export default function DashboardPage() {
           className="lg:col-span-1"
         >
           <div className="space-y-6 mt-4">
-            <Link href="/organization/org_company" className="block">
-              <Button variant="primary" className="w-full justify-start">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                  />
-                </svg>
-                View Organizations
-              </Button>
-            </Link>
             <Link href="/analytics" className="block">
               <Button variant="secondary" className="w-full justify-start">
                 <svg
