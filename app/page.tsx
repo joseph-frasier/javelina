@@ -309,13 +309,10 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">{currentPlan}</p>
                 {currentOrgName && (
-                  <p className="text-lg font-medium text-gray-slate dark:text-gray-300 mb-1">
+                  <p className="text-lg font-medium text-gray-slate dark:text-gray-300">
                     {currentOrgName}
                   </p>
                 )}
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Most recent subscription
-                </p>
               </>
             )}
           </div>
