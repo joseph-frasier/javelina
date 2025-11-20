@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const orgSectionRef = useRef<HTMLDivElement>(null);
+  const pageTopRef = useRef<HTMLDivElement>(null);
 
   const handleAvatarUpdate = (avatarUrl: string | null) => {
     updateProfile({ avatar_url: avatarUrl ?? undefined });
@@ -36,10 +37,13 @@ export default function ProfilePage() {
 
   // Scroll to top on page load
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (pageTopRef.current) {
+      pageTopRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  // Scroll to top when page changes
+  // Scroll to org section when page changes
   useEffect(() => {
     if (orgSectionRef.current) {
       orgSectionRef.current.scrollIntoView({ 
@@ -82,7 +86,7 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-4 sm:p-6 md:p-8">
+      <div ref={pageTopRef} className="p-4 sm:p-6 md:p-8">
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
           {/* Left Sidebar - Full width on mobile, 320px on desktop */}
           <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
