@@ -65,7 +65,6 @@ export async function updateZone(
   formData: {
     name: string
     description?: string
-    status?: 'active' | 'disabled' | 'archived'
     admin_email?: string
     negative_caching_ttl?: number
   }

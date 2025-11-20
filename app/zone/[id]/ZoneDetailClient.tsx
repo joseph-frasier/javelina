@@ -75,7 +75,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [editFormData, setEditFormData] = useState({
     name: zone.name || '',
     description: zone.description || '',
-    active: zone.active ?? true,
     nameservers: zone.nameservers ? zone.nameservers.join('\n') : '',
     admin_email: zone.admin_email || 'admin@example.com',
     negative_caching_ttl: zone.negative_caching_ttl || 3600,
@@ -220,7 +219,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       const result = await updateZone(zoneId, {
         name: editFormData.name,
         description: editFormData.description,
-        status: editFormData.active ? 'active' : 'disabled',
         admin_email: editFormData.admin_email,
         negative_caching_ttl: editFormData.negative_caching_ttl,
       });
@@ -322,7 +320,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
                 <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                 </svg>
-                Serial: {zone.soa_serial}
+                SOA Serial: {zone.soa_serial}
               </div>
             </div>
           </div>
@@ -564,22 +562,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             </div>
           </div>
 
-          {/* Active Status Toggle */}
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-orange-dark dark:text-white">Active Status <span className="text-red-600">*</span></label>
-            <button
-              onClick={() => setEditFormData({ ...editFormData, active: !editFormData.active })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                editFormData.active ? 'bg-orange' : 'bg-gray-light'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  editFormData.active ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
         </div>
         <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-light">
           <Button 

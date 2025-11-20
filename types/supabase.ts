@@ -205,7 +205,6 @@ export interface Database {
           environment_id: string
           name: string
           description: string | null
-          active: boolean
           verification_status: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at: string | null
           nameservers: string[] | null
@@ -223,7 +222,6 @@ export interface Database {
           environment_id: string
           name: string
           description?: string | null
-          active?: boolean
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
           nameservers?: string[] | null
@@ -241,7 +239,6 @@ export interface Database {
           environment_id?: string
           name?: string
           description?: string | null
-          active?: boolean
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
           nameservers?: string[] | null
