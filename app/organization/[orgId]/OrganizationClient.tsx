@@ -58,6 +58,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
+  const [planName, setPlanName] = useState<string | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const canAddEnvironment = canCreateEnvironment(org.role);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
@@ -70,9 +71,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     router.push(`/organization/${org.id}/environment/${environmentId}`);
   };
 
-  // Check if this is the newest plan (shown on dashboard)
+  // Check if this is the newest plan and get plan name
   useEffect(() => {
-    const checkIfNewest = async () => {
+    const checkPlan = async () => {
       setIsLoadingPlan(true);
       try {
         const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
@@ -81,16 +82,23 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           // Get the most recent org (last in array)
           const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
           // Check if current org matches the newest one
-          setIsNewestPlan(mostRecentOrg.org_id === org.id);
+          const isNewest = mostRecentOrg.org_id === org.id;
+          setIsNewestPlan(isNewest);
+          
+          // Get plan name for current org
+          const currentOrgData = orgsWithSubscriptions.find(o => o.org_id === org.id);
+          if (currentOrgData?.plan_name) {
+            setPlanName(currentOrgData.plan_name);
+          }
         }
       } catch (error) {
-        console.error('Error checking newest plan:', error);
+        console.error('Error checking plan:', error);
       } finally {
         setIsLoadingPlan(false);
       }
     };
 
-    checkIfNewest();
+    checkPlan();
   }, [org.id]);
 
   return (
@@ -101,9 +109,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange break-words">{org.name}</h1>
-              {!isLoadingPlan && isNewestPlan && (
+              {!isLoadingPlan && isNewestPlan && planName && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange text-white">
-                  Newest Plan
+                  {planName}
                 </span>
               )}
             </div>
