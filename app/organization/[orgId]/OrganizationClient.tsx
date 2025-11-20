@@ -99,7 +99,14 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-2 break-words">{org.name}</h1>
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange break-words">{org.name}</h1>
+              {!isLoadingPlan && isNewestPlan && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange text-white">
+                  Newest Plan
+                </span>
+              )}
+            </div>
             {org.description && <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300">{org.description}</p>}
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -129,20 +136,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             )}
           </div>
         </div>
-
-        {/* Newest Plan Banner */}
-        {!isLoadingPlan && isNewestPlan && (
-          <div className="mb-6 sm:mb-8">
-            <div className="bg-orange/10 dark:bg-orange/20 border-l-4 border-orange rounded-r-lg px-4 py-3 flex items-center gap-3">
-              <span className="text-2xl">✨</span>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-orange-dark dark:text-orange">
-                  Newest Plan - Shown on your dashboard
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Overview Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
