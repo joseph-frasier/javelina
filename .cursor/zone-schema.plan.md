@@ -1,6 +1,29 @@
 <!-- 9aaf6562-7853-4ca8-b7b5-3a818f833c4b 36e1ab08-55f4-4658-aaa3-d1a64bf292f9 -->
 # DNS Schema Refactor: Zones & Zone_Records Overhaul
 
+## Architecture Note
+
+**CRITICAL**: This app uses a separate Express backend API (localhost:3001) that handles all Supabase database operations.
+
+- ✅ Frontend → Backend API → Supabase
+- ❌ Frontend → Supabase (direct calls)
+
+### Current State of API Integration:
+
+**Correctly Using Backend API:**
+- ✅ `lib/api-client.ts` - HTTP client for backend (`zonesApi`, `dnsRecordsApi`, etc.)
+- ✅ `lib/actions/zones.ts` - Server Actions that call backend API
+- ✅ `lib/api/dns.ts` - Uses backend API via fetch (`getZoneDNSRecords()`)
+
+**Dead Code Identified:**
+- ☠️ `lib/api/hierarchy.ts` - **ENTIRE FILE IS DEAD CODE!**
+  - All 6 functions (createOrganization, createEnvironment, createZone, fetchUserOrganizations, fetchOrganizationEnvironments, fetchEnvironmentZones) are NOT used anywhere
+  - Only TypeScript interfaces are imported from this file: `CreateZoneData`, `CreateEnvironmentData`, `CreateOrganizationData`
+  - **Action Item**: This file can be deleted, but move the interfaces to a proper types file first
+  - For this refactor, we'll just update the `CreateZoneData` interface to remove `zone_type`
+
+All NEW code must use the backend API. For this zone schema refactor, ensure no new direct Supabase calls are introduced.
+
 ## Phase 1: Database Migration (Supabase)
 
 ### Migration File: Create new migration via MCP
@@ -91,24 +114,28 @@ Update these type definitions:
    - Remove zone_type column from table display
    - Update any zone_type filters
 
-### Update API Clients
+### Update API Clients (Frontend → Backend)
 
-1. **lib/api/hierarchy.ts**
+**IMPORTANT**: These changes are for the FRONTEND API client. The backend API server changes are documented in Phase 5.
 
-   - Remove `zone_type` from CreateZoneData interface
-   - Remove zone_type validation in createZone()
-   - Remove zone_type from insert payload
+1. **lib/api-client.ts** (HTTP client for backend API)
 
-2. **lib/actions/zones.ts**
+   - `zonesApi.create()` - Remove `type` parameter from request body
+   - `zonesApi.update()` - Remove `type` parameter from request body
+   - These methods already correctly call the backend API at `localhost:3001/api/zones`
+
+2. **lib/actions/zones.ts** (If it exists - uses apiClient)
 
    - Remove `zone_type` parameter from createZone()
    - Remove `zone_type` parameter from updateZone()
-   - Remove zone_type from API request bodies
+   - Ensure it uses `apiClient` from `lib/api-client.ts`, NOT direct Supabase calls
 
-3. **lib/api-client.ts**
+3. **lib/api/hierarchy.ts** (DEAD CODE - MINIMAL CHANGES)
 
-   - Remove `type` parameter from zonesApi.create()
-   - Remove `type` parameter from zonesApi.update()
+   - ☠️ This entire file is dead code (functions are never called)
+   - Only the TypeScript interfaces are used elsewhere
+   - **For this refactor**: Remove `zone_type` from `CreateZoneData` interface
+   - **Future cleanup**: Extract interfaces to a proper types file, then delete this entire file
 
 ### Files to update:
 
@@ -138,7 +165,12 @@ Create utility functions for SOA record management:
 
 ## Phase 5: Backend API Changes (Separate Implementation)
 
-**Note**: Backend API runs on separate server (localhost:3001), handled separately but documented here for reference:
+**IMPORTANT**: Backend API runs on a **separate Express server** (localhost:3001) in a **separate codebase/repository**.
+
+- This phase documents what needs to change on the backend
+- Frontend developers: You DO NOT need to implement these backend changes
+- Backend must be updated separately to match the new database schema
+- The backend is responsible for all Supabase database operations
 
 ### Backend Endpoints to Update:
 
