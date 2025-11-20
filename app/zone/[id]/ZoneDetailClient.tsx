@@ -10,8 +10,6 @@ import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
 import { RecordDistributionChart } from '@/components/dns/RecordDistributionChart';
-import { TTLHeatmap } from '@/components/dns/TTLHeatmap';
-import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
 import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
 import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';
@@ -349,16 +347,10 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card title="Total Records" className="p-4 sm:p-6">
           <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{zoneSummary.totalRecords}</p>
           <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
-        </Card>
-        <Card title="Verification" className="p-4 sm:p-6">
-          <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange capitalize">{zoneSummary.verificationStatus}</p>
-          <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">
-            {zoneSummary.lastVerifiedAt ? new Date(zoneSummary.lastVerifiedAt).toLocaleDateString() : 'Never verified'}
-          </p>
         </Card>
         <Card title="Health Status" className="p-4 sm:p-6">
           <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange capitalize">{zoneSummary.healthStatus}</p>
@@ -372,13 +364,10 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         </Card>
       </div>
 
-      {/* Record Distribution and TTL Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      {/* Record Distribution */}
+      <div className="mb-6 sm:mb-8">
         <Card title="Record Type Distribution" className="p-4 sm:p-6">
           <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
-        </Card>
-        <Card title="TTL Distribution" className="p-4 sm:p-6">
-          <TTLHeatmap data={zoneSummary.ttlDistribution} />
         </Card>
       </div>
 
