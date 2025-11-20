@@ -15,8 +15,6 @@ export default function ProfilePage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const orgSectionRef = useRef<HTMLDivElement>(null);
-  const pageTopRef = useRef<HTMLDivElement>(null);
 
   const handleAvatarUpdate = (avatarUrl: string | null) => {
     updateProfile({ avatar_url: avatarUrl ?? undefined });
@@ -37,21 +35,8 @@ export default function ProfilePage() {
 
   // Scroll to top on page load
   useEffect(() => {
-    if (pageTopRef.current) {
-      pageTopRef.current.scrollIntoView({ behavior: 'instant', block: 'start' });
-    }
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    window.scrollTo(0, 0);
   }, []);
-
-  // Scroll to org section when page changes
-  useEffect(() => {
-    if (orgSectionRef.current) {
-      orgSectionRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start'
-      });
-    }
-  }, [currentPage]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -86,7 +71,7 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div ref={pageTopRef} className="p-4 sm:p-6 md:p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
           {/* Left Sidebar - Full width on mobile, 320px on desktop */}
           <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
@@ -135,7 +120,6 @@ export default function ProfilePage() {
           {/* Main Content */}
           <div className="flex-1 space-y-4 sm:space-y-6">
             {/* Organization Membership */}
-            <div ref={orgSectionRef}>
             <Card className="p-4 sm:p-6">
               <div className="mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
@@ -202,7 +186,6 @@ export default function ProfilePage() {
                 </div>
               )}
             </Card>
-            </div>
 
           </div>
         </div>
