@@ -141,11 +141,11 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
   },
   SOA: {
     label: 'SOA',
-    description: 'Start of Authority',
+    description: 'Start of Authority (System Managed)',
     requiresPriority: false,
     defaultTTL: 86400,
-    placeholder: 'ns1.example.com admin.example.com',
-    hint: 'SOA records are auto-managed. Manual creation not recommended.',
+    placeholder: 'System-generated from zone properties',
+    hint: 'SOA data is automatically generated from zone properties. Edit SOA settings in zone configuration.',
   },
 };
 

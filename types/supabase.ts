@@ -210,6 +210,8 @@ export interface Database {
           last_verified_at: string | null
           nameservers: string[] | null
           soa_serial: number
+          admin_email: string
+          negative_caching_ttl: number
           live: boolean
           deleted_at: string | null
           created_at: string
@@ -226,6 +228,8 @@ export interface Database {
           last_verified_at?: string | null
           nameservers?: string[] | null
           soa_serial?: number
+          admin_email?: string
+          negative_caching_ttl?: number
           live?: boolean
           deleted_at?: string | null
           created_at?: string
@@ -242,6 +246,8 @@ export interface Database {
           last_verified_at?: string | null
           nameservers?: string[] | null
           soa_serial?: number
+          admin_email?: string
+          negative_caching_ttl?: number
           live?: boolean
           deleted_at?: string | null
           created_at?: string
@@ -308,7 +314,6 @@ export interface Database {
           value: string
           ttl: number
           comment: string | null
-          metadata: Json | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -321,7 +326,6 @@ export interface Database {
           value: string
           ttl: number
           comment?: string | null
-          metadata?: Json | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -334,7 +338,6 @@ export interface Database {
           value?: string
           ttl?: number
           comment?: string | null
-          metadata?: Json | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
