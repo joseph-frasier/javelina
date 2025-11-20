@@ -86,7 +86,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           setIsNewestPlan(isNewest);
           
           // Get plan name for current org
-          const currentOrgData = orgsWithSubscriptions.find(o => o.org_id === org.id);
+          const currentOrgData = orgsWithSubscriptions.find((o: any) => o.org_id === org.id);
           if (currentOrgData?.plan_name) {
             setPlanName(currentOrgData.plan_name);
           }
