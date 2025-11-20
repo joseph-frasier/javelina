@@ -266,8 +266,8 @@ export default function DashboardPage() {
         </Card>
 
         <Card
-          title="Current Plan"
-          description="Your active subscription"
+          title="Newest Plan"
+          description="Most recent subscription"
           className="lg:col-span-2"
         >
           <div className="flex flex-col items-center justify-center py-16">
@@ -314,7 +314,7 @@ export default function DashboardPage() {
                   </p>
                 )}
                 <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Your current subscription plan
+                  Most recent subscription
                 </p>
               </>
             )}
