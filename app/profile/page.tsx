@@ -177,12 +177,12 @@ export default function ProfilePage() {
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed min-w-[90px]"
                   >
                     Previous
                   </Button>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-[200px] justify-center">
                     {/* Page numbers */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
                       // Show first page, last page, current page, and pages around current
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed min-w-[90px]"
                   >
                     Next
                   </Button>
