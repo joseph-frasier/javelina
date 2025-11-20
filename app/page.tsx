@@ -100,14 +100,12 @@ export default function DashboardPage() {
         // Find the most recently created organization (last in array)
         const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
         console.log('🎯 [Plan Fetch] Most recent org:', mostRecentOrg);
-        console.log('🎯 [Plan Fetch] Subscription data:', mostRecentOrg?.subscription);
-        console.log('🎯 [Plan Fetch] Plan data:', mostRecentOrg?.subscription?.plan);
-        console.log('🎯 [Plan Fetch] Plan name:', mostRecentOrg?.subscription?.plan?.name);
+        console.log('🎯 [Plan Fetch] Plan name (direct):', mostRecentOrg?.plan_name);
         
-        // Extract plan name from subscription
-        if (mostRecentOrg?.subscription?.plan?.name) {
-          console.log('✅ [Plan Fetch] Setting plan name:', mostRecentOrg.subscription.plan.name);
-          setCurrentPlan(mostRecentOrg.subscription.plan.name);
+        // Extract plan name - API returns it directly on the org object as plan_name
+        if (mostRecentOrg?.plan_name) {
+          console.log('✅ [Plan Fetch] Setting plan name:', mostRecentOrg.plan_name);
+          setCurrentPlan(mostRecentOrg.plan_name);
         } else {
           console.log('❌ [Plan Fetch] No plan name found, setting to null');
           setCurrentPlan(null);
