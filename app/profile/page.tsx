@@ -177,56 +177,21 @@ export default function ProfilePage() {
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed min-w-[90px]"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </Button>
                   
-                  <div className="flex items-center gap-2 min-w-[200px] justify-center">
-                    {/* Page numbers */}
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                      // Show first page, last page, current page, and pages around current
-                      const showPage = 
-                        page === 1 || 
-                        page === totalPages || 
-                        (page >= currentPage - 1 && page <= currentPage + 1);
-                      
-                      const showEllipsis = 
-                        (page === currentPage - 2 && currentPage > 3) ||
-                        (page === currentPage + 2 && currentPage < totalPages - 2);
-
-                      if (showEllipsis) {
-                        return (
-                          <span key={page} className="text-gray-400 dark:text-gray-600 px-2">
-                            ...
-                          </span>
-                        );
-                      }
-
-                      if (!showPage) return null;
-
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => handlePageChange(page)}
-                          className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                            currentPage === page
-                              ? 'bg-orange text-white'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 font-medium px-4">
+                    Page {currentPage} of {totalPages}
+                  </span>
 
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed min-w-[90px]"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </Button>
