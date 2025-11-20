@@ -312,9 +312,10 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-3 break-words">{zone.name}</h1>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <VerificationStatusBadge status={zoneSummary.verificationStatus} />
-              <HealthStatusBadge status={zoneSummary.healthStatus} />
-              <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} />
+              {/* Temporarily commented out - may be useful in the future */}
+              {/* <VerificationStatusBadge status={zoneSummary.verificationStatus} /> */}
+              {/* <HealthStatusBadge status={zoneSummary.healthStatus} /> */}
+              {/* <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} /> */}
               {/* SOA Serial Badge */}
               <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                 <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
