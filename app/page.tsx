@@ -21,6 +21,7 @@ export default function DashboardPage() {
   });
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
   const [planError, setPlanError] = useState(false);
   
   useEffect(() => {
@@ -101,14 +102,17 @@ export default function DashboardPage() {
         const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
         console.log('🎯 [Plan Fetch] Most recent org:', mostRecentOrg);
         console.log('🎯 [Plan Fetch] Plan name (direct):', mostRecentOrg?.plan_name);
+        console.log('🎯 [Plan Fetch] Org name:', mostRecentOrg?.organization_name);
         
-        // Extract plan name - API returns it directly on the org object as plan_name
+        // Extract plan name and org name - API returns them directly on the org object
         if (mostRecentOrg?.plan_name) {
           console.log('✅ [Plan Fetch] Setting plan name:', mostRecentOrg.plan_name);
           setCurrentPlan(mostRecentOrg.plan_name);
+          setCurrentOrgName(mostRecentOrg.organization_name || null);
         } else {
           console.log('❌ [Plan Fetch] No plan name found, setting to null');
           setCurrentPlan(null);
+          setCurrentOrgName(null);
         }
       } catch (error) {
         console.error('❌ [Plan Fetch] Error fetching plan data:', error);
@@ -319,6 +323,11 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">{currentPlan}</p>
+                {currentOrgName && (
+                  <p className="text-lg font-medium text-gray-slate dark:text-gray-300 mb-1">
+                    {currentOrgName}
+                  </p>
+                )}
                 <p className="text-sm text-gray-400 dark:text-gray-500">
                   Your current subscription plan
                 </p>
