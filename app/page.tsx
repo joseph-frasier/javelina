@@ -153,7 +153,7 @@ export default function DashboardPage() {
           className="lg:col-span-1"
         >
           <div className="space-y-6 mt-4">
-            <Link href="/organization/org_company" className="block">
+            <Link href="/profile" className="block">
               <Button variant="primary" className="w-full justify-start">
                 <svg
                   className="w-5 h-5 mr-2"
@@ -165,10 +165,10 @@ export default function DashboardPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
-                View Organizations
+                Your Profile
               </Button>
             </Link>
             <Link href="/analytics" className="block">

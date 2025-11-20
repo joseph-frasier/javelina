@@ -863,44 +863,9 @@ function SettingsContent() {
                         Previous
                       </Button>
                       
-                      <div className="flex items-center gap-2">
-                        {/* Page numbers */}
-                        {Array.from({ length: billingTotalPages }, (_, i) => i + 1).map((page) => {
-                          // Show first page, last page, current page, and pages around current
-                          const showPage = 
-                            page === 1 || 
-                            page === billingTotalPages || 
-                            (page >= billingCurrentPage - 1 && page <= billingCurrentPage + 1);
-                          
-                          const showEllipsis = 
-                            (page === billingCurrentPage - 2 && billingCurrentPage > 3) ||
-                            (page === billingCurrentPage + 2 && billingCurrentPage < billingTotalPages - 2);
-
-                          if (showEllipsis) {
-                            return (
-                              <span key={page} className="text-gray-400 dark:text-gray-600 px-2">
-                                ...
-                              </span>
-                            );
-                          }
-
-                          if (!showPage) return null;
-
-                          return (
-                            <button
-                              key={page}
-                              onClick={() => handleBillingPageChange(page)}
-                              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                                billingCurrentPage === page
-                                  ? 'bg-orange text-white'
-                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 font-medium px-4">
+                        Page {billingCurrentPage} of {billingTotalPages}
+                      </span>
 
                       <Button
                         variant="outline"

@@ -13,6 +13,7 @@ import { getPlanById, fetchPlans, PLANS_CONFIG } from '@/lib/plans-config';
 import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
 import { gsap } from 'gsap';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 function PricingContent() {
   const router = useRouter();
@@ -137,10 +138,16 @@ function PricingContent() {
     <div className="min-h-screen bg-orange-light">
       {/* Header */}
       <div className="border-b border-gray-light bg-white">
-        <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1">
+        <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
           <Link href="/" className="inline-block cursor-pointer">
             <Logo width={150} height={60} />
           </Link>
+          <Breadcrumb 
+            items={[
+              { label: 'Dashboard', href: '/' },
+              { label: 'Select Plan' }
+            ]}
+          />
         </div>
       </div>
 
