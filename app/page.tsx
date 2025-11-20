@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { useAuthStore } from '@/lib/auth-store';
-import { environmentsApi, zonesApi } from '@/lib/api-client';
+import { environmentsApi, zonesApi, subscriptionsApi } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
@@ -19,6 +19,10 @@ export default function DashboardPage() {
     totalZones: 0,
     zonesThisMonth: 0
   });
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
+  const [planError, setPlanError] = useState(false);
   
   useEffect(() => {
     const fetchCounts = async () => {
@@ -61,6 +65,51 @@ export default function DashboardPage() {
     };
     
     fetchCounts();
+  }, [organizations]);
+
+  // Fetch subscription data for current plan display
+  useEffect(() => {
+    const fetchPlanData = async () => {
+      if (organizations.length === 0) {
+        setIsLoadingPlan(false);
+        setCurrentPlan(null);
+        return;
+      }
+
+      setIsLoadingPlan(true);
+      setPlanError(false);
+
+      try {
+        // Fetch all organizations with their subscription data
+        const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
+        
+        if (!orgsWithSubscriptions || orgsWithSubscriptions.length === 0) {
+          setCurrentPlan(null);
+          setIsLoadingPlan(false);
+          return;
+        }
+
+        // Find the most recently created organization (last in array)
+        const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
+        
+        // Extract plan name and org name - API returns them directly on the org object
+        if (mostRecentOrg?.plan_name) {
+          setCurrentPlan(mostRecentOrg.plan_name);
+          setCurrentOrgName(mostRecentOrg.organization_name || null);
+        } else {
+          setCurrentPlan(null);
+          setCurrentOrgName(null);
+        }
+      } catch (error) {
+        console.error('Error fetching plan data:', error);
+        setPlanError(true);
+        setCurrentPlan(null);
+      } finally {
+        setIsLoadingPlan(false);
+      }
+    };
+
+    fetchPlanData();
   }, [organizations]);
 
   return (
@@ -217,18 +266,55 @@ export default function DashboardPage() {
         </Card>
 
         <Card
-          title="Recent Activity"
-          description="Latest updates and changes"
+          title="Newest Plan"
+          description="Most recent subscription"
           className="lg:col-span-2"
         >
           <div className="flex flex-col items-center justify-center py-16">
-            <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-lg font-semibold text-gray-slate dark:text-gray-400 mb-2">Coming Soon</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">
-              Activity tracking will be available soon
-            </p>
+            {isLoadingPlan ? (
+              <>
+                <div className="w-16 h-16 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center mb-4 animate-pulse">
+                  <svg className="w-8 h-8 text-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Loading plan...</p>
+              </>
+            ) : planError ? (
+              <>
+                <svg className="w-16 h-16 text-red-300 dark:text-red-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-lg font-semibold text-gray-slate dark:text-gray-400 mb-2">Unable to Load Plan</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  There was an error loading your subscription
+                </p>
+              </>
+            ) : !currentPlan ? (
+              <>
+                <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <p className="text-lg font-semibold text-gray-slate dark:text-gray-400 mb-2">No Active Plan</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  Add an organization to get started
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">{currentPlan}</p>
+                {currentOrgName && (
+                  <p className="text-lg font-medium text-gray-slate dark:text-gray-300">
+                    {currentOrgName}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </Card>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import { AddEnvironmentModal } from '@/components/modals/AddEnvironmentModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
 import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
+import { subscriptionsApi } from '@/lib/api-client';
 
 interface Environment {
   id: string;
@@ -56,6 +57,8 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isAddEnvModalOpen, setIsAddEnvModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isNewestPlan, setIsNewestPlan] = useState(false);
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const canAddEnvironment = canCreateEnvironment(org.role);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
   const canDeleteOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
@@ -67,13 +70,43 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     router.push(`/organization/${org.id}/environment/${environmentId}`);
   };
 
+  // Check if this is the newest plan (shown on dashboard)
+  useEffect(() => {
+    const checkIfNewest = async () => {
+      setIsLoadingPlan(true);
+      try {
+        const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
+        
+        if (orgsWithSubscriptions && orgsWithSubscriptions.length > 0) {
+          // Get the most recent org (last in array)
+          const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
+          // Check if current org matches the newest one
+          setIsNewestPlan(mostRecentOrg.org_id === org.id);
+        }
+      } catch (error) {
+        console.error('Error checking newest plan:', error);
+      } finally {
+        setIsLoadingPlan(false);
+      }
+    };
+
+    checkIfNewest();
+  }, [org.id]);
+
   return (
     <>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-2 break-words">{org.name}</h1>
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange break-words">{org.name}</h1>
+              {!isLoadingPlan && isNewestPlan && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange text-white">
+                  Newest Plan
+                </span>
+              )}
+            </div>
             {org.description && <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300">{org.description}</p>}
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
