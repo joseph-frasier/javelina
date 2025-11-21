@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "env:dev": "bash scripts/switch-env.sh dev",
+    "env:prod": "bash scripts/switch-env.sh prod",
+    "env:status": "bash scripts/switch-env.sh status"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
