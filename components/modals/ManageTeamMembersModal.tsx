@@ -162,7 +162,6 @@ export function ManageTeamMembersModal({
                         variant="primary"
                         size="sm"
                         onClick={handleSaveRole}
-                        className="min-w-[80px]"
                       >
                         Save
                       </Button>
@@ -173,9 +172,8 @@ export function ManageTeamMembersModal({
                           setEditingUserId(null);
                           setEditingRole('');
                         }}
-                        className="min-w-[80px]"
                       >
-                        Cancel
+                        ✕
                       </Button>
                     </div>
                   ) : (
