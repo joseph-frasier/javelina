@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import Dropdown from '@/components/ui/Dropdown';
 import { useToastStore } from '@/lib/toast-store';
 
 interface InviteUsersModalProps {
@@ -112,24 +113,20 @@ export function InviteUsersModal({
         </div>
 
         <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-slate dark:text-white mb-1"
-          >
-            Role *
-          </label>
-          <select
-            id="role"
+          <Dropdown
+            label="Role *"
             value={role}
-            onChange={(e) => setRole(e.target.value as RBACRole)}
-            disabled={isLoading}
-            className="w-full px-4 py-2 border border-gray-light dark:border-gray-slate rounded-lg bg-white dark:bg-gray-slate text-gray-slate dark:text-white focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
-          >
-            <option value="Viewer">Viewer - Can view only</option>
-            <option value="Editor">Editor - Can view and edit</option>
-            <option value="Admin">Admin - Can manage resources</option>
-            <option value="SuperAdmin">SuperAdmin - Full access</option>
-          </select>
+            onChange={(value) => setRole(value as RBACRole)}
+            options={[
+              { value: 'Viewer', label: 'Viewer - Can view only' },
+              { value: 'Editor', label: 'Editor - Can view and edit' },
+              { value: 'Admin', label: 'Admin - Can manage resources' },
+              { value: 'SuperAdmin', label: 'SuperAdmin - Full access' },
+            ]}
+          />
+          <p className="mt-1 text-xs text-gray-slate dark:text-gray-light">
+            Select the permission level for this team member
+          </p>
         </div>
 
         <div>
