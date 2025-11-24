@@ -90,7 +90,7 @@ export default function DashboardPage() {
             <Card
               title="Quick Actions"
               description="Common tasks and shortcuts"
-              className="lg:col-span-1"
+              className="lg:col-span-1 h-fit"
             >
               <div className="space-y-4 mt-4">
                 <Link href="/pricing" className="block">
