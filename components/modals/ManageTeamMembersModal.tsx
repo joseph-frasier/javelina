@@ -160,14 +160,14 @@ export function ManageTeamMembersModal({
                       </div>
                       <Button
                         variant="primary"
-                        size="sm"
+                        size="md"
                         onClick={handleSaveRole}
                       >
                         Save
                       </Button>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="md"
                         onClick={() => {
                           setEditingUserId(null);
                           setEditingRole('');
