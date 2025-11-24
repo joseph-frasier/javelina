@@ -29,13 +29,13 @@ case "$1" in
     echo -e "\n${YELLOW}⚠️  Restart your dev server to apply changes${NC}"
     ;;
     
-  branch|schema-enhancements)
-    if [ ! -f .env.branch-schema-enhancements ]; then
-      echo "❌ Error: .env.branch-schema-enhancements file not found"
+  dev|development)
+    if [ ! -f .env.dev ]; then
+      echo "❌ Error: .env.dev file not found"
       exit 1
     fi
-    cp .env.branch-schema-enhancements .env.local
-    echo -e "${GREEN}✅ Switched to SCHEMA-ENHANCEMENTS BRANCH${NC}"
+    cp .env.dev .env.local
+    echo -e "${GREEN}✅ Switched to DEV${NC}"
     show_current
     echo -e "\n${YELLOW}⚠️  Restart your dev server to apply changes${NC}"
     ;;
@@ -45,11 +45,11 @@ case "$1" in
     ;;
     
   *)
-    echo "Usage: ./scripts/switch-env.sh [prod|branch|status]"
+    echo "Usage: ./scripts/switch-env.sh [prod|dev|status]"
     echo ""
     echo "Commands:"
     echo "  prod, production          - Switch to production environment"
-    echo "  branch, schema-enhancements - Switch to schema-enhancements branch"
+    echo "  dev, development          - Switch to dev environment"
     echo "  status, current           - Show current active environment"
     show_current
     exit 1
