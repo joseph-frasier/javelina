@@ -91,16 +91,8 @@ export async function addMemberToOrganization(orgId: string, userId: string, rol
       return { error: 'Admin backend functionality not yet available in development mode' };
     }
 
-    // Check member limit (import at top of file will be needed)
-    const { canCreateResource } = await import('@/lib/entitlements');
-    const limitCheck = await canCreateResource(orgId, 'member');
-    if (!limitCheck.canCreate) {
-      return { 
-        error: limitCheck.reason || 'Team member limit reached. Please upgrade your plan to add more members.',
-        upgrade_required: true 
-      };
-    }
-
+    // Note: Member limits are now managed by Launch Darkly, not enforced here
+    
     // Add member to organization
     const { error } = await client!
       .from('organization_members')

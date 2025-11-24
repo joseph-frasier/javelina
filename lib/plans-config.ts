@@ -60,7 +60,7 @@ interface DbPlan {
     price_id: string;
     description?: string;
   };
-  entitlements: Array<{
+  entitlements?: Array<{
     key: string;
     value: string;
     value_type: 'boolean' | 'numeric' | 'text';
@@ -69,98 +69,59 @@ interface DbPlan {
 
 /**
  * Convert database plan format to frontend Plan format
+ * Now simplified to ignore entitlements and use hardcoded limits
  */
 function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
-  // Group plans by their base code (e.g., 'basic_monthly' and 'basic_annual' -> 'basic')
-  const planGroups = new Map<string, { monthly?: DbPlan; annual?: DbPlan }>();
+  console.log('Converting plans from API:', dbPlans);
   
-  dbPlans.forEach(dbPlan => {
-    let baseCode: string;
-    let interval: 'monthly' | 'annual';
-    
-    if (dbPlan.code.endsWith('_monthly')) {
-      baseCode = dbPlan.code.replace('_monthly', '');
-      interval = 'monthly';
-    } else if (dbPlan.code.endsWith('_annual')) {
-      baseCode = dbPlan.code.replace('_annual', '');
-      interval = 'annual';
-    } else {
-      // Fallback for any other format
-      baseCode = dbPlan.code;
-      interval = 'monthly';
-    }
-    
-    const group = planGroups.get(baseCode) || {};
-    group[interval] = dbPlan;
-    planGroups.set(baseCode, group);
-  });
+  if (!dbPlans || !Array.isArray(dbPlans)) {
+    console.error('Invalid dbPlans data:', dbPlans);
+    return [];
+  }
   
-  // Convert each group to a Plan
-  const plans: Plan[] = [];
-  
-  planGroups.forEach((group, baseCode) => {
-    // Use monthly plan as the primary source, or annual if monthly doesn't exist
-    const primary = group.monthly || group.annual;
-    if (!primary) return;
+  // Map each plan directly (they're all lifetime plans now)
+  const plans: Plan[] = dbPlans.map(dbPlan => {
+    const baseCode = dbPlan.code; // e.g., 'starter_lifetime'
     
-    // Extract entitlements
-    const entitlements = new Map(
-      primary.entitlements.map(e => [e.key, e.value])
-    );
-    
-    const getNumericEntitlement = (key: string): number => {
-      const val = entitlements.get(key);
-      return val ? parseInt(val, 10) : 0;
-    };
-    
-    const getBooleanEntitlement = (key: string): boolean => {
-      return entitlements.get(key) === 'true';
-    };
+    // Get hardcoded limits for this plan
+    const hardcodedLimits = HARDCODED_PLAN_LIMITS[baseCode] || HARDCODED_PLAN_LIMITS['starter_lifetime'];
     
     // Build Plan object
     const plan: Plan = {
       id: baseCode,
-      code: primary.code,
-      name: primary.name.replace(' (Monthly)', '').replace(' (Annual)', ''),
-      description: primary.metadata.description || '',
-      popular: baseCode === 'pro', // Mark Pro as popular
+      code: dbPlan.code,
+      name: dbPlan.name, // Keep "Lifetime" in the name
+      description: dbPlan.metadata?.description || '',
+      popular: baseCode === 'pro_lifetime', // Mark Pro as popular
       limits: {
-        environments: getNumericEntitlement('environments_limit'),
-        zones: getNumericEntitlement('zones_limit'),
-        dnsRecords: getNumericEntitlement('dns_records_limit'),
-        teamMembers: getNumericEntitlement('team_members_limit'),
+        environments: hardcodedLimits.environments,
+        zones: hardcodedLimits.zones,
+        dnsRecords: hardcodedLimits.records,
+        teamMembers: hardcodedLimits.users,
       },
       booleanFeatures: {
-        apiAccess: getBooleanEntitlement('api_access'),
-        advancedAnalytics: getBooleanEntitlement('advanced_analytics'),
-        prioritySupport: getBooleanEntitlement('priority_support'),
-        auditLogs: getBooleanEntitlement('audit_logs'),
-        customRoles: getBooleanEntitlement('custom_roles'),
-        sso: getBooleanEntitlement('sso_enabled'),
-        bulkOperations: getBooleanEntitlement('bulk_operations'),
-        exportData: getBooleanEntitlement('export_data'),
+        apiAccess: baseCode !== 'starter_lifetime',
+        advancedAnalytics: baseCode !== 'starter_lifetime',
+        prioritySupport: baseCode !== 'starter_lifetime',
+        auditLogs: baseCode !== 'starter_lifetime',
+        customRoles: baseCode === 'premium_lifetime' || baseCode === 'enterprise_lifetime',
+        sso: baseCode === 'enterprise_lifetime',
+        bulkOperations: baseCode !== 'starter_lifetime',
+        exportData: baseCode !== 'starter_lifetime',
       },
-      features: buildFeaturesList(baseCode, entitlements),
+      features: buildFeaturesList(baseCode, new Map()),
     };
     
-    // Add pricing
-    if (group.monthly) {
+    // Add pricing (all are lifetime/one-time now)
+    if (dbPlan.metadata?.price !== undefined && dbPlan.metadata?.price_id) {
       plan.monthly = {
-        amount: group.monthly.metadata.price,
-        priceId: group.monthly.metadata.price_id,
-        interval: 'month',
+        amount: dbPlan.metadata.price,
+        priceId: dbPlan.metadata.price_id,
+        interval: 'month', // Still labeled as month for compatibility
       };
     }
     
-    if (group.annual) {
-      plan.annual = {
-        amount: group.annual.metadata.price,
-        priceId: group.annual.metadata.price_id,
-        interval: 'year',
-      };
-    }
-    
-    plans.push(plan);
+    return plan;
   });
   
   // Sort plans by order: starter, pro, premium, enterprise
@@ -171,79 +132,137 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
     return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
   });
   
+  console.log('Converted plans:', plans);
   return plans;
 }
 
 /**
- * Build features list based on entitlements
+ * Hardcoded plan limits (not from database)
+ * These are the actual limits enforced by Launch Darkly
+ */
+const HARDCODED_PLAN_LIMITS: Record<string, {
+  organizations: number;
+  users: number;
+  environments: number;
+  zones: number;
+  records: number;
+  queries: string;
+}> = {
+  'starter_lifetime': {
+    organizations: 1,
+    users: 1,
+    environments: 2,
+    zones: 2,
+    records: 200,
+    queries: '5m',
+  },
+  'pro_lifetime': {
+    organizations: 1,
+    users: 5,
+    environments: 20,
+    zones: 20,
+    records: 2000,
+    queries: '50m',
+  },
+  'premium_lifetime': {
+    organizations: 1,
+    users: 20,
+    environments: 50,
+    zones: 50,
+    records: 5000,
+    queries: '500m',
+  },
+  'enterprise_lifetime': {
+    organizations: -1, // Custom
+    users: -1, // Custom
+    environments: -1, // Custom
+    zones: -1, // Custom
+    records: -1, // Custom
+    queries: 'Custom',
+  },
+};
+
+/**
+ * Build features list based on hardcoded limits
  */
 function buildFeaturesList(planId: string, entitlements: Map<string, string>): PlanFeature[] {
   const features: PlanFeature[] = [];
+  const limits = HARDCODED_PLAN_LIMITS[planId];
   
-  const envLimit = entitlements.get('environments_limit');
-  const zonesLimit = entitlements.get('zones_limit');
-  const dnsLimit = entitlements.get('dns_records_limit');
-  const membersLimit = entitlements.get('team_members_limit');
-  
-  // Add limit features
-  features.push({
-    name: `${envLimit === '-1' ? 'Unlimited' : envLimit} Environment${envLimit === '1' ? '' : 's'}`,
-    included: true,
-  });
-  
-  features.push({
-    name: `${zonesLimit === '-1' ? 'Unlimited' : zonesLimit} DNS Zone${zonesLimit === '1' ? '' : 's'}`,
-    included: true,
-  });
-  
-  features.push({
-    name: `${dnsLimit === '-1' ? 'Unlimited' : dnsLimit} DNS Records per Zone`,
-    included: true,
-  });
-  
-  features.push({
-    name: `${membersLimit === '-1' ? 'Unlimited' : membersLimit} Team Member${membersLimit === '1' ? '' : 's'}`,
-    included: true,
-  });
-  
-  // Add boolean features
-  if (entitlements.get('bulk_operations') === 'true') {
-    features.push({ name: 'Bulk Operations', included: true });
+  if (!limits) {
+    return features;
   }
   
-  if (entitlements.get('export_data') === 'true') {
-    features.push({ name: 'Export Data', included: true });
-  }
-  
-  if (entitlements.get('api_access') === 'true') {
-    features.push({ name: 'API Access', included: true });
+  // Add organization limit
+  if (limits.organizations === -1) {
+    features.push({
+      name: 'Organizations: Custom',
+      included: true,
+    });
   } else {
-    features.push({ name: 'API Access', included: false });
+    features.push({
+      name: `${limits.organizations} Organization${limits.organizations === 1 ? '' : 's'}`,
+      included: true,
+    });
   }
   
-  if (entitlements.get('advanced_analytics') === 'true') {
-    features.push({ name: 'Advanced Analytics', included: true });
+  // Add user limit
+  if (limits.users === -1) {
+    features.push({
+      name: 'User Accounts: Custom',
+      included: true,
+    });
   } else {
-    features.push({ name: 'Advanced Analytics', included: false });
+    features.push({
+      name: `${limits.users} ${limits.users === 1 ? 'single user' : 'user accounts'}`,
+      included: true,
+    });
   }
   
-  if (entitlements.get('priority_support') === 'true') {
-    features.push({ name: 'Priority Support', included: true });
+  // Add environment limit
+  if (limits.environments === -1) {
+    features.push({
+      name: 'Environments: Custom',
+      included: true,
+    });
   } else {
-    features.push({ name: 'Email Support', included: true });
+    features.push({
+      name: `${limits.environments} Environment${limits.environments === 1 ? '' : 's'}`,
+      included: true,
+    });
   }
   
-  if (entitlements.get('audit_logs') === 'true') {
-    features.push({ name: 'Audit Logs', included: true });
+  // Add zones limit
+  if (limits.zones === -1) {
+    features.push({
+      name: 'Zones/Domains: Custom',
+      included: true,
+    });
+  } else {
+    features.push({
+      name: `${limits.zones} Zones/Domains`,
+      included: true,
+    });
   }
   
-  if (entitlements.get('custom_roles') === 'true') {
-    features.push({ name: 'Custom Roles', included: true });
+  // Add records limit
+  if (limits.records === -1) {
+    features.push({
+      name: 'Records: Custom',
+      included: true,
+    });
+  } else {
+    features.push({
+      name: `${limits.records} records total`,
+      included: true,
+    });
   }
   
-  if (entitlements.get('sso_enabled') === 'true') {
-    features.push({ name: 'SSO / SAML', included: true });
-  }
+  // Add queries limit
+  features.push({
+    name: `${limits.queries} Queries`,
+    included: true,
+  });
   
   return features;
 }
@@ -254,8 +273,154 @@ let plansCacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
+ * Fallback static plans configuration
+ * Used when backend is unavailable or during migration
+ */
+const FALLBACK_PLANS: Plan[] = [
+  {
+    id: 'starter_lifetime',
+    code: 'starter_lifetime',
+    name: 'Starter Lifetime',
+    description: 'Perfect for small projects and testing',
+    popular: false,
+    monthly: {
+      amount: 9.95,
+      priceId: 'price_starter_monthly',
+      interval: 'month',
+    },
+    features: [
+      { name: '1 Organization', included: true },
+      { name: '1 single user', included: true },
+      { name: '2 Environments', included: true },
+      { name: '2 Zones/Domains', included: true },
+      { name: '200 records total', included: true },
+      { name: '5m Queries', included: true },
+    ],
+    limits: {
+      environments: 2,
+      zones: 2,
+      dnsRecords: 200,
+      teamMembers: 1,
+    },
+    booleanFeatures: {
+      apiAccess: false,
+      advancedAnalytics: false,
+      prioritySupport: false,
+      auditLogs: false,
+      customRoles: false,
+      sso: false,
+      bulkOperations: false,
+      exportData: false,
+    },
+  },
+  {
+    id: 'pro_lifetime',
+    code: 'pro_lifetime',
+    name: 'Pro Lifetime',
+    description: 'For growing teams and production workloads',
+    popular: true,
+    monthly: {
+      amount: 49.95,
+      priceId: 'price_pro_monthly',
+      interval: 'month',
+    },
+    features: [
+      { name: '1 Organization', included: true },
+      { name: '5 user accounts', included: true },
+      { name: '20 Environments', included: true },
+      { name: '20 Zones/domains', included: true },
+      { name: '2000 records total', included: true },
+      { name: '50m queries', included: true },
+    ],
+    limits: {
+      environments: 20,
+      zones: 20,
+      dnsRecords: 2000,
+      teamMembers: 5,
+    },
+    booleanFeatures: {
+      apiAccess: true,
+      advancedAnalytics: true,
+      prioritySupport: true,
+      auditLogs: true,
+      customRoles: false,
+      sso: false,
+      bulkOperations: true,
+      exportData: true,
+    },
+  },
+  {
+    id: 'premium_lifetime',
+    code: 'premium_lifetime',
+    name: 'Business Lifetime',
+    description: 'Advanced features for enterprise teams',
+    popular: false,
+    monthly: {
+      amount: 199.95,
+      priceId: 'price_premium_monthly',
+      interval: 'month',
+    },
+    features: [
+      { name: '1 Organization', included: true },
+      { name: '20 user accounts', included: true },
+      { name: '50 Environments', included: true },
+      { name: '50 Zones/domains', included: true },
+      { name: '5000 records total', included: true },
+      { name: '500m queries', included: true },
+    ],
+    limits: {
+      environments: 50,
+      zones: 50,
+      dnsRecords: 5000,
+      teamMembers: 20,
+    },
+    booleanFeatures: {
+      apiAccess: true,
+      advancedAnalytics: true,
+      prioritySupport: true,
+      auditLogs: true,
+      customRoles: true,
+      sso: false,
+      bulkOperations: true,
+      exportData: true,
+    },
+  },
+  {
+    id: 'enterprise_lifetime',
+    code: 'enterprise_lifetime',
+    name: 'Enterprise Lifetime',
+    description: 'Custom solutions for large organizations',
+    popular: false,
+    features: [
+      { name: 'Organizations: Custom', included: true },
+      { name: 'Pricing: Custom', included: true },
+      { name: 'User Accounts: Custom', included: true },
+      { name: 'Environments: Custom', included: true },
+      { name: 'Zones/Domains: Custom', included: true },
+    ],
+    limits: {
+      environments: -1,
+      zones: -1,
+      dnsRecords: -1,
+      teamMembers: -1,
+    },
+    booleanFeatures: {
+      apiAccess: true,
+      advancedAnalytics: true,
+      prioritySupport: true,
+      auditLogs: true,
+      customRoles: true,
+      sso: true,
+      bulkOperations: true,
+      exportData: true,
+    },
+  },
+];
+
+/**
  * Fetch all plans from the API
  * Uses cache on client-side to avoid repeated API calls
+ * Falls back to static config if API fails
  */
 export async function fetchPlans(): Promise<Plan[]> {
   // Check cache (client-side only)
@@ -267,6 +432,13 @@ export async function fetchPlans(): Promise<Plan[]> {
     const dbPlans = await plansApi.getAll() as DbPlan[];
     const plans = convertDbPlanToPlan(dbPlans);
     
+    // If conversion resulted in empty plans, use fallback
+    if (plans.length === 0) {
+      console.warn('No plans returned from API, using fallback configuration');
+      updateStaticConfig(FALLBACK_PLANS);
+      return FALLBACK_PLANS;
+    }
+    
     // Update cache (client-side only)
     if (typeof window !== 'undefined') {
       plansCache = plans;
@@ -277,9 +449,12 @@ export async function fetchPlans(): Promise<Plan[]> {
     
     return plans;
   } catch (error) {
-    console.error('Error fetching plans:', error);
-    // Return fallback empty array or could return hardcoded fallback
-    return [];
+    console.error('Error fetching plans, using fallback configuration:', error);
+    // Use fallback plans when API fails
+    if (typeof window !== 'undefined') {
+      updateStaticConfig(FALLBACK_PLANS);
+    }
+    return FALLBACK_PLANS;
   }
 }
 
@@ -298,8 +473,9 @@ export function clearPlansCache(): void {
 /**
  * Static plans config for synchronous access (e.g., Zustand stores)
  * This gets populated after the first fetchPlans() call
+ * Initialized with fallback plans for immediate availability
  */
-export let PLANS_CONFIG: Plan[] = [];
+export let PLANS_CONFIG: Plan[] = FALLBACK_PLANS;
 
 /**
  * Internal helper to populate the static config

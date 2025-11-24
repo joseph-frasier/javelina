@@ -156,7 +156,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint 
     WHERE conname = 'subscriptions_status_check' 
-    AND consrc LIKE '%lifetime%'
+    AND pg_get_constraintdef(oid) LIKE '%lifetime%'
   ) THEN
     RAISE WARNING 'subscriptions_status_check constraint may not include lifetime status';
   END IF;

@@ -1,13 +1,22 @@
 'use client';
 
-import { formatLimit, isUnlimited } from '@/types/billing';
-
 interface UsageMeterProps {
   current: number;
   limit: number | null;
   label: string;
   resourceType: 'environment' | 'zone' | 'member' | 'record';
   onUpgrade?: () => void;
+}
+
+// Utility functions for display
+function isUnlimited(limit: number | null): boolean {
+  return limit === -1;
+}
+
+function formatLimit(limit: number | null): string {
+  if (limit === null) return 'Not set';
+  if (limit === -1) return 'Unlimited';
+  return limit.toLocaleString();
 }
 
 export function UsageMeter({

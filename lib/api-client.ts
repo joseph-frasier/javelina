@@ -180,13 +180,6 @@ export const subscriptionsApi = {
   },
 
   /**
-   * Check if organization can create a resource
-   */
-  canCreate: (org_id: string, resource_type: 'environment' | 'zone' | 'member') => {
-    return apiClient.get(`/subscriptions/can-create?org_id=${org_id}&resource_type=${resource_type}`);
-  },
-
-  /**
    * Get subscription status
    */
   getStatus: (org_id: string) => {
@@ -202,15 +195,6 @@ export const subscriptionsApi = {
   },
 };
 
-// Entitlements API
-export const entitlementsApi = {
-  /**
-   * Check a specific entitlement
-   */
-  check: (org_id: string, entitlement_key: string) => {
-    return apiClient.get(`/entitlements/check?org_id=${org_id}&entitlement_key=${entitlement_key}`);
-  },
-};
 
 // Plans API
 export const plansApi = {

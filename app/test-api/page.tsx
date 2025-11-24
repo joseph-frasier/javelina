@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiClient, organizationsApi, subscriptionsApi, entitlementsApi, stripeApi } from '@/lib/api-client';
+import { apiClient, organizationsApi, subscriptionsApi, stripeApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
 
 interface TestResult {
@@ -112,14 +112,6 @@ export default function TestApiPage() {
 
         await runTest('Subscriptions API - Get Status', async () => {
           return await subscriptionsApi.getStatus(testOrgId);
-        });
-
-        await runTest('Subscriptions API - Can Create Environment', async () => {
-          return await subscriptionsApi.canCreate(testOrgId, 'environment');
-        });
-
-        await runTest('Entitlements API - Check environments_limit', async () => {
-          return await entitlementsApi.check(testOrgId, 'environments_limit');
         });
       } else {
         console.warn('No org_id available - skipping subscription tests');
