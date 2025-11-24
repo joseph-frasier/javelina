@@ -92,11 +92,11 @@ export default function DashboardPage() {
               description="Common tasks and shortcuts"
               className="lg:col-span-1"
             >
-              <div className="space-y-3 mt-3">
+              <div className="space-y-4 mt-4">
                 <Link href="/pricing" className="block">
-                  <Button variant="primary" className="w-full justify-start" size="sm">
+                  <Button variant="primary" className="w-full justify-start">
                     <svg
-                      className="w-4 h-4 mr-2"
+                      className="w-5 h-5 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -112,9 +112,9 @@ export default function DashboardPage() {
                   </Button>
                 </Link>
                 <Link href="/profile" className="block">
-                  <Button variant="secondary" className="w-full justify-start" size="sm">
+                  <Button variant="secondary" className="w-full justify-start">
                     <svg
-                      className="w-4 h-4 mr-2"
+                      className="w-5 h-5 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -130,9 +130,9 @@ export default function DashboardPage() {
                   </Button>
                 </Link>
                 <Link href="/settings" className="block">
-                  <Button variant="outline" className="w-full justify-start" size="sm">
+                  <Button variant="outline" className="w-full justify-start">
                     <svg
-                      className="w-4 h-4 mr-2"
+                      className="w-5 h-5 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -236,11 +236,11 @@ export default function DashboardPage() {
               title="Quick Actions"
               description="Common tasks and shortcuts"
             >
-              <div className="space-y-3 mt-3">
+              <div className="space-y-4 mt-4">
                 <Link href="/pricing" className="block">
-                  <Button variant="primary" className="w-full justify-start" size="sm">
+                  <Button variant="primary" className="w-full justify-start">
                     <svg
-                      className="w-4 h-4 mr-2"
+                      className="w-5 h-5 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -256,9 +256,9 @@ export default function DashboardPage() {
                   </Button>
                 </Link>
                 <Link href="/profile" className="block">
-                  <Button variant="secondary" className="w-full justify-start" size="sm">
+                  <Button variant="secondary" className="w-full justify-start">
                     <svg
-                      className="w-4 h-4 mr-2"
+                      className="w-5 h-5 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -274,9 +274,9 @@ export default function DashboardPage() {
                   </Button>
                 </Link>
                 <Link href="/settings" className="block">
-                  <Button variant="outline" className="w-full justify-start" size="sm">
+                  <Button variant="outline" className="w-full justify-start">
                     <svg
-                      className="w-4 h-4 mr-2"
+                      className="w-5 h-5 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
