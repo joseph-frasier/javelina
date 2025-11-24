@@ -392,12 +392,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         />
       </Card>
 
-      {/* Record Distribution */}
-      <div className="mb-6 sm:mb-8">
-        <Card title="Record Type Distribution" className="p-4 sm:p-6">
-          <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
-        </Card>
-      </div>
+      {/* Audit Timeline */}
+      <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        <AuditTimeline
+          auditLogs={auditLogs}
+          onDiffClick={setSelectedLog}
+        />
+      </Card>
 
       {/* Verification Checklist */}
       {/* TODO: Re-enable when nameserver verification feature is ready */}
@@ -409,13 +410,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         />
       </Card> */}
 
-      {/* Audit Timeline */}
-      <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <AuditTimeline
-          auditLogs={auditLogs}
-          onDiffClick={setSelectedLog}
-        />
-      </Card>
+      {/* Record Distribution */}
+      <div className="mb-6 sm:mb-8">
+        <Card title="Record Type Distribution" className="p-4 sm:p-6">
+          <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
+        </Card>
+      </div>
 
       {/* Bulk Action Bar */}
       <BulkActionBar
