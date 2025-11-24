@@ -97,7 +97,7 @@ export default async function OrganizationPage({
   // Fetch all zones for this organization with environment names
   const { data: allZones } = await supabase
     .from('zones')
-    .select('id, name, environment_id, status')
+    .select('id, name, environment_id, live')
     .in('environment_id', environments?.map(e => e.id) || [])
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
@@ -119,7 +119,7 @@ export default async function OrganizationPage({
         name: zone.name,
         environment_id: zone.environment_id,
         environment_name: environment?.name || 'Unknown',
-        status: zone.status as 'active' | 'inactive',
+        status: zone.live ? 'active' : 'inactive',
         records_count: recordsCount || 0,
       };
     })
