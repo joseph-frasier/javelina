@@ -127,12 +127,6 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
           <div className="flex items-center space-x-6">
             <nav className="hidden md:flex items-center space-x-6">
               <Link
-                href="/"
-                className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
                 href="/analytics"
                 className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
               >
