@@ -126,6 +126,14 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                 Add Environment
               </Button>
             )}
+            <Link href="/pricing">
+              <Button variant="secondary" size="sm" className="justify-center w-full">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Upgrade Plan
+              </Button>
+            </Link>
             {canEditOrg && (
               <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
