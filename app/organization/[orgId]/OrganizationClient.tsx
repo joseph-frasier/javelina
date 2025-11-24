@@ -265,15 +265,10 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           {/* Org Content */}
           <div className="lg:col-span-2 space-y-4">
             {/* Environments List */}
-            <div>
-              <h2 className="text-xl font-bold text-orange-dark dark:text-orange mb-4">
-                Environments
-              </h2>
-              <EnvironmentsList
-                organizationId={org.id}
-                environments={org.environments}
-              />
-            </div>
+            <EnvironmentsList
+              organizationId={org.id}
+              environments={org.environments}
+            />
 
             {/* Invite Users Box */}
             <InviteUsersBox
