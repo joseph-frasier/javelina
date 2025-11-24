@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UsageMeter } from './UsageMeter';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
-import { formatLimit } from '@/types/billing';
 
 interface SubscriptionManagerProps {
   orgId: string;
@@ -38,38 +37,17 @@ export function SubscriptionManager({
 
       setSubscription(data);
 
-      // Build usage data from entitlements
+      // Build usage data - all limits are now unlimited (managed by Launch Darkly)
       const usageData: OrgUsageWithLimits = {
         org_id: orgId,
         environments_count: 0, // TODO: Fetch actual counts
         zones_count: 0,
         members_count: 0,
-        environments_limit: null,
-        zones_limit: null,
-        members_limit: null,
-        dns_records_limit: null,
+        environments_limit: -1, // Unlimited
+        zones_limit: -1, // Unlimited
+        members_limit: -1, // Unlimited
+        dns_records_limit: -1, // Unlimited
       };
-
-      // Parse entitlements to get limits
-      if (data.entitlements) {
-        data.entitlements.forEach((ent: any) => {
-          const value = parseInt(ent.value, 10);
-          switch (ent.entitlement_key) {
-            case 'environments_limit':
-              usageData.environments_limit = value;
-              break;
-            case 'zones_limit':
-              usageData.zones_limit = value;
-              break;
-            case 'team_members_limit':
-              usageData.members_limit = value;
-              break;
-            case 'dns_records_limit':
-              usageData.dns_records_limit = value;
-              break;
-          }
-        });
-      }
 
       setUsage(usageData);
     } catch (err: any) {
@@ -209,7 +187,7 @@ export function SubscriptionManager({
         </div>
       </div>
 
-      {/* Usage Meters */}
+      {/* Usage Meters - Currently showing unlimited for all resources */}
       {usage && (
         <div className="bg-white rounded-xl border border-gray-light shadow-sm p-6">
           <h3 className="text-lg font-bold text-orange-dark mb-4">Resource Usage</h3>
@@ -235,56 +213,6 @@ export function SubscriptionManager({
               resourceType="member"
               onUpgrade={onChangePlan}
             />
-          </div>
-        </div>
-      )}
-
-      {/* Features List */}
-      {subscription?.entitlements && subscription.entitlements.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-light shadow-sm p-6">
-          <h3 className="text-lg font-bold text-orange-dark mb-4">Plan Features</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {subscription.entitlements
-              .filter((ent) => ent.value_type === 'boolean')
-              .map((ent) => {
-                const enabled = ent.value === 'true';
-                return (
-                  <div key={ent.entitlement_key} className="flex items-center space-x-2">
-                    {enabled ? (
-                      <svg
-                        className="w-5 h-5 text-green-600 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-5 h-5 text-gray-400 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    )}
-                    <span className={`text-sm ${enabled ? 'text-orange-dark' : 'text-gray-slate'}`}>
-                      {ent.entitlement_description || ent.entitlement_key.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                );
-              })}
           </div>
         </div>
       )}

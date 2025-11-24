@@ -33,42 +33,6 @@ export interface Plan {
 export type PlanCode = 'free' | 'basic_monthly' | 'basic_annual' | 'pro_monthly' | 'pro_annual' | 'enterprise_monthly';
 
 // =====================================================
-// ENTITLEMENTS
-// =====================================================
-
-export interface Entitlement {
-  id: string;
-  key: string;
-  description: string | null;
-  value_type: 'boolean' | 'numeric' | 'text';
-  created_at: string;
-}
-
-export type EntitlementKey = 
-  | 'environments_limit'
-  | 'zones_limit'
-  | 'dns_records_limit'
-  | 'team_members_limit'
-  | 'api_access'
-  | 'advanced_analytics'
-  | 'priority_support'
-  | 'audit_logs'
-  | 'custom_roles'
-  | 'sso_enabled'
-  | 'bulk_operations'
-  | 'export_data';
-
-// =====================================================
-// PLAN ENTITLEMENTS
-// =====================================================
-
-export interface PlanEntitlement {
-  plan_id: string;
-  entitlement_id: string;
-  value: string; // Store as string, parse based on entitlement.value_type
-}
-
-// =====================================================
 // SUBSCRIPTIONS
 // =====================================================
 
@@ -116,20 +80,6 @@ export interface SubscriptionItem {
 }
 
 // =====================================================
-// ORG ENTITLEMENT OVERRIDES
-// =====================================================
-
-export interface OrgEntitlementOverride {
-  org_id: string;
-  entitlement_id: string;
-  value: string;
-  reason: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// =====================================================
 // HELPER FUNCTION RETURN TYPES
 // =====================================================
 
@@ -148,17 +98,6 @@ export interface OrgSubscriptionDetails {
   cancel_at_period_end: boolean;
 }
 
-/**
- * Return type for get_org_entitlements() function
- */
-export interface OrgEntitlement {
-  entitlement_key: string;
-  entitlement_description: string | null;
-  value: string;
-  value_type: 'boolean' | 'numeric' | 'text';
-  is_override: boolean;
-}
-
 // =====================================================
 // API RESPONSE TYPES
 // =====================================================
@@ -169,30 +108,6 @@ export interface OrgEntitlement {
 export interface CurrentSubscriptionResponse {
   subscription: OrgSubscriptionDetails | null;
   plan: Plan | null;
-  entitlements: OrgEntitlement[];
-}
-
-/**
- * Response from /api/entitlements/check
- */
-export interface EntitlementCheckResponse {
-  org_id: string;
-  entitlement_key: string;
-  value: string | null;
-  value_type: 'boolean' | 'numeric' | 'text' | null;
-  parsed_value: boolean | number | string | null;
-}
-
-/**
- * Response from /api/subscriptions/can-create
- */
-export interface CanCreateResourceResponse {
-  org_id: string;
-  resource_type: 'environment' | 'zone' | 'member';
-  can_create: boolean;
-  current_count?: number;
-  limit?: number | null; // null means no limit defined, -1 means unlimited
-  reason?: string;
 }
 
 // =====================================================
@@ -256,46 +171,5 @@ export interface OrgUsageWithLimits extends OrgUsage {
   zones_limit: number | null;
   members_limit: number | null;
   dns_records_limit: number | null;
-}
-
-// =====================================================
-// UTILITY TYPES
-// =====================================================
-
-/**
- * Parse entitlement value based on type
- */
-export function parseEntitlementValue(
-  value: string,
-  valueType: 'boolean' | 'numeric' | 'text'
-): boolean | number | string {
-  switch (valueType) {
-    case 'boolean':
-      return value === 'true';
-    case 'numeric':
-      return parseInt(value, 10);
-    case 'text':
-    default:
-      return value;
-  }
-}
-
-/**
- * Check if a numeric limit is unlimited
- */
-export function isUnlimited(limit: number | string | null): boolean {
-  if (limit === null) return false;
-  const numericLimit = typeof limit === 'string' ? parseInt(limit, 10) : limit;
-  return numericLimit === -1;
-}
-
-/**
- * Format limit for display
- */
-export function formatLimit(limit: number | string | null): string {
-  if (limit === null) return 'Not set';
-  const numericLimit = typeof limit === 'string' ? parseInt(limit, 10) : limit;
-  if (numericLimit === -1) return 'Unlimited';
-  return numericLimit.toLocaleString();
 }
 

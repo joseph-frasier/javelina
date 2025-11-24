@@ -60,7 +60,7 @@ interface DbPlan {
     price_id: string;
     description?: string;
   };
-  entitlements: Array<{
+  entitlements?: Array<{
     key: string;
     value: string;
     value_type: 'boolean' | 'numeric' | 'text';
@@ -103,18 +103,20 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
     const primary = group.monthly || group.annual;
     if (!primary) return;
     
-    // Extract entitlements
+    // Extract entitlements (fallback to defaults if not present)
     const entitlements = new Map(
-      primary.entitlements.map(e => [e.key, e.value])
+      (primary.entitlements || []).map(e => [e.key, e.value])
     );
     
+    // Default to unlimited (-1) if entitlements don't exist
     const getNumericEntitlement = (key: string): number => {
       const val = entitlements.get(key);
-      return val ? parseInt(val, 10) : 0;
+      return val ? parseInt(val, 10) : -1; // Default to unlimited
     };
     
     const getBooleanEntitlement = (key: string): boolean => {
-      return entitlements.get(key) === 'true';
+      const val = entitlements.get(key);
+      return val ? val === 'true' : true; // Default to true if not present
     };
     
     // Build Plan object
@@ -254,8 +256,170 @@ let plansCacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
+ * Fallback static plans configuration
+ * Used when backend is unavailable or during migration
+ */
+const FALLBACK_PLANS: Plan[] = [
+  {
+    id: 'starter_lifetime',
+    code: 'starter_lifetime',
+    name: 'Starter',
+    description: 'Perfect for small projects and testing',
+    popular: false,
+    monthly: {
+      amount: 20,
+      priceId: 'price_starter_monthly',
+      interval: 'month',
+    },
+    features: [
+      { name: 'Unlimited Environments', included: true },
+      { name: 'Unlimited DNS Zones', included: true },
+      { name: 'Unlimited DNS Records per Zone', included: true },
+      { name: 'Unlimited Team Members', included: true },
+      { name: 'Email Support', included: true },
+      { name: 'API Access', included: false },
+      { name: 'Advanced Analytics', included: false },
+    ],
+    limits: {
+      environments: -1,
+      zones: -1,
+      dnsRecords: -1,
+      teamMembers: -1,
+    },
+    booleanFeatures: {
+      apiAccess: false,
+      advancedAnalytics: false,
+      prioritySupport: false,
+      auditLogs: false,
+      customRoles: false,
+      sso: false,
+      bulkOperations: true,
+      exportData: true,
+    },
+  },
+  {
+    id: 'pro_lifetime',
+    code: 'pro_lifetime',
+    name: 'Pro',
+    description: 'For growing teams and production workloads',
+    popular: true,
+    monthly: {
+      amount: 49,
+      priceId: 'price_pro_monthly',
+      interval: 'month',
+    },
+    features: [
+      { name: 'Unlimited Environments', included: true },
+      { name: 'Unlimited DNS Zones', included: true },
+      { name: 'Unlimited DNS Records per Zone', included: true },
+      { name: 'Unlimited Team Members', included: true },
+      { name: 'API Access', included: true },
+      { name: 'Advanced Analytics', included: true },
+      { name: 'Priority Support', included: true },
+      { name: 'Audit Logs', included: true },
+      { name: 'Bulk Operations', included: true },
+      { name: 'Export Data', included: true },
+    ],
+    limits: {
+      environments: -1,
+      zones: -1,
+      dnsRecords: -1,
+      teamMembers: -1,
+    },
+    booleanFeatures: {
+      apiAccess: true,
+      advancedAnalytics: true,
+      prioritySupport: true,
+      auditLogs: true,
+      customRoles: false,
+      sso: false,
+      bulkOperations: true,
+      exportData: true,
+    },
+  },
+  {
+    id: 'premium_lifetime',
+    code: 'premium_lifetime',
+    name: 'Premium',
+    description: 'Advanced features for enterprise teams',
+    popular: false,
+    monthly: {
+      amount: 99,
+      priceId: 'price_premium_monthly',
+      interval: 'month',
+    },
+    features: [
+      { name: 'Unlimited Environments', included: true },
+      { name: 'Unlimited DNS Zones', included: true },
+      { name: 'Unlimited DNS Records per Zone', included: true },
+      { name: 'Unlimited Team Members', included: true },
+      { name: 'API Access', included: true },
+      { name: 'Advanced Analytics', included: true },
+      { name: 'Priority Support', included: true },
+      { name: 'Audit Logs', included: true },
+      { name: 'Custom Roles', included: true },
+      { name: 'Bulk Operations', included: true },
+      { name: 'Export Data', included: true },
+    ],
+    limits: {
+      environments: -1,
+      zones: -1,
+      dnsRecords: -1,
+      teamMembers: -1,
+    },
+    booleanFeatures: {
+      apiAccess: true,
+      advancedAnalytics: true,
+      prioritySupport: true,
+      auditLogs: true,
+      customRoles: true,
+      sso: false,
+      bulkOperations: true,
+      exportData: true,
+    },
+  },
+  {
+    id: 'enterprise_lifetime',
+    code: 'enterprise_lifetime',
+    name: 'Enterprise',
+    description: 'Custom solutions for large organizations',
+    popular: false,
+    features: [
+      { name: 'Unlimited Everything', included: true },
+      { name: 'API Access', included: true },
+      { name: 'Advanced Analytics', included: true },
+      { name: 'Priority Support', included: true },
+      { name: 'Audit Logs', included: true },
+      { name: 'Custom Roles', included: true },
+      { name: 'SSO / SAML', included: true },
+      { name: 'Bulk Operations', included: true },
+      { name: 'Export Data', included: true },
+      { name: 'Dedicated Support', included: true },
+      { name: 'Custom SLA', included: true },
+    ],
+    limits: {
+      environments: -1,
+      zones: -1,
+      dnsRecords: -1,
+      teamMembers: -1,
+    },
+    booleanFeatures: {
+      apiAccess: true,
+      advancedAnalytics: true,
+      prioritySupport: true,
+      auditLogs: true,
+      customRoles: true,
+      sso: true,
+      bulkOperations: true,
+      exportData: true,
+    },
+  },
+];
+
+/**
  * Fetch all plans from the API
  * Uses cache on client-side to avoid repeated API calls
+ * Falls back to static config if API fails
  */
 export async function fetchPlans(): Promise<Plan[]> {
   // Check cache (client-side only)
@@ -267,6 +431,13 @@ export async function fetchPlans(): Promise<Plan[]> {
     const dbPlans = await plansApi.getAll() as DbPlan[];
     const plans = convertDbPlanToPlan(dbPlans);
     
+    // If conversion resulted in empty plans, use fallback
+    if (plans.length === 0) {
+      console.warn('No plans returned from API, using fallback configuration');
+      updateStaticConfig(FALLBACK_PLANS);
+      return FALLBACK_PLANS;
+    }
+    
     // Update cache (client-side only)
     if (typeof window !== 'undefined') {
       plansCache = plans;
@@ -277,9 +448,12 @@ export async function fetchPlans(): Promise<Plan[]> {
     
     return plans;
   } catch (error) {
-    console.error('Error fetching plans:', error);
-    // Return fallback empty array or could return hardcoded fallback
-    return [];
+    console.error('Error fetching plans, using fallback configuration:', error);
+    // Use fallback plans when API fails
+    if (typeof window !== 'undefined') {
+      updateStaticConfig(FALLBACK_PLANS);
+    }
+    return FALLBACK_PLANS;
   }
 }
 
@@ -298,8 +472,9 @@ export function clearPlansCache(): void {
 /**
  * Static plans config for synchronous access (e.g., Zustand stores)
  * This gets populated after the first fetchPlans() call
+ * Initialized with fallback plans for immediate availability
  */
-export let PLANS_CONFIG: Plan[] = [];
+export let PLANS_CONFIG: Plan[] = FALLBACK_PLANS;
 
 /**
  * Internal helper to populate the static config
