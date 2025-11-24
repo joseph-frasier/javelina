@@ -113,11 +113,12 @@ export function ManageTeamMembersModal({
         </div>
 
         {/* Users List */}
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-3 max-h-96 overflow-y-auto" style={{ overflow: 'visible' }}>
           {users.map((user) => (
             <div
               key={user.id}
               className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate"
+              style={{ overflow: 'visible' }}
             >
               <div className="flex items-center space-x-3 flex-1 min-w-0">
                 {/* Avatar */}

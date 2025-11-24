@@ -24,9 +24,23 @@ export default function Dropdown({
   className,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  // Calculate menu position when opened
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -58,6 +72,7 @@ export default function Dropdown({
 
       {/* Dropdown Button */}
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark dark:text-gray-100 flex items-center justify-between transition-colors hover:border-orange/50"
@@ -81,9 +96,16 @@ export default function Dropdown({
         </svg>
       </button>
 
-      {/* Dropdown Menu - Positioned Below */}
+      {/* Dropdown Menu - Fixed Positioning to Break Out of Overflow */}
       {isOpen && (
-        <div className="absolute z-[9999] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div 
+          className="fixed z-[9999] mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto"
+          style={{
+            top: `${menuPosition.top + 4}px`,
+            left: `${menuPosition.left}px`,
+            width: `${menuPosition.width}px`,
+          }}
+        >
           {options.map((option) => (
             <button
               key={option.value}
