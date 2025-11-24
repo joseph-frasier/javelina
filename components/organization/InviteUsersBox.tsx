@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { InviteUsersModal } from '@/components/modals/InviteUsersModal';
+import { ManageTeamMembersModal } from '@/components/modals/ManageTeamMembersModal';
 
 interface User {
   id: string;
@@ -19,7 +20,8 @@ interface InviteUsersBoxProps {
 }
 
 export function InviteUsersBox({ organizationId, organizationName }: InviteUsersBoxProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -86,10 +88,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => {
-              // TODO: Open manage members modal/page
-              console.log('Manage team members');
-            }}
+            onClick={() => setIsManageModalOpen(true)}
           >
             <svg
               className="w-4 h-4 mr-1"
@@ -138,7 +137,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
             <Button
               variant="primary"
               size="sm"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsInviteModalOpen(true)}
             >
               <svg
                 className="w-4 h-4 mr-1"
@@ -236,9 +235,17 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
 
       {/* Invite Users Modal */}
       <InviteUsersModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
         organizationId={organizationId}
+        organizationName={organizationName}
+      />
+
+      {/* Manage Team Members Modal */}
+      <ManageTeamMembersModal
+        isOpen={isManageModalOpen}
+        onClose={() => setIsManageModalOpen(false)}
+        users={users}
         organizationName={organizationName}
       />
     </>
