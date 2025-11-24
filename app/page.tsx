@@ -1,162 +1,198 @@
 'use client';
 
 import Link from 'next/link';
-import { StatCard, Card } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { useAuthStore } from '@/lib/auth-store';
-import { environmentsApi, zonesApi, subscriptionsApi } from '@/lib/api-client';
+import { environmentsApi } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
+import { CompactStatCard } from '@/components/dashboard/CompactStatCard';
+import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
+import { EnvironmentsList } from '@/components/organization/EnvironmentsList';
+import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
+
+interface Environment {
+  id: string;
+  name: string;
+  organization_id: string;
+  environment_type?: 'production' | 'staging' | 'development';
+  status?: 'active' | 'disabled' | 'archived';
+  zones_count?: number;
+  total_records?: number;
+}
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const organizations = user?.organizations || [];
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
-  const [aggregateStats, setAggregateStats] = useState({
-    totalOrgs: organizations.length,
-    totalEnvironments: 0,
-    totalZones: 0,
-    zonesThisMonth: 0
-  });
-  const [isLoadingPlan, setIsLoadingPlan] = useState(true);
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
-  const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
-  const [planError, setPlanError] = useState(false);
   
+  // State for org view
+  const [mostRecentOrg, setMostRecentOrg] = useState<any>(null);
+  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [isLoadingOrgData, setIsLoadingOrgData] = useState(false);
+  const [totalZones, setTotalZones] = useState(0);
+
+  // Fetch most recent org data
   useEffect(() => {
-    const fetchCounts = async () => {
+    const fetchOrgData = async () => {
       if (organizations.length === 0) {
-        setIsLoadingStats(false);
         return;
       }
-      
-      setIsLoadingStats(true);
+
+      setIsLoadingOrgData(true);
       try {
-        // Fetch all environments ONCE (backend already filters by user access)
+        // Get most recent org (last in array = newest)
+        const recentOrg = organizations[organizations.length - 1];
+        setMostRecentOrg(recentOrg);
+
+        // Fetch environments for this org
         const allEnvironments = await environmentsApi.list();
-        
-        // Fetch all zones ONCE (backend already filters by user access)
-        const allZones = await zonesApi.list();
-        
-        // Filter out deleted zones
-        const activeZones = allZones.filter((zone: any) => !zone.deleted_at);
-        
-        // Count zones created this month
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-        const zonesThisMonth = activeZones.filter((zone: any) => 
-          new Date(zone.created_at) >= startOfMonth
-        ).length;
-        
-        setAggregateStats({
-          totalOrgs: organizations.length,
-          totalEnvironments: allEnvironments.length,
-          totalZones: activeZones.length,
-          zonesThisMonth: zonesThisMonth
-        });
+        const orgEnvironments = allEnvironments.filter(
+          (env: any) => env.organization_id === recentOrg.id
+        );
+
+        // Calculate total zones across environments
+        const zonesCount = orgEnvironments.reduce(
+          (sum: number, env: any) => sum + (env.zones_count || 0),
+          0
+        );
+
+        setEnvironments(orgEnvironments);
+        setTotalZones(zonesCount);
       } catch (error) {
-        console.error('Error fetching dashboard counts:', error);
-        // Keep default stats on error
+        console.error('Error fetching org data:', error);
       } finally {
-        setIsLoadingStats(false);
-      }
-    };
-    
-    fetchCounts();
-  }, [organizations]);
-
-  // Fetch subscription data for current plan display
-  useEffect(() => {
-    const fetchPlanData = async () => {
-      if (organizations.length === 0) {
-        setIsLoadingPlan(false);
-        setCurrentPlan(null);
-        return;
-      }
-
-      setIsLoadingPlan(true);
-      setPlanError(false);
-
-      try {
-        // Fetch all organizations with their subscription data
-        const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
-        
-        if (!orgsWithSubscriptions || orgsWithSubscriptions.length === 0) {
-          setCurrentPlan(null);
-          setIsLoadingPlan(false);
-          return;
-        }
-
-        // Find the most recently created organization (last in array)
-        const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
-        
-        // Extract plan name and org name - API returns them directly on the org object
-        if (mostRecentOrg?.plan_name) {
-          setCurrentPlan(mostRecentOrg.plan_name);
-          setCurrentOrgName(mostRecentOrg.organization_name || null);
-        } else {
-          setCurrentPlan(null);
-          setCurrentOrgName(null);
-        }
-      } catch (error) {
-        console.error('Error fetching plan data:', error);
-        setPlanError(true);
-        setCurrentPlan(null);
-      } finally {
-        setIsLoadingPlan(false);
+        setIsLoadingOrgData(false);
       }
     };
 
-    fetchPlanData();
+    fetchOrgData();
   }, [organizations]);
 
+  // Render welcome view for users without orgs
+  if (organizations.length === 0) {
+    return (
+      <ProtectedRoute>
+        <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
+          {/* Hero Section - Welcome */}
+          <div className="mb-8">
+            <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
+              Welcome to Javelina
+            </h1>
+            <p className="font-light text-gray-slate text-lg">
+              Get started with DNS management in just a few simple steps
+            </p>
+          </div>
+
+          {/* Content Grid - Welcome View */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Quick Actions */}
+            <Card
+              title="Quick Actions"
+              description="Common tasks and shortcuts"
+              className="lg:col-span-1"
+            >
+              <div className="space-y-4 mt-4">
+                <Link href="/pricing" className="block">
+                  <Button variant="primary" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Buy Organization
+                  </Button>
+                </Link>
+                <Link href="/profile" className="block">
+                  <Button variant="secondary" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    Your Profile
+                  </Button>
+                </Link>
+                <Link href="/settings" className="block">
+                  <Button variant="outline" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Settings
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+
+            {/* Welcome Guidance */}
+            <Card
+              title="Getting Started with Javelina"
+              description="Follow these steps to set up your DNS infrastructure"
+              className="lg:col-span-2"
+            >
+              <WelcomeGuidance />
+            </Card>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  // Render org view for users with orgs
   return (
     <ProtectedRoute>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
-      {/* Hero Section */}
-      <div className="mb-8">
-        <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
-          Innovate. Connect. Empower.
-        </h1>
-        <p className="font-light text-gray-slate text-lg">
-          Welcome back to your Javelina dashboard
-        </p>
-      </div>
+        {/* Hero Section - Custom Greeting */}
+        <div className="mb-8">
+          <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
+            Welcome back, {user?.name || 'User'}
+          </h1>
+          <p className="font-light text-gray-slate text-lg">
+            {mostRecentOrg?.name || 'Loading...'}
+          </p>
+        </div>
 
-      {/* Stats Grid - Updated for new hierarchy */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <StatCard
-            title="Total Organizations"
-            value={isLoadingStats ? "..." : aggregateStats.totalOrgs.toString()}
-            change="Your organizations"
-            changeType="neutral"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                />
-              </svg>
-            }
-          />
-
-          <StatCard
+        {/* Compact Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <CompactStatCard
             title="Total Environments"
-            value={isLoadingStats ? "..." : aggregateStats.totalEnvironments.toString()}
-            change="Across all orgs"
-            changeType="neutral"
+            value={isLoadingOrgData ? '...' : environments.length}
+            subtitle={`${environments.length === 1 ? 'environment' : 'environments'} active`}
             icon={
               <svg
-                className="w-6 h-6"
+                className="w-6 h-6 text-orange"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -170,15 +206,13 @@ export default function DashboardPage() {
               </svg>
             }
           />
-
-          <StatCard
-            title="Total DNS Zones"
-            value={isLoadingStats ? "..." : aggregateStats.totalZones.toString()}
-            change="+12 this month"
-            changeType="positive"
+          <CompactStatCard
+            title="Total Zones"
+            value={isLoadingOrgData ? '...' : totalZones}
+            subtitle="DNS zones managed"
             icon={
               <svg
-                className="w-6 h-6"
+                className="w-6 h-6 text-blue-electric"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -192,141 +226,115 @@ export default function DashboardPage() {
               </svg>
             }
           />
-      </div>
+        </div>
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <Card
-          title="Quick Actions"
-          description="Common tasks and shortcuts"
-          className="lg:col-span-1"
-        >
-          <div className="space-y-6 mt-4">
-            <Link href="/pricing" className="block">
-              <Button variant="primary" className="w-full justify-start">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Buy Organization
-              </Button>
-            </Link>
-            <Link href="/profile" className="block">
-              <Button variant="secondary" className="w-full justify-start">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                Your Profile
-              </Button>
-            </Link>
-            <Link href="/settings" className="block">
-              <Button variant="outline" className="w-full justify-start">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                Settings
-              </Button>
-            </Link>
+        {/* Content Grid - Org View */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Quick Actions */}
+          <div className="lg:col-span-1 space-y-4">
+            <Card
+              title="Quick Actions"
+              description="Common tasks and shortcuts"
+            >
+              <div className="space-y-4 mt-4">
+                <Link href="/pricing" className="block">
+                  <Button variant="primary" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Buy Organization
+                  </Button>
+                </Link>
+                <Link href="/profile" className="block">
+                  <Button variant="secondary" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    Your Profile
+                  </Button>
+                </Link>
+                <Link href="/settings" className="block">
+                  <Button variant="outline" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Settings
+                  </Button>
+                </Link>
+              </div>
+            </Card>
           </div>
-        </Card>
 
-        <Card
-          title="Newest Plan"
-          description="Most recent subscription"
-          className="lg:col-span-2"
-        >
-          <div className="flex flex-col items-center justify-center py-16">
-            {isLoadingPlan ? (
-              <>
-                <div className="w-16 h-16 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center mb-4 animate-pulse">
-                  <svg className="w-8 h-8 text-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-                <p className="text-sm text-gray-400 dark:text-gray-500">Loading plan...</p>
-              </>
-            ) : planError ? (
-              <>
-                <svg className="w-16 h-16 text-red-300 dark:text-red-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-lg font-semibold text-gray-slate dark:text-gray-400 mb-2">Unable to Load Plan</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  There was an error loading your subscription
-                </p>
-              </>
-            ) : !currentPlan ? (
-              <>
-                <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <p className="text-lg font-semibold text-gray-slate dark:text-gray-400 mb-2">No Active Plan</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Add an organization to get started
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="w-16 h-16 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-                <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">{currentPlan}</p>
-                {currentOrgName && (
-                  <p className="text-lg font-medium text-gray-slate dark:text-gray-300">
-                    {currentOrgName}
-                  </p>
-                )}
-              </>
+          {/* Org Content */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Environments List */}
+            <div>
+              <h2 className="text-xl font-bold text-orange-dark dark:text-orange mb-4">
+                Environments
+              </h2>
+              {isLoadingOrgData ? (
+                <Card>
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+                    <p className="mt-4 text-sm text-gray-slate dark:text-gray-light">
+                      Loading environments...
+                    </p>
+                  </div>
+                </Card>
+              ) : (
+                <EnvironmentsList
+                  organizationId={mostRecentOrg?.id || ''}
+                  environments={environments}
+                />
+              )}
+            </div>
+
+            {/* Invite Users Box */}
+            {mostRecentOrg && (
+              <InviteUsersBox
+                organizationId={mostRecentOrg.id}
+                organizationName={mostRecentOrg.name}
+              />
             )}
           </div>
-        </Card>
+        </div>
       </div>
-
-      {/* Bottom Section - Performance Chart (Commented out - Server metrics not implemented yet) */}
-      {/* <Card
-        title="System Performance"
-        description="Monitor your application metrics"
-      >
-        <PerformanceChart />
-      </Card> */}
-    </div>
     </ProtectedRoute>
   );
 }
