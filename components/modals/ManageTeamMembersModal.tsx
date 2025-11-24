@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
@@ -28,6 +28,14 @@ export function ManageTeamMembersModal({
 }: ManageTeamMembersModalProps) {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<string>('');
+
+  // Reset editing state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setEditingUserId(null);
+      setEditingRole('');
+    }
+  }, [isOpen]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
