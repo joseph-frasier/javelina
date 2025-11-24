@@ -364,32 +364,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         </Card>
       </div>
 
-      {/* Record Distribution */}
-      <div className="mb-6 sm:mb-8">
-        <Card title="Record Type Distribution" className="p-4 sm:p-6">
-          <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
-        </Card>
-      </div>
-
-      {/* Verification Checklist */}
-      {/* TODO: Re-enable when nameserver verification feature is ready */}
-      {/* <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <VerificationChecklist
-          nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
-          verificationStatus={zoneSummary.verificationStatus}
-          lastVerifiedAt={zoneSummary.lastVerifiedAt}
-        />
-      </Card> */}
-
-      {/* Audit Timeline */}
-      <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <AuditTimeline
-          auditLogs={auditLogs}
-          onDiffClick={setSelectedLog}
-        />
-      </Card>
-
-      {/* DNS Records Table */}
+      {/* DNS Records Table - Moved to top as primary action */}
       <Card 
         title="DNS Records" 
         className="p-4 sm:p-6 mb-6 sm:mb-8"
@@ -414,6 +389,31 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           nameservers={zone.nameservers}
           soaSerial={zone.soa_serial}
           defaultTTL={zone.ttl}
+        />
+      </Card>
+
+      {/* Record Distribution */}
+      <div className="mb-6 sm:mb-8">
+        <Card title="Record Type Distribution" className="p-4 sm:p-6">
+          <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
+        </Card>
+      </div>
+
+      {/* Verification Checklist */}
+      {/* TODO: Re-enable when nameserver verification feature is ready */}
+      {/* <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        <VerificationChecklist
+          nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
+          verificationStatus={zoneSummary.verificationStatus}
+          lastVerifiedAt={zoneSummary.lastVerifiedAt}
+        />
+      </Card> */}
+
+      {/* Audit Timeline */}
+      <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        <AuditTimeline
+          auditLogs={auditLogs}
+          onDiffClick={setSelectedLog}
         />
       </Card>
 
