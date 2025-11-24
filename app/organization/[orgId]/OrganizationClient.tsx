@@ -14,6 +14,7 @@ import { subscriptionsApi } from '@/lib/api-client';
 import { CompactStatCard } from '@/components/dashboard/CompactStatCard';
 import { EnvironmentsList } from '@/components/organization/EnvironmentsList';
 import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
+import { ZonesList } from '@/components/organization/ZonesList';
 import { useAuthStore } from '@/lib/auth-store';
 
 interface Environment {
@@ -31,6 +32,15 @@ interface Environment {
   total_records?: number;
 }
 
+interface Zone {
+  id: string;
+  name: string;
+  environment_id: string;
+  environment_name: string;
+  status: 'active' | 'inactive';
+  records_count: number;
+}
+
 interface ActivityLog {
   action: string;
   target: string;
@@ -46,6 +56,7 @@ interface OrganizationData {
   environments: Environment[];
   environmentsCount: number;
   zonesCount: number;
+  zones: Zone[];
   recentActivity: ActivityLog[];
   created_at: string;
   updated_at: string;
@@ -197,8 +208,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
         {/* Content Grid - Org View */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Quick Actions */}
+          {/* Left Column - Quick Actions & Team Members */}
           <div className="lg:col-span-1 space-y-4">
+            {/* Quick Actions */}
             <Card
               title="Quick Actions"
               description="Common tasks and shortcuts"
@@ -266,9 +278,15 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                 </Link>
               </div>
             </Card>
+
+            {/* Team Members */}
+            <InviteUsersBox
+              organizationId={org.id}
+              organizationName={org.name}
+            />
           </div>
 
-          {/* Org Content */}
+          {/* Right Column - Environments & Zones */}
           <div className="lg:col-span-2 space-y-4">
             {/* Environments List */}
             <EnvironmentsList
@@ -276,10 +294,10 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               environments={org.environments}
             />
 
-            {/* Invite Users Box */}
-            <InviteUsersBox
+            {/* Zones List */}
+            <ZonesList
               organizationId={org.id}
-              organizationName={org.name}
+              zones={org.zones}
             />
           </div>
         </div>
