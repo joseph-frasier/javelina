@@ -113,7 +113,7 @@ export function ManageTeamMembersModal({
         </div>
 
         {/* Users List */}
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-3">
           {users.map((user) => (
             <div
               key={user.id}
