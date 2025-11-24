@@ -355,7 +355,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
           </div>
         </nav>
 
-        {/* Add Organization Button */}
+        {/* Buy Organization Button */}
         <div className="flex-shrink-0 p-4 border-t border-gray-light flex justify-center">
           <button
             onClick={() => setIsAddOrgModalOpen(true)}
@@ -364,7 +364,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            <span>Add Organization</span>
+            <span>Buy Organization</span>
           </button>
         </div>
       </aside>
@@ -407,7 +407,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
           <button
             onClick={() => router.push('/pricing')}
             className="flex items-center gap-1.5 px-4 py-1.5 bg-orange hover:bg-orange-dark text-white text-sm rounded transition-colors"
-            title="Add Organization"
+            title="Buy Organization"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -417,7 +417,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            <span>Add Organization</span>
+            <span>Buy Organization</span>
           </button>
         </div>
       )}
@@ -426,8 +426,8 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
           <button
             onClick={() => setIsAddOrgModalOpen(true)}
             className="w-full flex items-center justify-center p-2 bg-orange hover:bg-orange-dark text-white rounded-md transition-colors"
-            title="Add Organization"
-            aria-label="Add Organization"
+            title="Buy Organization"
+            aria-label="Buy Organization"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
