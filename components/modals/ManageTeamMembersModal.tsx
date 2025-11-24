@@ -242,7 +242,7 @@ export function ManageTeamMembersModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end pt-4 border-t border-gray-light dark:border-gray-slate">
+        <div className="flex justify-end pt-4">
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
