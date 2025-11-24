@@ -90,7 +90,7 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
     const plan: Plan = {
       id: baseCode,
       code: dbPlan.code,
-      name: dbPlan.name.replace(' Lifetime', ''),
+      name: dbPlan.name, // Keep "Lifetime" in the name
       description: dbPlan.metadata?.description || '',
       popular: baseCode === 'pro_lifetime', // Mark Pro as popular
       limits: {
@@ -280,7 +280,7 @@ const FALLBACK_PLANS: Plan[] = [
   {
     id: 'starter_lifetime',
     code: 'starter_lifetime',
-    name: 'Starter',
+    name: 'Starter Lifetime',
     description: 'Perfect for small projects and testing',
     popular: false,
     monthly: {
@@ -316,7 +316,7 @@ const FALLBACK_PLANS: Plan[] = [
   {
     id: 'pro_lifetime',
     code: 'pro_lifetime',
-    name: 'Pro',
+    name: 'Pro Lifetime',
     description: 'For growing teams and production workloads',
     popular: true,
     monthly: {
@@ -352,7 +352,7 @@ const FALLBACK_PLANS: Plan[] = [
   {
     id: 'premium_lifetime',
     code: 'premium_lifetime',
-    name: 'Business',
+    name: 'Business Lifetime',
     description: 'Advanced features for enterprise teams',
     popular: false,
     monthly: {
@@ -388,7 +388,7 @@ const FALLBACK_PLANS: Plan[] = [
   {
     id: 'enterprise_lifetime',
     code: 'enterprise_lifetime',
-    name: 'Enterprise',
+    name: 'Enterprise Lifetime',
     description: 'Custom solutions for large organizations',
     popular: false,
     features: [
