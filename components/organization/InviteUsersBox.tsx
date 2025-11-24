@@ -42,6 +42,18 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
             email: 'user@example.com',
             role: 'SuperAdmin',
           },
+          {
+            id: '2',
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            role: 'Admin',
+          },
+          {
+            id: '3',
+            name: 'Jane Smith',
+            email: 'jane.smith@example.com',
+            role: 'Editor',
+          },
         ];
         
         setUsers(mockUsers);
