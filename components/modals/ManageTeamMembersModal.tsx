@@ -151,7 +151,7 @@ export function ManageTeamMembersModal({
                 <div className="flex items-center space-x-2 flex-shrink-0">
                   {editingUserId === user.id ? (
                     <div className="flex items-center space-x-2">
-                      <div className="w-48">
+                      <div className="w-48 relative z-[100]">
                         <Dropdown
                           value={editingRole}
                           onChange={setEditingRole}

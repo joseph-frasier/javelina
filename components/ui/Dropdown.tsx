@@ -83,7 +83,7 @@ export default function Dropdown({
 
       {/* Dropdown Menu - Positioned Below */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-[9999] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
           {options.map((option) => (
             <button
               key={option.value}
