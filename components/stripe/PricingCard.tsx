@@ -88,7 +88,7 @@ export function PricingCard({
       <Button
         variant="outline"
         size="md"
-        className="w-full mt-auto"
+        className="w-full mt-6"
         onClick={() => onSelect(plan.id)}
         disabled={disabled}
       >
