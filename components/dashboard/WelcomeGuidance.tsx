@@ -7,7 +7,7 @@ export function WelcomeGuidance() {
   const steps = [
     {
       number: 1,
-      title: 'Buy/Subscribe to Organization',
+      title: 'Buy an Organization',
       description: 'Choose a plan that fits your needs',
       link: '/pricing',
       linkText: 'View Plans',
