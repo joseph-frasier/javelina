@@ -126,14 +126,12 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                 Add Environment
               </Button>
             )}
-            <Link href="/pricing">
-              <Button variant="secondary" size="sm" className="justify-center w-full">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                Upgrade Plan
-              </Button>
-            </Link>
+            <Button variant="secondary" size="sm" onClick={() => console.log('Upgrade Plan - TODO')} className="justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              Upgrade Plan
+            </Button>
             {canEditOrg && (
               <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,10 +271,15 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           {/* Org Content */}
           <div className="lg:col-span-2 space-y-4">
             {/* Environments List */}
-            <EnvironmentsList
-              organizationId={org.id}
-              environments={org.environments}
-            />
+            <div>
+              <h2 className="text-xl font-bold text-orange-dark dark:text-orange mb-4">
+                Environments
+              </h2>
+              <EnvironmentsList
+                organizationId={org.id}
+                environments={org.environments}
+              />
+            </div>
 
             {/* Invite Users Box */}
             <InviteUsersBox
@@ -312,4 +315,3 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     </>
   );
 }
-
