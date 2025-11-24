@@ -189,6 +189,7 @@ export function ManageTeamMembersModal({
                         variant="secondary"
                         size="sm"
                         onClick={() => handleEditRole(user.id, user.role)}
+                        className="!bg-orange hover:!bg-orange-dark !text-white"
                       >
                         <svg
                           className="w-4 h-4"
@@ -208,7 +209,7 @@ export function ManageTeamMembersModal({
                         variant="secondary"
                         size="sm"
                         onClick={() => handleRemoveUser(user.id, user.name)}
-                        className="!text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/20"
+                        className="!bg-red-600 hover:!bg-red-700 !text-white"
                       >
                         <svg
                           className="w-4 h-4"
