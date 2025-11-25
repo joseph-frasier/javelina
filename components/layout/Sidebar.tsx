@@ -314,22 +314,8 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
 
         {/* Content */}
         <nav className="flex-1 overflow-y-auto p-4 pb-24">
-          {/* Dashboard & Analytics Links */}
+          {/* Analytics Link */}
           <div className="mb-4 space-y-1 pb-4 border-b border-gray-light dark:border-gray-700">
-            <Link
-              href="/"
-              onClick={onMobileMenuClose}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                pathname === '/' 
-                  ? 'bg-orange text-white' 
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span className="font-medium">Dashboard</span>
-            </Link>
             <Link
               href="/analytics"
               onClick={onMobileMenuClose}
