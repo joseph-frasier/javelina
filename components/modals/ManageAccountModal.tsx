@@ -64,8 +64,26 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
     }
   }, [isOpen, user]);
 
+  // Email validation helper
+  const isValidEmail = (email: string): boolean => {
+    if (!email.trim()) return true; // Empty is okay (optional field)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate email formats
+    if (formData.billing_email && !isValidEmail(formData.billing_email)) {
+      addToast('error', 'Please enter a valid billing email address');
+      return;
+    }
+
+    if (formData.admin_email && !isValidEmail(formData.admin_email)) {
+      addToast('error', 'Please enter a valid admin email address');
+      return;
+    }
 
     setIsLoading(true);
 
