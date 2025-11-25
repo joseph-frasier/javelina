@@ -244,8 +244,9 @@ export function SubscriptionManager({
         </div>
       </div>
 
+      {/* TODO: Uncomment when integrating Launch Darkly for feature-based resource limits */}
       {/* Usage Meters - Currently showing unlimited for all resources */}
-      {usage && (
+      {/* {usage && (
         <div className="bg-white rounded-xl border border-gray-light shadow-sm p-6">
           <h3 className="text-lg font-bold text-orange-dark mb-4">Resource Usage</h3>
           <div className="space-y-4">
@@ -272,7 +273,7 @@ export function SubscriptionManager({
             />
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Change Plan Modal */}
       {isSubscriptionPlan && (
