@@ -410,6 +410,7 @@ export function EnvironmentClient({
         environmentId={envId}
         environmentName={environment.name}
         organizationId={orgId}
+        organizationName={organization.name}
         onSuccess={handleZoneSuccess}
       />
 
