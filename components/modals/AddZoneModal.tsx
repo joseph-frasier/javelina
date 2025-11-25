@@ -18,8 +18,8 @@ interface Environment {
 interface AddZoneModalProps {
   isOpen: boolean;
   onClose: () => void;
-  environmentId: string;
-  environmentName: string;
+  environmentId?: string;
+  environmentName?: string;
   organizationId: string;
   environments?: Environment[];
   onSuccess?: (zoneId: string) => void;
@@ -50,10 +50,10 @@ export function AddZoneModal({
   const needsEnvironmentSelection = !!environments;
   
   // Get the actual environment ID and name to use
-  const actualEnvironmentId = needsEnvironmentSelection ? selectedEnvironmentId : environmentId;
+  const actualEnvironmentId = needsEnvironmentSelection ? selectedEnvironmentId : (environmentId || '');
   const actualEnvironmentName = needsEnvironmentSelection 
     ? environments?.find(env => env.id === selectedEnvironmentId)?.name || ''
-    : environmentName;
+    : (environmentName || '');
 
   // Reset selected environment when modal opens/closes
   useEffect(() => {
