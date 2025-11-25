@@ -11,6 +11,7 @@ interface SubscriptionManagerProps {
   onChangePlan?: () => void;
   onManageBilling?: () => void;
   onCancelSubscription?: () => void;
+  refreshTrigger?: number;
 }
 
 export function SubscriptionManager({
@@ -18,6 +19,7 @@ export function SubscriptionManager({
   onChangePlan,
   onManageBilling,
   onCancelSubscription,
+  refreshTrigger,
 }: SubscriptionManagerProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -65,6 +67,13 @@ export function SubscriptionManager({
   useEffect(() => {
     fetchSubscriptionData();
   }, [fetchSubscriptionData]);
+
+  // Refresh data when refreshTrigger changes (e.g., after plan upgrade from modal)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchSubscriptionData();
+    }
+  }, [refreshTrigger, fetchSubscriptionData]);
 
   if (loading) {
     return (

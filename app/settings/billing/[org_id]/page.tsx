@@ -25,6 +25,7 @@ export default function OrganizationBillingPage() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -163,8 +164,9 @@ export default function OrganizationBillingPage() {
   const handleChangePlanSuccess = async () => {
     // This is called after the ChangePlanModal successfully updates the plan
     // The modal already handles the API call and waiting for webhook
-    // Just need to refresh the data here
+    // Refresh both the page's plan data and trigger SubscriptionManager to refresh
     await fetchCurrentPlan();
+    setRefreshTrigger(prev => prev + 1);
   };
 
   if (loading || !hasAccess) {
@@ -225,6 +227,7 @@ export default function OrganizationBillingPage() {
               onChangePlan={handleChangePlan}
               onManageBilling={handleManageBilling}
               onCancelSubscription={handleCancelSubscription}
+              refreshTrigger={refreshTrigger}
             />
           )}
         </div>
