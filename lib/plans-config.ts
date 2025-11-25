@@ -59,6 +59,7 @@ interface DbPlan {
     price: number;
     price_id: string;
     description?: string;
+    contact_sales?: boolean;
   };
   entitlements?: Array<{
     key: string;
