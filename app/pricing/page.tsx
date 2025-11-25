@@ -236,6 +236,59 @@ function PricingContent() {
           </div>
         </div>
 
+        {/* Enterprise Lifetime Plan - Full Width */}
+        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
+          <div key={plan.id} className="mb-12 bg-white rounded-xl p-6 border-2 border-gray-light shadow-lg">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+              {/* Left: Plan Info */}
+              <div className="flex-1">
+                <div className="mb-4">
+                  <h3 className="text-2xl font-bold text-orange-dark mb-2">
+                    {plan.name}
+                  </h3>
+                  <p className="text-sm text-gray-slate font-light">
+                    {plan.description}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-3">
+                  {plan.features.filter(f => f.included).map((feature, index) => (
+                    <div key={index} className="flex items-start">
+                      <svg
+                        className="w-5 h-5 text-orange mr-3 flex-shrink-0 mt-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span className="text-sm text-gray-slate font-regular">
+                        {feature.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Button */}
+              <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full md:w-auto px-8"
+                  onClick={() => handleSelectPlan(plan.id)}
+                >
+                  Contact Us
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+
         {/* Monthly Subscription Plans Section */}
         <div className="mb-12">
           <div className="text-center mb-6">
@@ -274,8 +327,8 @@ function PricingContent() {
           </div>
         </div>
 
-        {/* Enterprise Plan - Full Width Bottom Section */}
-        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime' || plan.id === 'enterprise').map((plan) => (
+        {/* Enterprise Subscription Plan - Full Width Bottom Section */}
+        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (
           <div key={plan.id} className="mb-8 bg-white rounded-xl p-6 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
               {/* Left: Plan Info */}
