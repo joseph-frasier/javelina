@@ -167,7 +167,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               </svg>
               Add Zone
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => console.log('Upgrade Plan - TODO')} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
+            <Button variant="secondary" size="sm" onClick={() => router.push(`/settings/billing/${org.id}?openModal=true`)} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>

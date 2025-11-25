@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Button from '@/components/ui/Button';
 import { fetchPlans, type Plan } from '@/lib/plans-config';
 import { useToastStore } from '@/lib/toast-store';
 import { stripeApi } from '@/lib/api-client';
@@ -30,6 +29,7 @@ export function ChangePlanModal({
   useEffect(() => {
     if (isOpen) {
       loadPlans();
+      setSelectedPlanCode(null); // Reset selection when opening
     }
   }, [isOpen]);
 
@@ -41,8 +41,7 @@ export function ChangePlanModal({
       // Filter to show only subscription plans (not lifetime or enterprise)
       const subscriptionPlans = allPlans.filter(
         plan => !plan.code.includes('_lifetime') && 
-                plan.code !== 'enterprise' &&
-                plan.code !== currentPlanCode // Exclude current plan
+                plan.code !== 'enterprise'
       );
       
       setPlans(subscriptionPlans);
@@ -54,15 +53,23 @@ export function ChangePlanModal({
     }
   };
 
-  const handleChangePlan = async () => {
+  const handleSelectPlan = (planCode: string) => {
+    if (planCode === currentPlanCode) {
+      addToast('info', 'You are already on this plan');
+      return;
+    }
+    setSelectedPlanCode(planCode);
+  };
+
+  const handleConfirmChange = async () => {
     if (!selectedPlanCode) {
       addToast('error', 'Please select a plan');
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
-      
       // 1. Call backend API to update subscription in Stripe
       await stripeApi.updateSubscription(orgId, selectedPlanCode);
       
@@ -78,6 +85,7 @@ export function ChangePlanModal({
     } catch (error: any) {
       console.error('Failed to change plan:', error);
       addToast('error', error.message || 'Failed to update subscription plan');
+      setSelectedPlanCode(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -86,17 +94,22 @@ export function ChangePlanModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="border-b border-gray-light p-6">
+        <div className="border-b border-gray-700 p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-orange-dark">
-              Change Subscription Plan
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold text-orange">
+                Change Subscription Plan
+              </h2>
+              <p className="text-sm text-gray-400 mt-1">
+                Select a new plan to upgrade or downgrade your subscription. Changes take effect immediately.
+              </p>
+            </div>
             <button
               onClick={onClose}
-              className="text-gray-slate hover:text-orange-dark transition-colors"
+              className="text-gray-400 hover:text-white transition-colors"
               disabled={isSubmitting}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,95 +117,146 @@ export function ChangePlanModal({
               </svg>
             </button>
           </div>
-          <p className="text-sm text-gray-slate mt-2">
-            Select a new plan to upgrade or downgrade your subscription. Changes take effect immediately.
-          </p>
         </div>
 
         {/* Content */}
         <div className="p-6">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
             </div>
           ) : (
-            <div className="space-y-4">
-              {plans.map((plan) => (
-                <div
-                  key={plan.id}
-                  onClick={() => setSelectedPlanCode(plan.code)}
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                    selectedPlanCode === plan.code
-                      ? 'border-orange bg-orange-light/30'
-                      : 'border-gray-light hover:border-orange/50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-bold text-orange-dark">
-                          {plan.name}
-                        </h3>
-                        {plan.popular && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange text-white">
+            <>
+              {/* Plan Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                {plans.map((plan) => {
+                  const isCurrent = plan.code === currentPlanCode;
+                  const isSelected = selectedPlanCode === plan.code;
+
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative rounded-xl p-6 transition-all ${
+                        isCurrent
+                          ? 'bg-[#252525] border-2 border-orange'
+                          : isSelected
+                          ? 'bg-[#252525] border-2 border-orange ring-2 ring-orange/50'
+                          : 'bg-[#252525] border-2 border-[#333] hover:border-orange/50'
+                      }`}
+                    >
+                      {/* Popular Badge */}
+                      {plan.popular && !isCurrent && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange text-white uppercase">
                             Popular
                           </span>
-                        )}
+                        </div>
+                      )}
+
+                      {/* Current Plan Badge */}
+                      {isCurrent && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange text-white uppercase">
+                            Current Plan
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Plan Name */}
+                      <h3 className="text-xl font-bold text-orange mb-2">
+                        {plan.name}
+                      </h3>
+
+                      {/* Price */}
+                      <div className="mb-4">
+                        <div className="text-4xl font-black text-white">
+                          ${plan.monthly?.amount.toFixed(2)}
+                        </div>
+                        <div className="text-sm text-gray-400 uppercase tracking-wide mt-1">
+                          /month
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-slate mb-3">
+
+                      {/* Description */}
+                      <p className="text-sm text-gray-400 mb-6">
                         {plan.description}
                       </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {plan.features.slice(0, 4).map((feature, idx) => (
-                          <div key={idx} className="flex items-start">
-                            <svg className="w-4 h-4 text-orange mr-1.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                      {/* Features */}
+                      <ul className="space-y-3 mb-6">
+                        {plan.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-xs text-gray-slate">
+                            <span className="text-sm text-gray-300">
                               {feature.name}
                             </span>
-                          </div>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
+
+                      {/* Action Button */}
+                      {isCurrent ? (
+                        <button
+                          disabled
+                          className="w-full py-3 px-4 rounded-lg font-bold border-2 border-orange text-orange cursor-not-allowed opacity-60"
+                        >
+                          Current Plan
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleSelectPlan(plan.code)}
+                          disabled={isSubmitting}
+                          className={`w-full py-3 px-4 rounded-lg font-bold transition-colors ${
+                            isSelected
+                              ? 'bg-orange text-white border-2 border-orange'
+                              : 'bg-transparent border-2 border-orange text-orange hover:bg-orange hover:text-white'
+                          }`}
+                        >
+                          {isSelected ? 'Selected' : 'Select'}
+                        </button>
+                      )}
                     </div>
-                    <div className="text-right ml-4">
-                      <div className="text-2xl font-black text-orange-dark">
-                        ${plan.monthly?.amount.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-gray-slate">
-                        /month
-                      </div>
+                  );
+                })}
+              </div>
+
+              {/* Confirmation Section */}
+              {selectedPlanCode && (
+                <div className="bg-[#252525] border border-[#333] rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">
+                        Your card will be charged the prorated difference immediately.
+                      </p>
+                      {plans.find(p => p.code === selectedPlanCode) && (
+                        <p className="text-white font-semibold">
+                          Selected: {plans.find(p => p.code === selectedPlanCode)?.name} - ${plans.find(p => p.code === selectedPlanCode)?.monthly?.amount.toFixed(2)}/month
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setSelectedPlanCode(null)}
+                        disabled={isSubmitting}
+                        className="px-6 py-3 rounded-lg font-bold border-2 border-gray-600 text-gray-300 hover:border-gray-500 transition-colors disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleConfirmChange}
+                        disabled={isSubmitting}
+                        className="px-6 py-3 rounded-lg font-bold bg-orange hover:bg-orange-dark text-white transition-colors disabled:opacity-50 disabled:cursor-wait min-w-[180px]"
+                      >
+                        {isSubmitting ? 'Updating subscription...' : 'Confirm Change'}
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-light p-6 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-slate">
-              Your card will be charged the prorated difference immediately.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleChangePlan}
-                disabled={!selectedPlanCode || isSubmitting}
-              >
-                {isSubmitting ? 'Updating subscription...' : 'Confirm Change'}
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
