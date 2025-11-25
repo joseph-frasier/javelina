@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { UsageMeter } from './UsageMeter';
 import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
@@ -18,6 +19,7 @@ export function SubscriptionManager({
   onManageBilling,
   onCancelSubscription,
 }: SubscriptionManagerProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<CurrentSubscriptionResponse | null>(null);
@@ -183,19 +185,61 @@ export function SubscriptionManager({
                   Cancel Subscription
                 </button>
               )}
+              <button
+                onClick={() => router.push(`/organization/${orgId}`)}
+                className="ml-auto px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors flex items-center gap-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                <span>Back to Organization</span>
+              </button>
             </div>
           )}
           
           {/* Lifetime plan message - only for lifetime plans */}
           {!isSubscriptionPlan && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <p className="text-sm text-blue-900">
-                <strong>Lifetime plan:</strong> You have a lifetime subscription with a one-time payment. To modify your plan, please contact our sales team at{' '}
-                <a href="mailto:sales@javelina.io" className="text-blue-600 hover:text-blue-700 underline font-medium">
-                  sales@javelina.io
-                </a>
-              </p>
-            </div>
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <p className="text-sm text-blue-900">
+                  <strong>Lifetime plan:</strong> You have a lifetime subscription with a one-time payment. To modify your plan, please contact our sales team at{' '}
+                  <a href="mailto:sales@javelina.io" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                    sales@javelina.io
+                  </a>
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => router.push(`/organization/${orgId}`)}
+                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors flex items-center gap-2"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span>Back to Organization</span>
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
