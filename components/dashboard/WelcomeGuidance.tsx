@@ -9,8 +9,6 @@ export function WelcomeGuidance() {
       number: 1,
       title: 'Buy an Organization',
       description: 'Choose a plan that fits your needs',
-      link: '/pricing',
-      linkText: 'View Plans',
     },
     {
       number: 2,

@@ -263,4 +263,3 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
     </>
   );
 }
-

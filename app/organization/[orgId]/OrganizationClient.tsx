@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { canCreateEnvironment } from '@/lib/permissions';
 import { AddEnvironmentModal } from '@/components/modals/AddEnvironmentModal';
+import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
 import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
@@ -71,6 +72,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   const [isAddEnvModalOpen, setIsAddEnvModalOpen] = useState(false);
+  const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
@@ -117,6 +119,21 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     checkPlan();
   }, [org.id]);
 
+  // Get plan badge color based on plan name
+  const getPlanBadgeColor = (plan: string | null) => {
+    if (!plan) return 'bg-gray-600';
+    
+    const planLower = plan.toLowerCase();
+    if (planLower.includes('premium') || planLower.includes('lifetime')) {
+      return 'bg-gradient-to-r from-orange to-orange-dark';
+    } else if (planLower.includes('pro') || planLower.includes('professional')) {
+      return 'bg-blue-electric';
+    } else if (planLower.includes('basic') || planLower.includes('starter')) {
+      return 'bg-gray-600';
+    }
+    return 'bg-blue-electric';
+  };
+
   return (
     <>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
@@ -126,7 +143,14 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
               Welcome back, {user?.name || 'User'}
             </h1>
-            <p className="font-light text-gray-slate text-lg">{org.name}</p>
+            <div className="flex items-center gap-3">
+              <p className="font-light text-gray-slate text-lg">{org.name}</p>
+              {!isLoadingPlan && planName && (
+                <span className={`${getPlanBadgeColor(planName)} text-white text-xs font-semibold px-3 py-1 rounded-full`}>
+                  {planName}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
             {canAddEnvironment && (
@@ -137,14 +161,20 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                 Add Environment
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={() => console.log('Upgrade Plan - TODO')} className="justify-center">
+            <Button variant="secondary" size="sm" onClick={() => setIsAddZoneModalOpen(true)} className="justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Add Zone
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => console.log('Upgrade Plan - TODO')} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
               Upgrade Plan
             </Button>
             {canEditOrg && (
-              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="justify-center">
+              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -283,6 +313,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             <InviteUsersBox
               organizationId={org.id}
               organizationName={org.name}
+              planName={planName}
             />
           </div>
 
@@ -310,6 +341,20 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         organizationId={org.id}
         organizationName={org.name}
         onSuccess={handleEnvironmentSuccess}
+      />
+
+      {/* Add Zone Modal */}
+      <AddZoneModal
+        isOpen={isAddZoneModalOpen}
+        onClose={() => setIsAddZoneModalOpen(false)}
+        organizationId={org.id}
+        organizationName={org.name}
+        environmentId=""
+        environmentName=""
+        environments={org.environments.map(env => ({
+          id: env.id,
+          name: env.name
+        }))}
       />
 
       {/* Edit Organization Modal */}
