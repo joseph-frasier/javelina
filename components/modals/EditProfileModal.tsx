@@ -19,14 +19,21 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: '',
+    first_name: '',
+    last_name: '',
     title: '',
   });
 
   useEffect(() => {
     if (isOpen && user) {
+      // Parse existing name into first/last if possible
+      const nameParts = (user.name || '').split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       setFormData({
-        name: user.name || '',
+        first_name: user.first_name || firstName,
+        last_name: user.last_name || lastName,
         title: user.title || '',
       });
     }
@@ -35,8 +42,13 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim()) {
-      addToast('error', 'Name is required');
+    if (!formData.first_name.trim()) {
+      addToast('error', 'First name is required');
+      return;
+    }
+
+    if (!formData.last_name.trim()) {
+      addToast('error', 'Last name is required');
       return;
     }
 
@@ -45,11 +57,16 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
     try {
       const supabase = createClient();
       
+      // Combine first and last name for the name field (for backward compatibility)
+      const fullName = `${formData.first_name.trim()} ${formData.last_name.trim()}`;
+      
       // Update the user's profile in the profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
-          name: formData.name.trim(),
+          name: fullName,
+          first_name: formData.first_name.trim(),
+          last_name: formData.last_name.trim(),
           title: formData.title.trim() || null,
           updated_at: new Date().toISOString(),
         })
@@ -59,7 +76,9 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
 
       // Update the local auth store
       await updateProfile({
-        name: formData.name.trim(),
+        name: fullName,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
         title: formData.title.trim() || undefined,
       });
 
@@ -75,8 +94,13 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
 
   const handleCancel = () => {
     if (user) {
+      const nameParts = (user.name || '').split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       setFormData({
-        name: user.name || '',
+        first_name: user.first_name || firstName,
+        last_name: user.last_name || lastName,
         title: user.title || '',
       });
     }
@@ -84,25 +108,44 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel} title="Edit Profile">
+    <Modal isOpen={isOpen} onClose={handleCancel} title="Edit Profile" size="medium">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name Field */}
-        <div>
-          <label 
-            htmlFor="name" 
-            className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-          >
-            Name <span className="text-red-500">*</span>
-          </label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="Your full name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            disabled={isLoading}
-            required
-          />
+        {/* First Name & Last Name - Side by Side */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label 
+              htmlFor="first_name" 
+              className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
+            >
+              First Name <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="first_name"
+              type="text"
+              placeholder="First name"
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <div>
+            <label 
+              htmlFor="last_name" 
+              className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
+            >
+              Last Name <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="last_name"
+              type="text"
+              placeholder="Last name"
+              value={formData.last_name}
+              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              disabled={isLoading}
+              required
+            />
+          </div>
         </div>
 
         {/* Title Field */}
@@ -152,4 +195,3 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
     </Modal>
   );
 }
-

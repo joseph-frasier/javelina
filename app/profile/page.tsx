@@ -6,14 +6,19 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { AvatarUpload } from '@/components/ui/AvatarUpload';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
-import { useState, useEffect, useRef } from 'react';
+import { ManageAccountModal } from '@/components/modals/ManageAccountModal';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { subscriptionsApi } from '@/lib/api-client';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, updateProfile } = useAuthStore();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showManageAccountModal, setShowManageAccountModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [subscriptionCount, setSubscriptionCount] = useState(0);
+  const [billingLoading, setBillingLoading] = useState(true);
   const itemsPerPage = 10;
 
   const handleAvatarUpdate = (avatarUrl: string | null) => {
@@ -38,8 +43,33 @@ export default function ProfilePage() {
     window.scrollTo(0, 0);
   }, []);
 
+  // Fetch subscription count for billing summary
+  useEffect(() => {
+    const fetchSubscriptions = async () => {
+      setBillingLoading(true);
+      try {
+        const data = await subscriptionsApi.getAllWithSubscriptions();
+        const activeCount = Array.isArray(data) 
+          ? data.filter((item: any) => item.status === 'active' || item.status === 'trialing').length 
+          : 0;
+        setSubscriptionCount(activeCount);
+      } catch (error) {
+        console.error('Error fetching subscriptions:', error);
+        setSubscriptionCount(0);
+      } finally {
+        setBillingLoading(false);
+      }
+    };
+
+    fetchSubscriptions();
+  }, []);
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleManageBilling = () => {
+    router.push('/settings?section=billing');
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -102,16 +132,80 @@ export default function ProfilePage() {
                     SuperUser
                   </p>
                 )}
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 justify-center">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowEditModal(true)}
-                    className="flex-1 sm:flex-none"
+                    className="text-sm px-3"
                   >
                     Edit Profile
                   </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowManageAccountModal(true)}
+                    className="text-sm px-3"
+                  >
+                    Manage Account
+                  </Button>
                 </div>
+              </div>
+            </Card>
+
+            {/* Billing Summary Card */}
+            <Card className="p-4 sm:p-6">
+              <div className="flex flex-col">
+                <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-3">
+                  Billing Summary
+                </h3>
+                <div className="flex items-center justify-between mb-4 p-3 bg-blue-electric/5 dark:bg-blue-electric/10 rounded-lg border border-blue-electric/20">
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="w-5 h-5 text-blue-electric"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-slate dark:text-white">
+                      {billingLoading ? 'Loading...' : `${subscriptionCount} active ${subscriptionCount === 1 ? 'subscription' : 'subscriptions'}`}
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleManageBilling}
+                  className="w-full justify-center"
+                >
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Manage Billing
+                </Button>
               </div>
             </Card>
 
@@ -159,7 +253,7 @@ export default function ProfilePage() {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+                <div className="flex items-center justify-center gap-2 mt-6">
                   <Button
                     variant="outline"
                     size="sm"
@@ -195,6 +289,12 @@ export default function ProfilePage() {
       <EditProfileModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
+      />
+
+      {/* Manage Account Modal */}
+      <ManageAccountModal
+        isOpen={showManageAccountModal}
+        onClose={() => setShowManageAccountModal(false)}
       />
     </ProtectedRoute>
   );

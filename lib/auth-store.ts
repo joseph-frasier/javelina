@@ -39,6 +39,17 @@ export interface User {
   sso_connected?: boolean
   last_login?: string
   organizations?: Organization[]
+  // New profile fields
+  first_name?: string
+  last_name?: string
+  billing_email?: string
+  billing_phone?: string
+  billing_address?: string
+  billing_city?: string
+  billing_state?: string
+  billing_zip?: string
+  admin_email?: string
+  admin_phone?: string
 }
 
 interface AuthState {
