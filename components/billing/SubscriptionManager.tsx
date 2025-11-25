@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { UsageMeter } from './UsageMeter';
+import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
 
 interface SubscriptionManagerProps {
@@ -21,6 +22,7 @@ export function SubscriptionManager({
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<CurrentSubscriptionResponse | null>(null);
   const [usage, setUsage] = useState<OrgUsageWithLimits | null>(null);
+  const [showChangePlanModal, setShowChangePlanModal] = useState(false);
 
   const fetchSubscriptionData = useCallback(async () => {
     try {
@@ -90,6 +92,19 @@ export function SubscriptionManager({
     ? statusColors[subscription.subscription.status] || 'bg-gray-100 text-gray-800'
     : 'bg-gray-100 text-gray-800';
 
+  // Check if this is a subscription plan (not lifetime)
+  const isSubscriptionPlan = subscription?.plan?.billing_interval === 'month';
+  const currentPlanCode = subscription?.plan?.code || '';
+
+  const handleChangePlan = () => {
+    setShowChangePlanModal(true);
+  };
+
+  const handleChangePlanSuccess = () => {
+    // Refresh subscription data
+    fetchSubscriptionData();
+  };
+
   return (
     <div className="space-y-6">
       {/* Current Plan Card */}
@@ -143,21 +158,19 @@ export function SubscriptionManager({
 
         {/* Actions */}
         <div className="space-y-4">
-          {/* Only show buttons for regular subscription plans */}
-          {subscription?.plan?.billing_interval !== null && (
+          {/* Show buttons for monthly subscription plans only */}
+          {isSubscriptionPlan && (
             <div className="flex flex-wrap gap-3">
-              {onChangePlan && (
-                <button
-                  onClick={onChangePlan}
-                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-                >
-                  Change Plan
-                </button>
-              )}
+              <button
+                onClick={handleChangePlan}
+                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+              >
+                Change Plan
+              </button>
               {onManageBilling && (
                 <button
                   onClick={onManageBilling}
-                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                  className="px-4 py-2 bg-white text-orange border border-orange rounded-md font-medium hover:bg-orange-light transition-colors"
                 >
                   Manage Billing
                 </button>
@@ -174,10 +187,10 @@ export function SubscriptionManager({
           )}
           
           {/* Lifetime plan message - only for lifetime plans */}
-          {subscription?.plan?.billing_interval === null && (
+          {!isSubscriptionPlan && (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <p className="text-sm text-blue-900">
-                <strong>Lifetime plan changes:</strong> To upgrade, downgrade, or modify your lifetime plan, please contact our sales team at{' '}
+                <strong>Lifetime plan:</strong> You have a lifetime subscription with a one-time payment. To modify your plan, please contact our sales team at{' '}
                 <a href="mailto:sales@javelina.io" className="text-blue-600 hover:text-blue-700 underline font-medium">
                   sales@javelina.io
                 </a>
@@ -215,6 +228,17 @@ export function SubscriptionManager({
             />
           </div>
         </div>
+      )}
+
+      {/* Change Plan Modal */}
+      {isSubscriptionPlan && (
+        <ChangePlanModal
+          isOpen={showChangePlanModal}
+          onClose={() => setShowChangePlanModal(false)}
+          currentPlanCode={currentPlanCode}
+          orgId={orgId}
+          onSuccess={handleChangePlanSuccess}
+        />
       )}
     </div>
   );
