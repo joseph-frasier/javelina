@@ -132,7 +132,7 @@ export default function ProfilePage() {
                     SuperUser
                   </p>
                 )}
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 justify-center">
                   <Button
                     variant="outline"
                     size="sm"
