@@ -132,12 +132,12 @@ export default function ProfilePage() {
                     SuperUser
                   </p>
                 )}
-                <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowEditModal(true)}
-                    className="flex-1 justify-center"
+                    className="text-sm px-3"
                   >
                     Edit Profile
                   </Button>
@@ -145,7 +145,7 @@ export default function ProfilePage() {
                     variant="secondary"
                     size="sm"
                     onClick={() => setShowManageAccountModal(true)}
-                    className="flex-1 justify-center"
+                    className="text-sm px-3"
                   >
                     Manage Account
                   </Button>
