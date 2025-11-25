@@ -77,7 +77,7 @@ function PricingContent() {
       return;
     }
 
-    if (planId === 'enterprise_lifetime') {
+    if (planId === 'enterprise_lifetime' || planId === 'enterprise') {
       // Enterprise plan - redirect to contact/sales
       addToast('info', 'Please contact our sales team for Enterprise pricing');
       // In a real app, this would go to a contact form
@@ -101,7 +101,7 @@ function PricingContent() {
     // Organization created successfully
     if (!selectedPlanForOrg) return;
 
-    if (selectedPlanForOrg.id === 'enterprise_lifetime') {
+    if (selectedPlanForOrg.id === 'enterprise_lifetime' || selectedPlanForOrg.id === 'enterprise') {
       // Enterprise plan - redirect to contact/sales
       addToast('info', 'Please contact our sales team for Enterprise pricing');
       return;
@@ -110,8 +110,12 @@ function PricingContent() {
     // All plans (including Starter) go through checkout
     const planConfig = PLANS_CONFIG.find(p => p.id === selectedPlanForOrg.id);
     if (planConfig && planConfig.monthly) {
+      // Determine billing interval based on plan code
+      const isLifetime = planConfig.code.includes('_lifetime');
+      const billingInterval = isLifetime ? 'lifetime' : planConfig.monthly.interval;
+      
       router.push(
-        `/checkout?org_id=${orgId}&plan_code=${planConfig.code}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=lifetime`
+        `/checkout?org_id=${orgId}&plan_code=${planConfig.code}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=${billingInterval}`
       );
     } else {
       addToast('error', 'Unable to proceed to checkout. Please try again.');
@@ -194,33 +198,84 @@ function PricingContent() {
           </p>
         </div>
 
-        {/* Pricing Cards Grid - Top 3 Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {PLANS_CONFIG.filter(plan => plan.id !== 'enterprise_lifetime').map((plan) => {
-            const planForCard = {
-              id: plan.id,
-              name: plan.name,
-              price: plan.monthly?.amount || 0,
-              priceId: plan.monthly?.priceId || '',
-              interval: 'lifetime' as const,
-              features: plan.features.filter(f => f.included).map(f => f.name),
-              description: plan.description,
-              popular: plan.popular,
-            };
-            return (
-              <PricingCard
-                key={plan.id}
-                plan={planForCard}
-                highlighted={plan.popular}
-                onSelect={handleSelectPlan}
-                hidePrice={false}
-              />
-            );
-          })}
+        {/* Lifetime Plans Section */}
+        <div className="mb-12">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-orange-dark mb-2">
+              Lifetime Plans
+            </h2>
+            <p className="text-sm text-gray-slate font-light">
+              Pay once, own forever. No recurring fees.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {PLANS_CONFIG.filter(plan => 
+              plan.code.includes('_lifetime') && 
+              plan.id !== 'enterprise_lifetime'
+            ).map((plan) => {
+              const planForCard = {
+                id: plan.id,
+                name: plan.name,
+                price: plan.monthly?.amount || 0,
+                priceId: plan.monthly?.priceId || '',
+                interval: 'lifetime' as const,
+                features: plan.features.filter(f => f.included).map(f => f.name),
+                description: plan.description,
+                popular: plan.popular,
+              };
+              return (
+                <PricingCard
+                  key={plan.id}
+                  plan={planForCard}
+                  highlighted={plan.popular}
+                  onSelect={handleSelectPlan}
+                  hidePrice={false}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Monthly Subscription Plans Section */}
+        <div className="mb-12">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-orange-dark mb-2">
+              Monthly Subscriptions
+            </h2>
+            <p className="text-sm text-gray-slate font-light">
+              Flexible monthly billing. Cancel anytime.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {PLANS_CONFIG.filter(plan => 
+              !plan.code.includes('_lifetime') && 
+              plan.id !== 'enterprise'
+            ).map((plan) => {
+              const planForCard = {
+                id: plan.id,
+                name: plan.name,
+                price: plan.monthly?.amount || 0,
+                priceId: plan.monthly?.priceId || '',
+                interval: 'month' as const,
+                features: plan.features.filter(f => f.included).map(f => f.name),
+                description: plan.description,
+                popular: plan.popular,
+              };
+              return (
+                <PricingCard
+                  key={plan.id}
+                  plan={planForCard}
+                  highlighted={plan.popular}
+                  onSelect={handleSelectPlan}
+                  hidePrice={false}
+                />
+              );
+            })}
+          </div>
         </div>
 
         {/* Enterprise Plan - Full Width Bottom Section */}
-        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
+        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime' || plan.id === 'enterprise').map((plan) => (
           <div key={plan.id} className="mb-8 bg-white rounded-xl p-6 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
               {/* Left: Plan Info */}
