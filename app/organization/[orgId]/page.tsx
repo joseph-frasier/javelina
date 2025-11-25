@@ -119,7 +119,7 @@ export default async function OrganizationPage({
         name: zone.name,
         environment_id: zone.environment_id,
         environment_name: environment?.name || 'Unknown',
-        status: zone.live ? 'active' : 'inactive',
+        status: (zone.live ? 'active' : 'inactive') as 'active' | 'inactive',
         records_count: recordsCount || 0,
       };
     })
