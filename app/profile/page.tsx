@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { AvatarUpload } from '@/components/ui/AvatarUpload';
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
+import { ManageAccountModal } from '@/components/modals/ManageAccountModal';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscriptionsApi } from '@/lib/api-client';
@@ -14,6 +15,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, updateProfile } = useAuthStore();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showManageAccountModal, setShowManageAccountModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [subscriptionCount, setSubscriptionCount] = useState(0);
   const [billingLoading, setBillingLoading] = useState(true);
@@ -130,14 +132,22 @@ export default function ProfilePage() {
                     SuperUser
                   </p>
                 )}
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowEditModal(true)}
-                    className="flex-1 sm:flex-none"
+                    className="flex-1 justify-center"
                   >
                     Edit Profile
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowManageAccountModal(true)}
+                    className="flex-1 justify-center"
+                  >
+                    Manage Account
                   </Button>
                 </div>
               </div>
@@ -279,6 +289,12 @@ export default function ProfilePage() {
       <EditProfileModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
+      />
+
+      {/* Manage Account Modal */}
+      <ManageAccountModal
+        isOpen={showManageAccountModal}
+        onClose={() => setShowManageAccountModal(false)}
       />
     </ProtectedRoute>
   );
