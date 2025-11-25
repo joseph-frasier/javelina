@@ -91,9 +91,11 @@ export function InviteUsersModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Invite Team Member"
-      description={`Invite someone to join ${organizationName}`}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-sm text-gray-slate dark:text-gray-light mb-4">
+          Invite someone to join {organizationName}
+        </p>
         <div>
           <label
             htmlFor="email"
