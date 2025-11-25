@@ -94,6 +94,37 @@ export default async function OrganizationPage({
     .in('environment_id', environments?.map(e => e.id) || [])
     .is('deleted_at', null);
 
+  // Fetch all zones for this organization with environment names
+  const { data: allZones } = await supabase
+    .from('zones')
+    .select('id, name, environment_id, live')
+    .in('environment_id', environments?.map(e => e.id) || [])
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+
+  // Fetch records count for each zone
+  const zonesWithData = await Promise.all(
+    (allZones || []).map(async (zone) => {
+      const { count: recordsCount } = await supabase
+        .from('dns_records')
+        .select('id', { count: 'exact', head: true })
+        .eq('zone_id', zone.id)
+        .is('deleted_at', null);
+      
+      // Find the environment name
+      const environment = environments?.find(e => e.id === zone.environment_id);
+      
+      return {
+        id: zone.id,
+        name: zone.name,
+        environment_id: zone.environment_id,
+        environment_name: environment?.name || 'Unknown',
+        status: (zone.live ? 'active' : 'inactive') as 'active' | 'inactive',
+        records_count: recordsCount || 0,
+      };
+    })
+  );
+
   // Fetch recent activity from audit logs
   const auditLogs = await getOrganizationAuditLogs(orgId, 10);
   const recentActivity = await Promise.all(auditLogs.map(log => formatAuditLog(log)));
@@ -107,6 +138,7 @@ export default async function OrganizationPage({
     environments: environmentsWithCounts,
     environmentsCount: environmentsWithCounts.length,
     zonesCount: zonesCount || 0,
+    zones: zonesWithData,
     recentActivity: recentActivity,
     created_at: org.created_at,
     updated_at: org.updated_at,

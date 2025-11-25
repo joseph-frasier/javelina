@@ -1,20 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { createZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
+
+interface Environment {
+  id: string;
+  name: string;
+}
 
 interface AddZoneModalProps {
   isOpen: boolean;
   onClose: () => void;
-  environmentId: string;
-  environmentName: string;
+  environmentId?: string;
+  environmentName?: string;
   organizationId: string;
+  organizationName: string;
+  environments?: Environment[];
   onSuccess?: (zoneId: string) => void;
 }
 
@@ -24,21 +32,45 @@ export function AddZoneModal({
   environmentId, 
   environmentName,
   organizationId,
+  organizationName,
+  environments,
   onSuccess 
 }: AddZoneModalProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [adminEmail, setAdminEmail] = useState('admin@example.com');
   const [negativeCachingTTL, setNegativeCachingTTL] = useState(3600);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; admin_email?: string; negative_caching_ttl?: string; general?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; admin_email?: string; negative_caching_ttl?: string; environment?: string; general?: string }>({});
 
   const { addToast } = useToastStore();
 
+  // Determine if we need environment selection (when environments prop is provided)
+  const needsEnvironmentSelection = !!environments;
+  
+  // Get the actual environment ID and name to use
+  const actualEnvironmentId = needsEnvironmentSelection ? selectedEnvironmentId : (environmentId || '');
+  const actualEnvironmentName = needsEnvironmentSelection 
+    ? environments?.find(env => env.id === selectedEnvironmentId)?.name || ''
+    : (environmentName || '');
+
+  // Reset selected environment when modal opens/closes
+  useEffect(() => {
+    if (isOpen && needsEnvironmentSelection) {
+      setSelectedEnvironmentId('');
+    }
+  }, [isOpen, needsEnvironmentSelection]);
+
   const validateForm = (): boolean => {
-    const newErrors: { name?: string; admin_email?: string; negative_caching_ttl?: string } = {};
+    const newErrors: { name?: string; admin_email?: string; negative_caching_ttl?: string; environment?: string } = {};
+
+    // Validate environment selection if needed
+    if (needsEnvironmentSelection && !selectedEnvironmentId) {
+      newErrors.environment = 'Please select an environment';
+    }
 
     if (!name.trim()) {
       newErrors.name = 'Zone name is required';
@@ -78,7 +110,7 @@ export function AddZoneModal({
       const result = await createZone({
         name: name.trim().toLowerCase(), // Domains are case-insensitive
         description: description.trim() || undefined,
-        environment_id: environmentId,
+        environment_id: actualEnvironmentId,
         admin_email: adminEmail.trim(),
         negative_caching_ttl: negativeCachingTTL
       });
@@ -94,7 +126,7 @@ export function AddZoneModal({
       const zone = result.data;
 
       // Invalidate React Query cache for zones
-      await queryClient.invalidateQueries({ queryKey: ['zones', environmentId] });
+      await queryClient.invalidateQueries({ queryKey: ['zones', actualEnvironmentId] });
       
       // Refresh the page data
       router.refresh();
@@ -129,6 +161,7 @@ export function AddZoneModal({
       onClose();
       // Clear form state after animation completes (200ms)
       setTimeout(() => {
+        setSelectedEnvironmentId('');
         setName('');
         setDescription('');
         setAdminEmail('admin@example.com');
@@ -147,11 +180,34 @@ export function AddZoneModal({
           </div>
         )}
 
-        <div>
-          <p className="text-sm text-gray-slate mb-4">
-            Adding zone to: <span className="font-semibold text-orange-dark dark:text-white">{environmentName}</span> environment
-          </p>
-        </div>
+        {needsEnvironmentSelection ? (
+          <div>
+            <label htmlFor="environment-select" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+              Select Environment <span className="text-red-500">*</span>
+            </label>
+            <Dropdown
+              value={selectedEnvironmentId}
+              options={environments?.map(env => ({
+                value: env.id,
+                label: env.name
+              })) || []}
+              onChange={setSelectedEnvironmentId}
+              className={errors.environment ? 'border-red-500' : ''}
+            />
+            {errors.environment && (
+              <p className="mt-1 text-sm text-red-600">{errors.environment}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-slate">
+              Choose which environment to add this zone to
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm text-gray-slate mb-4">
+              Adding zone to: <span className="font-semibold text-orange-dark dark:text-white">{environmentName}</span> environment
+            </p>
+          </div>
+        )}
 
         <div>
           <label htmlFor="zone-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
@@ -228,12 +284,13 @@ export function AddZoneModal({
               </label>
               <Input
                 id="negative-ttl"
-                type="number"
+                type="text"
                 value={negativeCachingTTL}
-                onChange={(e) => setNegativeCachingTTL(parseInt(e.target.value, 10) || 0)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setNegativeCachingTTL(parseInt(value, 10) || 0);
+                }}
                 placeholder="3600"
-                min={0}
-                max={86400}
                 disabled={isSubmitting}
                 className={errors.negative_caching_ttl ? 'border-red-500' : ''}
               />

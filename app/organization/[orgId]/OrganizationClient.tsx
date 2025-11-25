@@ -2,15 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { EnvironmentCard } from '@/components/hierarchy/EnvironmentCard';
 import { canCreateEnvironment } from '@/lib/permissions';
 import { AddEnvironmentModal } from '@/components/modals/AddEnvironmentModal';
+import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
 import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
 import { subscriptionsApi } from '@/lib/api-client';
+import { CompactStatCard } from '@/components/dashboard/CompactStatCard';
+import { EnvironmentsList } from '@/components/organization/EnvironmentsList';
+import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
+import { ZonesList } from '@/components/organization/ZonesList';
+import { useAuthStore } from '@/lib/auth-store';
 
 interface Environment {
   id: string;
@@ -25,6 +31,15 @@ interface Environment {
   created_by: string | null;
   zones_count?: number;
   total_records?: number;
+}
+
+interface Zone {
+  id: string;
+  name: string;
+  environment_id: string;
+  environment_name: string;
+  status: 'active' | 'inactive';
+  records_count: number;
 }
 
 interface ActivityLog {
@@ -42,6 +57,7 @@ interface OrganizationData {
   environments: Environment[];
   environmentsCount: number;
   zonesCount: number;
+  zones: Zone[];
   recentActivity: ActivityLog[];
   created_at: string;
   updated_at: string;
@@ -53,8 +69,10 @@ interface OrganizationClientProps {
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
+  const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   const [isAddEnvModalOpen, setIsAddEnvModalOpen] = useState(false);
+  const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
@@ -101,21 +119,38 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     checkPlan();
   }, [org.id]);
 
+  // Get plan badge color based on plan name
+  const getPlanBadgeColor = (plan: string | null) => {
+    if (!plan) return 'bg-gray-600';
+    
+    const planLower = plan.toLowerCase();
+    if (planLower.includes('premium') || planLower.includes('lifetime')) {
+      return 'bg-gradient-to-r from-orange to-orange-dark';
+    } else if (planLower.includes('pro') || planLower.includes('professional')) {
+      return 'bg-blue-electric';
+    } else if (planLower.includes('basic') || planLower.includes('starter')) {
+      return 'bg-gray-600';
+    }
+    return 'bg-blue-electric';
+  };
+
   return (
     <>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
-        {/* Header */}
+        {/* Hero Section - Custom Greeting */}
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange break-words">{org.name}</h1>
-              {!isLoadingPlan && isNewestPlan && planName && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange text-white">
+            <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
+              Welcome back, {user?.name || 'User'}
+            </h1>
+            <div className="flex items-center gap-3">
+              <p className="font-light text-gray-slate text-lg">{org.name}</p>
+              {!isLoadingPlan && planName && (
+                <span className={`${getPlanBadgeColor(planName)} text-white text-xs font-semibold px-3 py-1 rounded-full`}>
                   {planName}
                 </span>
               )}
             </div>
-            {org.description && <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300">{org.description}</p>}
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
             {canAddEnvironment && (
@@ -126,8 +161,20 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                 Add Environment
               </Button>
             )}
+            <Button variant="secondary" size="sm" onClick={() => setIsAddZoneModalOpen(true)} className="justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Add Zone
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => console.log('Upgrade Plan - TODO')} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              Upgrade Plan
+            </Button>
             {canEditOrg && (
-              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="justify-center">
+              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -145,90 +192,145 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           </div>
         </div>
 
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card title="Total Environments" className="p-4 sm:p-6">
-            <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{org.environmentsCount}</p>
-            <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">
-              {org.environments.filter(e => e.status === 'active').length} active
-            </p>
-          </Card>
-          <Card title="Total Zones" className="p-4 sm:p-6">
-            <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{org.zonesCount}</p>
-            <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">DNS zones managed</p>
-          </Card>
+        {/* Compact Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <CompactStatCard
+            title="Total Environments"
+            value={org.environmentsCount}
+            subtitle={`${org.environments.filter(e => e.status === 'active').length} active`}
+            icon={
+              <svg
+                className="w-6 h-6 text-orange"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+                />
+              </svg>
+            }
+          />
+          <CompactStatCard
+            title="Total Zones"
+            value={org.zonesCount}
+            subtitle="DNS zones managed"
+            icon={
+              <svg
+                className="w-6 h-6 text-blue-electric"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            }
+          />
         </div>
 
-        {/* Environments Grid */}
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-orange-dark dark:text-orange mb-4">Environments</h2>
-          {org.environments.length === 0 ? (
-            <Card className="p-12">
-              <div className="text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-slate mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                  />
-                </svg>
-                <h3 className="text-lg font-medium text-orange-dark mb-2">No environments yet</h3>
-                <p className="text-gray-slate mb-6">
-                  Get started by creating your first environment.
-                </p>
-                {canAddEnvironment && (
-                  <Button variant="primary" onClick={() => setIsAddEnvModalOpen(true)}>
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        {/* Content Grid - Org View */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Left Column - Quick Actions & Team Members */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Quick Actions */}
+            <Card
+              title="Quick Actions"
+              description="Common tasks and shortcuts"
+            >
+              <div className="space-y-4 mt-4">
+                <Link href="/pricing" className="block">
+                  <Button variant="primary" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
                     </svg>
-                    Add Environment
+                    Buy Organization
                   </Button>
-                )}
+                </Link>
+                <Link href="/profile" className="block">
+                  <Button variant="secondary" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    Your Profile
+                  </Button>
+                </Link>
+                <Link href="/settings" className="block">
+                  <Button variant="outline" className="w-full justify-start">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Settings
+                  </Button>
+                </Link>
               </div>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {org.environments.map((environment) => (
-                <EnvironmentCard
-                  key={environment.id}
-                  environment={environment}
-                  orgId={org.id}
-                  showRole={false}
-                />
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Recent Activity */}
-        {org.recentActivity.length > 0 && (
-          <Card title="Recent Activity" className="p-6">
-            <div className="space-y-4">
-              {org.recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 py-3 border-b border-gray-light last:border-0">
-                  <div className="flex-shrink-0 w-2 h-2 bg-orange rounded-full mt-2"></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-orange-dark">{activity.action}</span>
-                      <span className="text-xs text-gray-slate">{activity.timestamp}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-xs text-gray-slate">
-                      <span className="font-mono">{activity.target}</span>
-                      <span>•</span>
-                      <span>{activity.user}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+            {/* Team Members */}
+            <InviteUsersBox
+              organizationId={org.id}
+              organizationName={org.name}
+            />
+          </div>
+
+          {/* Right Column - Environments & Zones */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Environments List */}
+            <EnvironmentsList
+              organizationId={org.id}
+              environments={org.environments}
+            />
+
+            {/* Zones List */}
+            <ZonesList
+              organizationId={org.id}
+              zones={org.zones}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Add Environment Modal */}
@@ -238,6 +340,20 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         organizationId={org.id}
         organizationName={org.name}
         onSuccess={handleEnvironmentSuccess}
+      />
+
+      {/* Add Zone Modal */}
+      <AddZoneModal
+        isOpen={isAddZoneModalOpen}
+        onClose={() => setIsAddZoneModalOpen(false)}
+        organizationId={org.id}
+        organizationName={org.name}
+        environmentId=""
+        environmentName=""
+        environments={org.environments.map(env => ({
+          id: env.id,
+          name: env.name
+        }))}
       />
 
       {/* Edit Organization Modal */}
@@ -256,4 +372,3 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     </>
   );
 }
-

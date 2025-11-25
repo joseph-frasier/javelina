@@ -330,17 +330,23 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               </svg>
               Edit
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Delete
-            </Button>
             <Button variant="primary" size="sm" onClick={() => window.location.reload()} className="justify-center">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Reload
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleExport} className="justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
             </Button>
           </div>
         </div>
@@ -364,32 +370,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         </Card>
       </div>
 
-      {/* Record Distribution */}
-      <div className="mb-6 sm:mb-8">
-        <Card title="Record Type Distribution" className="p-4 sm:p-6">
-          <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
-        </Card>
-      </div>
-
-      {/* Verification Checklist */}
-      {/* TODO: Re-enable when nameserver verification feature is ready */}
-      {/* <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <VerificationChecklist
-          nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
-          verificationStatus={zoneSummary.verificationStatus}
-          lastVerifiedAt={zoneSummary.lastVerifiedAt}
-        />
-      </Card> */}
-
-      {/* Audit Timeline */}
-      <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <AuditTimeline
-          auditLogs={auditLogs}
-          onDiffClick={setSelectedLog}
-        />
-      </Card>
-
-      {/* DNS Records Table */}
+      {/* DNS Records Table - Moved to top as primary action */}
       <Card 
         title="DNS Records" 
         className="p-4 sm:p-6 mb-6 sm:mb-8"
@@ -417,6 +398,31 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         />
       </Card>
 
+      {/* Audit Timeline */}
+      <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        <AuditTimeline
+          auditLogs={auditLogs}
+          onDiffClick={setSelectedLog}
+        />
+      </Card>
+
+      {/* Verification Checklist */}
+      {/* TODO: Re-enable when nameserver verification feature is ready */}
+      {/* <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        <VerificationChecklist
+          nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
+          verificationStatus={zoneSummary.verificationStatus}
+          lastVerifiedAt={zoneSummary.lastVerifiedAt}
+        />
+      </Card> */}
+
+      {/* Record Distribution */}
+      <div className="mb-6 sm:mb-8">
+        <Card title="Record Type Distribution" className="p-4 sm:p-6">
+          <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
+        </Card>
+      </div>
+
       {/* Bulk Action Bar */}
       <BulkActionBar
         selectedCount={selectedRecords.length}
@@ -425,28 +431,6 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         onClearSelection={() => setSelectedRecords([])}
         onDelete={handleBulkDelete}
       />
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 pb-6 sm:pb-8">
-        <Button variant="outline" size="sm" disabled className="justify-center">
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
-          Save Draft
-        </Button>
-        <Button variant="outline" size="sm" disabled className="justify-center">
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          Deploy Now
-        </Button>
-        <Button variant="secondary" size="sm" onClick={handleExport} className="justify-center">
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Export Zone JSON
-        </Button>
-      </div>
 
       {/* Edit Zone Modal */}
       <Modal 
