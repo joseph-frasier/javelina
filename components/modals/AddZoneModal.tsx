@@ -21,6 +21,7 @@ interface AddZoneModalProps {
   environmentId?: string;
   environmentName?: string;
   organizationId: string;
+  organizationName: string;
   environments?: Environment[];
   onSuccess?: (zoneId: string) => void;
 }
@@ -31,6 +32,7 @@ export function AddZoneModal({
   environmentId, 
   environmentName,
   organizationId,
+  organizationName,
   environments,
   onSuccess 
 }: AddZoneModalProps) {
