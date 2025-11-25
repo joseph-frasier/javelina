@@ -159,7 +159,7 @@ export default function ProfilePage() {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+                <div className="flex items-center justify-center gap-2 mt-6">
                   <Button
                     variant="outline"
                     size="sm"
