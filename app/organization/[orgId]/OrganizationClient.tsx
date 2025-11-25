@@ -313,7 +313,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             <InviteUsersBox
               organizationId={org.id}
               organizationName={org.name}
-              planName={planName}
             />
           </div>
 
