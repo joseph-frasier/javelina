@@ -114,14 +114,6 @@ export function WelcomeGuidance() {
                 <p className="text-xs text-gray-slate dark:text-gray-light mt-0.5">
                   {step.description}
                 </p>
-                {step.link && (
-                  <Link
-                    href={step.link}
-                    className="text-xs text-blue-electric hover:text-blue-teal font-medium mt-1 inline-block"
-                  >
-                    {step.linkText} →
-                  </Link>
-                )}
               </div>
             </div>
           ))}
