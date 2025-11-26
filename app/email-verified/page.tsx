@@ -20,21 +20,12 @@ export default function EmailVerifiedPage() {
     checkAuth();
   }, [initializeAuth]);
 
-  // If user is authenticated, auto-redirect to pricing
+  // If user is authenticated, auto-redirect to dashboard
   useEffect(() => {
     if (!isChecking && isAuthenticated && user) {
-      console.log('[Email Verified] User is authenticated, redirecting to pricing');
-      
-      // Check if user has organizations
-      const hasOrganizations = user.organizations && user.organizations.length > 0;
-      
-      if (hasOrganizations) {
-        // User already has organizations, go to dashboard
-        router.push('/');
-      } else {
-        // First-time user, go to pricing
-        router.push('/pricing?onboarding=true');
-      }
+      console.log('[Email Verified] User is authenticated, redirecting to dashboard');
+      // Always redirect to dashboard - welcome guidance will show for first-time users
+      router.push('/');
     }
   }, [isAuthenticated, user, router, isChecking]);
 
