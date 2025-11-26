@@ -169,7 +169,7 @@ export function ChangePlanModal({
 
                       {/* Price */}
                       <div className="mb-4">
-                        <div className="text-4xl font-black text-gray-900 dark:text-white">
+                        <div className="text-4xl font-black text-gray-900 dark:text-orange">
                           ${plan.monthly?.amount.toFixed(2)}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">
