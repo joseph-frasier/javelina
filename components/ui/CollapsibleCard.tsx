@@ -98,12 +98,12 @@ export function CollapsibleCard({
       action={
         <button
           onClick={toggleExpanded}
-          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-500"
           aria-label={isExpanded ? 'Collapse' : 'Expand'}
         >
           <svg
             ref={chevronRef}
-            className="w-4 h-4 text-gray-500 dark:text-gray-400"
+            className="w-6 h-6 text-orange dark:text-orange"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
