@@ -58,14 +58,34 @@ export function SettingsLayout({ children, activeSection = 'general', onSectionC
   ];
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-orange-dark mb-8">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-4 sm:mb-6 md:mb-8">Settings</h1>
         
-        <div className="flex gap-8">
-          {/* Sidebar Navigation */}
-          <div className="w-64 flex-shrink-0">
-            <nav className="space-y-2">
+        {/* Mobile: Horizontal Scrolling Tabs */}
+        <div className="md:hidden mb-6 -mx-4 px-4 overflow-x-auto">
+          <nav className="flex gap-2 min-w-max pb-2">
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => onSectionChange?.(section.id)}
+                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap text-sm ${
+                  activeSection === section.id
+                    ? 'bg-orange text-white'
+                    : 'text-gray-slate dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-light/30'
+                }`}
+              >
+                <span>{section.icon}</span>
+                <span>{section.name}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+          {/* Desktop: Sidebar Navigation */}
+          <div className="hidden md:block w-64 flex-shrink-0">
+            <nav className="space-y-2 sticky top-6">
               {sections.map((section) => (
                 <button
                   key={section.id}
@@ -84,7 +104,7 @@ export function SettingsLayout({ children, activeSection = 'general', onSectionC
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {children}
           </div>
         </div>

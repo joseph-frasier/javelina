@@ -170,12 +170,12 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               </svg>
               Add Zone
             </Button>
-            <div className="relative group">
+            <div className="relative group self-stretch sm:self-auto">
               <Button 
                 variant="secondary" 
                 size="sm" 
                 onClick={() => !isLifetimePlan && router.push(`/settings/billing/${org.id}?openModal=true`)} 
-                className={`justify-center ${isLifetimePlan ? '!bg-gray-400 hover:!bg-gray-400 !text-gray-600 cursor-not-allowed' : '!bg-orange hover:!bg-orange-dark !text-white'}`}
+                className={`!flex w-full justify-center ${isLifetimePlan ? '!bg-gray-400 hover:!bg-gray-400 !text-gray-600 cursor-not-allowed' : '!bg-orange hover:!bg-orange-dark !text-white'}`}
                 disabled={isLifetimePlan}
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

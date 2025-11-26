@@ -120,7 +120,7 @@ export function ChangePlanModal({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6 pb-16 sm:pb-12">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
@@ -224,8 +224,8 @@ export function ChangePlanModal({
 
               {/* Confirmation Section */}
               {selectedPlanCode && (
-                <div className="bg-gray-100 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded-lg p-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-gray-100 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded-lg p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                         Your card will be charged the prorated difference immediately.
@@ -236,20 +236,20 @@ export function ChangePlanModal({
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 w-full sm:w-auto">
                       <button
                         onClick={() => setSelectedPlanCode(null)}
                         disabled={isSubmitting}
-                        className="px-6 py-3 rounded-lg font-bold border-2 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-500 transition-colors disabled:opacity-50"
+                        className="flex-1 sm:flex-none px-4 sm:px-6 py-3 rounded-lg font-bold border-2 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-500 transition-colors disabled:opacity-50"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleConfirmChange}
                         disabled={isSubmitting}
-                        className="px-6 py-3 rounded-lg font-bold bg-orange hover:bg-orange-dark text-white transition-colors disabled:opacity-50 disabled:cursor-wait min-w-[180px]"
+                        className="flex-1 sm:flex-none px-4 sm:px-6 py-3 rounded-lg font-bold bg-orange hover:bg-orange-dark text-white transition-colors disabled:opacity-50 disabled:cursor-wait sm:min-w-[180px]"
                       >
-                        {isSubmitting ? 'Updating subscription...' : 'Confirm Change'}
+                        {isSubmitting ? 'Updating...' : 'Confirm Change'}
                       </button>
                     </div>
                   </div>
