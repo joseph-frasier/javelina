@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchPlans, type Plan } from '@/lib/plans-config';
 import { useToastStore } from '@/lib/toast-store';
 import { stripeApi } from '@/lib/api-client';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -24,7 +26,77 @@ export function ChangePlanModal({
   const [loading, setLoading] = useState(true);
   const [selectedPlanCode, setSelectedPlanCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   const addToast = useToastStore((state) => state.addToast);
+  
+  const modalRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Handle opening/closing with animation
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    }
+  }, [isOpen]);
+
+  // GSAP Opening Animation
+  useGSAP(() => {
+    if (!shouldRender) return;
+
+    if (isOpen && modalRef.current && overlayRef.current) {
+      gsap.fromTo(
+        overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+      );
+
+      gsap.fromTo(
+        modalRef.current,
+        { scale: 0.95, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }
+      );
+    }
+  }, [isOpen, shouldRender]);
+
+  // GSAP Closing Animation
+  useEffect(() => {
+    if (!shouldRender) return;
+    if (isOpen) return;
+
+    if (modalRef.current && overlayRef.current) {
+      gsap.killTweensOf([modalRef.current, overlayRef.current]);
+
+      const tl = gsap.timeline({
+        onComplete: () => setShouldRender(false)
+      });
+
+      tl.to(overlayRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in'
+      });
+
+      tl.to(modalRef.current, {
+        scale: 0.95,
+        opacity: 0,
+        y: 20,
+        duration: 0.2,
+        ease: 'power2.in'
+      }, 0);
+    }
+  }, [isOpen, shouldRender]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -91,11 +163,20 @@ export function ChangePlanModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70 p-4 min-h-screen overflow-hidden">
-      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 min-h-screen overflow-hidden">
+      {/* Overlay */}
+      <div 
+        ref={overlayRef}
+        className="fixed inset-0 bg-black/50 dark:bg-black/70"
+        onClick={onClose}
+      />
+      {/* Modal */}
+      <div 
+        ref={modalRef}
+        className="relative bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
