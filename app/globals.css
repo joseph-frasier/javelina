@@ -89,8 +89,10 @@ header {
   background-color: #3d2817 !important;
 }
 
-/* Input boxes */
-.signup-form-bg input {
+/* Input boxes - high specificity to override Tailwind classes */
+.signup-form-bg input,
+.signup-form-bg input.bg-white,
+.signup-form-bg input.dark\:bg-gray-800 {
   background-color: #2a1a10 !important;
   border-color: #5a3520 !important;
   color: #e2e8f0 !important;
