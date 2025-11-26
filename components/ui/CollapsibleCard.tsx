@@ -103,7 +103,7 @@ export function CollapsibleCard({
         >
           <svg
             ref={chevronRef}
-            className="w-6 h-6 text-orange dark:text-orange"
+            className="w-8 h-8 text-orange dark:text-orange"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
