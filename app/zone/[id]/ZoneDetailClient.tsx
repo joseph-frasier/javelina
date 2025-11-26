@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
+import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Modal } from '@/components/ui/Modal';
@@ -399,12 +400,16 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       </Card>
 
       {/* Audit Timeline */}
-      <Card title="Change History" className="p-4 sm:p-6 mb-6 sm:mb-8">
+      <CollapsibleCard 
+        title="Change History" 
+        className="p-4 sm:p-6 mb-6 sm:mb-8"
+        storageKey={`zone-${zoneId}-changeHistory-collapsed`}
+      >
         <AuditTimeline
           auditLogs={auditLogs}
           onDiffClick={setSelectedLog}
         />
-      </Card>
+      </CollapsibleCard>
 
       {/* Verification Checklist */}
       {/* TODO: Re-enable when nameserver verification feature is ready */}
@@ -418,9 +423,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
       {/* Record Distribution */}
       <div className="mb-6 sm:mb-8">
-        <Card title="Record Type Distribution" className="p-4 sm:p-6">
+        <CollapsibleCard 
+          title="Record Type Distribution" 
+          className="p-4 sm:p-6"
+          storageKey={`zone-${zoneId}-recordDistribution-collapsed`}
+        >
           <RecordDistributionChart data={zoneSummary.recordTypeCounts} />
-        </Card>
+        </CollapsibleCard>
       </div>
 
       {/* Bulk Action Bar */}
