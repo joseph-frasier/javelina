@@ -78,6 +78,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isNewestPlan, setIsNewestPlan] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
+  const [isLifetimePlan, setIsLifetimePlan] = useState(false);
   const canAddEnvironment = canCreateEnvironment(org.role);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
   const canDeleteOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
@@ -107,6 +108,8 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           const currentOrgData = orgsWithSubscriptions.find((o: any) => o.org_id === org.id);
           if (currentOrgData?.plan_name) {
             setPlanName(currentOrgData.plan_name);
+            // Check if it's a lifetime plan
+            setIsLifetimePlan(currentOrgData.plan_name.toLowerCase().includes('lifetime'));
           }
         }
       } catch (error) {
@@ -167,12 +170,28 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               </svg>
               Add Zone
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => console.log('Upgrade Plan - TODO')} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-              Upgrade Plan
-            </Button>
+            <div className="relative group">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => !isLifetimePlan && router.push(`/settings/billing/${org.id}?openModal=true`)} 
+                className={`justify-center ${isLifetimePlan ? '!bg-gray-400 hover:!bg-gray-400 !text-gray-600 cursor-not-allowed' : '!bg-orange hover:!bg-orange-dark !text-white'}`}
+                disabled={isLifetimePlan}
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Upgrade Plan
+              </Button>
+              {isLifetimePlan && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  Coming soon for lifetime plans
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                    <div className="border-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                </div>
+              )}
+            </div>
             {canEditOrg && (
               <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

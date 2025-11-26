@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
 import { SettingsLayout } from '@/components/layout/SettingsLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { SubscriptionManager } from '@/components/billing/SubscriptionManager';
-import { PlanComparisonModal } from '@/components/billing/PlanComparisonModal';
+import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import { createClient } from '@/lib/supabase/client';
 
 export default function OrganizationBillingPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const orgId = params?.org_id as string | undefined;
   
   const user = useAuthStore((state) => state.user);
@@ -24,6 +25,7 @@ export default function OrganizationBillingPage() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -103,6 +105,14 @@ export default function OrganizationBillingPage() {
         setCurrentPlanCode('free');
       }
       console.log('Fetched plan data:', data);
+      
+      // Check if we should auto-open the modal (from query parameter)
+      const shouldOpenModal = searchParams.get('openModal');
+      if (shouldOpenModal === 'true') {
+        setShowPlanModal(true);
+        // Clean up URL
+        router.replace(`/settings/billing/${orgId}`, { scroll: false });
+      }
     } catch (error) {
       console.error('Error fetching current plan:', error);
       setCurrentPlanCode('free');
@@ -151,43 +161,12 @@ export default function OrganizationBillingPage() {
     }
   };
 
-  const handleSelectPlan = async (planCode: string) => {
-    setShowPlanModal(false);
-
-    if (!orgId) {
-      addToast('error', 'Organization ID is required');
-      return;
-    }
-
-    // Check if this is an upgrade/downgrade (has existing subscription) or new subscription
-    if (currentPlanCode && currentPlanCode !== 'free') {
-      // Existing subscription - update it instead of creating new one
-      try {
-        addToast('info', 'Updating your subscription...');
-        
-        const { stripeApi } = await import('@/lib/api-client');
-        await stripeApi.updateSubscription(orgId, planCode);
-
-        addToast('success', 'Subscription updated successfully!');
-        
-        // Refresh the page to show updated plan
-        window.location.reload();
-      } catch (error: any) {
-        console.error('Error updating subscription:', error);
-        addToast('error', error.message || 'Failed to update subscription');
-      }
-    } else {
-      // No existing subscription - redirect to checkout for new subscription
-      // Get price from PLANS_CONFIG for accuracy
-      const { PLANS_CONFIG } = await import('@/lib/plans-config');
-      const planConfig = PLANS_CONFIG.find(p => p.code === planCode || `${p.id}_monthly` === planCode);
-      const planPrice = planConfig?.monthly?.amount || 0;
-      const planName = planConfig?.name || planCode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-
-      router.push(
-        `/checkout?org_id=${orgId}&plan_code=${planCode}&plan_name=${encodeURIComponent(planName)}&plan_price=${planPrice}&billing_interval=month`
-      );
-    }
+  const handleChangePlanSuccess = async () => {
+    // This is called after the ChangePlanModal successfully updates the plan
+    // The modal already handles the API call and waiting for webhook
+    // Refresh both the page's plan data and trigger SubscriptionManager to refresh
+    await fetchCurrentPlan();
+    setRefreshTrigger(prev => prev + 1);
   };
 
   if (loading || !hasAccess) {
@@ -248,17 +227,21 @@ export default function OrganizationBillingPage() {
               onChangePlan={handleChangePlan}
               onManageBilling={handleManageBilling}
               onCancelSubscription={handleCancelSubscription}
+              refreshTrigger={refreshTrigger}
             />
           )}
         </div>
 
-        {/* Plan Comparison Modal */}
-        <PlanComparisonModal
-          isOpen={showPlanModal}
-          onClose={() => setShowPlanModal(false)}
-          currentPlanCode={currentPlanCode}
-          onSelectPlan={handleSelectPlan}
-        />
+        {/* Change Plan Modal */}
+        {orgId && (
+          <ChangePlanModal
+            isOpen={showPlanModal}
+            onClose={() => setShowPlanModal(false)}
+            currentPlanCode={currentPlanCode}
+            orgId={orgId}
+            onSuccess={handleChangePlanSuccess}
+          />
+        )}
       </SettingsLayout>
     </ProtectedRoute>
   );

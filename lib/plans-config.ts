@@ -59,6 +59,7 @@ interface DbPlan {
     price: number;
     price_id: string;
     description?: string;
+    contact_sales?: boolean;
   };
   entitlements?: Array<{
     key: string;
@@ -69,7 +70,7 @@ interface DbPlan {
 
 /**
  * Convert database plan format to frontend Plan format
- * Now simplified to ignore entitlements and use hardcoded limits
+ * Handles both lifetime plans and monthly subscription plans
  */
 function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
   console.log('Converting plans from API:', dbPlans);
@@ -79,20 +80,25 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
     return [];
   }
   
-  // Map each plan directly (they're all lifetime plans now)
+  // Map each plan
   const plans: Plan[] = dbPlans.map(dbPlan => {
-    const baseCode = dbPlan.code; // e.g., 'starter_lifetime'
+    const baseCode = dbPlan.code; // e.g., 'starter', 'starter_lifetime', 'pro', etc.
+    const isLifetime = dbPlan.billing_interval === null;
+    const isContactSales = dbPlan.metadata?.contact_sales === true;
     
     // Get hardcoded limits for this plan
-    const hardcodedLimits = HARDCODED_PLAN_LIMITS[baseCode] || HARDCODED_PLAN_LIMITS['starter_lifetime'];
+    const hardcodedLimits = HARDCODED_PLAN_LIMITS[baseCode] || HARDCODED_PLAN_LIMITS['starter'];
+    
+    // Determine base tier for features (starter, pro, business/premium, enterprise)
+    const baseTier = baseCode.replace('_lifetime', '').replace('premium', 'business');
     
     // Build Plan object
     const plan: Plan = {
       id: baseCode,
       code: dbPlan.code,
-      name: dbPlan.name, // Keep "Lifetime" in the name
+      name: dbPlan.name,
       description: dbPlan.metadata?.description || '',
-      popular: baseCode === 'pro_lifetime', // Mark Pro as popular
+      popular: baseCode === 'pro_lifetime' || baseCode === 'pro', // Mark Pro plans as popular
       limits: {
         environments: hardcodedLimits.environments,
         zones: hardcodedLimits.zones,
@@ -100,32 +106,47 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
         teamMembers: hardcodedLimits.users,
       },
       booleanFeatures: {
-        apiAccess: baseCode !== 'starter_lifetime',
-        advancedAnalytics: baseCode !== 'starter_lifetime',
-        prioritySupport: baseCode !== 'starter_lifetime',
-        auditLogs: baseCode !== 'starter_lifetime',
-        customRoles: baseCode === 'premium_lifetime' || baseCode === 'enterprise_lifetime',
-        sso: baseCode === 'enterprise_lifetime',
-        bulkOperations: baseCode !== 'starter_lifetime',
-        exportData: baseCode !== 'starter_lifetime',
+        apiAccess: !baseTier.includes('starter'),
+        advancedAnalytics: !baseTier.includes('starter'),
+        prioritySupport: !baseTier.includes('starter'),
+        auditLogs: !baseTier.includes('starter'),
+        customRoles: baseTier.includes('business') || baseTier.includes('enterprise'),
+        sso: baseTier.includes('enterprise'),
+        bulkOperations: !baseTier.includes('starter'),
+        exportData: !baseTier.includes('starter'),
       },
       features: buildFeaturesList(baseCode, new Map()),
     };
     
-    // Add pricing (all are lifetime/one-time now)
-    if (dbPlan.metadata?.price !== undefined && dbPlan.metadata?.price_id) {
-      plan.monthly = {
-        amount: dbPlan.metadata.price,
-        priceId: dbPlan.metadata.price_id,
-        interval: 'month', // Still labeled as month for compatibility
-      };
+    // Add pricing based on plan type
+    if (!isContactSales && dbPlan.metadata?.price !== undefined && dbPlan.metadata?.price_id) {
+      if (isLifetime) {
+        // Lifetime plan - one-time payment
+        plan.monthly = {
+          amount: dbPlan.metadata.price,
+          priceId: dbPlan.metadata.price_id,
+          interval: 'month', // Still labeled as month for compatibility
+        };
+      } else {
+        // Monthly subscription plan
+        plan.monthly = {
+          amount: dbPlan.metadata.price,
+          priceId: dbPlan.metadata.price_id,
+          interval: 'month',
+        };
+      }
     }
     
     return plan;
   });
   
-  // Sort plans by order: starter, pro, premium, enterprise
-  const order = ['starter_lifetime', 'pro_lifetime', 'premium_lifetime', 'enterprise_lifetime'];
+  // Sort plans by type and tier
+  const order = [
+    // Lifetime plans first
+    'starter_lifetime', 'pro_lifetime', 'premium_lifetime', 'enterprise_lifetime',
+    // Then subscription plans
+    'starter', 'pro', 'business', 'enterprise'
+  ];
   plans.sort((a, b) => {
     const aIndex = order.indexOf(a.id);
     const bIndex = order.indexOf(b.id);
@@ -148,6 +169,7 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   records: number;
   queries: string;
 }> = {
+  // Lifetime Plans
   'starter_lifetime': {
     organizations: 1,
     users: 1,
@@ -173,6 +195,40 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
     queries: '500m',
   },
   'enterprise_lifetime': {
+    organizations: -1, // Custom
+    users: -1, // Custom
+    environments: -1, // Custom
+    zones: -1, // Custom
+    records: -1, // Custom
+    queries: 'Custom',
+  },
+  
+  // Monthly Subscription Plans (same limits as lifetime counterparts)
+  'starter': {
+    organizations: 1,
+    users: 1,
+    environments: 2,
+    zones: 2,
+    records: 200,
+    queries: '5m',
+  },
+  'pro': {
+    organizations: 1,
+    users: 5,
+    environments: 20,
+    zones: 20,
+    records: 2000,
+    queries: '50m',
+  },
+  'business': {
+    organizations: 1,
+    users: 20,
+    environments: 50,
+    zones: 50,
+    records: 5000,
+    queries: '500m',
+  },
+  'enterprise': {
     organizations: -1, // Custom
     users: -1, // Custom
     environments: -1, // Custom

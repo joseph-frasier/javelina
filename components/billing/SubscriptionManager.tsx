@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { UsageMeter } from './UsageMeter';
+import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
 
 interface SubscriptionManagerProps {
@@ -9,6 +11,7 @@ interface SubscriptionManagerProps {
   onChangePlan?: () => void;
   onManageBilling?: () => void;
   onCancelSubscription?: () => void;
+  refreshTrigger?: number;
 }
 
 export function SubscriptionManager({
@@ -16,11 +19,14 @@ export function SubscriptionManager({
   onChangePlan,
   onManageBilling,
   onCancelSubscription,
+  refreshTrigger,
 }: SubscriptionManagerProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<CurrentSubscriptionResponse | null>(null);
   const [usage, setUsage] = useState<OrgUsageWithLimits | null>(null);
+  const [showChangePlanModal, setShowChangePlanModal] = useState(false);
 
   const fetchSubscriptionData = useCallback(async () => {
     try {
@@ -62,6 +68,13 @@ export function SubscriptionManager({
     fetchSubscriptionData();
   }, [fetchSubscriptionData]);
 
+  // Refresh data when refreshTrigger changes (e.g., after plan upgrade from modal)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchSubscriptionData();
+    }
+  }, [refreshTrigger, fetchSubscriptionData]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -89,6 +102,19 @@ export function SubscriptionManager({
   const statusColor = subscription?.subscription?.status
     ? statusColors[subscription.subscription.status] || 'bg-gray-100 text-gray-800'
     : 'bg-gray-100 text-gray-800';
+
+  // Check if this is a subscription plan (not lifetime)
+  const isSubscriptionPlan = subscription?.plan?.billing_interval === 'month';
+  const currentPlanCode = subscription?.plan?.code || '';
+
+  const handleChangePlan = () => {
+    setShowChangePlanModal(true);
+  };
+
+  const handleChangePlanSuccess = () => {
+    // Refresh subscription data
+    fetchSubscriptionData();
+  };
 
   return (
     <div className="space-y-6">
@@ -143,21 +169,19 @@ export function SubscriptionManager({
 
         {/* Actions */}
         <div className="space-y-4">
-          {/* Only show buttons for regular subscription plans */}
-          {subscription?.plan?.billing_interval !== null && (
+          {/* Show buttons for monthly subscription plans only */}
+          {isSubscriptionPlan && (
             <div className="flex flex-wrap gap-3">
-              {onChangePlan && (
-                <button
-                  onClick={onChangePlan}
-                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
-                >
-                  Change Plan
-                </button>
-              )}
+              <button
+                onClick={handleChangePlan}
+                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+              >
+                Change Plan
+              </button>
               {onManageBilling && (
                 <button
                   onClick={onManageBilling}
-                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                  className="px-4 py-2 bg-white text-orange border border-orange rounded-md font-medium hover:bg-orange-light transition-colors"
                 >
                   Manage Billing
                 </button>
@@ -170,25 +194,68 @@ export function SubscriptionManager({
                   Cancel Subscription
                 </button>
               )}
+              <button
+                onClick={() => router.push(`/organization/${orgId}`)}
+                className="ml-auto px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors flex items-center gap-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                <span>Back to Organization</span>
+              </button>
             </div>
           )}
           
           {/* Lifetime plan message - only for lifetime plans */}
-          {subscription?.plan?.billing_interval === null && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <p className="text-sm text-blue-900">
-                <strong>Lifetime plan changes:</strong> To upgrade, downgrade, or modify your lifetime plan, please contact our sales team at{' '}
-                <a href="mailto:sales@javelina.io" className="text-blue-600 hover:text-blue-700 underline font-medium">
-                  sales@javelina.io
-                </a>
-              </p>
-            </div>
+          {!isSubscriptionPlan && (
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <p className="text-sm text-blue-900">
+                  <strong>Lifetime plan:</strong> You have a lifetime subscription with a one-time payment. To modify your plan, please contact our sales team at{' '}
+                  <a href="mailto:sales@javelina.io" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                    sales@javelina.io
+                  </a>
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => router.push(`/organization/${orgId}`)}
+                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors flex items-center gap-2"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span>Back to Organization</span>
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
 
+      {/* TODO: Uncomment when integrating Launch Darkly for feature-based resource limits */}
       {/* Usage Meters - Currently showing unlimited for all resources */}
-      {usage && (
+      {/* {usage && (
         <div className="bg-white rounded-xl border border-gray-light shadow-sm p-6">
           <h3 className="text-lg font-bold text-orange-dark mb-4">Resource Usage</h3>
           <div className="space-y-4">
@@ -215,6 +282,17 @@ export function SubscriptionManager({
             />
           </div>
         </div>
+      )} */}
+
+      {/* Change Plan Modal */}
+      {isSubscriptionPlan && (
+        <ChangePlanModal
+          isOpen={showChangePlanModal}
+          onClose={() => setShowChangePlanModal(false)}
+          currentPlanCode={currentPlanCode}
+          orgId={orgId}
+          onSuccess={handleChangePlanSuccess}
+        />
       )}
     </div>
   );
