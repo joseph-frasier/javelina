@@ -94,22 +94,22 @@ export function ChangePlanModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 min-h-screen overflow-hidden">
-      <div className="bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70 p-4 min-h-screen overflow-hidden">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="border-b border-gray-700 p-6">
+        <div className="border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-orange">
                 Change Subscription Plan
               </h2>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Select a new plan to upgrade or downgrade your subscription. Changes take effect immediately.
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
               disabled={isSubmitting}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,10 +138,10 @@ export function ChangePlanModal({
                       key={plan.id}
                       className={`relative rounded-xl p-6 transition-all ${
                         isCurrent
-                          ? 'bg-[#252525] border-2 border-orange'
+                          ? 'bg-gray-50 dark:bg-[#252525] border-2 border-orange'
                           : isSelected
-                          ? 'bg-[#252525] border-2 border-orange ring-2 ring-orange/50'
-                          : 'bg-[#252525] border-2 border-[#333] hover:border-orange/50'
+                          ? 'bg-gray-50 dark:bg-[#252525] border-2 border-orange ring-2 ring-orange/50'
+                          : 'bg-gray-50 dark:bg-[#252525] border-2 border-gray-200 dark:border-[#333] hover:border-orange/50'
                       }`}
                     >
                       {/* Popular Badge */}
@@ -169,16 +169,16 @@ export function ChangePlanModal({
 
                       {/* Price */}
                       <div className="mb-4">
-                        <div className="text-4xl font-black text-white">
+                        <div className="text-4xl font-black text-gray-900 dark:text-white">
                           ${plan.monthly?.amount.toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-400 uppercase tracking-wide mt-1">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">
                           /month
                         </div>
                       </div>
 
                       {/* Description */}
-                      <p className="text-sm text-gray-400 mb-6">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                         {plan.description}
                       </p>
 
@@ -189,7 +189,7 @@ export function ChangePlanModal({
                             <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-sm text-gray-300">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
                               {feature.name}
                             </span>
                           </li>
@@ -224,14 +224,14 @@ export function ChangePlanModal({
 
               {/* Confirmation Section */}
               {selectedPlanCode && (
-                <div className="bg-[#252525] border border-[#333] rounded-lg p-6">
+                <div className="bg-gray-100 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-400 mb-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                         Your card will be charged the prorated difference immediately.
                       </p>
                       {plans.find(p => p.code === selectedPlanCode) && (
-                        <p className="text-white font-semibold">
+                        <p className="text-gray-900 dark:text-white font-semibold">
                           Selected: {plans.find(p => p.code === selectedPlanCode)?.name} - ${plans.find(p => p.code === selectedPlanCode)?.monthly?.amount.toFixed(2)}/month
                         </p>
                       )}
@@ -240,7 +240,7 @@ export function ChangePlanModal({
                       <button
                         onClick={() => setSelectedPlanCode(null)}
                         disabled={isSubmitting}
-                        className="px-6 py-3 rounded-lg font-bold border-2 border-gray-600 text-gray-300 hover:border-gray-500 transition-colors disabled:opacity-50"
+                        className="px-6 py-3 rounded-lg font-bold border-2 border-gray-400 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-500 transition-colors disabled:opacity-50"
                       >
                         Cancel
                       </button>
