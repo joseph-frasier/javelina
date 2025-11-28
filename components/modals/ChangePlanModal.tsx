@@ -35,6 +35,7 @@ export function ChangePlanModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [upgradePricing, setUpgradePricing] = useState<UpgradePricing | null>(null);
   const [calculatingPrice, setCalculatingPrice] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   const addToast = useToastStore((state) => state.addToast);
   
   const modalRef = useRef<HTMLDivElement>(null);
