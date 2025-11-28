@@ -343,7 +343,7 @@ export function ChangePlanModal({
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        Your monthly subscription will be canceled, and you'll receive a prorated credit for the remaining days.
+                        Your monthly subscription will be canceled, and you&apos;ll receive a prorated credit for the remaining days.
                       </p>
                     </div>
                   )}
@@ -385,7 +385,7 @@ export function ChangePlanModal({
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        You'll be charged the prorated difference today. Your new rate of ${upgradePricing.originalPrice.toFixed(2)}/month starts at your next billing period.
+                        You&apos;ll be charged the prorated difference today. Your new rate of ${upgradePricing.originalPrice.toFixed(2)}/month starts at your next billing period.
                       </p>
                     </div>
                   )}
