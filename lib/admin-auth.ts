@@ -14,6 +14,10 @@ const ADMIN_COOKIE_NAME = process.env.NODE_ENV === 'production'
   : 'admin_session';
 const SESSION_DURATION = 3600; // 1 hour
 
+// Dev-only bypass credentials (only works in development)
+const DEV_ADMIN_EMAIL = 'admin@irongrove.com';
+const DEV_ADMIN_PASSWORD = 'admin123';
+
 // In-memory store for valid admin sessions with user data
 // Use global to persist across module reloads in development
 declare global {
@@ -32,6 +36,40 @@ export async function loginAdmin(
   ip?: string,
   userAgent?: string
 ) {
+  // DEV-ONLY: Bypass Supabase auth for quick development access
+  if (process.env.NODE_ENV === 'development' && 
+      email === DEV_ADMIN_EMAIL && 
+      password === DEV_ADMIN_PASSWORD) {
+    console.log('[Admin Auth] DEV MODE: Bypassing Supabase authentication');
+    
+    // Create a fake dev admin session
+    const devAdminId = 'dev-admin-00000000-0000-0000-0000-000000000000';
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + SESSION_DURATION * 1000);
+
+    // Store token with dev user data in memory
+    validAdminSessions.set(token, {
+      id: devAdminId,
+      email: DEV_ADMIN_EMAIL,
+      name: 'Dev Admin',
+    });
+
+    // Set cookie
+    const cookieStore = await cookies();
+    cookieStore.set(ADMIN_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: false, // Dev mode
+      sameSite: 'strict',
+      expires: expiresAt,
+      path: '/'
+    });
+
+    return {
+      success: true,
+      admin: { id: devAdminId, email: DEV_ADMIN_EMAIL, name: 'Dev Admin' }
+    };
+  }
+
   const supabase = await createClient();
 
   // Authenticate with Supabase
