@@ -57,8 +57,32 @@ curl -X POST http://localhost:3001/api/stripe/subscriptions \
 **Expected Behavior**:
 - Retrieve current subscription from database
 - Update Stripe subscription with new price ID
-- Prorate charges automatically
+- **Charge prorated difference IMMEDIATELY** (not on next invoice)
 - Return updated subscription details
+
+**IMPORTANT: Proration Behavior**:
+The backend MUST use `proration_behavior: 'always_invoice'` to charge the prorated difference immediately:
+
+```typescript
+const updatedSubscription = await stripe.subscriptions.update(
+  subscriptionId,
+  {
+    items: [{
+      id: subscriptionItemId,
+      price: newPriceId,
+    }],
+    // Charge prorated difference immediately
+    proration_behavior: 'always_invoice',
+    // Expand to see the invoice details
+    expand: ['latest_invoice.payment_intent'],
+  }
+);
+```
+
+**Proration Options** (for reference):
+- `create_prorations` (default) - Prorations added to next invoice ❌
+- `always_invoice` - Charge immediately ✅ (USE THIS)
+- `none` - No proration
 
 **Restrictions**:
 - ❌ Should NOT allow switching from lifetime to subscription

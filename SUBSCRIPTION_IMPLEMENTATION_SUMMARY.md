@@ -202,9 +202,9 @@ Success toast → Modal closes → Data refreshes
 - Changing lifetime plans (contact sales)
 
 ### Proration
-- Stripe automatically handles proration
-- Upgrades: Immediate charge for prorated difference
-- Downgrades: Credit applied to next invoice
+- Stripe handles proration with `proration_behavior: 'always_invoice'`
+- **Upgrades**: Prorated difference charged **immediately**, new rate at next billing
+- **Downgrades**: Credit applied to next invoice
 
 ---
 

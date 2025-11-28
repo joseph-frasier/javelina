@@ -44,7 +44,8 @@ export type SubscriptionStatus =
   | 'canceled'
   | 'incomplete'
   | 'incomplete_expired'
-  | 'paused';
+  | 'paused'
+  | 'lifetime';
 
 export interface Subscription {
   id: string;

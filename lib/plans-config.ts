@@ -609,3 +609,119 @@ export function getPlanLimit(
   return plan?.limits[resource] ?? 0;
 }
 
+/**
+ * Helper: Check if a plan is a lifetime plan
+ */
+export function isLifetimePlan(planCode: string): boolean {
+  return planCode.includes('_lifetime');
+}
+
+/**
+ * Helper: Get plan tier (starter, pro, business/premium, enterprise)
+ */
+export function getPlanTier(planCode: string): string {
+  const baseTier = planCode.replace('_lifetime', '');
+  // Normalize business/premium to business
+  return baseTier === 'premium' ? 'business' : baseTier;
+}
+
+/**
+ * Helper: Get plan tier level (for comparison)
+ */
+export function getPlanTierLevel(planCode: string): number {
+  const tier = getPlanTier(planCode);
+  const levels: Record<string, number> = {
+    starter: 1,
+    pro: 2,
+    business: 3,
+    premium: 3,
+    enterprise: 4,
+  };
+  return levels[tier] || 0;
+}
+
+/**
+ * Helper: Check if upgrade is valid
+ * Returns true if targetPlan is a valid upgrade from currentPlan
+ */
+export function isValidUpgrade(currentPlanCode: string, targetPlanCode: string): boolean {
+  // Can't "upgrade" to the same plan
+  if (currentPlanCode === targetPlanCode) {
+    return false;
+  }
+  
+  // Enterprise plans require contacting sales
+  if (targetPlanCode === 'enterprise' || targetPlanCode === 'enterprise_lifetime') {
+    return false;
+  }
+  
+  const currentIsLifetime = isLifetimePlan(currentPlanCode);
+  const targetIsLifetime = isLifetimePlan(targetPlanCode);
+  const currentTierLevel = getPlanTierLevel(currentPlanCode);
+  const targetTierLevel = getPlanTierLevel(targetPlanCode);
+  
+  // Lifetime users cannot downgrade
+  if (currentIsLifetime && targetTierLevel < currentTierLevel) {
+    return false;
+  }
+  
+  // Lifetime users can only upgrade to higher lifetime tiers
+  if (currentIsLifetime && !targetIsLifetime) {
+    return false;
+  }
+  
+  // Monthly users can upgrade to same or higher tier (either monthly or lifetime)
+  if (!currentIsLifetime && targetTierLevel >= currentTierLevel) {
+    return true;
+  }
+  
+  // Lifetime users can upgrade to higher lifetime tiers
+  if (currentIsLifetime && targetIsLifetime && targetTierLevel > currentTierLevel) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Helper: Get upgrade type
+ */
+export function getUpgradeType(currentPlanCode: string, targetPlanCode: string): 
+  'subscription-to-lifetime' | 'lifetime-to-lifetime' | 'subscription-to-subscription' | 'invalid' {
+  
+  if (!isValidUpgrade(currentPlanCode, targetPlanCode)) {
+    return 'invalid';
+  }
+  
+  const currentIsLifetime = isLifetimePlan(currentPlanCode);
+  const targetIsLifetime = isLifetimePlan(targetPlanCode);
+  
+  if (!currentIsLifetime && targetIsLifetime) {
+    return 'subscription-to-lifetime';
+  }
+  
+  if (currentIsLifetime && targetIsLifetime) {
+    return 'lifetime-to-lifetime';
+  }
+  
+  if (!currentIsLifetime && !targetIsLifetime) {
+    return 'subscription-to-subscription';
+  }
+  
+  return 'invalid';
+}
+
+/**
+ * Helper: Calculate upgrade price difference (for lifetime to lifetime)
+ */
+export function calculateLifetimeUpgradePrice(
+  currentPlan: Plan,
+  targetPlan: Plan
+): number {
+  const currentPrice = currentPlan.monthly?.amount || 0;
+  const targetPrice = targetPlan.monthly?.amount || 0;
+  
+  // For lifetime plans, the difference is simply the price difference
+  return Math.max(0, targetPrice - currentPrice);
+}
+
