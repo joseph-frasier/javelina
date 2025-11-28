@@ -87,10 +87,10 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL(next, requestUrl.origin))
       }
 
-      // First-time user: send to pricing to select a plan
+      // First-time user: send to dashboard with welcome guidance
       if (!hasOrganizations) {
-        console.log('[Auth Callback] First-time user → redirecting to pricing')
-        return NextResponse.redirect(new URL('/pricing?onboarding=true', requestUrl.origin))
+        console.log('[Auth Callback] First-time user → redirecting to dashboard')
+        return NextResponse.redirect(new URL('/', requestUrl.origin))
       }
 
       // Returning user with organizations: send to dashboard

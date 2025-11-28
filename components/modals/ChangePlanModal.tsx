@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { fetchPlans, type Plan, isValidUpgrade, getUpgradeType, calculateLifetimeUpgradePrice, isLifetimePlan } from '@/lib/plans-config';
 import { useToastStore } from '@/lib/toast-store';
 import { stripeApi } from '@/lib/api-client';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -34,6 +36,75 @@ export function ChangePlanModal({
   const [upgradePricing, setUpgradePricing] = useState<UpgradePricing | null>(null);
   const [calculatingPrice, setCalculatingPrice] = useState(false);
   const addToast = useToastStore((state) => state.addToast);
+  
+  const modalRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Handle opening/closing with animation
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    }
+  }, [isOpen]);
+
+  // GSAP Opening Animation
+  useGSAP(() => {
+    if (!shouldRender) return;
+
+    if (isOpen && modalRef.current && overlayRef.current) {
+      gsap.fromTo(
+        overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+      );
+
+      gsap.fromTo(
+        modalRef.current,
+        { scale: 0.95, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }
+      );
+    }
+  }, [isOpen, shouldRender]);
+
+  // GSAP Closing Animation
+  useEffect(() => {
+    if (!shouldRender) return;
+    if (isOpen) return;
+
+    if (modalRef.current && overlayRef.current) {
+      gsap.killTweensOf([modalRef.current, overlayRef.current]);
+
+      const tl = gsap.timeline({
+        onComplete: () => setShouldRender(false)
+      });
+
+      tl.to(overlayRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in'
+      });
+
+      tl.to(modalRef.current, {
+        scale: 0.95,
+        opacity: 0,
+        y: 20,
+        duration: 0.2,
+        ease: 'power2.in'
+      }, 0);
+    }
+  }, [isOpen, shouldRender]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -167,15 +238,24 @@ export function ChangePlanModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   const currentIsLifetime = isLifetimePlan(currentPlanCode);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 min-h-screen overflow-hidden">
-      <div className="bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 min-h-screen overflow-hidden">
+      {/* Overlay */}
+      <div 
+        ref={overlayRef}
+        className="fixed inset-0 bg-black/50 dark:bg-black/70"
+        onClick={onClose}
+      />
+      {/* Modal */}
+      <div 
+        ref={modalRef}
+        className="relative bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="border-b border-gray-700 p-6">
+        <div className="border-b border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-orange">
@@ -189,7 +269,7 @@ export function ChangePlanModal({
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
               disabled={isSubmitting}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,7 +280,7 @@ export function ChangePlanModal({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6 pb-16 sm:pb-12">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
@@ -221,7 +301,7 @@ export function ChangePlanModal({
                       key={plan.id}
                       className={`relative rounded-xl p-6 transition-all ${
                         isCurrent
-                          ? 'bg-[#252525] border-2 border-orange'
+                          ? 'bg-gray-50 dark:bg-[#252525] border-2 border-orange'
                           : isSelected
                           ? 'bg-[#252525] border-2 border-orange ring-2 ring-orange/50'
                           : isDisabled
@@ -263,7 +343,7 @@ export function ChangePlanModal({
 
                       {/* Price */}
                       <div className="mb-4">
-                        <div className="text-4xl font-black text-white">
+                        <div className="text-4xl font-black text-gray-900 dark:text-orange">
                           ${plan.monthly?.amount.toFixed(2)}
                         </div>
                         <div className="text-sm text-gray-400 uppercase tracking-wide mt-1">
@@ -272,7 +352,7 @@ export function ChangePlanModal({
                       </div>
 
                       {/* Description */}
-                      <p className="text-sm text-gray-400 mb-6">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                         {plan.description}
                       </p>
 
@@ -283,7 +363,7 @@ export function ChangePlanModal({
                             <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-sm text-gray-300">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
                               {feature.name}
                             </span>
                           </li>

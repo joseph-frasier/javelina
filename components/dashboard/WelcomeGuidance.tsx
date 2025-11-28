@@ -23,7 +23,7 @@ export function WelcomeGuidance() {
     {
       number: 4,
       title: 'Configure Records',
-      description: 'Set up A, AAAA, CNAME, and other DNS records',
+      description: 'Set up A, AAAA, and other DNS records',
     },
   ];
 
@@ -91,9 +91,6 @@ export function WelcomeGuidance() {
     <div className="space-y-6">
       {/* Getting Started Checklist */}
       <div>
-        <h3 className="text-lg font-bold text-orange-dark dark:text-orange mb-4">
-          Getting Started
-        </h3>
         <div className="space-y-3">
           {steps.map((step) => (
             <div
