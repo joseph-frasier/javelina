@@ -168,6 +168,26 @@ export const stripeApi = {
   updateSubscription: (org_id: string, new_plan_code: string) => {
     return apiClient.post('/stripe/subscriptions/update', { org_id, new_plan_code });
   },
+  
+  /**
+   * Calculate upgrade pricing with proration
+   */
+  calculateUpgrade: (org_id: string, target_plan_code: string) => {
+    return apiClient.post('/stripe/calculate-upgrade', { org_id, target_plan_code });
+  },
+  
+  /**
+   * Upgrade to lifetime plan or higher lifetime tier
+   * Returns a clientSecret for the PaymentIntent to be used with Stripe Elements
+   */
+  upgradeToLifetime: (org_id: string, target_plan_code: string): Promise<{
+    clientSecret: string;
+    flow: 'payment_intent';
+    upgrade_type: 'subscription-to-lifetime' | 'lifetime-to-lifetime';
+    final_price: number;
+  }> => {
+    return apiClient.post('/stripe/upgrade-to-lifetime', { org_id, target_plan_code });
+  },
 };
 
 // Subscriptions API

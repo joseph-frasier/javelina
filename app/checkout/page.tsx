@@ -16,6 +16,11 @@ interface CheckoutData {
   plan_name?: string;
   plan_price?: number;
   billing_interval?: string;
+  // Upgrade-specific fields
+  upgrade_type?: 'subscription-to-lifetime' | 'lifetime-to-lifetime' | null;
+  original_price?: number;
+  credit_amount?: number;
+  from_plan_code?: string;
 }
 
 interface SubscriptionIntent {
@@ -38,6 +43,7 @@ function CheckoutContent() {
     const org_id = searchParams.get('org_id');
     const plan_code = searchParams.get('plan_code');
     const price_id = searchParams.get('price_id');
+    const upgrade_type = searchParams.get('upgrade_type') as CheckoutData['upgrade_type'];
 
     if (!org_id || !plan_code) {
       addToast('error', 'Invalid checkout parameters');
@@ -45,31 +51,47 @@ function CheckoutContent() {
       return;
     }
 
-    setCheckoutData({
+    const data: CheckoutData = {
       org_id,
       plan_code,
       price_id: price_id || '',
       plan_name: searchParams.get('plan_name') || 'Selected Plan',
       plan_price: parseFloat(searchParams.get('plan_price') || '0'),
       billing_interval: searchParams.get('billing_interval') || 'lifetime',
-    });
+      // Upgrade-specific parameters
+      upgrade_type: upgrade_type || null,
+      original_price: parseFloat(searchParams.get('original_price') || '0'),
+      credit_amount: parseFloat(searchParams.get('credit_amount') || '0'),
+      from_plan_code: searchParams.get('from_plan_code') || '',
+    };
+
+    setCheckoutData(data);
 
     // Guard against double invocation in React StrictMode
     if (hasRequestedRef.current) return;
     hasRequestedRef.current = true;
 
-    // Create subscription intent
-    const createSubscriptionIntent = async () => {
+    // Create subscription/payment intent
+    const createPaymentIntent = async () => {
       try {
         setIsLoading(true);
 
         const { stripeApi } = await import('@/lib/api-client');
-        const data = await stripeApi.createSubscription(org_id, plan_code, price_id || undefined);
+        
+        // Use upgrade endpoint for lifetime upgrades, regular for new subscriptions
+        let response;
+        if (upgrade_type === 'subscription-to-lifetime' || upgrade_type === 'lifetime-to-lifetime') {
+          // Call the upgrade endpoint which returns a PaymentIntent
+          response = await stripeApi.upgradeToLifetime(org_id, plan_code);
+        } else {
+          // Regular subscription creation
+          response = await stripeApi.createSubscription(org_id, plan_code, price_id || undefined);
+        }
 
-        setClientSecret(data.clientSecret);
-        setFlow(data.flow);
+        setClientSecret(response.clientSecret);
+        setFlow(response.flow || 'payment_intent');
       } catch (error: any) {
-        console.error('Error creating subscription:', error);
+        console.error('Error creating payment intent:', error);
         addToast('error', error.message || 'Failed to initialize payment');
         router.push('/pricing');
       } finally {
@@ -77,7 +99,7 @@ function CheckoutContent() {
       }
     };
 
-    createSubscriptionIntent();
+    createPaymentIntent();
   }, [searchParams, router, addToast, hasRequestedRef]);
 
   const handlePaymentSuccess = () => {
@@ -93,6 +115,9 @@ function CheckoutContent() {
     return null;
   }
 
+  const isUpgrade = !!checkoutData.upgrade_type;
+  const isLifetime = checkoutData.billing_interval === 'lifetime';
+
   return (
     <div className="min-h-screen bg-orange-light">
       {/* Header */}
@@ -102,8 +127,8 @@ function CheckoutContent() {
           <Breadcrumb 
             items={[
               { label: 'Dashboard', href: '/' },
-              { label: 'Select Plan', href: '/pricing' },
-              { label: 'Checkout' }
+              { label: isUpgrade ? 'Billing' : 'Select Plan', href: isUpgrade ? '/settings/billing' : '/pricing' },
+              { label: isUpgrade ? 'Upgrade' : 'Checkout' }
             ]}
           />
         </div>
@@ -114,10 +139,12 @@ function CheckoutContent() {
         {/* Title */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-orange-dark mb-2">
-            Complete Your Purchase
+            {isUpgrade ? 'Complete Your Upgrade' : 'Complete Your Purchase'}
           </h1>
           <p className="text-base text-gray-slate font-light">
-            You&apos;re one step away from unlocking powerful DNS management
+            {isUpgrade 
+              ? 'You\'re upgrading to a lifetime plan with enhanced features'
+              : 'You\'re one step away from unlocking powerful DNS management'}
           </p>
         </div>
 
@@ -155,7 +182,7 @@ function CheckoutContent() {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl border border-gray-light shadow-lg p-8 sticky top-8">
                 <h2 className="text-xl font-bold text-orange-dark mb-6">
-                  Order Summary
+                  {isUpgrade ? 'Upgrade Summary' : 'Order Summary'}
                 </h2>
 
                 <div className="space-y-6">
@@ -166,28 +193,63 @@ function CheckoutContent() {
                         <h3 className="font-bold text-orange-dark">
                           {checkoutData.plan_name}
                         </h3>
-                        <p className="text-sm text-gray-slate font-light">
-                          Billed {checkoutData.billing_interval}ly
-                        </p>
+                        {isLifetime && (
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full uppercase">
+                            Lifetime
+                          </span>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-orange-dark">
-                          ${Number(checkoutData.plan_price).toFixed(2)}
-                        </p>
-                        <p className="text-sm text-gray-slate font-light">
-                          /{checkoutData.billing_interval}
-                        </p>
-                      </div>
+                      {!isUpgrade && (
+                        <div className="text-right">
+                          <p className="font-bold text-orange-dark">
+                            ${Number(checkoutData.plan_price).toFixed(2)}
+                          </p>
+                          {!isLifetime && (
+                            <p className="text-sm text-gray-slate font-light">
+                              /{checkoutData.billing_interval}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Divider */}
-                  <div className="border-t border-gray-light"></div>
+                  {/* Upgrade Pricing Breakdown */}
+                  {isUpgrade && checkoutData.original_price !== undefined && (
+                    <div className="space-y-3 py-4 border-t border-b border-gray-light">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-slate">
+                          {checkoutData.plan_name} Price
+                        </span>
+                        <span className="font-medium text-gray-700">
+                          ${Number(checkoutData.original_price).toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      {checkoutData.credit_amount !== undefined && checkoutData.credit_amount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-slate">
+                            {checkoutData.upgrade_type === 'lifetime-to-lifetime' 
+                              ? 'Current Plan Credit'
+                              : 'Subscription Credit'}
+                          </span>
+                          <span className="font-medium text-green-600">
+                            -${Number(checkoutData.credit_amount).toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Non-upgrade divider */}
+                  {!isUpgrade && (
+                    <div className="border-t border-gray-light"></div>
+                  )}
 
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-lg font-bold text-orange-dark">
-                      Total due today
+                      {isUpgrade ? 'Upgrade Cost' : 'Total due today'}
                     </span>
                     <span className="text-2xl font-black text-orange-dark">
                       ${Number(checkoutData.plan_price).toFixed(2)}
@@ -196,12 +258,53 @@ function CheckoutContent() {
 
                   {/* Fine Print */}
                   <div className="pt-4 border-t border-gray-light">
-                    <p className="text-xs text-gray-slate font-light">
-                      Your subscription will automatically renew every{' '}
-                      {checkoutData.billing_interval}. You can cancel anytime from your
-                      account settings.
-                    </p>
+                    {isLifetime ? (
+                      <p className="text-xs text-gray-slate font-light">
+                        This is a one-time payment for lifetime access. 
+                        No recurring charges will be made.
+                        {isUpgrade && checkoutData.upgrade_type === 'subscription-to-lifetime' && (
+                          <span className="block mt-2">
+                            Your monthly subscription will be automatically canceled after this purchase.
+                          </span>
+                        )}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-slate font-light">
+                        Your subscription will automatically renew every{' '}
+                        {checkoutData.billing_interval}. You can cancel anytime from your
+                        account settings.
+                      </p>
+                    )}
                   </div>
+
+                  {/* Upgrade Benefits */}
+                  {isUpgrade && (
+                    <div className="pt-4 border-t border-gray-light">
+                      <h4 className="text-sm font-bold text-orange-dark mb-3">
+                        What you get:
+                      </h4>
+                      <ul className="space-y-2">
+                        <li className="flex items-start text-xs">
+                          <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-gray-slate">Lifetime access - no recurring fees</span>
+                        </li>
+                        <li className="flex items-start text-xs">
+                          <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-gray-slate">All future updates included</span>
+                        </li>
+                        <li className="flex items-start text-xs">
+                          <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-gray-slate">Priority support</span>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
