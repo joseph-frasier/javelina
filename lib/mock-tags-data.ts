@@ -13,6 +13,11 @@ export interface ZoneTagAssignment {
   tagIds: string[];
 }
 
+export interface RecordTagAssignment {
+  recordId: string;
+  tagIds: string[];
+}
+
 // Predefined color palette for tags (16 colors in 2 rows)
 export const TAG_COLORS = [
   // Row 1 - Vibrant colors
@@ -51,6 +56,12 @@ export const INITIAL_ZONE_TAG_ASSIGNMENTS: ZoneTagAssignment[] = [
   // These will be populated based on actual zone IDs in the UI
 ];
 
+// Initial mock record-tag assignments (maps record IDs to their tag IDs)
+// In a real app, this would come from the database
+export const INITIAL_RECORD_TAG_ASSIGNMENTS: RecordTagAssignment[] = [
+  // These will be populated based on actual record IDs in the UI
+];
+
 // Helper function to get tags for a zone
 export function getTagsForZone(zoneId: string, assignments: ZoneTagAssignment[], tags: Tag[]): Tag[] {
   const assignment = assignments.find(a => a.zoneId === zoneId);
@@ -60,6 +71,18 @@ export function getTagsForZone(zoneId: string, assignments: ZoneTagAssignment[],
 
 // Helper function to get zones count for a tag
 export function getZoneCountForTag(tagId: string, assignments: ZoneTagAssignment[]): number {
+  return assignments.filter(a => a.tagIds.includes(tagId)).length;
+}
+
+// Helper function to get tags for a record
+export function getTagsForRecord(recordId: string, assignments: RecordTagAssignment[], tags: Tag[]): Tag[] {
+  const assignment = assignments.find(a => a.recordId === recordId);
+  if (!assignment) return [];
+  return tags.filter(tag => assignment.tagIds.includes(tag.id));
+}
+
+// Helper function to get records count for a tag
+export function getRecordCountForTag(tagId: string, assignments: RecordTagAssignment[]): number {
   return assignments.filter(a => a.tagIds.includes(tagId)).length;
 }
 

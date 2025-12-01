@@ -39,6 +39,13 @@ import {
   getDNSRecords,
   toggleDNSRecordStatus,
 } from '@/lib/actions/dns-records';
+import { 
+  INITIAL_MOCK_TAGS, 
+  INITIAL_RECORD_TAG_ASSIGNMENTS,
+  type Tag, 
+  type RecordTagAssignment 
+} from '@/lib/mock-tags-data';
+import { AssignTagsModal } from '@/components/modals/AssignTagsModal';
 
 interface ZoneDetailClientProps {
   zone: any;
@@ -69,6 +76,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [showDeleteRecordConfirm, setShowDeleteRecordConfirm] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<DNSRecord | null>(null);
   const [isRecordLoading, setIsRecordLoading] = useState(false);
+
+  // Tags state (mockup)
+  const [mockTags, setMockTags] = useState<Tag[]>(INITIAL_MOCK_TAGS);
+  const [recordTagAssignments, setRecordTagAssignments] = useState<RecordTagAssignment[]>(INITIAL_RECORD_TAG_ASSIGNMENTS);
+  const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
+  const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
+  const [selectedRecordForTags, setSelectedRecordForTags] = useState<{ id: string; name: string } | null>(null);
   
   // Edit form state
   const [editFormData, setEditFormData] = useState({
@@ -272,6 +286,39 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     }
   };
 
+  // Tag handlers (mockup)
+  const handleTagClick = (tagId: string) => {
+    setActiveTagIds(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  const handleClearTagFilters = () => {
+    setActiveTagIds([]);
+  };
+
+  const handleOpenAssignTags = (recordId: string, recordName: string) => {
+    setSelectedRecordForTags({ id: recordId, name: recordName });
+    setIsAssignTagsModalOpen(true);
+  };
+
+  const handleSaveRecordTagAssignments = (recordId: string, tagIds: string[]) => {
+    setRecordTagAssignments(prev => {
+      // Remove any existing assignment for this record
+      const filtered = prev.filter(a => a.recordId !== recordId);
+      // Only add if there are tags to assign
+      if (tagIds.length > 0) {
+        return [...filtered, { recordId, tagIds }];
+      }
+      return filtered;
+    });
+    setIsAssignTagsModalOpen(false);
+    setSelectedRecordForTags(null);
+    addToast('success', 'Tags updated successfully');
+  };
+
   // Build breadcrumb items
   const breadcrumbItems = [];
   if (organization && environment) {
@@ -396,6 +443,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           nameservers={zone.nameservers}
           soaSerial={zone.soa_serial}
           defaultTTL={zone.ttl}
+          // Tag props (mockup)
+          tags={mockTags}
+          recordTagAssignments={recordTagAssignments}
+          activeTagIds={activeTagIds}
+          onTagClick={handleTagClick}
+          onAssignTags={handleOpenAssignTags}
+          onClearTagFilters={handleClearTagFilters}
         />
       </Card>
 
@@ -652,6 +706,29 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         variant="danger"
         isLoading={isRecordLoading}
       />
+
+      {/* Assign Tags Modal (mockup) */}
+      {selectedRecordForTags && (
+        <AssignTagsModal
+          isOpen={isAssignTagsModalOpen}
+          onClose={() => {
+            setIsAssignTagsModalOpen(false);
+            setSelectedRecordForTags(null);
+          }}
+          tags={mockTags}
+          zoneName={selectedRecordForTags.name}
+          zoneId={selectedRecordForTags.id}
+          assignedTagIds={
+            recordTagAssignments.find(a => a.recordId === selectedRecordForTags.id)?.tagIds || []
+          }
+          onSave={handleSaveRecordTagAssignments}
+          onToggleFavorite={(tagId) => {
+            setMockTags(prev => prev.map(tag => 
+              tag.id === tagId ? { ...tag, isFavorite: !tag.isFavorite } : tag
+            ));
+          }}
+        />
+      )}
     </div>
   );
 }

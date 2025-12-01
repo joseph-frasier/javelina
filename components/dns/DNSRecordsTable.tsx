@@ -6,6 +6,9 @@ import type { DNSRecord } from '@/types/dns';
 import { RECORD_TYPE_INFO } from '@/types/dns';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ExportButton } from '@/components/admin/ExportButton';
+import { TagBadge } from '@/components/ui/TagBadge';
+import type { Tag, RecordTagAssignment } from '@/lib/mock-tags-data';
+import { getTagsForRecord } from '@/lib/mock-tags-data';
 
 interface DNSRecordsTableProps {
   records: DNSRecord[];
@@ -19,6 +22,13 @@ interface DNSRecordsTableProps {
   nameservers?: string[];
   soaSerial?: number;
   defaultTTL?: number;
+  // Tag-related props (mockup)
+  tags?: Tag[];
+  recordTagAssignments?: RecordTagAssignment[];
+  activeTagIds?: string[];
+  onTagClick?: (tagId: string) => void;
+  onAssignTags?: (recordId: string, recordName: string) => void;
+  onClearTagFilters?: () => void;
 }
 
 export function DNSRecordsTable({
@@ -32,6 +42,13 @@ export function DNSRecordsTable({
   nameservers,
   soaSerial,
   defaultTTL,
+  // Tag props
+  tags = [],
+  recordTagAssignments = [],
+  activeTagIds = [],
+  onTagClick,
+  onAssignTags,
+  onClearTagFilters,
 }: DNSRecordsTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<keyof DNSRecord | null>('name');
@@ -59,7 +76,7 @@ export function DNSRecordsTable({
     return priorityRanges.filter(range => hasRecordsInRange.get(range.key));
   }, [records, priorityRanges]);
 
-  // Filter records based on search query, status, and priority
+  // Filter records based on search query, status, priority, and tags
   const filteredRecords = useMemo(() => {
     let filtered = records;
     
@@ -78,8 +95,16 @@ export function DNSRecordsTable({
     
     // Priority filter removed - priority is now part of the value field (not a separate column)
     
+    // Apply tag filter (OR logic - record must have at least one of the selected tags)
+    if (activeTagIds.length > 0) {
+      filtered = filtered.filter(record => {
+        const assignment = recordTagAssignments.find(a => a.recordId === record.id);
+        return activeTagIds.some(tagId => assignment?.tagIds?.includes(tagId) ?? false);
+      });
+    }
+    
     return filtered;
-  }, [records, searchQuery, statusFilters, priorityFilters, priorityRanges]);
+  }, [records, searchQuery, statusFilters, priorityFilters, priorityRanges, activeTagIds, recordTagAssignments]);
 
   // Sort records
   const filteredAndSortedRecords = useMemo(() => {
@@ -354,6 +379,72 @@ export function DNSRecordsTable({
         )}
       </div>
 
+      {/* Tag Filter Bar */}
+      {activeTagIds.length > 0 && (
+        <div className="flex items-center justify-between p-3 bg-orange/10 rounded-lg">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-gray-slate dark:text-gray-300">Filtering by:</span>
+            {activeTagIds.map(tagId => {
+              const tag = tags.find(t => t.id === tagId);
+              if (!tag) return null;
+              return (
+                <TagBadge
+                  key={tag.id}
+                  name={tag.name}
+                  color={tag.color}
+                  size="sm"
+                  showRemove
+                  onRemove={() => onTagClick?.(tag.id)}
+                />
+              );
+            })}
+            <span className="text-sm text-gray-slate dark:text-gray-400">
+              ({filteredRecords.length} {filteredRecords.length === 1 ? 'record' : 'records'})
+            </span>
+          </div>
+          <button
+            onClick={() => onClearTagFilters?.()}
+            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1 transition-colors flex-shrink-0"
+          >
+            Clear all
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Empty state when tag filter has no matches */}
+      {activeTagIds.length > 0 && filteredAndSortedRecords.length === 0 && (
+        <div className="text-center py-12 border border-dashed border-gray-light dark:border-gray-700 rounded-lg">
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+            />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            No records match this filter
+          </h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Try selecting different tags or clear the filter.
+          </p>
+          <button
+            onClick={() => onClearTagFilters?.()}
+            className="mt-4 text-sm text-orange hover:text-orange-dark font-medium"
+          >
+            Clear tag filter
+          </button>
+        </div>
+      )}
+
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full border-collapse">
@@ -371,24 +462,26 @@ export function DNSRecordsTable({
                 />
               </th>
               {[
-                { key: 'name' as const, label: 'Name' },
-                { key: 'type' as const, label: 'Type' },
-                { key: 'value' as const, label: 'Value' },
-                { key: 'ttl' as const, label: 'TTL' },
+                { key: 'name' as keyof DNSRecord | null, label: 'Name', sortable: true },
+                { key: 'type' as keyof DNSRecord | null, label: 'Type', sortable: true },
+                { key: 'value' as keyof DNSRecord | null, label: 'Value', sortable: true },
+                { key: null as keyof DNSRecord | null, label: 'Tags', sortable: false },
+                { key: 'ttl' as keyof DNSRecord | null, label: 'TTL', sortable: true },
               ].map(column => (
                 <th
-                  key={column.key}
+                  key={column.key || column.label}
                   className={clsx(
-                    'text-left py-3 px-4 text-sm font-semibold transition-colors cursor-pointer select-none hover:text-orange dark:hover:text-orange',
-                    sortKey === column.key
+                    'text-left py-3 px-4 text-sm font-semibold transition-colors select-none',
+                    column.sortable && 'cursor-pointer hover:text-orange dark:hover:text-orange',
+                    column.key && sortKey === column.key
                       ? 'text-orange-dark dark:text-orange'
                       : 'text-gray-700 dark:text-gray-300'
                   )}
-                  onClick={() => handleSort(column.key)}
+                  onClick={() => column.sortable && column.key && handleSort(column.key)}
                 >
                   <div className="flex items-center gap-2">
                     {column.label}
-                    {sortKey === column.key && (
+                    {column.key && sortKey === column.key && (
                       <span className="text-orange">
                         {sortDirection === 'asc' ? '↑' : '↓'}
                       </span>
@@ -442,6 +535,46 @@ export function DNSRecordsTable({
                         {record.value}
                       </span>
                     </Tooltip>
+                  </td>
+                  {/* Tags Column */}
+                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {(() => {
+                        const recordTags = getTagsForRecord(record.id, recordTagAssignments, tags);
+                        const displayTags = recordTags.slice(0, 3);
+                        const remainingCount = recordTags.length - 3;
+                        
+                        return (
+                          <>
+                            {displayTags.map(tag => (
+                              <TagBadge
+                                key={tag.id}
+                                name={tag.name}
+                                color={tag.color}
+                                size="sm"
+                                onClick={() => onTagClick?.(tag.id)}
+                              />
+                            ))}
+                            {remainingCount > 0 && (
+                              <span className="text-xs text-gray-slate dark:text-gray-400">
+                                +{remainingCount}
+                              </span>
+                            )}
+                            {onAssignTags && (
+                              <button
+                                onClick={() => onAssignTags(record.id, record.name || '@')}
+                                className="p-1 rounded hover:bg-gray-light dark:hover:bg-gray-700 transition-colors"
+                                title="Assign tags"
+                              >
+                                <svg className="w-4 h-4 text-gray-400 hover:text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300">
                     {record.ttl}s
@@ -502,6 +635,55 @@ export function DNSRecordsTable({
                     {record.value}
                   </div>
                 </div>
+                {/* Tags in Mobile View */}
+                {tags.length > 0 && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <span className="text-gray-500 dark:text-gray-400">Tags:</span>
+                    <div className="flex items-center gap-1 flex-wrap mt-1">
+                      {(() => {
+                        const recordTags = getTagsForRecord(record.id, recordTagAssignments, tags);
+                        const displayTags = recordTags.slice(0, 3);
+                        const remainingCount = recordTags.length - 3;
+                        
+                        return (
+                          <>
+                            {displayTags.length === 0 ? (
+                              <span className="text-xs text-gray-400 dark:text-gray-500 italic">No tags</span>
+                            ) : (
+                              <>
+                                {displayTags.map(tag => (
+                                  <TagBadge
+                                    key={tag.id}
+                                    name={tag.name}
+                                    color={tag.color}
+                                    size="sm"
+                                    onClick={() => onTagClick?.(tag.id)}
+                                  />
+                                ))}
+                                {remainingCount > 0 && (
+                                  <span className="text-xs text-gray-slate dark:text-gray-400">
+                                    +{remainingCount}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {onAssignTags && (
+                              <button
+                                onClick={() => onAssignTags(record.id, record.name || '@')}
+                                className="p-1 rounded hover:bg-gray-light dark:hover:bg-gray-700 transition-colors"
+                                title="Assign tags"
+                              >
+                                <svg className="w-4 h-4 text-gray-400 hover:text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                   <span>TTL: {record.ttl}s</span>
                 </div>
