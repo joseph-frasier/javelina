@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -155,6 +155,13 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     const assignment = zoneTagAssignments.find(a => a.zoneId === zoneId);
     return assignment?.tagIds || [];
   };
+
+  // Memoize assigned tag IDs for the selected zone to prevent useEffect re-triggers in modal
+  const selectedZoneAssignedTagIds = useMemo(() => {
+    if (!selectedZoneForTags) return [];
+    const assignment = zoneTagAssignments.find(a => a.zoneId === selectedZoneForTags.id);
+    return assignment?.tagIds || [];
+  }, [selectedZoneForTags, zoneTagAssignments]);
   // ============================================
 
   // Check if this is the newest plan and get plan name
@@ -390,7 +397,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           zoneName={selectedZoneForTags.name}
           zoneId={selectedZoneForTags.id}
           allTags={mockTags}
-          assignedTagIds={getAssignedTagIds(selectedZoneForTags.id)}
+          assignedTagIds={selectedZoneAssignedTagIds}
           onSave={handleSaveTagAssignments}
           onToggleFavorite={handleToggleFavorite}
         />

@@ -49,7 +49,7 @@ export function ZonesList({
   const filteredZones = activeTagId
     ? zones.filter(zone => {
         const assignment = assignments.find(a => a.zoneId === zone.id);
-        return assignment?.tagIds.includes(activeTagId);
+        return assignment?.tagIds?.includes(activeTagId) ?? false;
       })
     : zones;
 
