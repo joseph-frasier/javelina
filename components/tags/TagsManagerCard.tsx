@@ -9,8 +9,9 @@ import { getZoneCountForTag } from '@/lib/mock-tags-data';
 interface TagsManagerCardProps {
   tags: Tag[];
   assignments: ZoneTagAssignment[];
-  activeTagId: string | null;
-  onTagClick: (tagId: string | null) => void;
+  activeTagIds: string[];
+  onTagClick: (tagId: string) => void;
+  onClearFilters: () => void;
   onToggleFavorite: (tagId: string) => void;
   onCreateTag: () => void;
 }
@@ -18,11 +19,14 @@ interface TagsManagerCardProps {
 export function TagsManagerCard({
   tags,
   assignments,
-  activeTagId,
+  activeTagIds,
   onTagClick,
+  onClearFilters,
   onToggleFavorite,
   onCreateTag,
 }: TagsManagerCardProps) {
+  const hasActiveFilters = activeTagIds.length > 0;
+
   return (
     <Card
       title="Tags"
@@ -64,13 +68,13 @@ export function TagsManagerCard({
       ) : (
         <div className="space-y-2 mt-4">
           {/* Active Filter Indicator */}
-          {activeTagId && (
+          {hasActiveFilters && (
             <div className="flex items-center justify-between p-2 bg-orange/10 rounded-lg mb-3">
               <span className="text-sm text-orange-dark dark:text-orange">
-                Filtering by tag
+                Filtering by {activeTagIds.length} tag{activeTagIds.length > 1 ? 's' : ''}
               </span>
               <button
-                onClick={() => onTagClick(null)}
+                onClick={onClearFilters}
                 className="text-sm text-orange hover:text-orange-dark flex items-center gap-1"
               >
                 Clear
@@ -83,7 +87,7 @@ export function TagsManagerCard({
 
           {tags.map((tag) => {
             const zoneCount = getZoneCountForTag(tag.id, assignments);
-            const isActive = activeTagId === tag.id;
+            const isActive = activeTagIds.includes(tag.id);
 
             return (
               <div
@@ -95,9 +99,25 @@ export function TagsManagerCard({
                     : 'bg-gray-light/30 dark:bg-gray-800 border border-transparent hover:bg-gray-light/50 dark:hover:bg-gray-700'
                   }
                 `}
-                onClick={() => onTagClick(isActive ? null : tag.id)}
+                onClick={() => onTagClick(tag.id)}
               >
                 <div className="flex items-center gap-3">
+                  {/* Checkbox indicator */}
+                  <div
+                    className={`
+                      w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
+                      ${isActive
+                        ? 'bg-orange border-orange'
+                        : 'border-gray-400 dark:border-gray-500'
+                      }
+                    `}
+                  >
+                    {isActive && (
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
                   <TagBadge name={tag.name} color={tag.color} size="md" />
                   <span className="text-xs text-gray-slate dark:text-gray-400">
                     {zoneCount} {zoneCount === 1 ? 'zone' : 'zones'}
@@ -105,13 +125,6 @@ export function TagsManagerCard({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Active Indicator */}
-                  {isActive && (
-                    <svg className="w-4 h-4 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-
                   {/* Favorite Star */}
                   <button
                     onClick={(e) => {
@@ -140,4 +153,3 @@ export function TagsManagerCard({
     </Card>
   );
 }
-

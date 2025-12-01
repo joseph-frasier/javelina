@@ -23,8 +23,9 @@ interface ZonesListProps {
   // Tagging mockup props
   tags?: Tag[];
   assignments?: ZoneTagAssignment[];
-  activeTagId?: string | null;
-  onTagClick?: (tagId: string | null) => void;
+  activeTagIds?: string[];
+  onTagClick?: (tagId: string) => void;
+  onClearFilters?: () => void;
   onAssignTags?: (zoneId: string, zoneName: string) => void;
 }
 
@@ -33,23 +34,26 @@ export function ZonesList({
   zones,
   tags = [],
   assignments = [],
-  activeTagId = null,
+  activeTagIds = [],
   onTagClick,
+  onClearFilters,
   onAssignTags,
 }: ZonesListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Reset to page 1 when activeTagId changes from parent
+  // Reset to page 1 when activeTagIds changes from parent
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTagId]);
+  }, [activeTagIds]);
 
-  // Filter zones by active tag
-  const filteredZones = activeTagId
+  // Filter zones by active tags (show zones that have ANY of the selected tags)
+  const filteredZones = activeTagIds.length > 0
     ? zones.filter(zone => {
         const assignment = assignments.find(a => a.zoneId === zone.id);
-        return assignment?.tagIds?.includes(activeTagId) ?? false;
+        if (!assignment?.tagIds) return false;
+        // Zone matches if it has ANY of the selected tags
+        return activeTagIds.some(tagId => assignment.tagIds.includes(tagId));
       })
     : zones;
 
@@ -63,34 +67,40 @@ export function ZonesList({
     setCurrentPage(page);
   };
 
-  // Reset to page 1 when filter changes
-  const handleClearFilter = () => {
-    setCurrentPage(1);
-    onTagClick?.(null);
-  };
-
-  const activeTag = tags.find(t => t.id === activeTagId);
+  // Get the active tag objects for display
+  const activeTags = tags.filter(t => activeTagIds.includes(t.id));
+  const hasActiveFilters = activeTagIds.length > 0;
 
   return (
     <Card
       title="Zones"
-      description={activeTagId ? `Filtered by tag` : "All DNS zones"}
+      description={hasActiveFilters ? `Filtered by ${activeTagIds.length} tag${activeTagIds.length > 1 ? 's' : ''}` : "All DNS zones"}
     >
       {/* Active Filter Bar */}
-      {activeTagId && activeTag && (
+      {hasActiveFilters && activeTags.length > 0 && (
         <div className="flex items-center justify-between p-3 bg-orange/10 rounded-lg mb-4 mt-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-gray-slate dark:text-gray-300">Filtering by:</span>
-            <TagBadge name={activeTag.name} color={activeTag.color} size="sm" />
+            {activeTags.map(tag => (
+              <TagBadge 
+                key={tag.id} 
+                name={tag.name} 
+                color={tag.color} 
+                size="sm"
+                onClick={() => onTagClick?.(tag.id)}
+                showRemove
+                onRemove={() => onTagClick?.(tag.id)}
+              />
+            ))}
             <span className="text-sm text-gray-slate dark:text-gray-400">
               ({filteredZones.length} {filteredZones.length === 1 ? 'zone' : 'zones'})
             </span>
           </div>
           <button
-            onClick={handleClearFilter}
-            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1 transition-colors"
+            onClick={onClearFilters}
+            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1 transition-colors flex-shrink-0"
           >
-            Clear filter
+            Clear all
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -183,7 +193,7 @@ export function ZonesList({
                               color={tag.color}
                               size="sm"
                               onClick={() => onTagClick?.(tag.id)}
-                              isActive={activeTagId === tag.id}
+                              isActive={activeTagIds.includes(tag.id)}
                             />
                           ))}
                           {/* Add Tag Button */}

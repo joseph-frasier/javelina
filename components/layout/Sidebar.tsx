@@ -18,16 +18,18 @@ interface SidebarProps {
   onMobileMenuClose?: () => void;
   // Tags mockup props
   mockTags?: Tag[];
-  activeTagId?: string | null;
-  onTagFilterChange?: (tagId: string | null) => void;
+  activeTagIds?: string[];
+  onTagFilterChange?: (tagId: string) => void;
+  onClearTagFilters?: () => void;
 }
 
 export function Sidebar({ 
   isMobileMenuOpen = false, 
   onMobileMenuClose,
   mockTags,
-  activeTagId,
+  activeTagIds,
   onTagFilterChange,
+  onClearTagFilters,
 }: SidebarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,15 +52,29 @@ export function Sidebar({
 
   // Use provided tags or fall back to initial mock tags for the mockup
   const tags = mockTags || INITIAL_MOCK_TAGS;
-  const [internalActiveTagId, setInternalActiveTagId] = useState<string | null>(null);
+  const [internalActiveTagIds, setInternalActiveTagIds] = useState<string[]>([]);
   
   // Use external state if provided, otherwise use internal state
-  const currentActiveTagId = activeTagId !== undefined ? activeTagId : internalActiveTagId;
-  const handleTagClick = (tagId: string | null) => {
+  const currentActiveTagIds = activeTagIds !== undefined ? activeTagIds : internalActiveTagIds;
+  
+  const handleTagClick = (tagId: string) => {
     if (onTagFilterChange) {
       onTagFilterChange(tagId);
     } else {
-      setInternalActiveTagId(tagId);
+      // Internal toggle logic for multi-select
+      setInternalActiveTagIds(prev => 
+        prev.includes(tagId) 
+          ? prev.filter(id => id !== tagId)
+          : [...prev, tagId]
+      );
+    }
+  };
+
+  const handleClearFilters = () => {
+    if (onClearTagFilters) {
+      onClearTagFilters();
+    } else {
+      setInternalActiveTagIds([]);
     }
   };
 
@@ -357,8 +373,9 @@ export function Sidebar({
           {/* Favorite Tags Section (Mockup) */}
           <FavoriteTagsSidebar
             tags={tags}
-            activeTagId={currentActiveTagId}
+            activeTagIds={currentActiveTagIds}
             onTagClick={handleTagClick}
+            onClearFilters={handleClearFilters}
             isCollapsed={false}
           />
 
@@ -414,8 +431,9 @@ export function Sidebar({
             {/* Collapsed Favorite Tags */}
             <FavoriteTagsSidebar
               tags={tags}
-              activeTagId={currentActiveTagId}
+              activeTagIds={currentActiveTagIds}
               onTagClick={handleTagClick}
+              onClearFilters={handleClearFilters}
               isCollapsed={true}
             />
             {userOrganizations.map((org) => (
@@ -447,8 +465,9 @@ export function Sidebar({
             {/* Favorite Tags Section (Mockup) */}
             <FavoriteTagsSidebar
               tags={tags}
-              activeTagId={currentActiveTagId}
+              activeTagIds={currentActiveTagIds}
               onTagClick={handleTagClick}
+              onClearFilters={handleClearFilters}
               isCollapsed={false}
             />
             {/* Organizations */}

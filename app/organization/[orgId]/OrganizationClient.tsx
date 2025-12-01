@@ -107,7 +107,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     });
     return initialAssignments;
   });
-  const [activeTagId, setActiveTagId] = useState<string | null>(null);
+  const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
   
   // Modal states
   const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
@@ -127,8 +127,18 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     );
   };
 
-  const handleTagClick = (tagId: string | null) => {
-    setActiveTagId(tagId);
+  // Toggle tag in/out of active filter (multi-select)
+  const handleTagClick = (tagId: string) => {
+    setActiveTagIds(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)  // Remove if already selected
+        : [...prev, tagId]                  // Add if not selected
+    );
+  };
+
+  // Clear all tag filters
+  const handleClearTagFilters = () => {
+    setActiveTagIds([]);
   };
 
   const handleOpenAssignTags = (zoneId: string, zoneName: string) => {
@@ -348,8 +358,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             {/* Favorite Tags Card (Alternative visualization for mockup) */}
             <FavoriteTagsCard
               tags={mockTags}
-              activeTagId={activeTagId}
+              activeTagIds={activeTagIds}
               onTagClick={handleTagClick}
+              onClearFilters={handleClearTagFilters}
               onToggleFavorite={handleToggleFavorite}
             />
 
@@ -366,8 +377,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             <TagsManagerCard
               tags={mockTags}
               assignments={zoneTagAssignments}
-              activeTagId={activeTagId}
+              activeTagIds={activeTagIds}
               onTagClick={handleTagClick}
+              onClearFilters={handleClearTagFilters}
               onToggleFavorite={handleToggleFavorite}
               onCreateTag={() => setIsCreateTagModalOpen(true)}
             />
@@ -378,8 +390,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               zones={org.zones}
               tags={mockTags}
               assignments={zoneTagAssignments}
-              activeTagId={activeTagId}
+              activeTagIds={activeTagIds}
               onTagClick={handleTagClick}
+              onClearFilters={handleClearTagFilters}
               onAssignTags={handleOpenAssignTags}
             />
           </div>
