@@ -15,6 +15,7 @@ import { ZonesList } from '@/components/organization/ZonesList';
 import { useAuthStore } from '@/lib/auth-store';
 // Tagging System Mockup Imports
 import { TagsManagerCard } from '@/components/tags/TagsManagerCard';
+import { FavoriteTagsCard } from '@/components/tags/FavoriteTagsCard';
 import { CreateTagModal } from '@/components/modals/CreateTagModal';
 import { AssignTagsModal } from '@/components/modals/AssignTagsModal';
 import { 
@@ -343,6 +344,14 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                 </Link>
               </div>
             </Card>
+
+            {/* Favorite Tags Card (Alternative visualization for mockup) */}
+            <FavoriteTagsCard
+              tags={mockTags}
+              activeTagId={activeTagId}
+              onTagClick={handleTagClick}
+              onToggleFavorite={handleToggleFavorite}
+            />
 
             {/* Team Members */}
             <InviteUsersBox
