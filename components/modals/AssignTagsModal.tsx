@@ -30,6 +30,16 @@ export function AssignTagsModal({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const prevIsOpenRef = useRef(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Reset selected tags only when modal OPENS (not on every assignedTagIds change)
   // This prevents losing user selections when parent state changes mid-edit
@@ -63,9 +73,10 @@ export function AssignTagsModal({
 
   const handleClose = () => {
     onClose();
-    // Reset after animation
-    setTimeout(() => {
+    // Reset after animation - use ref so we can cancel on unmount
+    closeTimeoutRef.current = setTimeout(() => {
       setSearchQuery('');
+      closeTimeoutRef.current = null;
     }, 250);
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -18,6 +18,16 @@ export function CreateTagModal({ isOpen, onClose, onCreateTag, existingTags }: C
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(TAG_COLORS[0].value);
   const [errors, setErrors] = useState<{ name?: string }>({});
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: { name?: string } = {};
@@ -54,11 +64,12 @@ export function CreateTagModal({ isOpen, onClose, onCreateTag, existingTags }: C
 
   const handleClose = () => {
     onClose();
-    // Reset form after animation
-    setTimeout(() => {
+    // Reset form after animation - use ref so we can cancel on unmount
+    closeTimeoutRef.current = setTimeout(() => {
       setName('');
       setSelectedColor(TAG_COLORS[0].value);
       setErrors({});
+      closeTimeoutRef.current = null;
     }, 250);
   };
 
