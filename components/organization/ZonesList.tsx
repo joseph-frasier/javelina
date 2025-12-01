@@ -145,7 +145,7 @@ export function ZonesList({
           <p className="text-gray-slate dark:text-gray-light text-sm mb-4">
             No zones match this filter.
           </p>
-          <Button variant="secondary" size="sm" onClick={handleClearFilter}>
+          <Button variant="secondary" size="sm" onClick={onClearFilters}>
             Clear filter
           </Button>
         </div>
