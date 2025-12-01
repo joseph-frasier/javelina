@@ -98,17 +98,17 @@ export function CreateTagModal({ isOpen, onClose, onCreateTag, existingTags }: C
           <label className="block text-sm font-medium text-orange-dark dark:text-white mb-3">
             Tag Color
           </label>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-8 gap-2">
             {TAG_COLORS.map((color) => (
               <button
                 key={color.value}
                 type="button"
                 onClick={() => setSelectedColor(color.value)}
                 className={`
-                  w-full aspect-square rounded-lg transition-all duration-150
+                  w-8 h-8 rounded-md transition-all duration-150
                   ${selectedColor === color.value 
                     ? 'ring-2 ring-offset-2 ring-orange scale-110' 
-                    : 'hover:scale-105'
+                    : 'hover:scale-110'
                   }
                 `}
                 style={{ backgroundColor: color.value }}
