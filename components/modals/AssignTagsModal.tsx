@@ -96,7 +96,7 @@ export function AssignTagsModal({
         </div>
 
         {/* Tags List */}
-        <div className="max-h-64 overflow-y-auto space-y-1">
+        <div className="min-h-[256px] max-h-64 overflow-y-auto space-y-1">
           {filteredTags.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-slate dark:text-gray-400 text-sm">
