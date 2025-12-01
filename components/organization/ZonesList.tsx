@@ -97,7 +97,7 @@ export function ZonesList({
             </span>
           </div>
           <button
-            onClick={onClearFilters}
+            onClick={() => onClearFilters?.()}
             className="text-sm text-orange hover:text-orange-dark flex items-center gap-1 transition-colors flex-shrink-0"
           >
             Clear all
@@ -145,7 +145,7 @@ export function ZonesList({
           <p className="text-gray-slate dark:text-gray-light text-sm mb-4">
             No zones match this filter.
           </p>
-          <Button variant="secondary" size="sm" onClick={onClearFilters}>
+          <Button variant="secondary" size="sm" onClick={() => onClearFilters?.()}>
             Clear filter
           </Button>
         </div>
