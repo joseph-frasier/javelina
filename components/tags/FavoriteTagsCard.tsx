@@ -119,7 +119,7 @@ export function FavoriteTagsCard({
           </div>
 
           {/* Usage hint */}
-          <p className="text-xs text-gray-slate/70 dark:text-gray-500 pt-2 border-t border-gray-light/50 dark:border-gray-700">
+          <p className="text-xs text-gray-slate/70 dark:text-gray-500 mt-2">
             Click tags to filter zones (multi-select) • Hover to unfavorite
           </p>
         </div>

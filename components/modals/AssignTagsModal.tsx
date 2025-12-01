@@ -164,7 +164,7 @@ export function AssignTagsModal({
 
         {/* Selected Tags Preview */}
         {selectedTagIds.length > 0 && (
-          <div className="pt-3 border-t border-gray-light dark:border-gray-700">
+          <div className="mt-2">
             <p className="text-xs text-gray-slate dark:text-gray-400 mb-2">
               Selected tags ({selectedTagIds.length}):
             </p>

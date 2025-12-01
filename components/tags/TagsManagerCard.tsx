@@ -154,7 +154,7 @@ export function TagsManagerCard({
 
           {/* Tag count indicator when scrolling */}
           {tags.length > 6 && (
-            <p className="text-xs text-gray-slate dark:text-gray-500 mt-2 pt-2 border-t border-gray-light/50 dark:border-gray-700">
+            <p className="text-xs text-gray-slate dark:text-gray-500 mt-3">
               {tags.length} tags total
             </p>
           )}
