@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -113,6 +113,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
   const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
   const [selectedZoneForTags, setSelectedZoneForTags] = useState<{ id: string; name: string } | null>(null);
+  const assignTagsCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Tag handlers
   const handleCreateTag = (newTag: Tag) => {
@@ -142,6 +143,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   };
 
   const handleOpenAssignTags = (zoneId: string, zoneName: string) => {
+    // Clear any pending timeout from a previous modal close to prevent race condition
+    if (assignTagsCloseTimeoutRef.current) {
+      clearTimeout(assignTagsCloseTimeoutRef.current);
+      assignTagsCloseTimeoutRef.current = null;
+    }
     setSelectedZoneForTags({ id: zoneId, name: zoneName });
     setIsAssignTagsModalOpen(true);
   };
@@ -414,7 +420,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           onClose={() => {
             setIsAssignTagsModalOpen(false);
             // Delay clearing zone data to allow closing animation to complete
-            setTimeout(() => setSelectedZoneForTags(null), 300);
+            // Store ref so we can cancel if user opens another modal quickly
+            assignTagsCloseTimeoutRef.current = setTimeout(() => {
+              setSelectedZoneForTags(null);
+              assignTagsCloseTimeoutRef.current = null;
+            }, 300);
           }}
           zoneName={selectedZoneForTags.name}
           zoneId={selectedZoneForTags.id}

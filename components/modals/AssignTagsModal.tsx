@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { TagBadge } from '@/components/ui/TagBadge';
@@ -29,10 +29,16 @@ export function AssignTagsModal({
 }: AssignTagsModalProps) {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const prevIsOpenRef = useRef(false);
 
-  // Reset selected tags when modal opens
+  // Reset selected tags only when modal OPENS (not on every assignedTagIds change)
+  // This prevents losing user selections when parent state changes mid-edit
   useEffect(() => {
-    if (isOpen) {
+    const wasOpen = prevIsOpenRef.current;
+    prevIsOpenRef.current = isOpen;
+    
+    // Only reset when modal transitions from closed to open
+    if (isOpen && !wasOpen) {
       setSelectedTagIds([...assignedTagIds]);
       setSearchQuery('');
     }
