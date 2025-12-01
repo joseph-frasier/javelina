@@ -384,7 +384,8 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           isOpen={isAssignTagsModalOpen}
           onClose={() => {
             setIsAssignTagsModalOpen(false);
-            setSelectedZoneForTags(null);
+            // Delay clearing zone data to allow closing animation to complete
+            setTimeout(() => setSelectedZoneForTags(null), 300);
           }}
           zoneName={selectedZoneForTags.name}
           zoneId={selectedZoneForTags.id}
