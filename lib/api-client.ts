@@ -146,6 +146,26 @@ export const apiClient = {
 // DOMAIN-SPECIFIC API METHODS
 // =====================================================
 
+// Proration payment response types
+interface ProrationPayment {
+  payment_intent_id?: string;
+  amount: number;
+  status: 'succeeded' | 'failed';
+  error?: string;
+}
+
+interface UpdateSubscriptionResponse {
+  success: boolean;
+  subscription_id: string;
+  proration?: {
+    current_plan_credit: number;
+    new_plan_charge: number;
+    amount_due: number;
+    payment: ProrationPayment | null;
+  };
+  message?: string;
+}
+
 // Stripe API
 export const stripeApi = {
   /**
@@ -164,9 +184,10 @@ export const stripeApi = {
 
   /**
    * Update a subscription
+   * Returns proration details including payment status if applicable
    */
-  updateSubscription: (org_id: string, new_plan_code: string) => {
-    return apiClient.post('/stripe/subscriptions/update', { org_id, new_plan_code });
+  updateSubscription: (org_id: string, new_plan_code: string): Promise<UpdateSubscriptionResponse> => {
+    return apiClient.post<UpdateSubscriptionResponse>('/stripe/subscriptions/update', { org_id, new_plan_code });
   },
   
   /**
