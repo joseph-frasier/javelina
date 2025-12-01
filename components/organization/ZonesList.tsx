@@ -64,17 +64,6 @@ export function ZonesList({
     onTagClick?.(null);
   };
 
-  const getStatusBadgeColor = (status?: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'inactive':
-        return 'bg-gray-slate/10 text-gray-slate border-gray-slate/20';
-      default:
-        return 'bg-gray-light/10 text-gray-slate border-gray-light/20';
-    }
-  };
-
   const activeTag = tags.find(t => t.id === activeTagId);
 
   return (
@@ -181,15 +170,6 @@ export function ZonesList({
                           <h3 className="text-base font-bold text-orange-dark dark:text-orange truncate">
                             {zone.name}
                           </h3>
-                          {zone.status && (
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getStatusBadgeColor(
-                                zone.status
-                              )}`}
-                            >
-                              {zone.status}
-                            </span>
-                          )}
                           {/* Tag Badges */}
                           {zoneTags.map(tag => (
                             <TagBadge
