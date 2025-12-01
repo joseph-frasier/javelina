@@ -715,7 +715,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             setIsAssignTagsModalOpen(false);
             setSelectedRecordForTags(null);
           }}
-          tags={mockTags}
+          allTags={mockTags}
           zoneName={selectedRecordForTags.name}
           zoneId={selectedRecordForTags.id}
           assignedTagIds={
