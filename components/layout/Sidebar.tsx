@@ -10,15 +10,21 @@ import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useEnvironments } from '@/lib/hooks/useEnvironments';
 import { useZones } from '@/lib/hooks/useZones';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
+import { getTagsForZone, INITIAL_MOCK_TAGS, type Tag, type ZoneTagAssignment } from '@/lib/mock-tags-data';
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
   onMobileMenuClose?: () => void;
+  // Optional tag props for displaying tag dots on zones
+  tags?: Tag[];
+  zoneTagAssignments?: ZoneTagAssignment[];
 }
 
 export function Sidebar({ 
   isMobileMenuOpen = false, 
   onMobileMenuClose,
+  tags = [],
+  zoneTagAssignments = [],
 }: SidebarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
@@ -130,6 +136,8 @@ export function Sidebar({
                 handleToggleEnvironment={handleToggleEnvironment}
                 envContainerRefs={envContainerRefs}
                 zoneContainerRefs={zoneContainerRefs}
+                tags={tags}
+                zoneTagAssignments={zoneTagAssignments}
               />
             )}
           </div>
@@ -427,12 +435,16 @@ function EnvironmentsList({
   handleToggleEnvironment,
   envContainerRefs,
   zoneContainerRefs,
+  tags,
+  zoneTagAssignments,
 }: {
   orgId: string;
   expandedEnvironments: Set<string>;
   handleToggleEnvironment: (envId: string) => void;
   envContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
   zoneContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+  tags: Tag[];
+  zoneTagAssignments: ZoneTagAssignment[];
 }) {
   const { data: environments, isLoading } = useEnvironments(orgId);
 
@@ -510,6 +522,8 @@ function EnvironmentsList({
             <ZonesList 
               environmentId={environment.id} 
               zoneContainerRefs={zoneContainerRefs}
+              tags={tags}
+              zoneTagAssignments={zoneTagAssignments}
             />
           )}
         </div>
@@ -527,12 +541,32 @@ function truncateName(name: string, maxLength: number = 20): string {
 // Sub-component to fetch and display zones for an environment
 function ZonesList({ 
   environmentId, 
-  zoneContainerRefs 
+  zoneContainerRefs,
+  tags,
+  zoneTagAssignments,
 }: { 
   environmentId: string;
   zoneContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+  tags: Tag[];
+  zoneTagAssignments: ZoneTagAssignment[];
 }) {
   const { data: zones, isLoading } = useZones(environmentId);
+
+  // Use provided tags or fall back to mock data for mockup display
+  const displayTags = tags.length > 0 ? tags : INITIAL_MOCK_TAGS;
+  
+  // Generate mock assignments if none provided (for mockup purposes)
+  // This creates sample tag assignments based on zone index to show the feature
+  const displayAssignments = zoneTagAssignments.length > 0 
+    ? zoneTagAssignments 
+    : (zones || []).map((zone, index) => {
+        const tagIds: string[] = [];
+        // Assign different tags based on zone index for variety
+        if (index % 3 === 0) tagIds.push('tag-1'); // Production (green)
+        if (index % 2 === 0) tagIds.push('tag-2'); // Staging (yellow)
+        if (index % 4 === 0) tagIds.push('tag-4'); // US-East (purple)
+        return { zoneId: zone.id, tagIds };
+      }).filter(a => a.tagIds.length > 0);
 
   if (isLoading) {
     return (
@@ -557,31 +591,49 @@ function ZonesList({
         zoneContainerRefs.current[environmentId] = el;
       }}
     >
-      {zones.map((zone) => (
-        <Link
-          key={zone.id}
-          href={`/zone/${zone.id}`}
-          className="zone-item flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
-          title={zone.name}
-        >
-          <svg
-            className="w-4 h-4 flex-shrink-0 text-gray-slate group-hover:text-orange"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      {zones.map((zone) => {
+        // Get tags assigned to this zone
+        const zoneTags = getTagsForZone(zone.id, displayAssignments, displayTags);
+        
+        return (
+          <Link
+            key={zone.id}
+            href={`/zone/${zone.id}`}
+            className="zone-item flex items-center space-x-2 px-2 py-1 rounded transition-colors group"
+            title={zone.name}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span className="text-sm text-gray-slate group-hover:text-orange truncate">
-            {truncateName(zone.name)}
-          </span>
-        </Link>
-      ))}
+            <svg
+              className="w-4 h-4 flex-shrink-0 text-gray-slate group-hover:text-orange"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="text-sm text-gray-slate group-hover:text-orange truncate flex-1">
+              {truncateName(zone.name)}
+            </span>
+            {/* Tag dots */}
+            {zoneTags.length > 0 && (
+              <span className="flex gap-0.5 flex-shrink-0">
+                {zoneTags.slice(0, 3).map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="w-[6px] h-[6px] rounded-full"
+                    style={{ backgroundColor: tag.color }}
+                    title={tag.name}
+                  />
+                ))}
+              </span>
+            )}
+          </Link>
+        );
+      })}
     </div>
   );
 }
