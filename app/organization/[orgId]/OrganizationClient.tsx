@@ -115,6 +115,15 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [selectedZoneForTags, setSelectedZoneForTags] = useState<{ id: string; name: string } | null>(null);
   const assignTagsCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Cleanup timeout on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => {
+      if (assignTagsCloseTimeoutRef.current) {
+        clearTimeout(assignTagsCloseTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Tag handlers
   const handleCreateTag = (newTag: Tag) => {
     setMockTags(prev => [...prev, newTag]);
