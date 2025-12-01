@@ -5,18 +5,24 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { canCreateEnvironment } from '@/lib/permissions';
-import { AddEnvironmentModal } from '@/components/modals/AddEnvironmentModal';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
 import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
 import { subscriptionsApi } from '@/lib/api-client';
-import { CompactStatCard } from '@/components/dashboard/CompactStatCard';
-import { EnvironmentsList } from '@/components/organization/EnvironmentsList';
 import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
 import { ZonesList } from '@/components/organization/ZonesList';
 import { useAuthStore } from '@/lib/auth-store';
+// Tagging System Mockup Imports
+import { TagsManagerCard } from '@/components/tags/TagsManagerCard';
+import { CreateTagModal } from '@/components/modals/CreateTagModal';
+import { AssignTagsModal } from '@/components/modals/AssignTagsModal';
+import { 
+  INITIAL_MOCK_TAGS, 
+  type Tag, 
+  type ZoneTagAssignment,
+  generateTagId 
+} from '@/lib/mock-tags-data';
 
 interface Environment {
   id: string;
@@ -71,23 +77,80 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
-  const [isAddEnvModalOpen, setIsAddEnvModalOpen] = useState(false);
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
-  const canAddEnvironment = canCreateEnvironment(org.role);
+  const [isLifetimePlan, setIsLifetimePlan] = useState(false);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
   const canDeleteOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
 
-  const handleEnvironmentSuccess = (environmentId: string) => {
-    // Auto-expand and select the new environment
-    selectAndExpand(org.id, environmentId);
-    // Navigate to the new environment page
-    router.push(`/organization/${org.id}/environment/${environmentId}`);
+  // ============================================
+  // TAGGING SYSTEM MOCKUP STATE
+  // ============================================
+  const [mockTags, setMockTags] = useState<Tag[]>(INITIAL_MOCK_TAGS);
+  const [zoneTagAssignments, setZoneTagAssignments] = useState<ZoneTagAssignment[]>(() => {
+    // Initialize with some mock assignments based on existing zones
+    const initialAssignments: ZoneTagAssignment[] = [];
+    org.zones.forEach((zone, index) => {
+      // Assign some tags to zones for demo purposes
+      const tagIds: string[] = [];
+      if (index % 3 === 0) tagIds.push('tag-1'); // Production
+      if (index % 2 === 0) tagIds.push('tag-2'); // Staging
+      if (index % 4 === 0) tagIds.push('tag-4'); // US-East
+      if (tagIds.length > 0) {
+        initialAssignments.push({ zoneId: zone.id, tagIds });
+      }
+    });
+    return initialAssignments;
+  });
+  const [activeTagId, setActiveTagId] = useState<string | null>(null);
+  
+  // Modal states
+  const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
+  const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
+  const [selectedZoneForTags, setSelectedZoneForTags] = useState<{ id: string; name: string } | null>(null);
+
+  // Tag handlers
+  const handleCreateTag = (newTag: Tag) => {
+    setMockTags(prev => [...prev, newTag]);
   };
+
+  const handleToggleFavorite = (tagId: string) => {
+    setMockTags(prev => 
+      prev.map(tag => 
+        tag.id === tagId ? { ...tag, isFavorite: !tag.isFavorite } : tag
+      )
+    );
+  };
+
+  const handleTagClick = (tagId: string | null) => {
+    setActiveTagId(tagId);
+  };
+
+  const handleOpenAssignTags = (zoneId: string, zoneName: string) => {
+    setSelectedZoneForTags({ id: zoneId, name: zoneName });
+    setIsAssignTagsModalOpen(true);
+  };
+
+  const handleSaveTagAssignments = (zoneId: string, tagIds: string[]) => {
+    setZoneTagAssignments(prev => {
+      const existing = prev.find(a => a.zoneId === zoneId);
+      if (existing) {
+        return prev.map(a => a.zoneId === zoneId ? { ...a, tagIds } : a);
+      } else {
+        return [...prev, { zoneId, tagIds }];
+      }
+    });
+  };
+
+  const getAssignedTagIds = (zoneId: string): string[] => {
+    const assignment = zoneTagAssignments.find(a => a.zoneId === zoneId);
+    return assignment?.tagIds || [];
+  };
+  // ============================================
 
   // Check if this is the newest plan and get plan name
   useEffect(() => {
@@ -153,14 +216,13 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
-            {canAddEnvironment && (
-              <Button variant="secondary" size="sm" onClick={() => setIsAddEnvModalOpen(true)} className="justify-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Environment
-              </Button>
-            )}
+            {/* Create Tag Button (Mockup) */}
+            <Button variant="secondary" size="sm" onClick={() => setIsCreateTagModalOpen(true)} className="justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              Create Tag
+            </Button>
             <Button variant="secondary" size="sm" onClick={() => setIsAddZoneModalOpen(true)} className="justify-center">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -197,51 +259,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           </div>
         </div>
 
-        {/* Compact Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <CompactStatCard
-            title="Total Environments"
-            value={org.environmentsCount}
-            subtitle={`${org.environments.filter(e => e.status === 'active').length} active`}
-            icon={
-              <svg
-                className="w-6 h-6 text-orange"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                />
-              </svg>
-            }
-          />
-          <CompactStatCard
-            title="Total Zones"
-            value={org.zonesCount}
-            subtitle="DNS zones managed"
-            icon={
-              <svg
-                className="w-6 h-6 text-blue-electric"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            }
-          />
-        </div>
-
-        {/* Content Grid - Org View */}
+        {/* Content Grid - Org View (No stat cards - cleaner look) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left Column - Quick Actions & Team Members */}
           <div className="lg:col-span-1 space-y-4">
@@ -321,31 +339,56 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             />
           </div>
 
-          {/* Right Column - Environments & Zones */}
+          {/* Right Column - Tags & Zones */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Environments List */}
-            <EnvironmentsList
-              organizationId={org.id}
-              environments={org.environments}
+            {/* Tags Manager Card (Replaces Environments) */}
+            <TagsManagerCard
+              tags={mockTags}
+              assignments={zoneTagAssignments}
+              activeTagId={activeTagId}
+              onTagClick={handleTagClick}
+              onToggleFavorite={handleToggleFavorite}
+              onCreateTag={() => setIsCreateTagModalOpen(true)}
             />
 
-            {/* Zones List */}
+            {/* Zones List with Tags */}
             <ZonesList
               organizationId={org.id}
               zones={org.zones}
+              tags={mockTags}
+              assignments={zoneTagAssignments}
+              activeTagId={activeTagId}
+              onTagClick={handleTagClick}
+              onAssignTags={handleOpenAssignTags}
             />
           </div>
         </div>
       </div>
 
-      {/* Add Environment Modal */}
-      <AddEnvironmentModal
-        isOpen={isAddEnvModalOpen}
-        onClose={() => setIsAddEnvModalOpen(false)}
-        organizationId={org.id}
-        organizationName={org.name}
-        onSuccess={handleEnvironmentSuccess}
+      {/* Create Tag Modal (Mockup) */}
+      <CreateTagModal
+        isOpen={isCreateTagModalOpen}
+        onClose={() => setIsCreateTagModalOpen(false)}
+        onCreateTag={handleCreateTag}
+        existingTags={mockTags}
       />
+
+      {/* Assign Tags Modal (Mockup) */}
+      {selectedZoneForTags && (
+        <AssignTagsModal
+          isOpen={isAssignTagsModalOpen}
+          onClose={() => {
+            setIsAssignTagsModalOpen(false);
+            setSelectedZoneForTags(null);
+          }}
+          zoneName={selectedZoneForTags.name}
+          zoneId={selectedZoneForTags.id}
+          allTags={mockTags}
+          assignedTagIds={getAssignedTagIds(selectedZoneForTags.id)}
+          onSave={handleSaveTagAssignments}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      )}
 
       {/* Add Zone Modal */}
       <AddZoneModal

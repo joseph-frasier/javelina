@@ -10,13 +10,25 @@ import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useEnvironments } from '@/lib/hooks/useEnvironments';
 import { useZones } from '@/lib/hooks/useZones';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
+import { FavoriteTagsSidebar } from '@/components/tags/FavoriteTagsSidebar';
+import { INITIAL_MOCK_TAGS, type Tag } from '@/lib/mock-tags-data';
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
   onMobileMenuClose?: () => void;
+  // Tags mockup props
+  mockTags?: Tag[];
+  activeTagId?: string | null;
+  onTagFilterChange?: (tagId: string | null) => void;
 }
 
-export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: SidebarProps = {}) {
+export function Sidebar({ 
+  isMobileMenuOpen = false, 
+  onMobileMenuClose,
+  mockTags,
+  activeTagId,
+  onTagFilterChange,
+}: SidebarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuthStore();
@@ -35,6 +47,20 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
   // Get organizations from authenticated user (already from Supabase)
   const userOrganizations = user?.organizations || [];
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+
+  // Use provided tags or fall back to initial mock tags for the mockup
+  const tags = mockTags || INITIAL_MOCK_TAGS;
+  const [internalActiveTagId, setInternalActiveTagId] = useState<string | null>(null);
+  
+  // Use external state if provided, otherwise use internal state
+  const currentActiveTagId = activeTagId !== undefined ? activeTagId : internalActiveTagId;
+  const handleTagClick = (tagId: string | null) => {
+    if (onTagFilterChange) {
+      onTagFilterChange(tagId);
+    } else {
+      setInternalActiveTagId(tagId);
+    }
+  };
 
   // Animate mobile menu
   useEffect(() => {
@@ -328,6 +354,14 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
             </Link>
           </div>
 
+          {/* Favorite Tags Section (Mockup) */}
+          <FavoriteTagsSidebar
+            tags={tags}
+            activeTagId={currentActiveTagId}
+            onTagClick={handleTagClick}
+            isCollapsed={false}
+          />
+
           {/* Organizations Section */}
           <div className="mb-2">
             <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3 mb-2 text-center">
@@ -377,6 +411,13 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
         {isCollapsed ? (
           // Collapsed view - show icons only
           <div className="flex flex-col space-y-2">
+            {/* Collapsed Favorite Tags */}
+            <FavoriteTagsSidebar
+              tags={tags}
+              activeTagId={currentActiveTagId}
+              onTagClick={handleTagClick}
+              isCollapsed={true}
+            />
             {userOrganizations.map((org) => (
               <Link
                 key={org.id}
@@ -401,8 +442,23 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
             ))}
           </div>
         ) : (
-          // Expanded view - use shared render function
-          renderOrganizations()
+          // Expanded view
+          <>
+            {/* Favorite Tags Section (Mockup) */}
+            <FavoriteTagsSidebar
+              tags={tags}
+              activeTagId={currentActiveTagId}
+              onTagClick={handleTagClick}
+              isCollapsed={false}
+            />
+            {/* Organizations */}
+            <div className="mb-2">
+              <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3 mb-2">
+                Organizations
+              </h3>
+              {renderOrganizations()}
+            </div>
+          </>
         )}
       </nav>
     </aside>
