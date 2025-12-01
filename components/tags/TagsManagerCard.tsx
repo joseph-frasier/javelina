@@ -66,7 +66,7 @@ export function TagsManagerCard({
           </Button>
         </div>
       ) : (
-        <div className="space-y-2 mt-4">
+        <div className="mt-4">
           {/* Active Filter Indicator */}
           {hasActiveFilters && (
             <div className="flex items-center justify-between p-2 bg-orange/10 rounded-lg mb-3">
@@ -85,6 +85,8 @@ export function TagsManagerCard({
             </div>
           )}
 
+          {/* Scrollable tags list - max ~6 items visible */}
+          <div className="max-h-[340px] overflow-y-auto space-y-2 pr-1">
           {tags.map((tag) => {
             const zoneCount = getZoneCountForTag(tag.id, assignments);
             const isActive = activeTagIds.includes(tag.id);
@@ -148,6 +150,14 @@ export function TagsManagerCard({
               </div>
             );
           })}
+          </div>
+
+          {/* Tag count indicator when scrolling */}
+          {tags.length > 6 && (
+            <p className="text-xs text-gray-slate dark:text-gray-500 mt-2 pt-2 border-t border-gray-light/50 dark:border-gray-700">
+              {tags.length} tags total
+            </p>
+          )}
         </div>
       )}
     </Card>
