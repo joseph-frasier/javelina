@@ -50,13 +50,13 @@ export function FavoriteTagsSidebar({
         </h3>
       </div>
 
-      {/* Favorite Tags List */}
-      <div className="space-y-1 px-2">
+      {/* Favorite Tags List - Max height with scroll */}
+      <div className="px-2">
         {/* Clear Filter Option */}
         {activeTagId && (
           <button
             onClick={() => onTagClick(null)}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-gray-slate hover:text-orange hover:bg-gray-light/50 dark:hover:bg-gray-700 transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-gray-slate hover:text-orange hover:bg-gray-light/50 dark:hover:bg-gray-700 transition-colors mb-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -65,26 +65,35 @@ export function FavoriteTagsSidebar({
           </button>
         )}
 
-        {favoriteTags.map((tag) => (
-          <button
-            key={tag.id}
-            onClick={() => onTagClick(activeTagId === tag.id ? null : tag.id)}
-            className={`
-              w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors
-              ${activeTagId === tag.id 
-                ? 'bg-orange/10 ring-1 ring-orange' 
-                : 'hover:bg-gray-light/50 dark:hover:bg-gray-700'
-              }
-            `}
-          >
-            <TagBadge name={tag.name} color={tag.color} size="sm" />
-            {activeTagId === tag.id && (
-              <svg className="w-3 h-3 text-orange ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </button>
-        ))}
+        <div className="max-h-[160px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+          {favoriteTags.map((tag) => (
+            <button
+              key={tag.id}
+              onClick={() => onTagClick(activeTagId === tag.id ? null : tag.id)}
+              className={`
+                w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors
+                ${activeTagId === tag.id 
+                  ? 'bg-orange/10 ring-1 ring-orange' 
+                  : 'hover:bg-gray-light/50 dark:hover:bg-gray-700'
+                }
+              `}
+            >
+              <TagBadge name={tag.name} color={tag.color} size="sm" />
+              {activeTagId === tag.id && (
+                <svg className="w-3 h-3 text-orange ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+        
+        {/* Show count if there are many favorites */}
+        {favoriteTags.length > 4 && (
+          <p className="text-xs text-gray-slate dark:text-gray-500 mt-2 px-2">
+            {favoriteTags.length} favorites
+          </p>
+        )}
       </div>
     </div>
   );

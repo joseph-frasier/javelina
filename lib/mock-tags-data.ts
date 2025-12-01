@@ -29,9 +29,9 @@ export const TAG_COLORS = [
 export const INITIAL_MOCK_TAGS: Tag[] = [
   { id: 'tag-1', name: 'Production', color: '#22C55E', isFavorite: true },
   { id: 'tag-2', name: 'Staging', color: '#EAB308', isFavorite: true },
-  { id: 'tag-3', name: 'Development', color: '#3B82F6', isFavorite: false },
-  { id: 'tag-4', name: 'US-East', color: '#8B5CF6', isFavorite: false },
-  { id: 'tag-5', name: 'US-West', color: '#EC4899', isFavorite: false },
+  { id: 'tag-3', name: 'Development', color: '#3B82F6', isFavorite: true },
+  { id: 'tag-4', name: 'US-East', color: '#8B5CF6', isFavorite: true },
+  { id: 'tag-5', name: 'US-West', color: '#EC4899', isFavorite: true },
   { id: 'tag-6', name: 'EU', color: '#14B8A6', isFavorite: true },
 ];
 
