@@ -68,7 +68,7 @@ export function AssignTagsModal({
 
   const handleSave = () => {
     onSave(zoneId, selectedTagIds);
-    onClose();
+    handleClose();
   };
 
   const handleClose = () => {
