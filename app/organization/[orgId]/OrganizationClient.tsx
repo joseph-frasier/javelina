@@ -137,6 +137,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   const handleSaveTagAssignments = (zoneId: string, tagIds: string[]) => {
     setZoneTagAssignments(prev => {
+      // If no tags selected, remove the assignment entirely to avoid state bloat
+      if (tagIds.length === 0) {
+        return prev.filter(a => a.zoneId !== zoneId);
+      }
+      
       const existing = prev.find(a => a.zoneId === zoneId);
       if (existing) {
         return prev.map(a => a.zoneId === zoneId ? { ...a, tagIds } : a);
