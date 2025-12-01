@@ -10,26 +10,15 @@ import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useEnvironments } from '@/lib/hooks/useEnvironments';
 import { useZones } from '@/lib/hooks/useZones';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
-import { FavoriteTagsSidebar } from '@/components/tags/FavoriteTagsSidebar';
-import { INITIAL_MOCK_TAGS, type Tag } from '@/lib/mock-tags-data';
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
   onMobileMenuClose?: () => void;
-  // Tags mockup props
-  mockTags?: Tag[];
-  activeTagIds?: string[];
-  onTagFilterChange?: (tagId: string) => void;
-  onClearTagFilters?: () => void;
 }
 
 export function Sidebar({ 
   isMobileMenuOpen = false, 
   onMobileMenuClose,
-  mockTags,
-  activeTagIds,
-  onTagFilterChange,
-  onClearTagFilters,
 }: SidebarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
@@ -49,34 +38,6 @@ export function Sidebar({
   // Get organizations from authenticated user (already from Supabase)
   const userOrganizations = user?.organizations || [];
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
-
-  // Use provided tags or fall back to initial mock tags for the mockup
-  const tags = mockTags || INITIAL_MOCK_TAGS;
-  const [internalActiveTagIds, setInternalActiveTagIds] = useState<string[]>([]);
-  
-  // Use external state if provided, otherwise use internal state
-  const currentActiveTagIds = activeTagIds !== undefined ? activeTagIds : internalActiveTagIds;
-  
-  const handleTagClick = (tagId: string) => {
-    if (onTagFilterChange) {
-      onTagFilterChange(tagId);
-    } else {
-      // Internal toggle logic for multi-select
-      setInternalActiveTagIds(prev => 
-        prev.includes(tagId) 
-          ? prev.filter(id => id !== tagId)
-          : [...prev, tagId]
-      );
-    }
-  };
-
-  const handleClearFilters = () => {
-    if (onClearTagFilters) {
-      onClearTagFilters();
-    } else {
-      setInternalActiveTagIds([]);
-    }
-  };
 
   // Animate mobile menu
   useEffect(() => {
@@ -370,15 +331,6 @@ export function Sidebar({
             </Link>
           </div>
 
-          {/* Favorite Tags Section (Mockup) */}
-          <FavoriteTagsSidebar
-            tags={tags}
-            activeTagIds={currentActiveTagIds}
-            onTagClick={handleTagClick}
-            onClearFilters={handleClearFilters}
-            isCollapsed={false}
-          />
-
           {/* Organizations Section */}
           <div className="mb-2">
             <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3 mb-2 text-center">
@@ -428,14 +380,6 @@ export function Sidebar({
         {isCollapsed ? (
           // Collapsed view - show icons only
           <div className="flex flex-col space-y-2">
-            {/* Collapsed Favorite Tags */}
-            <FavoriteTagsSidebar
-              tags={tags}
-              activeTagIds={currentActiveTagIds}
-              onTagClick={handleTagClick}
-              onClearFilters={handleClearFilters}
-              isCollapsed={true}
-            />
             {userOrganizations.map((org) => (
               <Link
                 key={org.id}
@@ -460,24 +404,8 @@ export function Sidebar({
             ))}
           </div>
         ) : (
-          // Expanded view
-          <>
-            {/* Favorite Tags Section (Mockup) */}
-            <FavoriteTagsSidebar
-              tags={tags}
-              activeTagIds={currentActiveTagIds}
-              onTagClick={handleTagClick}
-              onClearFilters={handleClearFilters}
-              isCollapsed={false}
-            />
-            {/* Organizations */}
-            <div className="mb-2">
-              <h3 className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase tracking-wider px-3 mb-2">
-                Organizations
-              </h3>
-              {renderOrganizations()}
-            </div>
-          </>
+          // Expanded view - use shared render function
+          renderOrganizations()
         )}
       </nav>
     </aside>
