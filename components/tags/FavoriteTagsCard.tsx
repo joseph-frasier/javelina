@@ -78,20 +78,13 @@ export function FavoriteTagsCard({
               return (
                 <div
                   key={tag.id}
-                  className={`
-                    group relative flex items-center gap-1 p-1 rounded-lg transition-all
-                    ${isActive 
-                      ? 'bg-orange/10 ring-1 ring-orange' 
-                      : 'hover:bg-gray-light/50 dark:hover:bg-gray-700'
-                    }
-                  `}
+                  className="group relative flex items-center gap-1"
                 >
                   <TagBadge
                     name={tag.name}
                     color={tag.color}
                     size="md"
                     onClick={() => onTagClick(isActive ? null : tag.id)}
-                    isActive={isActive}
                   />
                   {/* Unfavorite button on hover */}
                   <button
