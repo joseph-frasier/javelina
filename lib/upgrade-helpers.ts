@@ -25,11 +25,11 @@ export function calculateProratedCredit(
   const periodStart = new Date(currentPeriodStart);
   const periodEnd = new Date(currentPeriodEnd);
   
-  // Calculate total days in period
-  const totalDays = Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate total days in period (rounded to nearest whole day to match backend)
+  const totalDays = Math.round((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Calculate days remaining
-  const daysRemaining = Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate days remaining (rounded to nearest whole day to match backend)
+  const daysRemaining = Math.round((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   
   // Don't give negative credit
   if (daysRemaining <= 0) {
@@ -143,8 +143,8 @@ export function calculateSubscriptionToSubscriptionUpgrade(
     ? new Date(subscription.current_period_start)
     : new Date();
   
-  const totalDays = Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
-  const daysRemaining = Math.max(0, Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  const totalDays = Math.round((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.max(0, Math.round((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
   
   const newPlanDailyRate = targetMonthlyPrice / totalDays;
   const newPlanProrated = newPlanDailyRate * daysRemaining;
