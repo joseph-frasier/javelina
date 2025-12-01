@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -39,6 +39,11 @@ export function ZonesList({
 }: ZonesListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  // Reset to page 1 when activeTagId changes from parent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTagId]);
 
   // Filter zones by active tag
   const filteredZones = activeTagId
