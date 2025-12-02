@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
@@ -97,6 +97,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       }
     };
   }, []);
+
+  // Memoize assigned tag IDs for the selected record to prevent useEffect re-triggers in modal
+  const selectedRecordAssignedTagIds = useMemo(() => {
+    if (!selectedRecordForTags) return [];
+    const assignment = recordTagAssignments.find(a => a.recordId === selectedRecordForTags.id);
+    return assignment?.tagIds || [];
+  }, [selectedRecordForTags, recordTagAssignments]);
   
   // Edit form state
   const [editFormData, setEditFormData] = useState({
@@ -796,9 +803,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           allTags={mockTags}
           zoneName={selectedRecordForTags.name}
           zoneId={selectedRecordForTags.id}
-          assignedTagIds={
-            recordTagAssignments.find(a => a.recordId === selectedRecordForTags.id)?.tagIds || []
-          }
+          assignedTagIds={selectedRecordAssignedTagIds}
           onSave={handleSaveRecordTagAssignments}
           onToggleFavorite={(tagId) => {
             setMockTags(prev => prev.map(tag => 
