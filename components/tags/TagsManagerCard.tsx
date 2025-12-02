@@ -14,6 +14,7 @@ interface TagsManagerCardProps {
   onClearFilters: () => void;
   onToggleFavorite: (tagId: string) => void;
   onCreateTag: () => void;
+  onEditTag?: (tag: Tag) => void;
 }
 
 export function TagsManagerCard({
@@ -24,6 +25,7 @@ export function TagsManagerCard({
   onClearFilters,
   onToggleFavorite,
   onCreateTag,
+  onEditTag,
 }: TagsManagerCardProps) {
   const hasActiveFilters = activeTagIds.length > 0;
 
@@ -126,7 +128,22 @@ export function TagsManagerCard({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  {/* Edit Button */}
+                  {onEditTag && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditTag(tag);
+                      }}
+                      className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-light dark:hover:bg-gray-600 transition-all"
+                      title="Edit tag"
+                    >
+                      <svg className="w-4 h-4 text-gray-400 hover:text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                  )}
                   {/* Favorite Star */}
                   <button
                     onClick={(e) => {

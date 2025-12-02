@@ -113,6 +113,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
   const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
   const [selectedZoneForTags, setSelectedZoneForTags] = useState<{ id: string; name: string } | null>(null);
+  const [tagToEdit, setTagToEdit] = useState<Tag | null>(null);
   const assignTagsCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup timeout on unmount to prevent setting state on unmounted component
@@ -135,6 +136,41 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         tag.id === tagId ? { ...tag, isFavorite: !tag.isFavorite } : tag
       )
     );
+  };
+
+  // Edit tag handler - opens modal in edit mode
+  const handleEditTag = (tag: Tag) => {
+    setTagToEdit(tag);
+    setIsCreateTagModalOpen(true);
+  };
+
+  // Save edited tag
+  const handleSaveEditedTag = (updatedTag: Tag) => {
+    setMockTags(prev => 
+      prev.map(tag => tag.id === updatedTag.id ? updatedTag : tag)
+    );
+    setTagToEdit(null);
+  };
+
+  // Delete tag and clean up assignments
+  const handleDeleteTag = (tagId: string) => {
+    // Remove tag from mockTags
+    setMockTags(prev => prev.filter(tag => tag.id !== tagId));
+    // Remove tag from all zone assignments
+    setZoneTagAssignments(prev => 
+      prev.map(assignment => ({
+        ...assignment,
+        tagIds: assignment.tagIds.filter(id => id !== tagId)
+      })).filter(assignment => assignment.tagIds.length > 0) // Remove empty assignments
+    );
+    // Clear from active filters if present
+    setActiveTagIds(prev => prev.filter(id => id !== tagId));
+    setTagToEdit(null);
+  };
+
+  // Get zone count for a tag (for delete confirmation)
+  const getZoneCountForTag = (tagId: string): number => {
+    return zoneTagAssignments.filter(a => a.tagIds.includes(tagId)).length;
   };
 
   // Toggle tag in/out of active filter (multi-select)
@@ -397,6 +433,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               onClearFilters={handleClearTagFilters}
               onToggleFavorite={handleToggleFavorite}
               onCreateTag={() => setIsCreateTagModalOpen(true)}
+              onEditTag={handleEditTag}
             />
 
             {/* Zones List with Tags */}
@@ -414,12 +451,21 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         </div>
       </div>
 
-      {/* Create Tag Modal (Mockup) */}
+      {/* Create/Edit Tag Modal (Mockup) */}
       <CreateTagModal
         isOpen={isCreateTagModalOpen}
-        onClose={() => setIsCreateTagModalOpen(false)}
+        onClose={() => {
+          setIsCreateTagModalOpen(false);
+          // Clear edit state after modal animation
+          setTimeout(() => setTagToEdit(null), 250);
+        }}
         onCreateTag={handleCreateTag}
         existingTags={mockTags}
+        tagToEdit={tagToEdit}
+        onEditTag={handleSaveEditedTag}
+        onDeleteTag={handleDeleteTag}
+        zoneCount={tagToEdit ? getZoneCountForTag(tagToEdit.id) : 0}
+        recordCount={0} // Record tags handled in ZoneDetailClient
       />
 
       {/* Assign Tags Modal (Mockup) */}

@@ -86,6 +86,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
   const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
   const [selectedRecordForTags, setSelectedRecordForTags] = useState<{ id: string; name: string } | null>(null);
+  const [tagToEdit, setTagToEdit] = useState<Tag | null>(null);
   const assignTagsCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup timeout on unmount
@@ -315,6 +316,44 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
   const handleClearTagFilters = () => {
     setActiveTagIds([]);
+  };
+
+  // Edit tag handler - opens modal in edit mode
+  const handleEditTag = (tag: Tag) => {
+    setTagToEdit(tag);
+    setIsCreateTagModalOpen(true);
+  };
+
+  // Save edited tag
+  const handleSaveEditedTag = (updatedTag: Tag) => {
+    setMockTags(prev => 
+      prev.map(tag => tag.id === updatedTag.id ? updatedTag : tag)
+    );
+    setTagToEdit(null);
+    addToast('success', `Tag "${updatedTag.name}" updated successfully`);
+  };
+
+  // Delete tag and clean up assignments
+  const handleDeleteTag = (tagId: string) => {
+    const tagName = mockTags.find(t => t.id === tagId)?.name;
+    // Remove tag from mockTags
+    setMockTags(prev => prev.filter(tag => tag.id !== tagId));
+    // Remove tag from all record assignments
+    setRecordTagAssignments(prev => 
+      prev.map(assignment => ({
+        ...assignment,
+        tagIds: assignment.tagIds.filter(id => id !== tagId)
+      })).filter(assignment => assignment.tagIds.length > 0)
+    );
+    // Clear from active filters if present
+    setActiveTagIds(prev => prev.filter(id => id !== tagId));
+    setTagToEdit(null);
+    addToast('success', `Tag "${tagName}" deleted successfully`);
+  };
+
+  // Get record count for a tag (for delete confirmation)
+  const getRecordCountForTag = (tagId: string): number => {
+    return recordTagAssignments.filter(a => a.tagIds.includes(tagId)).length;
   };
 
   const handleOpenAssignTags = (recordId: string, recordName: string) => {
@@ -769,12 +808,21 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         />
       )}
 
-      {/* Create Tag Modal (mockup) */}
+      {/* Create/Edit Tag Modal (mockup) */}
       <CreateTagModal
         isOpen={isCreateTagModalOpen}
-        onClose={() => setIsCreateTagModalOpen(false)}
+        onClose={() => {
+          setIsCreateTagModalOpen(false);
+          // Clear edit state after modal animation
+          setTimeout(() => setTagToEdit(null), 250);
+        }}
         onCreateTag={handleCreateTag}
         existingTags={mockTags}
+        tagToEdit={tagToEdit}
+        onEditTag={handleSaveEditedTag}
+        onDeleteTag={handleDeleteTag}
+        zoneCount={0} // Zone tags handled in OrganizationClient
+        recordCount={tagToEdit ? getRecordCountForTag(tagToEdit.id) : 0}
       />
     </div>
   );
