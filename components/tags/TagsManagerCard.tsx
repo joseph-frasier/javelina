@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { TagBadge } from '@/components/ui/TagBadge';
@@ -178,6 +179,21 @@ export function TagsManagerCard({
   onReorderTags,
 }: TagsManagerCardProps) {
   const hasActiveFilters = activeTagIds.length > 0;
+  const [isScrollbarVisible, setIsScrollbarVisible] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Show scrollbar on scroll, hide after 1.5 seconds of inactivity
+  const handleScroll = useCallback(() => {
+    setIsScrollbarVisible(true);
+    
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrollbarVisible(false);
+    }, 1500);
+  }, []);
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -274,7 +290,21 @@ export function TagsManagerCard({
               items={tags.map(tag => tag.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="max-h-[340px] overflow-y-auto space-y-2 pr-1">
+              <div 
+                className={`max-h-[340px] overflow-y-auto space-y-2 pr-1 scrollbar-auto-hide ${
+                  isScrollbarVisible ? 'scrollbar-visible' : ''
+                }`}
+                onScroll={handleScroll}
+                onMouseEnter={() => setIsScrollbarVisible(true)}
+                onMouseLeave={() => {
+                  if (scrollTimeoutRef.current) {
+                    clearTimeout(scrollTimeoutRef.current);
+                  }
+                  scrollTimeoutRef.current = setTimeout(() => {
+                    setIsScrollbarVisible(false);
+                  }, 1500);
+                }}
+              >
                 {tags.map((tag) => {
                   const zoneCount = getZoneCountForTag(tag.id, assignments);
                   const isActive = activeTagIds.includes(tag.id);
