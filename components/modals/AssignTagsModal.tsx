@@ -15,6 +15,11 @@ interface AssignTagsModalProps {
   assignedTagIds: string[];
   onSave: (zoneId: string, tagIds: string[]) => void;
   onToggleFavorite: (tagId: string) => void;
+  // Bulk mode props
+  bulkZoneIds?: string[];
+  bulkZoneNames?: string[];
+  bulkAssignments?: { zoneId: string; tagIds: string[] }[];
+  onBulkSave?: (zoneIds: string[], tagIds: string[]) => void;
 }
 
 export function AssignTagsModal({
@@ -26,11 +31,27 @@ export function AssignTagsModal({
   assignedTagIds,
   onSave,
   onToggleFavorite,
+  bulkZoneIds,
+  bulkZoneNames,
+  bulkAssignments,
+  onBulkSave,
 }: AssignTagsModalProps) {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const prevIsOpenRef = useRef(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Bulk mode detection
+  const isBulkMode = bulkZoneIds && bulkZoneIds.length > 1;
+  const totalZones = isBulkMode ? bulkZoneIds.length : 1;
+
+  // Calculate tag states for bulk mode (how many zones have each tag)
+  const getTagZoneCount = (tagId: string): number => {
+    if (!isBulkMode || !bulkAssignments) return 0;
+    return bulkAssignments.filter(a => 
+      bulkZoneIds.includes(a.zoneId) && a.tagIds.includes(tagId)
+    ).length;
+  };
 
   // Cleanup timeout on unmount to prevent setting state on unmounted component
   useEffect(() => {
@@ -49,10 +70,23 @@ export function AssignTagsModal({
     
     // Only reset when modal transitions from closed to open
     if (isOpen && !wasOpen) {
-      setSelectedTagIds([...assignedTagIds]);
+      if (isBulkMode && bulkAssignments && bulkZoneIds) {
+        // In bulk mode, start with tags that are on ALL selected zones
+        const tagsOnAllZones = allTags
+          .filter(tag => {
+            const count = bulkAssignments.filter(a => 
+              bulkZoneIds.includes(a.zoneId) && a.tagIds.includes(tag.id)
+            ).length;
+            return count === bulkZoneIds.length;
+          })
+          .map(t => t.id);
+        setSelectedTagIds(tagsOnAllZones);
+      } else {
+        setSelectedTagIds([...assignedTagIds]);
+      }
       setSearchQuery('');
     }
-  }, [isOpen, assignedTagIds]);
+  }, [isOpen, assignedTagIds, isBulkMode, bulkAssignments, bulkZoneIds, allTags]);
 
   const filteredTags = allTags.filter(tag =>
     tag.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -67,7 +101,11 @@ export function AssignTagsModal({
   };
 
   const handleSave = () => {
-    onSave(zoneId, selectedTagIds);
+    if (isBulkMode && onBulkSave && bulkZoneIds) {
+      onBulkSave(bulkZoneIds, selectedTagIds);
+    } else {
+      onSave(zoneId, selectedTagIds);
+    }
     handleClose();
   };
 
@@ -80,11 +118,16 @@ export function AssignTagsModal({
     }, 250);
   };
 
+  // Build modal title
+  const modalTitle = isBulkMode 
+    ? `Assign Tags to ${totalZones} Zones`
+    : `Manage Tags for ${zoneName}`;
+
   return (
     <Modal 
       isOpen={isOpen} 
       onClose={handleClose} 
-      title={`Manage Tags for ${zoneName}`}
+      title={modalTitle}
       size="medium"
     >
       <div className="space-y-4">
@@ -121,39 +164,51 @@ export function AssignTagsModal({
               </p>
             </div>
           ) : (
-            filteredTags.map((tag) => (
-              <div
-                key={tag.id}
-                className={`
-                  flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors
-                  ${selectedTagIds.includes(tag.id)
-                    ? 'bg-orange/10 border border-orange'
-                    : 'bg-gray-light/30 dark:bg-gray-800 border border-transparent hover:bg-gray-light/50 dark:hover:bg-gray-700'
-                  }
-                `}
-                onClick={() => toggleTag(tag.id)}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Checkbox */}
-                  <div
-                    className={`
-                      w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
-                      ${selectedTagIds.includes(tag.id)
-                        ? 'bg-orange border-orange'
-                        : 'border-gray-slate dark:border-gray-500'
-                      }
-                    `}
-                  >
-                    {selectedTagIds.includes(tag.id) && (
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+            filteredTags.map((tag) => {
+              const tagZoneCount = isBulkMode ? getTagZoneCount(tag.id) : 0;
+              const isPartial = isBulkMode && tagZoneCount > 0 && tagZoneCount < totalZones;
+              const isOnAllZones = isBulkMode && tagZoneCount === totalZones;
+              
+              return (
+                <div
+                  key={tag.id}
+                  className={`
+                    flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors
+                    ${selectedTagIds.includes(tag.id)
+                      ? 'bg-orange/10 border border-orange'
+                      : 'bg-gray-light/30 dark:bg-gray-800 border border-transparent hover:bg-gray-light/50 dark:hover:bg-gray-700'
+                    }
+                  `}
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Checkbox */}
+                    <div
+                      className={`
+                        w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
+                        ${selectedTagIds.includes(tag.id)
+                          ? 'bg-orange border-orange'
+                          : 'border-gray-slate dark:border-gray-500'
+                        }
+                      `}
+                    >
+                      {selectedTagIds.includes(tag.id) && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    
+                    {/* Tag Badge */}
+                    <TagBadge name={tag.name} color={tag.color} size="sm" />
+                    
+                    {/* Partial count indicator for bulk mode */}
+                    {isBulkMode && tagZoneCount > 0 && !selectedTagIds.includes(tag.id) && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                        {tagZoneCount} of {totalZones} zones
+                      </span>
                     )}
                   </div>
-                  
-                  {/* Tag Badge */}
-                  <TagBadge name={tag.name} color={tag.color} size="sm" />
-                </div>
 
                 {/* Favorite Star */}
                 <button
@@ -175,7 +230,8 @@ export function AssignTagsModal({
                   )}
                 </button>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

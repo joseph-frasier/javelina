@@ -27,6 +27,8 @@ interface ZonesListProps {
   onTagClick?: (tagId: string) => void;
   onClearFilters?: () => void;
   onAssignTags?: (zoneId: string, zoneName: string) => void;
+  // Bulk assignment props
+  onBulkAssignTags?: (zoneIds: string[], zoneNames: string[]) => void;
 }
 
 export function ZonesList({ 
@@ -38,8 +40,10 @@ export function ZonesList({
   onTagClick,
   onClearFilters,
   onAssignTags,
+  onBulkAssignTags,
 }: ZonesListProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedZoneIds, setSelectedZoneIds] = useState<Set<string>>(new Set());
   const itemsPerPage = 8;
 
   // Reset to page 1 when activeTagIds changes from parent
@@ -71,11 +75,106 @@ export function ZonesList({
   const activeTags = tags.filter(t => activeTagIds.includes(t.id));
   const hasActiveFilters = activeTagIds.length > 0;
 
+  // Selection handlers for bulk actions
+  const toggleZoneSelection = (zoneId: string) => {
+    setSelectedZoneIds(prev => {
+      const next = new Set(prev);
+      if (next.has(zoneId)) {
+        next.delete(zoneId);
+      } else {
+        next.add(zoneId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedZoneIds.size === filteredZones.length) {
+      setSelectedZoneIds(new Set());
+    } else {
+      setSelectedZoneIds(new Set(filteredZones.map(z => z.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedZoneIds(new Set());
+  };
+
+  const handleBulkAssign = () => {
+    if (onBulkAssignTags && selectedZoneIds.size > 0) {
+      const selectedIds = Array.from(selectedZoneIds);
+      const selectedNames = selectedIds.map(id => zones.find(z => z.id === id)?.name || '');
+      onBulkAssignTags(selectedIds, selectedNames);
+    }
+  };
+
+  const allSelected = filteredZones.length > 0 && selectedZoneIds.size === filteredZones.length;
+  const someSelected = selectedZoneIds.size > 0 && selectedZoneIds.size < filteredZones.length;
+
   return (
     <Card
       title="Zones"
       description={hasActiveFilters ? `Filtered by ${activeTagIds.length} tag${activeTagIds.length > 1 ? 's' : ''}` : "All DNS zones"}
     >
+      {/* Selection Toolbar */}
+      {onBulkAssignTags && filteredZones.length > 0 && (
+        <div className="flex items-center justify-between py-2 px-1 border-b border-gray-light dark:border-gray-700 mt-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div
+              onClick={toggleSelectAll}
+              className={`
+                w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer
+                ${allSelected
+                  ? 'bg-orange border-orange'
+                  : someSelected
+                    ? 'bg-orange/50 border-orange'
+                    : 'border-gray-400 dark:border-gray-500 hover:border-orange'
+                }
+              `}
+            >
+              {allSelected && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {someSelected && !allSelected && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
+                </svg>
+              )}
+            </div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {selectedZoneIds.size > 0 
+                ? `${selectedZoneIds.size} selected` 
+                : 'Select all'
+              }
+            </span>
+          </label>
+          
+          {/* Floating action bar when zones are selected */}
+          {selectedZoneIds.size > 0 && (
+            <div className="flex items-center gap-3">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleBulkAssign}
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                Assign Tags
+              </Button>
+              <button
+                onClick={clearSelection}
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Active Filter Bar */}
       {hasActiveFilters && activeTags.length > 0 && (
         <div className="flex items-center justify-between p-3 bg-orange/10 rounded-lg mb-4 mt-2">
@@ -158,10 +257,37 @@ export function ZonesList({
               return (
                 <div
                   key={zone.id}
-                  className="p-4 rounded-lg border border-gray-light dark:border-gray-600 hover:border-orange dark:hover:border-orange transition-colors bg-white dark:bg-gray-800"
+                  className={`p-4 rounded-lg border transition-colors bg-white dark:bg-gray-800 ${
+                    selectedZoneIds.has(zone.id)
+                      ? 'border-orange bg-orange/5'
+                      : 'border-gray-light dark:border-gray-600 hover:border-orange dark:hover:border-orange'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 flex-1 min-w-0">
+                      {/* Selection Checkbox */}
+                      {onBulkAssignTags && (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleZoneSelection(zone.id);
+                          }}
+                          className={`
+                            flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer
+                            ${selectedZoneIds.has(zone.id)
+                              ? 'bg-orange border-orange'
+                              : 'border-gray-400 dark:border-gray-500 hover:border-orange'
+                            }
+                          `}
+                        >
+                          {selectedZoneIds.has(zone.id) && (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      )}
+
                       {/* Icon */}
                       <div className="flex-shrink-0">
                         <svg
