@@ -337,8 +337,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       }
       return filtered;
     });
-    setIsAssignTagsModalOpen(false);
-    setSelectedRecordForTags(null);
+    // Don't close modal here - let the modal's handleClose() handle it via onClose
+    // This allows the closing animation to play properly
     addToast('success', 'Tags updated successfully');
   };
 
