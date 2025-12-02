@@ -551,6 +551,7 @@ function ZonesList({
   zoneTagAssignments: ZoneTagAssignment[];
 }) {
   const { data: zones, isLoading } = useZones(environmentId);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Use provided tags or fall back to mock data for mockup display
   const displayTags = tags.length > 0 ? tags : INITIAL_MOCK_TAGS;
@@ -567,6 +568,13 @@ function ZonesList({
         if (index % 4 === 0) tagIds.push('tag-4'); // US-East (purple)
         return { zoneId: zone.id, tagIds };
       }).filter(a => a.tagIds.length > 0);
+
+  // Sort zones alphabetically
+  const sortedZones = [...(zones || [])].sort((a, b) => {
+    return sortOrder === 'asc' 
+      ? a.name.localeCompare(b.name)
+      : b.name.localeCompare(a.name);
+  });
 
   if (isLoading) {
     return (
@@ -586,12 +594,33 @@ function ZonesList({
 
   return (
     <div 
-      className="ml-4 mt-1 space-y-1 overflow-hidden"
+      className="ml-4 mt-1 overflow-hidden"
       ref={(el) => {
         zoneContainerRefs.current[environmentId] = el;
       }}
     >
-      {zones.map((zone) => {
+      {/* Sort Toggle */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+        }}
+        className="flex items-center gap-1 px-2 py-0.5 mb-1 text-xs text-gray-slate hover:text-orange transition-colors"
+        title={sortOrder === 'asc' ? 'Sorted A-Z (click for Z-A)' : 'Sorted Z-A (click for A-Z)'}
+      >
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h5" />
+        </svg>
+        <span>{sortOrder === 'asc' ? 'A-Z' : 'Z-A'}</span>
+        <svg className={`w-3 h-3 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Zones List */}
+      <div className="space-y-1">
+      {sortedZones.map((zone) => {
         // Get tags assigned to this zone
         const zoneTags = getTagsForZone(zone.id, displayAssignments, displayTags);
         
@@ -634,6 +663,7 @@ function ZonesList({
           </Link>
         );
       })}
+      </div>
     </div>
   );
 }
