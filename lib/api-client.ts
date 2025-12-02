@@ -170,9 +170,13 @@ interface UpdateSubscriptionResponse {
 export const stripeApi = {
   /**
    * Create a subscription intent
+   * @param org_id - Organization ID
+   * @param plan_code - Plan code to subscribe to
+   * @param price_id - Optional Stripe price ID
+   * @param promotion_code - Optional promotion code to apply discount
    */
-  createSubscription: (org_id: string, plan_code: string, price_id?: string) => {
-    return apiClient.post('/stripe/subscriptions', { org_id, plan_code, price_id });
+  createSubscription: (org_id: string, plan_code: string, price_id?: string, promotion_code?: string) => {
+    return apiClient.post('/stripe/subscriptions', { org_id, plan_code, price_id, promotion_code });
   },
 
   /**
@@ -529,6 +533,116 @@ export const adminApi = {
     return apiClient.get(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`);
   },
 };
+
+// Discounts/Promotion Codes API
+export const discountsApi = {
+  /**
+   * Validate a promotion code
+   * Returns discount details if valid, error if invalid
+   */
+  validate: (code: string, plan_code?: string): Promise<{
+    valid: boolean;
+    promotion_code_id?: string;
+    stripe_promotion_code_id?: string;
+    discount_type?: 'percent_off' | 'amount_off';
+    discount_value?: number;
+    code?: string;
+    message?: string;
+  }> => {
+    return apiClient.post('/discounts/validate', { code, plan_code });
+  },
+
+  /**
+   * List all promotion codes (admin only)
+   */
+  list: (params?: { active_only?: boolean; page?: number; limit?: number }): Promise<{
+    promotion_codes: PromotionCode[];
+    total: number;
+    page: number;
+    limit: number;
+  }> => {
+    const query = new URLSearchParams();
+    if (params?.active_only !== undefined) query.append('active_only', params.active_only.toString());
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    const queryString = query.toString();
+    return apiClient.get(`/discounts${queryString ? `?${queryString}` : ''}`);
+  },
+
+  /**
+   * Create a new promotion code (admin only)
+   */
+  create: (data: {
+    code: string;
+    discount_type: 'percent_off' | 'amount_off';
+    discount_value: number;
+    max_redemptions?: number;
+    expires_at?: string;
+    first_time_transaction_only?: boolean;
+  }): Promise<PromotionCode> => {
+    return apiClient.post('/discounts', data);
+  },
+
+  /**
+   * Deactivate a promotion code (admin only)
+   */
+  deactivate: (id: string): Promise<{ success: boolean }> => {
+    return apiClient.delete(`/discounts/${id}`);
+  },
+
+  /**
+   * Get promotion code redemption history (admin only)
+   */
+  getRedemptions: (params?: { promotion_code_id?: string; page?: number; limit?: number }): Promise<{
+    redemptions: DiscountRedemption[];
+    total: number;
+    page: number;
+    limit: number;
+  }> => {
+    const query = new URLSearchParams();
+    if (params?.promotion_code_id) query.append('promotion_code_id', params.promotion_code_id);
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    const queryString = query.toString();
+    return apiClient.get(`/discounts/redemptions${queryString ? `?${queryString}` : ''}`);
+  },
+};
+
+// Types for discount API
+export interface PromotionCode {
+  id: string;
+  stripe_promotion_code_id: string;
+  stripe_coupon_id: string;
+  code: string;
+  discount_type: 'percent_off' | 'amount_off';
+  discount_value: number;
+  currency: string;
+  max_redemptions: number | null;
+  times_redeemed: number;
+  first_time_transaction_only: boolean;
+  applies_to_plans: string[] | null;
+  expires_at: string | null;
+  is_active: boolean;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DiscountRedemption {
+  id: string;
+  promotion_code_id: string;
+  org_id: string;
+  subscription_id: string | null;
+  user_id: string | null;
+  stripe_invoice_id: string | null;
+  amount_discounted: number;
+  original_amount: number;
+  final_amount: number;
+  created_at: string;
+  // Joined fields
+  promotion_code?: PromotionCode;
+  organization_name?: string;
+}
 
 // Export everything
 export default apiClient;
