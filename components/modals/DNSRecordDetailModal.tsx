@@ -20,7 +20,7 @@ interface DNSRecordDetailModalProps {
   onDelete: (record: DNSRecord) => void;
   // Optional tag props for mockup
   recordTags?: Tag[];
-  onAssignTags?: () => void;
+  onAssignTags?: (recordId: string, recordName: string) => void;
 }
 
 export function DNSRecordDetailModal({
@@ -165,7 +165,7 @@ export function DNSRecordDetailModal({
             </h4>
             {onAssignTags && (
               <button
-                onClick={onAssignTags}
+                onClick={() => onAssignTags(displayRecord.id, displayRecord.name)}
                 className="text-xs text-orange hover:text-orange-dark flex items-center gap-1 transition-colors"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,7 +186,7 @@ export function DNSRecordDetailModal({
               No tags assigned
               {onAssignTags && (
                 <button
-                  onClick={onAssignTags}
+                  onClick={() => onAssignTags(displayRecord.id, displayRecord.name)}
                   className="ml-2 text-orange hover:text-orange-dark transition-colors"
                 >
                   Add tags

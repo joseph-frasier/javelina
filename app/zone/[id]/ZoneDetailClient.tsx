@@ -761,10 +761,10 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         onDelete={handleDeleteRecord}
         // Tag props (mockup)
         recordTags={selectedRecord ? getTagsForRecord(selectedRecord.id, recordTagAssignments, mockTags) : []}
-        onAssignTags={selectedRecord ? () => {
+        onAssignTags={(recordId, recordName) => {
           setShowRecordDetailModal(false);
-          handleOpenAssignTags(selectedRecord.id, selectedRecord.name);
-        } : undefined}
+          handleOpenAssignTags(recordId, recordName);
+        }}
       />
 
       <ConfirmationModal
