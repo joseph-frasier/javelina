@@ -92,12 +92,19 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
         ? Math.round(parseFloat(formData.discount_value) * 100) 
         : parseFloat(formData.discount_value);
 
+      // Convert local datetime to UTC ISO string
+      // datetime-local input returns "2025-12-02T13:44" (local time, no timezone)
+      // We need to convert this to UTC for consistent storage
+      const expiresAtUTC = formData.expires_at 
+        ? new Date(formData.expires_at).toISOString() 
+        : undefined;
+
       await discountsApi.create({
         code: formData.code.toUpperCase(),
         discount_type: formData.discount_type,
         discount_value: discountValue,
         max_redemptions: formData.max_redemptions ? parseInt(formData.max_redemptions) : undefined,
-        expires_at: formData.expires_at || undefined,
+        expires_at: expiresAtUTC,
         first_time_transaction_only: true,
       });
 
@@ -216,6 +223,9 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
               onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
               className="w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange dark:bg-gray-700 dark:text-white"
             />
+            <p className="mt-1 text-xs text-gray-400">
+              Enter time in your local timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone})
+            </p>
           </div>
 
           {/* Note */}
