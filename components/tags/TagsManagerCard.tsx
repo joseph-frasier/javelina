@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useId } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { TagBadge } from '@/components/ui/TagBadge';
@@ -181,6 +181,9 @@ export function TagsManagerCard({
   const hasActiveFilters = activeTagIds.length > 0;
   const [isScrollbarVisible, setIsScrollbarVisible] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Stable ID for DndContext to prevent hydration mismatch
+  const dndContextId = useId();
 
   // Show scrollbar on scroll, hide after 1.5 seconds of inactivity
   const handleScroll = useCallback(() => {
@@ -282,6 +285,7 @@ export function TagsManagerCard({
 
           {/* Scrollable tags list with drag and drop */}
           <DndContext
+            id={dndContextId}
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
