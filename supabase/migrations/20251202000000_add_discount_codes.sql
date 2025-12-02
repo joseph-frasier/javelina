@@ -30,13 +30,14 @@ CREATE TABLE IF NOT EXISTS public.promotion_codes (
 ALTER TABLE public.promotion_codes ENABLE ROW LEVEL SECURITY;
 
 -- RLS: Only superusers can view/manage promotion codes
+-- Note: Uses superadmin boolean column, not role text column
 CREATE POLICY "Superusers can view promotion codes"
   ON public.promotion_codes FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM public.profiles
       WHERE profiles.id = auth.uid()
-      AND profiles.role = 'superuser'
+      AND profiles.superadmin = true
     )
   );
 
@@ -46,7 +47,7 @@ CREATE POLICY "Superusers can manage promotion codes"
     EXISTS (
       SELECT 1 FROM public.profiles
       WHERE profiles.id = auth.uid()
-      AND profiles.role = 'superuser'
+      AND profiles.superadmin = true
     )
   );
 
@@ -102,13 +103,14 @@ CREATE POLICY "Users can view their org redemptions"
   );
 
 -- Superusers can view all redemptions
+-- Note: Uses superadmin boolean column, not role text column
 CREATE POLICY "Superusers can view all redemptions"
   ON public.discount_redemptions FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM public.profiles
       WHERE profiles.id = auth.uid()
-      AND profiles.role = 'superuser'
+      AND profiles.superadmin = true
     )
   );
 
