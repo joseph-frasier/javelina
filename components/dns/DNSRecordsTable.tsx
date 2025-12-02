@@ -198,8 +198,8 @@ export function DNSRecordsTable({
     setPriorityFilters(new Set());
   }, []);
 
-  // Calculate active filter count
-  const activeFilterCount = statusFilters.size + priorityFilters.size;
+  // Calculate active filter count (includes tag filters)
+  const activeFilterCount = statusFilters.size + priorityFilters.size + activeTagIds.length;
 
   // Check if all visible records are selected
   const allSelected = filteredAndSortedRecords.length > 0 && 
