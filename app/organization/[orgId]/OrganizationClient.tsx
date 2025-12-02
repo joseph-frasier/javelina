@@ -138,6 +138,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     );
   };
 
+  // Reorder tags handler - updates tag order after drag and drop
+  const handleReorderTags = (reorderedTags: Tag[]) => {
+    setMockTags(reorderedTags);
+  };
+
   // Edit tag handler - opens modal in edit mode
   const handleEditTag = (tag: Tag) => {
     setTagToEdit(tag);
@@ -434,6 +439,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               onToggleFavorite={handleToggleFavorite}
               onCreateTag={() => setIsCreateTagModalOpen(true)}
               onEditTag={handleEditTag}
+              onReorderTags={handleReorderTags}
             />
 
             {/* Zones List with Tags */}
