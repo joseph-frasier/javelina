@@ -416,8 +416,8 @@ export default function AdminDiscountsPage() {
             </Button>
           </div>
 
-          {/* Stat Cards */}
-          {!loading && (
+          {/* Stat Cards - Temporarily disabled until backend sync is complete */}
+          {false && !loading && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 label="Total Codes"
@@ -505,6 +505,7 @@ export default function AdminDiscountsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+{/* Active only filter - Temporarily disabled until backend filtering is complete
               <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
@@ -517,6 +518,7 @@ export default function AdminDiscountsPage() {
                 />
                 Active only
               </label>
+              */}
             </div>
 
             {loading ? (
