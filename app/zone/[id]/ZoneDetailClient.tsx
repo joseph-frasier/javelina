@@ -42,6 +42,7 @@ import {
 import { 
   INITIAL_MOCK_TAGS, 
   INITIAL_RECORD_TAG_ASSIGNMENTS,
+  getTagsForRecord,
   type Tag, 
   type RecordTagAssignment 
 } from '@/lib/mock-tags-data';
@@ -704,6 +705,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           setShowEditRecordModal(true);
         }}
         onDelete={handleDeleteRecord}
+        // Tag props (mockup)
+        recordTags={selectedRecord ? getTagsForRecord(selectedRecord.id, recordTagAssignments, mockTags) : []}
+        onAssignTags={selectedRecord ? () => {
+          setShowRecordDetailModal(false);
+          handleOpenAssignTags(selectedRecord.id, selectedRecord.name);
+        } : undefined}
       />
 
       <ConfirmationModal
