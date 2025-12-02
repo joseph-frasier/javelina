@@ -300,7 +300,7 @@ export function ChangePlanModal({
                   return (
                     <div
                       key={plan.id}
-                      className={`relative rounded-xl p-6 transition-all ${
+                      className={`relative rounded-xl p-6 transition-all flex flex-col ${
                         isCurrent
                           ? 'bg-gray-50 dark:bg-[#252525] border-2 border-orange'
                           : isSelected
@@ -358,7 +358,7 @@ export function ChangePlanModal({
                       </p>
 
                       {/* Features */}
-                      <ul className="space-y-3 mb-6">
+                      <ul className="space-y-3 mb-6 flex-grow">
                         {plan.features.slice(0, 5).map((feature, idx) => (
                           <li key={idx} className="flex items-start">
                             <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,34 +371,36 @@ export function ChangePlanModal({
                         ))}
                       </ul>
 
-                      {/* Action Button */}
-                      {isCurrent ? (
-                        <button
-                          disabled
-                          className="w-full py-3 px-4 rounded-lg font-bold border-2 border-orange text-orange cursor-not-allowed opacity-60"
-                        >
-                          Current Plan
-                        </button>
-                      ) : !isValidUpgradeOption ? (
-                        <button
-                          disabled
-                          className="w-full py-3 px-4 rounded-lg font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50"
-                        >
-                          Not Available
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleSelectPlan(plan.code)}
-                          disabled={isSubmitting || calculatingPrice}
-                          className={`w-full py-3 px-4 rounded-lg font-bold transition-colors ${
-                            isSelected
-                              ? 'bg-orange text-white border-2 border-orange'
-                              : 'bg-transparent border-2 border-orange text-orange hover:bg-orange hover:text-white'
-                          }`}
-                        >
-                          {isSelected ? 'Selected' : 'Select'}
-                        </button>
-                      )}
+                      {/* Action Button - pushed to bottom with mt-auto */}
+                      <div className="mt-auto">
+                        {isCurrent ? (
+                          <button
+                            disabled
+                            className="w-full py-3 px-4 rounded-lg font-bold border-2 border-orange text-orange cursor-not-allowed opacity-60"
+                          >
+                            Current Plan
+                          </button>
+                        ) : !isValidUpgradeOption ? (
+                          <button
+                            disabled
+                            className="w-full py-3 px-4 rounded-lg font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50"
+                          >
+                            Not Available
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleSelectPlan(plan.code)}
+                            disabled={isSubmitting || calculatingPrice}
+                            className={`w-full py-3 px-4 rounded-lg font-bold transition-colors ${
+                              isSelected
+                                ? 'bg-orange text-white border-2 border-orange'
+                                : 'bg-transparent border-2 border-orange text-orange hover:bg-orange hover:text-white'
+                            }`}
+                          >
+                            {isSelected ? 'Selected' : 'Select'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
