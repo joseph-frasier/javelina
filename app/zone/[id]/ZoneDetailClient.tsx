@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
@@ -86,6 +86,16 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
   const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
   const [selectedRecordForTags, setSelectedRecordForTags] = useState<{ id: string; name: string } | null>(null);
+  const assignTagsCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (assignTagsCloseTimeoutRef.current) {
+        clearTimeout(assignTagsCloseTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // Edit form state
   const [editFormData, setEditFormData] = useState({
@@ -308,6 +318,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   };
 
   const handleOpenAssignTags = (recordId: string, recordName: string) => {
+    // Clear any pending timeout from a previous modal close to prevent race condition
+    if (assignTagsCloseTimeoutRef.current) {
+      clearTimeout(assignTagsCloseTimeoutRef.current);
+      assignTagsCloseTimeoutRef.current = null;
+    }
     setSelectedRecordForTags({ id: recordId, name: recordName });
     setIsAssignTagsModalOpen(true);
   };
@@ -733,7 +748,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           isOpen={isAssignTagsModalOpen}
           onClose={() => {
             setIsAssignTagsModalOpen(false);
-            setSelectedRecordForTags(null);
+            // Delay clearing record data to allow closing animation to complete
+            assignTagsCloseTimeoutRef.current = setTimeout(() => {
+              setSelectedRecordForTags(null);
+              assignTagsCloseTimeoutRef.current = null;
+            }, 300);
           }}
           allTags={mockTags}
           zoneName={selectedRecordForTags.name}
