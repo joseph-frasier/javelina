@@ -269,9 +269,24 @@ export function DNSRecordsTable({
         </svg>
       </div>
 
-      {/* Filters and Export */}
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <ExportButton
+          data={selectedRecords.length > 0 
+            ? filteredAndSortedRecords.filter(r => selectedRecords.includes(r.id))
+            : filteredAndSortedRecords
+          }
+          filename={`${zoneName}-dns-records`}
+          label="Export Records"
+          zoneName={zoneName}
+          nameservers={nameservers}
+          soaSerial={soaSerial}
+          defaultTTL={defaultTTL}
+        />
+      </div>
+
+      {/* Filters - Hidden for now (not filtering anything currently)
       <div className="space-y-3">
-        {/* Filter Toggle Button and Export Button */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button
@@ -305,27 +320,11 @@ export function DNSRecordsTable({
               </button>
             )}
           </div>
-          
-          {/* Export Button */}
-          <ExportButton
-            data={selectedRecords.length > 0 
-              ? filteredAndSortedRecords.filter(r => selectedRecords.includes(r.id))
-              : filteredAndSortedRecords
-            }
-            filename={`${zoneName}-dns-records`}
-            label="Export Records"
-            zoneName={zoneName}
-            nameservers={nameservers}
-            soaSerial={soaSerial}
-            defaultTTL={defaultTTL}
-          />
         </div>
 
-        {/* Filter Panel */}
         {showFilters && (
           <div className="inline-block bg-gray-50 dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg p-3 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex flex-col md:flex-row md:gap-8 gap-3">
-              {/* Status Filter */}
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Status
@@ -350,7 +349,6 @@ export function DNSRecordsTable({
                 </div>
               </div>
 
-              {/* Priority Filter */}
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Priority
@@ -378,6 +376,7 @@ export function DNSRecordsTable({
           </div>
         )}
       </div>
+      */}
 
       {/* Tag Filter Bar */}
       {activeTagIds.length > 0 && (
