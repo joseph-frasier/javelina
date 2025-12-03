@@ -218,7 +218,7 @@ export function ChangePlanModal({
         window.location.href = `/checkout?${params.toString()}`;
       } else {
         // Use regular subscription update for monthly plan changes
-        await stripeApi.updateSubscription(orgId, selectedPlanCode);
+        const response = await stripeApi.updateSubscription(orgId, selectedPlanCode);
         
         // Wait for webhook to process
         await new Promise(resolve => setTimeout(resolve, 2500));
@@ -226,7 +226,15 @@ export function ChangePlanModal({
         // Refresh subscription data
         await onSuccess?.();
         
-        addToast('success', 'Subscription plan updated successfully!');
+        // Handle proration payment status
+        const { proration } = response;
+        if (proration?.payment?.status === 'succeeded') {
+          addToast('success', `Plan updated! Charged $${proration.amount_due.toFixed(2)} for the upgrade.`);
+        } else if (proration?.payment?.status === 'failed') {
+          addToast('error', `Plan updated but payment failed: ${proration.payment.error || 'Unknown error'}`);
+        } else {
+          addToast('success', 'Subscription plan updated successfully!');
+        }
         onClose();
       }
     } catch (error: any) {
