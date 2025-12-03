@@ -308,14 +308,14 @@ export function ChangePlanModal({
                   return (
                     <div
                       key={plan.id}
-                      className={`relative rounded-xl p-6 transition-all ${
+                      className={`relative rounded-xl p-6 transition-all flex flex-col ${
                         isCurrent
                           ? 'bg-gray-50 dark:bg-[#252525] border-2 border-orange'
                           : isSelected
-                          ? 'bg-[#252525] border-2 border-orange ring-2 ring-orange/50'
+                          ? 'bg-gray-100 dark:bg-[#252525] border-2 border-orange ring-2 ring-orange/50'
                           : isDisabled
-                          ? 'bg-[#252525] border-2 border-[#333] opacity-50 cursor-not-allowed'
-                          : 'bg-[#252525] border-2 border-[#333] hover:border-orange/50 cursor-pointer'
+                          ? 'bg-gray-100 dark:bg-[#252525] border-2 border-gray-200 dark:border-[#333] opacity-50 cursor-not-allowed'
+                          : 'bg-gray-100 dark:bg-[#252525] border-2 border-gray-200 dark:border-[#333] hover:border-orange/50 cursor-pointer'
                       }`}
                     >
                       {/* Popular Badge */}
@@ -352,10 +352,10 @@ export function ChangePlanModal({
 
                       {/* Price */}
                       <div className="mb-4">
-                        <div className="text-4xl font-black text-gray-900 dark:text-orange">
+                        <div className="text-4xl font-black text-orange">
                           ${plan.monthly?.amount.toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-400 uppercase tracking-wide mt-1">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">
                           {planIsLifetime ? 'ONE-TIME' : '/MONTH'}
                         </div>
                       </div>
@@ -366,7 +366,7 @@ export function ChangePlanModal({
                       </p>
 
                       {/* Features */}
-                      <ul className="space-y-3 mb-6">
+                      <ul className="space-y-3 mb-6 flex-grow">
                         {plan.features.slice(0, 5).map((feature, idx) => (
                           <li key={idx} className="flex items-start">
                             <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -379,7 +379,8 @@ export function ChangePlanModal({
                         ))}
                       </ul>
 
-                      {/* Action Button */}
+                      {/* Action Button - pushed to bottom with mt-auto */}
+                      <div className="mt-auto">
                       {isCurrent ? (
                         <button
                           disabled
@@ -390,7 +391,7 @@ export function ChangePlanModal({
                       ) : !isValidUpgradeOption ? (
                         <button
                           disabled
-                          className="w-full py-3 px-4 rounded-lg font-bold border-2 border-gray-600 text-gray-500 cursor-not-allowed opacity-50"
+                            className="w-full py-3 px-4 rounded-lg font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50"
                         >
                           Not Available
                         </button>
@@ -407,6 +408,7 @@ export function ChangePlanModal({
                           {isSelected ? 'Selected' : 'Select'}
                         </button>
                       )}
+                      </div>
                     </div>
                   );
                 })}
@@ -414,21 +416,21 @@ export function ChangePlanModal({
 
               {/* Pricing Breakdown Section */}
               {selectedPlanCode && upgradePricing && !calculatingPrice && (
-                <div className="bg-[#252525] border border-[#333] rounded-lg p-6 mb-6">
+                <div className="bg-gray-100 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded-lg p-6 mb-6">
                   <h3 className="text-lg font-bold text-orange mb-4">Upgrade Pricing</h3>
                   
                   {upgradePricing.upgradeType === 'subscription-to-lifetime' && (
                     <div className="space-y-3 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Lifetime Plan Price:</span>
-                        <span className="text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Lifetime Plan Price:</span>
+                        <span className="text-gray-900 dark:text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Credit from Current Subscription:</span>
-                        <span className="text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Credit from Current Subscription:</span>
+                        <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
                       </div>
-                      <div className="border-t border-gray-600 pt-3 flex justify-between">
-                        <span className="text-white font-bold">Total Due Today:</span>
+                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
+                        <span className="text-gray-900 dark:text-white font-bold">Total Due Today:</span>
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
@@ -440,15 +442,15 @@ export function ChangePlanModal({
                   {upgradePricing.upgradeType === 'lifetime-to-lifetime' && (
                     <div className="space-y-3 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">New Plan Price:</span>
-                        <span className="text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">New Plan Price:</span>
+                        <span className="text-gray-900 dark:text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Current Plan Credit:</span>
-                        <span className="text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Current Plan Credit:</span>
+                        <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
                       </div>
-                      <div className="border-t border-gray-600 pt-3 flex justify-between">
-                        <span className="text-white font-bold">Upgrade Cost:</span>
+                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
+                        <span className="text-gray-900 dark:text-white font-bold">Upgrade Cost:</span>
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
@@ -460,17 +462,17 @@ export function ChangePlanModal({
                   {upgradePricing.upgradeType === 'subscription-to-subscription' && (
                     <div className="space-y-3 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">New Plan Price:</span>
-                        <span className="text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}/month</span>
+                        <span className="text-gray-600 dark:text-gray-400">New Plan Price:</span>
+                        <span className="text-gray-900 dark:text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}/month</span>
                       </div>
                       {upgradePricing.credit > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Credit from Current Subscription:</span>
-                          <span className="text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
+                          <span className="text-gray-600 dark:text-gray-400">Credit from Current Subscription:</span>
+                          <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="border-t border-gray-600 pt-3 flex justify-between">
-                        <span className="text-white font-bold">Total Due Today:</span>
+                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
+                        <span className="text-gray-900 dark:text-white font-bold">Total Due Today:</span>
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
@@ -482,9 +484,9 @@ export function ChangePlanModal({
               )}
 
               {calculatingPrice && (
-                <div className="bg-[#252525] border border-[#333] rounded-lg p-6 mb-6 flex items-center justify-center">
+                <div className="bg-gray-100 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded-lg p-6 mb-6 flex items-center justify-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange mr-3"></div>
-                  <span className="text-gray-400">Calculating upgrade price...</span>
+                  <span className="text-gray-600 dark:text-gray-400">Calculating upgrade price...</span>
                 </div>
               )}
 
@@ -497,7 +499,7 @@ export function ChangePlanModal({
                       setUpgradePricing(null);
                     }}
                     disabled={isSubmitting}
-                    className="px-6 py-3 rounded-lg font-bold border-2 border-gray-600 text-gray-300 hover:border-gray-500 transition-colors disabled:opacity-50"
+                    className="px-6 py-3 rounded-lg font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>

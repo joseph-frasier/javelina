@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { TagBadge } from '@/components/ui/TagBadge';
 import type { DNSRecord } from '@/types/dns';
 import { RECORD_TYPE_INFO } from '@/types/dns';
 import { getFQDN } from '@/lib/utils/dns-validation';
 import { formatDateWithRelative } from '@/lib/utils/time';
+import type { Tag } from '@/lib/mock-tags-data';
 
 interface DNSRecordDetailModalProps {
   isOpen: boolean;
@@ -16,6 +18,9 @@ interface DNSRecordDetailModalProps {
   zoneName: string;
   onEdit: (record: DNSRecord) => void;
   onDelete: (record: DNSRecord) => void;
+  // Optional tag props for mockup
+  recordTags?: Tag[];
+  onAssignTags?: (recordId: string, recordName: string) => void;
 }
 
 export function DNSRecordDetailModal({
@@ -25,6 +30,8 @@ export function DNSRecordDetailModal({
   zoneName,
   onEdit,
   onDelete,
+  recordTags = [],
+  onAssignTags,
 }: DNSRecordDetailModalProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const [displayRecord, setDisplayRecord] = useState<DNSRecord | null>(null);
@@ -147,6 +154,45 @@ export function DNSRecordDetailModal({
                 {displayRecord.comment}
               </p>
             </div>
+          )}
+        </div>
+
+        {/* Tags Section */}
+        <div className="border-t border-gray-light dark:border-gray-700 pt-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              Tags
+            </h4>
+            {onAssignTags && (
+              <button
+                onClick={() => onAssignTags(displayRecord.id, displayRecord.name)}
+                className="text-xs text-orange hover:text-orange-dark flex items-center gap-1 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Manage Tags
+              </button>
+            )}
+          </div>
+          {recordTags.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {recordTags.map((tag) => (
+                <TagBadge key={tag.id} name={tag.name} color={tag.color} size="md" />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+              No tags assigned
+              {onAssignTags && (
+                <button
+                  onClick={() => onAssignTags(displayRecord.id, displayRecord.name)}
+                  className="ml-2 text-orange hover:text-orange-dark transition-colors"
+                >
+                  Add tags
+                </button>
+              )}
+            </p>
           )}
         </div>
 

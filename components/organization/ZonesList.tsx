@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { TagBadge } from '@/components/ui/TagBadge';
+import type { Tag, ZoneTagAssignment } from '@/lib/mock-tags-data';
+import { getTagsForZone } from '@/lib/mock-tags-data';
 
 interface Zone {
   id: string;
@@ -17,38 +20,94 @@ interface Zone {
 interface ZonesListProps {
   organizationId: string;
   zones: Zone[];
+  // Tagging mockup props
+  tags?: Tag[];
+  assignments?: ZoneTagAssignment[];
+  activeTagIds?: string[];
+  onTagClick?: (tagId: string) => void;
+  onClearFilters?: () => void;
+  onAssignTags?: (zoneId: string, zoneName: string) => void;
 }
 
-export function ZonesList({ organizationId, zones }: ZonesListProps) {
+export function ZonesList({ 
+  organizationId, 
+  zones,
+  tags = [],
+  assignments = [],
+  activeTagIds = [],
+  onTagClick,
+  onClearFilters,
+  onAssignTags,
+}: ZonesListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // Reset to page 1 when activeTagIds changes from parent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTagIds]);
+
+  // Filter zones by active tags (show zones that have ANY of the selected tags)
+  const filteredZones = activeTagIds.length > 0
+    ? zones.filter(zone => {
+        const assignment = assignments.find(a => a.zoneId === zone.id);
+        if (!assignment?.tagIds) return false;
+        // Zone matches if it has ANY of the selected tags
+        return activeTagIds.some(tagId => assignment.tagIds.includes(tagId));
+      })
+    : zones;
+
   // Pagination logic
-  const totalPages = Math.ceil(zones.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredZones.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedZones = zones.slice(startIndex, endIndex);
+  const paginatedZones = filteredZones.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const getStatusBadgeColor = (status?: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'inactive':
-        return 'bg-gray-slate/10 text-gray-slate border-gray-slate/20';
-      default:
-        return 'bg-gray-light/10 text-gray-slate border-gray-light/20';
-    }
-  };
+  // Get the active tag objects for display
+  const activeTags = tags.filter(t => activeTagIds.includes(t.id));
+  const hasActiveFilters = activeTagIds.length > 0;
 
   return (
     <Card
       title="Zones"
-      description="All DNS zones across environments"
+      description={hasActiveFilters ? `Filtered by ${activeTagIds.length} tag${activeTagIds.length > 1 ? 's' : ''}` : "All DNS zones"}
     >
+      {/* Active Filter Bar */}
+      {hasActiveFilters && activeTags.length > 0 && (
+        <div className="flex items-center justify-between p-3 bg-orange/10 rounded-lg mb-4 mt-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-gray-slate dark:text-gray-300">Filtering by:</span>
+            {activeTags.map(tag => (
+              <TagBadge 
+                key={tag.id} 
+                name={tag.name} 
+                color={tag.color} 
+                size="sm"
+                onClick={() => onTagClick?.(tag.id)}
+                showRemove
+                onRemove={() => onTagClick?.(tag.id)}
+              />
+            ))}
+            <span className="text-sm text-gray-slate dark:text-gray-400">
+              ({filteredZones.length} {filteredZones.length === 1 ? 'zone' : 'zones'})
+            </span>
+          </div>
+          <button
+            onClick={() => onClearFilters?.()}
+            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1 transition-colors flex-shrink-0"
+          >
+            Clear all
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {zones.length === 0 ? (
         <div className="text-center py-12">
           <svg
@@ -68,10 +127,35 @@ export function ZonesList({ organizationId, zones }: ZonesListProps) {
             No zones yet. Add your first zone to get started.
           </p>
         </div>
+      ) : filteredZones.length === 0 ? (
+        <div className="text-center py-12">
+          <svg
+            className="w-16 h-16 text-gray-slate dark:text-gray-light mx-auto mb-4 opacity-50"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <p className="text-gray-slate dark:text-gray-light text-sm mb-4">
+            No zones match this filter.
+          </p>
+          <Button variant="secondary" size="sm" onClick={() => onClearFilters?.()}>
+            Clear filter
+          </Button>
+        </div>
       ) : (
         <>
           <div className="space-y-3 mt-4">
-            {paginatedZones.map((zone) => (
+            {paginatedZones.map((zone) => {
+              const zoneTags = getTagsForZone(zone.id, assignments, tags);
+              
+              return (
               <div
                 key={zone.id}
                 className="p-4 rounded-lg border border-gray-light dark:border-gray-600 hover:border-orange dark:hover:border-orange transition-colors bg-white dark:bg-gray-800"
@@ -97,18 +181,32 @@ export function ZonesList({ organizationId, zones }: ZonesListProps) {
 
                     {/* Zone Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
+                        <div className="flex items-center flex-wrap gap-2 mb-1">
                         <h3 className="text-base font-bold text-orange-dark dark:text-orange truncate">
                           {zone.name}
                         </h3>
-                        {zone.status && (
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getStatusBadgeColor(
-                              zone.status
-                            )}`}
-                          >
-                            {zone.status}
-                          </span>
+                          {/* Tag Badges */}
+                          {zoneTags.map(tag => (
+                            <TagBadge
+                              key={tag.id}
+                              name={tag.name}
+                              color={tag.color}
+                              size="sm"
+                              onClick={() => onTagClick?.(tag.id)}
+                              isActive={activeTagIds.includes(tag.id)}
+                            />
+                          ))}
+                          {/* Add Tag Button */}
+                          {onAssignTags && (
+                            <button
+                              onClick={() => onAssignTags(zone.id, zone.name)}
+                              className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-dashed border-gray-400 text-gray-400 hover:border-orange hover:text-orange transition-colors"
+                              title="Manage tags"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                            </button>
                         )}
                       </div>
                       <div className="flex items-center space-x-4 text-xs text-gray-slate dark:text-gray-light">
@@ -128,24 +226,6 @@ export function ZonesList({ organizationId, zones }: ZonesListProps) {
                           </svg>
                           <span>{zone.records_count || 0} records</span>
                         </span>
-                        {zone.environment_name && (
-                          <span className="flex items-center space-x-1">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                              />
-                            </svg>
-                            <span>{zone.environment_name}</span>
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -160,7 +240,8 @@ export function ZonesList({ organizationId, zones }: ZonesListProps) {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination Controls - only show if more than 8 zones */}

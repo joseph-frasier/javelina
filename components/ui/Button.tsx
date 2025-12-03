@@ -13,6 +13,7 @@ const buttonVariants = cva(
         ghost: 'bg-transparent text-orange hover:underline',
         outline:
           'border-2 border-orange text-orange hover:bg-orange hover:text-white dark:hover:bg-orange dark:hover:opacity-90',
+        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
       },
       size: {
         sm: 'px-3 py-1.5 text-sm',

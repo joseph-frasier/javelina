@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
@@ -39,6 +39,15 @@ import {
   getDNSRecords,
   toggleDNSRecordStatus,
 } from '@/lib/actions/dns-records';
+import { 
+  INITIAL_MOCK_TAGS, 
+  INITIAL_RECORD_TAG_ASSIGNMENTS,
+  getTagsForRecord,
+  type Tag, 
+  type RecordTagAssignment 
+} from '@/lib/mock-tags-data';
+import { AssignTagsModal } from '@/components/modals/AssignTagsModal';
+import { CreateTagModal } from '@/components/modals/CreateTagModal';
 
 interface ZoneDetailClientProps {
   zone: any;
@@ -69,6 +78,32 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
   const [showDeleteRecordConfirm, setShowDeleteRecordConfirm] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<DNSRecord | null>(null);
   const [isRecordLoading, setIsRecordLoading] = useState(false);
+
+  // Tags state (mockup)
+  const [mockTags, setMockTags] = useState<Tag[]>(INITIAL_MOCK_TAGS);
+  const [recordTagAssignments, setRecordTagAssignments] = useState<RecordTagAssignment[]>(INITIAL_RECORD_TAG_ASSIGNMENTS);
+  const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
+  const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
+  const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false);
+  const [selectedRecordForTags, setSelectedRecordForTags] = useState<{ id: string; name: string } | null>(null);
+  const [tagToEdit, setTagToEdit] = useState<Tag | null>(null);
+  const assignTagsCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (assignTagsCloseTimeoutRef.current) {
+        clearTimeout(assignTagsCloseTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Memoize assigned tag IDs for the selected record to prevent useEffect re-triggers in modal
+  const selectedRecordAssignedTagIds = useMemo(() => {
+    if (!selectedRecordForTags) return [];
+    const assignment = recordTagAssignments.find(a => a.recordId === selectedRecordForTags.id);
+    return assignment?.tagIds || [];
+  }, [selectedRecordForTags, recordTagAssignments]);
   
   // Edit form state
   const [editFormData, setEditFormData] = useState({
@@ -272,6 +307,87 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
     }
   };
 
+  // Tag handlers (mockup)
+  const handleCreateTag = (newTag: Tag) => {
+    setMockTags(prev => [...prev, newTag]);
+    addToast('success', `Tag "${newTag.name}" created successfully`);
+  };
+
+  const handleTagClick = (tagId: string) => {
+    setActiveTagIds(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  const handleClearTagFilters = () => {
+    setActiveTagIds([]);
+  };
+
+  // Edit tag handler - opens modal in edit mode
+  const handleEditTag = (tag: Tag) => {
+    setTagToEdit(tag);
+    setIsCreateTagModalOpen(true);
+  };
+
+  // Save edited tag
+  const handleSaveEditedTag = (updatedTag: Tag) => {
+    setMockTags(prev => 
+      prev.map(tag => tag.id === updatedTag.id ? updatedTag : tag)
+    );
+    setTagToEdit(null);
+    addToast('success', `Tag "${updatedTag.name}" updated successfully`);
+  };
+
+  // Delete tag and clean up assignments
+  const handleDeleteTag = (tagId: string) => {
+    const tagName = mockTags.find(t => t.id === tagId)?.name;
+    // Remove tag from mockTags
+    setMockTags(prev => prev.filter(tag => tag.id !== tagId));
+    // Remove tag from all record assignments
+    setRecordTagAssignments(prev => 
+      prev.map(assignment => ({
+        ...assignment,
+        tagIds: assignment.tagIds.filter(id => id !== tagId)
+      })).filter(assignment => assignment.tagIds.length > 0)
+    );
+    // Clear from active filters if present
+    setActiveTagIds(prev => prev.filter(id => id !== tagId));
+    setTagToEdit(null);
+    addToast('success', `Tag "${tagName}" deleted successfully`);
+  };
+
+  // Get record count for a tag (for delete confirmation)
+  const getRecordCountForTag = (tagId: string): number => {
+    return recordTagAssignments.filter(a => a.tagIds.includes(tagId)).length;
+  };
+
+  const handleOpenAssignTags = (recordId: string, recordName: string) => {
+    // Clear any pending timeout from a previous modal close to prevent race condition
+    if (assignTagsCloseTimeoutRef.current) {
+      clearTimeout(assignTagsCloseTimeoutRef.current);
+      assignTagsCloseTimeoutRef.current = null;
+    }
+    setSelectedRecordForTags({ id: recordId, name: recordName });
+    setIsAssignTagsModalOpen(true);
+  };
+
+  const handleSaveRecordTagAssignments = (recordId: string, tagIds: string[]) => {
+    setRecordTagAssignments(prev => {
+      // Remove any existing assignment for this record
+      const filtered = prev.filter(a => a.recordId !== recordId);
+      // Only add if there are tags to assign
+      if (tagIds.length > 0) {
+        return [...filtered, { recordId, tagIds }];
+      }
+      return filtered;
+    });
+    // Don't close modal here - let the modal's handleClose() handle it via onClose
+    // This allows the closing animation to play properly
+    addToast('success', 'Tags updated successfully');
+  };
+
   // Build breadcrumb items
   const breadcrumbItems = [];
   if (organization && environment) {
@@ -325,6 +441,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
+            <Button variant="secondary" size="sm" onClick={() => setIsCreateTagModalOpen(true)} className="justify-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              Create Tag
+            </Button>
             <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)} className="justify-center">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -337,7 +459,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
               </svg>
               Reload
             </Button>
-            <Button variant="secondary" size="sm" onClick={handleExport} className="justify-center">
+            <Button variant="primary" size="sm" onClick={handleExport} className="justify-center">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -396,6 +518,13 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           nameservers={zone.nameservers}
           soaSerial={zone.soa_serial}
           defaultTTL={zone.ttl}
+          // Tag props (mockup)
+          tags={mockTags}
+          recordTagAssignments={recordTagAssignments}
+          activeTagIds={activeTagIds}
+          onTagClick={handleTagClick}
+          onAssignTags={handleOpenAssignTags}
+          onClearTagFilters={handleClearTagFilters}
         />
       </Card>
 
@@ -637,6 +766,12 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
           setShowEditRecordModal(true);
         }}
         onDelete={handleDeleteRecord}
+        // Tag props (mockup)
+        recordTags={selectedRecord ? getTagsForRecord(selectedRecord.id, recordTagAssignments, mockTags) : []}
+        onAssignTags={(recordId, recordName) => {
+          setShowRecordDetailModal(false);
+          handleOpenAssignTags(recordId, recordName);
+        }}
       />
 
       <ConfirmationModal
@@ -651,6 +786,48 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
         confirmText="Delete Record"
         variant="danger"
         isLoading={isRecordLoading}
+      />
+
+      {/* Assign Tags Modal (mockup) */}
+      {selectedRecordForTags && (
+        <AssignTagsModal
+          isOpen={isAssignTagsModalOpen}
+          onClose={() => {
+            setIsAssignTagsModalOpen(false);
+            // Delay clearing record data to allow closing animation to complete
+            assignTagsCloseTimeoutRef.current = setTimeout(() => {
+              setSelectedRecordForTags(null);
+              assignTagsCloseTimeoutRef.current = null;
+            }, 300);
+          }}
+          allTags={mockTags}
+          zoneName={selectedRecordForTags.name}
+          zoneId={selectedRecordForTags.id}
+          assignedTagIds={selectedRecordAssignedTagIds}
+          onSave={handleSaveRecordTagAssignments}
+          onToggleFavorite={(tagId) => {
+            setMockTags(prev => prev.map(tag => 
+              tag.id === tagId ? { ...tag, isFavorite: !tag.isFavorite } : tag
+            ));
+          }}
+        />
+      )}
+
+      {/* Create/Edit Tag Modal (mockup) */}
+      <CreateTagModal
+        isOpen={isCreateTagModalOpen}
+        onClose={() => {
+          setIsCreateTagModalOpen(false);
+          // Clear edit state after modal animation
+          setTimeout(() => setTagToEdit(null), 250);
+        }}
+        onCreateTag={handleCreateTag}
+        existingTags={mockTags}
+        tagToEdit={tagToEdit}
+        onEditTag={handleSaveEditedTag}
+        onDeleteTag={handleDeleteTag}
+        zoneCount={0} // Zone tags handled in OrganizationClient
+        recordCount={tagToEdit ? getRecordCountForTag(tagToEdit.id) : 0}
       />
     </div>
   );

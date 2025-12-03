@@ -40,6 +40,10 @@ export default function RootLayout({
                   }
                   if (stored === 'light' || stored === 'dark') {
                     apply(stored);
+                  } else if (stored === 'system') {
+                    // Resolve system preference
+                    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    apply(prefersDark ? 'dark' : 'light');
                   } else {
                     // Default to light mode for first-time visitors
                     apply('light');
