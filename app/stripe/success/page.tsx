@@ -15,8 +15,10 @@ function SuccessPageContent() {
 
   useEffect(() => {
     const paymentIntent = searchParams.get('payment_intent');
+    const setupIntent = searchParams.get('setup_intent');
 
-    if (!paymentIntent) {
+    // Accept either payment_intent (normal payment) or setup_intent ($0 first invoice due to discount)
+    if (!paymentIntent && !setupIntent) {
       addToast('error', 'Invalid payment session');
       router.push('/pricing');
       return;
