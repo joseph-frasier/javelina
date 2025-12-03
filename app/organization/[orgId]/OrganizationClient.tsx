@@ -115,10 +115,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [selectedZoneForTags, setSelectedZoneForTags] = useState<{ id: string; name: string } | null>(null);
   const [tagToEdit, setTagToEdit] = useState<Tag | null>(null);
   const assignTagsCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Bulk assignment state
-  const [bulkSelectedZoneIds, setBulkSelectedZoneIds] = useState<string[]>([]);
-  const [bulkSelectedZoneNames, setBulkSelectedZoneNames] = useState<string[]>([]);
 
   // Cleanup timeout on unmount to prevent setting state on unmounted component
   useEffect(() => {
@@ -202,49 +198,8 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
       clearTimeout(assignTagsCloseTimeoutRef.current);
       assignTagsCloseTimeoutRef.current = null;
     }
-    // Reset bulk state when opening single zone modal
-    setBulkSelectedZoneIds([]);
-    setBulkSelectedZoneNames([]);
     setSelectedZoneForTags({ id: zoneId, name: zoneName });
     setIsAssignTagsModalOpen(true);
-  };
-
-  // Bulk assignment handler - opens modal for multiple zones
-  const handleBulkAssignTags = (zoneIds: string[], zoneNames: string[]) => {
-    if (assignTagsCloseTimeoutRef.current) {
-      clearTimeout(assignTagsCloseTimeoutRef.current);
-      assignTagsCloseTimeoutRef.current = null;
-    }
-    // Reset single zone state when opening bulk modal
-    setSelectedZoneForTags(null);
-    setBulkSelectedZoneIds(zoneIds);
-    setBulkSelectedZoneNames(zoneNames);
-    setIsAssignTagsModalOpen(true);
-  };
-
-  // Bulk save handler - applies tags to all selected zones
-  const handleBulkSaveTagAssignments = (zoneIds: string[], tagIds: string[]) => {
-    setZoneTagAssignments(prev => {
-      const updated = [...prev];
-      
-      zoneIds.forEach(zoneId => {
-        if (tagIds.length === 0) {
-          // Remove assignment if no tags
-          const idx = updated.findIndex(a => a.zoneId === zoneId);
-          if (idx >= 0) updated.splice(idx, 1);
-        } else {
-          // Update or create assignment
-          const existing = updated.find(a => a.zoneId === zoneId);
-          if (existing) {
-            existing.tagIds = tagIds;
-          } else {
-            updated.push({ zoneId, tagIds });
-          }
-        }
-      });
-      
-      return updated;
-    });
   };
 
   const handleSaveTagAssignments = (zoneId: string, tagIds: string[]) => {
@@ -497,7 +452,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               onTagClick={handleTagClick}
               onClearFilters={handleClearTagFilters}
               onAssignTags={handleOpenAssignTags}
-              onBulkAssignTags={handleBulkAssignTags}
             />
           </div>
         </div>
@@ -520,8 +474,8 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         recordCount={0} // Record tags handled in ZoneDetailClient
       />
 
-      {/* Assign Tags Modal (Mockup) - handles both single zone and bulk mode */}
-      {(selectedZoneForTags || bulkSelectedZoneIds.length > 0) && (
+      {/* Assign Tags Modal (Mockup) */}
+      {selectedZoneForTags && (
         <AssignTagsModal
           isOpen={isAssignTagsModalOpen}
           onClose={() => {
@@ -530,22 +484,15 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             // Store ref so we can cancel if user opens another modal quickly
             assignTagsCloseTimeoutRef.current = setTimeout(() => {
               setSelectedZoneForTags(null);
-              setBulkSelectedZoneIds([]);
-              setBulkSelectedZoneNames([]);
               assignTagsCloseTimeoutRef.current = null;
             }, 300);
           }}
-          zoneName={selectedZoneForTags?.name || ''}
-          zoneId={selectedZoneForTags?.id || ''}
+          zoneName={selectedZoneForTags.name}
+          zoneId={selectedZoneForTags.id}
           allTags={mockTags}
           assignedTagIds={selectedZoneAssignedTagIds}
           onSave={handleSaveTagAssignments}
           onToggleFavorite={handleToggleFavorite}
-          // Bulk mode props
-          bulkZoneIds={bulkSelectedZoneIds.length > 0 ? bulkSelectedZoneIds : undefined}
-          bulkZoneNames={bulkSelectedZoneNames.length > 0 ? bulkSelectedZoneNames : undefined}
-          bulkAssignments={bulkSelectedZoneIds.length > 0 ? zoneTagAssignments : undefined}
-          onBulkSave={bulkSelectedZoneIds.length > 0 ? handleBulkSaveTagAssignments : undefined}
         />
       )}
 
