@@ -1,6 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -23,7 +26,11 @@ interface CreateDiscountModalProps {
 
 function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModalProps) {
   const { addToast } = useToastStore();
+  const [mounted, setMounted] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     code: '',
     discount_type: 'percent_off' as 'percent_off' | 'amount_off',
@@ -32,6 +39,65 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
     expires_at: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Handle opening/closing with animation
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    }
+  }, [isOpen]);
+
+  // GSAP Opening Animation
+  useGSAP(() => {
+    if (!mounted || !shouldRender) return;
+
+    if (isOpen && modalRef.current && overlayRef.current) {
+      gsap.fromTo(
+        overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+      );
+
+      gsap.fromTo(
+        modalRef.current,
+        { scale: 0.95, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }
+      );
+    }
+  }, [isOpen, mounted, shouldRender]);
+
+  // Handle closing animation
+  useEffect(() => {
+    if (!mounted || !shouldRender) return;
+    if (isOpen) return;
+
+    if (modalRef.current && overlayRef.current) {
+      gsap.killTweensOf([modalRef.current, overlayRef.current]);
+
+      const tl = gsap.timeline({
+        onComplete: () => setShouldRender(false)
+      });
+
+      tl.to(overlayRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in'
+      });
+
+      tl.to(modalRef.current, {
+        scale: 0.95,
+        opacity: 0,
+        y: 20,
+        duration: 0.2,
+        ease: 'power2.in'
+      }, 0);
+    }
+  }, [isOpen, mounted, shouldRender]);
 
   const resetForm = () => {
     setFormData({
@@ -118,11 +184,22 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
     }
   };
 
-  if (!isOpen) return null;
+  if (!shouldRender || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        ref={overlayRef}
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+
+      {/* Modal */}
+      <div 
+        ref={modalRef}
+        className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4"
+      >
         <div className="p-6 border-b border-gray-light dark:border-gray-700">
           <h2 className="text-xl font-bold text-orange-dark dark:text-orange">
             Create Discount Code
@@ -252,6 +329,8 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 export default function AdminDiscountsPage() {
