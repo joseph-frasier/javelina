@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import type { DNSRecord, DNSRecordType } from '@/types/dns';
 
 /**
@@ -117,35 +117,59 @@ export function exportToJSON(data: any[], basename: string, options: ExportOptio
 /**
  * Export data to Excel format
  */
-export function exportToExcel(data: any[], basename: string, options: ExportOptions = {}): void {
+export async function exportToExcel(data: any[], basename: string, options: ExportOptions = {}): Promise<void> {
   if (!data || data.length === 0) {
     throw new Error('No data to export');
   }
 
   const prepared = prepareData(data);
+  const headers = Object.keys(prepared[0]);
   
-  // Create workbook
-  const worksheet = XLSX.utils.json_to_sheet(prepared);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, options.sheetName || 'Data');
+  // Create workbook and worksheet
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(options.sheetName || 'Data');
   
-  // Auto-size columns
+  // Set up columns with headers and auto-width
   const maxWidth = 50;
-  const colWidths = Object.keys(prepared[0]).map(key => ({
-    wch: Math.min(
+  worksheet.columns = headers.map(header => ({
+    header,
+    key: header,
+    width: Math.min(
       maxWidth,
       Math.max(
-        key.length,
-        ...prepared.map(row => String(row[key] || '').length)
+        header.length + 2,
+        ...prepared.map(row => String(row[header] || '').length + 2)
       )
     )
   }));
-  worksheet['!cols'] = colWidths;
+  
+  // Style header row
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFE8E8E8' }
+  };
+  
+  // Add data rows
+  prepared.forEach(row => {
+    worksheet.addRow(row);
+  });
   
   const filename = options.filename || getFilename(basename, 'xlsx');
   
-  // Download file
-  XLSX.writeFile(workbook, filename);
+  // Generate buffer and download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 /**
@@ -355,12 +379,12 @@ export function exportToBIND(
 /**
  * Export data in specified format
  */
-export function exportData(
+export async function exportData(
   data: any[],
   format: ExportFormat,
   basename: string,
   options: ExportOptions | BINDExportOptions = {}
-): void {
+): Promise<void> {
   try {
     switch (format) {
       case 'csv':
@@ -370,7 +394,7 @@ export function exportData(
         exportToJSON(data, basename, options);
         break;
       case 'excel':
-        exportToExcel(data, basename, options);
+        await exportToExcel(data, basename, options);
         break;
       case 'bind':
         // BIND export requires special handling with BINDExportOptions
