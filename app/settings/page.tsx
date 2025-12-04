@@ -905,7 +905,7 @@ function SettingsContent() {
                         size="sm"
                         onClick={() => setShowEmailModal(true)}
                       >
-                        Manage
+                        View
                       </Button>
                     </div>
 
