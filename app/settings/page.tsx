@@ -6,7 +6,6 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { SettingsLayout } from '@/components/layout/SettingsLayout';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import Dropdown from '@/components/ui/Dropdown';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
@@ -434,125 +433,13 @@ function SettingsContent() {
                       </div>
                     </div>
 
-                    {/* Two Column Layout for Compact Settings */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                      {/* Language */}
-                      <div>
-                        <Dropdown
-                          label="Language"
-                          value={general.language}
-                          options={[
-                            { value: 'English', label: 'English' },
-                            { value: 'Spanish', label: 'Spanish' },
-                            { value: 'French', label: 'French' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ language: value })}
-                        />
-                      </div>
-
-                      {/* Timezone */}
-                      <div>
-                        <Dropdown
-                          label="Timezone"
-                          value={general.timezone}
-                          options={[
-                            { value: 'America/New_York', label: 'Eastern Time' },
-                            { value: 'America/Chicago', label: 'Central Time' },
-                            { value: 'America/Denver', label: 'Mountain Time' },
-                            { value: 'America/Los_Angeles', label: 'Pacific Time' },
-                            { value: 'UTC', label: 'UTC' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ timezone: value })}
-                        />
-                      </div>
-
-                      {/* Date Format */}
-                      <div>
-                        <Dropdown
-                          label="Date Format"
-                          value={general.dateFormat || 'MM/DD/YYYY'}
-                          options={[
-                            { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
-                            { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
-                            { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ dateFormat: value as 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD' })}
-                        />
-                      </div>
-
-                      {/* Time Format */}
-                      <div>
-                        <Dropdown
-                          label="Time Format"
-                          value={general.timeFormat || '12h'}
-                          options={[
-                            { value: '12h', label: '12-hour (2:30 PM)' },
-                            { value: '24h', label: '24-hour (14:30)' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ timeFormat: value as '12h' | '24h' })}
-                        />
-                      </div>
-
-                      {/* Default Landing Page */}
-                      <div>
-                        <Dropdown
-                          label="Default Landing Page"
-                          value={general.defaultLandingPage || 'dashboard'}
-                          options={[
-                            { value: 'dashboard', label: 'Dashboard' },
-                            { value: 'organizations', label: 'Organizations' },
-                            { value: 'analytics', label: 'Analytics' },
-                            { value: 'settings', label: 'Settings' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ defaultLandingPage: value })}
-                        />
-                      </div>
-
-                      {/* Items Per Page */}
-                      <div>
-                        <Dropdown
-                          label="Items Per Page"
-                          value={(general.itemsPerPage || 25).toString()}
-                          options={[
-                            { value: '10', label: '10 items' },
-                            { value: '25', label: '25 items' },
-                            { value: '50', label: '50 items' },
-                            { value: '100', label: '100 items' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ itemsPerPage: parseInt(value) })}
-                        />
-                      </div>
-
-                      {/* Auto-Refresh Interval */}
-                      <div>
-                        <Dropdown
-                          label="Auto-Refresh Interval"
-                          value={(general.autoRefreshInterval ?? 60).toString()}
-                          options={[
-                            { value: '0', label: 'Off' },
-                            { value: '30', label: '30 seconds' },
-                            { value: '60', label: '1 minute' },
-                            { value: '300', label: '5 minutes' },
-                            { value: '600', label: '10 minutes' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ autoRefreshInterval: parseInt(value) })}
-                        />
-                      </div>
-
-                      {/* Default DNS TTL */}
-                      <div>
-                        <Dropdown
-                          label="Default DNS Record TTL"
-                          value={(general.defaultDnsTtl || 3600).toString()}
-                          options={[
-                            { value: '300', label: '5 minutes' },
-                            { value: '1800', label: '30 minutes' },
-                            { value: '3600', label: '1 hour' },
-                            { value: '14400', label: '4 hours' },
-                            { value: '86400', label: '24 hours' }
-                          ]}
-                          onChange={(value) => updateGeneralSettings({ defaultDnsTtl: parseInt(value) })}
-                        />
+                    {/* More Settings Coming Soon */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                      <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <p className="text-sm">More settings coming soon</p>
                       </div>
                     </div>
                   </div>
