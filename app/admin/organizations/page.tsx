@@ -12,7 +12,7 @@ import Dropdown from '@/components/ui/Dropdown';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { ExportButton } from '@/components/admin/ExportButton';
-import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
 import { adminApi } from '@/lib/api-client';
@@ -598,21 +598,11 @@ export default function AdminOrganizationsPage() {
                   <thead>
                     <tr className="border-b border-gray-light">
                       <th className="text-left py-3 px-4 w-12">
-                        <input
-                          type="checkbox"
-                          checked={paginatedOrgs.length > 0 && paginatedOrgs.every(org => selectedIds.has(org.id))}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              paginatedOrgs.forEach(org => setSelectedIds(prev => new Set(prev).add(org.id)));
-                            } else {
-                              paginatedOrgs.forEach(org => setSelectedIds(prev => {
-                                const newSet = new Set(prev);
-                                newSet.delete(org.id);
-                                return newSet;
-                              }));
-                            }
-                          }}
-                          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                        <SelectAllCheckbox
+                          selectedCount={selectedIds.size}
+                          totalCount={filteredOrgs.length}
+                          onSelectAll={selectAll}
+                          onSelectNone={clearSelection}
                         />
                       </th>
                       <th 
@@ -667,7 +657,21 @@ export default function AdminOrganizationsPage() {
                           )}
                         </div>
                       </th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
+                        {selectedIds.size > 0 ? (
+                          <button
+                            onClick={handleBulkDelete}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete ({selectedIds.size})
+                          </button>
+                        ) : (
+                          'Actions'
+                        )}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -746,15 +750,6 @@ export default function AdminOrganizationsPage() {
             </p>
           )}
         </div>
-
-        {/* Bulk Action Bar */}
-        <BulkActionBar
-          selectedCount={selectedIds.size}
-          totalCount={filteredOrgs.length}
-          onSelectAll={selectAll}
-          onClearSelection={clearSelection}
-          onDelete={handleBulkDelete}
-        />
 
         {/* Confirmation Modal */}
         <ConfirmationModal
