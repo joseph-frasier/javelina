@@ -29,11 +29,7 @@ export function PerformanceChart() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const resolved = general.theme === 'system'
-      ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      : general.theme === 'dark';
-    
-    setIsDark(resolved);
+    setIsDark(general.theme === 'dark');
   }, [general.theme]);
 
   // Theme-aware colors
