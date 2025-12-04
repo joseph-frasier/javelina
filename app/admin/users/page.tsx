@@ -177,6 +177,12 @@ export default function AdminUsersPage() {
     setSelectedIds(new Set(filteredUsers.map(u => u.id)));
   };
 
+  const selectPage = () => {
+    const newSelected = new Set(selectedIds);
+    paginatedUsers.forEach(user => newSelected.add(user.id));
+    setSelectedIds(newSelected);
+  };
+
   const clearSelection = () => {
     setSelectedIds(new Set());
   };
@@ -370,7 +376,6 @@ export default function AdminUsersPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    clearSelection(); // Clear selection when changing pages
   };
 
   return (
@@ -580,7 +585,10 @@ export default function AdminUsersPage() {
                         <th className="text-left py-3 px-4 w-12">
                           <SelectAllCheckbox
                             selectedCount={selectedIds.size}
+                            pageCount={paginatedUsers.length}
                             totalCount={filteredUsers.length}
+                            pageSelectedCount={paginatedUsers.filter(u => selectedIds.has(u.id)).length}
+                            onSelectPage={selectPage}
                             onSelectAll={selectAll}
                             onSelectNone={clearSelection}
                           />

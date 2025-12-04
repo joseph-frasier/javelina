@@ -4,14 +4,20 @@ import { useState, useRef, useEffect } from 'react';
 
 interface SelectAllCheckboxProps {
   selectedCount: number;
+  pageCount: number;
   totalCount: number;
+  pageSelectedCount: number;
+  onSelectPage: () => void;
   onSelectAll: () => void;
   onSelectNone: () => void;
 }
 
 export function SelectAllCheckbox({
   selectedCount,
+  pageCount,
   totalCount,
+  pageSelectedCount,
+  onSelectPage,
   onSelectAll,
   onSelectNone
 }: SelectAllCheckboxProps) {
@@ -30,14 +36,17 @@ export function SelectAllCheckbox({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isAllSelected = selectedCount === totalCount && totalCount > 0;
+  // Check if all items on current page are selected
+  const isPageFullySelected = pageSelectedCount === pageCount && pageCount > 0;
   const isPartiallySelected = selectedCount > 0 && selectedCount < totalCount;
 
   const handleCheckboxClick = () => {
-    if (selectedCount === 0) {
-      onSelectAll();
-    } else {
+    if (isPageFullySelected) {
+      // If current page is fully selected, deselect the page items
       onSelectNone();
+    } else {
+      // Select all items on current page
+      onSelectPage();
     }
   };
 
@@ -47,9 +56,9 @@ export function SelectAllCheckbox({
         {/* Checkbox */}
         <input
           type="checkbox"
-          checked={isAllSelected}
+          checked={isPageFullySelected}
           ref={(el) => {
-            if (el) el.indeterminate = isPartiallySelected;
+            if (el) el.indeterminate = isPartiallySelected && !isPageFullySelected;
           }}
           onChange={handleCheckboxClick}
           className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"

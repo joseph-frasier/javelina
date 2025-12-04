@@ -185,6 +185,12 @@ export default function AdminOrganizationsPage() {
     setSelectedIds(new Set(filteredOrgs.map(o => o.id)));
   };
 
+  const selectPage = () => {
+    const newSelected = new Set(selectedIds);
+    paginatedOrgs.forEach(org => newSelected.add(org.id));
+    setSelectedIds(newSelected);
+  };
+
   const clearSelection = () => {
     setSelectedIds(new Set());
   };
@@ -323,7 +329,6 @@ export default function AdminOrganizationsPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    clearSelection(); // Clear selection when changing pages
   };
 
   return (
@@ -600,7 +605,10 @@ export default function AdminOrganizationsPage() {
                       <th className="text-left py-3 px-4 w-12">
                         <SelectAllCheckbox
                           selectedCount={selectedIds.size}
+                          pageCount={paginatedOrgs.length}
                           totalCount={filteredOrgs.length}
+                          pageSelectedCount={paginatedOrgs.filter(o => selectedIds.has(o.id)).length}
+                          onSelectPage={selectPage}
                           onSelectAll={selectAll}
                           onSelectNone={clearSelection}
                         />
