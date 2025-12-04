@@ -66,7 +66,14 @@ export function ExportButton({
         exportData(data, format, filename);
       }
       
-      const formatLabel = format === 'bind' ? 'BIND zone file' : format.toUpperCase();
+      const formatLabels: Record<string, string> = {
+        csv: 'CSV',
+        json: 'JSON',
+        excel: 'Excel',
+        pdf: 'PDF',
+        bind: 'BIND zone file'
+      };
+      const formatLabel = formatLabels[format] || format.toUpperCase();
       addToast('success', `Exported ${data.length} records as ${formatLabel}`);
     } catch (error) {
       console.error('Export failed:', error);
@@ -153,6 +160,19 @@ export function ExportButton({
                 <div>
                   <div className="font-medium">Export as Excel</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">XLSX with formatting</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleExport('pdf')}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <div>
+                  <div className="font-medium">Export as PDF</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Print-ready document</div>
                 </div>
               </button>
 
