@@ -347,7 +347,13 @@ export default function AdminOrganizationsPage() {
               >
                 + Create Organization
               </Button>
-              <ExportButton data={filteredOrgs} filename="organizations" />
+              <ExportButton 
+                data={selectedIds.size > 0 
+                  ? filteredOrgs.filter(o => selectedIds.has(o.id))
+                  : filteredOrgs
+                } 
+                filename="organizations" 
+              />
             </div>
           </div>
 
