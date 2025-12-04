@@ -11,7 +11,7 @@ export interface NotificationSettings {
 }
 
 export interface GeneralSettings {
-  theme: 'light' | 'dark' | 'system';
+  theme: 'light' | 'dark';
   language: string;
   timezone: string;
   dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
@@ -97,13 +97,13 @@ export interface SettingsState {
   addAuditLog: (entry: Omit<AuditLogEntry, 'timestamp'>) => void;
   
   // Theme-specific actions
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  setTheme: (theme: 'light' | 'dark') => void;
   getResolvedTheme: () => 'light' | 'dark';
 }
 
 // Mock data
 const mockGeneralSettings: GeneralSettings = {
-  theme: 'system',
+  theme: 'light',
   language: 'English',
   timezone: 'America/New_York',
   dateFormat: 'MM/DD/YYYY',
@@ -251,12 +251,6 @@ export const useSettingsStore = create<SettingsState>()(
 
       getResolvedTheme: () => {
         const state = get();
-        if (state.general.theme === 'system') {
-          if (typeof window !== 'undefined' && window.matchMedia) {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
-          return 'light'; // fallback
-        }
         return state.general.theme;
       }
     }),

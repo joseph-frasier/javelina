@@ -403,7 +403,7 @@ function SettingsContent() {
                             name="theme"
                             value="light"
                             checked={general.theme === 'light'}
-                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' | 'system' })}
+                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' })}
                             className="mr-2"
                           />
                           Light
@@ -414,21 +414,10 @@ function SettingsContent() {
                             name="theme"
                             value="dark"
                             checked={general.theme === 'dark'}
-                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' | 'system' })}
+                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' })}
                             className="mr-2"
                           />
                           Dark
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="theme"
-                            value="system"
-                            checked={general.theme === 'system'}
-                            onChange={(e) => updateGeneralSettings({ theme: e.target.value as 'light' | 'dark' | 'system' })}
-                            className="mr-2"
-                          />
-                          System
                         </label>
                       </div>
                     </div>
