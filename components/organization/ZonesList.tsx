@@ -40,22 +40,37 @@ export function ZonesList({
   onAssignTags,
 }: ZonesListProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const itemsPerPage = 8;
 
-  // Reset to page 1 when activeTagIds changes from parent
+  // Reset to page 1 when activeTagIds or search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTagIds]);
+  }, [activeTagIds, searchQuery]);
 
-  // Filter zones by active tags (show zones that have ANY of the selected tags)
-  const filteredZones = activeTagIds.length > 0
-    ? zones.filter(zone => {
+  // Filter zones by search query and active tags
+  const filteredZones = zones.filter(zone => {
+    // Get tags for this zone
+    const zoneTags = tags.filter(tag => {
+      const assignment = assignments.find(a => a.zoneId === zone.id);
+      return assignment?.tagIds?.includes(tag.id);
+    });
+
+    // Check search query match (zone name or any tag name)
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = query === '' || 
+      zone.name.toLowerCase().includes(query) ||
+      zoneTags.some(tag => tag.name.toLowerCase().includes(query));
+
+    // Check tag filter match
+    const matchesTagFilter = activeTagIds.length === 0 || 
+      activeTagIds.some(tagId => {
         const assignment = assignments.find(a => a.zoneId === zone.id);
-        if (!assignment?.tagIds) return false;
-        // Zone matches if it has ANY of the selected tags
-        return activeTagIds.some(tagId => assignment.tagIds.includes(tagId));
-      })
-    : zones;
+        return assignment?.tagIds?.includes(tagId);
+      });
+
+    return matchesSearch && matchesTagFilter;
+  });
 
   // Pagination logic
   const totalPages = Math.ceil(filteredZones.length / itemsPerPage);
@@ -71,10 +86,58 @@ export function ZonesList({
   const activeTags = tags.filter(t => activeTagIds.includes(t.id));
   const hasActiveFilters = activeTagIds.length > 0;
 
+  // Generate description based on filters
+  const getDescription = () => {
+    const totalCount = zones.length;
+    const filteredCount = filteredZones.length;
+    
+    if (searchQuery || hasActiveFilters) {
+      const parts = [];
+      if (searchQuery) parts.push(`"${searchQuery}"`);
+      if (hasActiveFilters) parts.push(`${activeTagIds.length} tag${activeTagIds.length > 1 ? 's' : ''}`);
+      return `${filteredCount} of ${totalCount} zones`;
+    }
+    return "All DNS zones";
+  };
+
   return (
     <Card
       title="Zones"
-      description={hasActiveFilters ? `Filtered by ${activeTagIds.length} tag${activeTagIds.length > 1 ? 's' : ''}` : "All DNS zones"}
+      description={getDescription()}
+      action={
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search zones..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-40 sm:w-48 pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+          />
+          <svg
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      }
     >
       {/* Active Filter Bar */}
       {hasActiveFilters && activeTags.length > 0 && (
@@ -143,11 +206,22 @@ export function ZonesList({
             />
           </svg>
           <p className="text-gray-slate dark:text-gray-light text-sm mb-4">
-            No zones match this filter.
+            {searchQuery 
+              ? `No zones match "${searchQuery}"${hasActiveFilters ? ' with selected tags' : ''}.`
+              : 'No zones match this filter.'}
           </p>
-          <Button variant="secondary" size="sm" onClick={() => onClearFilters?.()}>
-            Clear filter
-          </Button>
+          <div className="flex items-center justify-center gap-2">
+            {searchQuery && (
+              <Button variant="secondary" size="sm" onClick={() => setSearchQuery('')}>
+                Clear search
+              </Button>
+            )}
+            {hasActiveFilters && (
+              <Button variant="secondary" size="sm" onClick={() => onClearFilters?.()}>
+                Clear tags
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
         <>
