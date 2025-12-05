@@ -21,62 +21,22 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Mock data - commented out, will be replaced with real DNS query logging
-// const trafficData = [
-//   { date: '2025-10-01', queries: 20104, errors: 42 },
-//   { date: '2025-10-02', queries: 21356, errors: 55 },
-//   { date: '2025-10-03', queries: 19980, errors: 61 },
-//   { date: '2025-10-04', queries: 24550, errors: 50 },
-//   { date: '2025-10-05', queries: 22987, errors: 38 },
-//   { date: '2025-10-06', queries: 25327, errors: 65 },
-// ];
-
-// const topDomains = [
-//   { domain: 'api.acme.com', queries: 18400, percent: '12%' },
-//   { domain: 'mail.acme.com', queries: 13900, percent: '9%' },
-//   { domain: 'dev.javelina.io', queries: 9300, percent: '6%' },
-//   { domain: 'staging.javelina.io', queries: 8750, percent: '6%' },
-//   { domain: 'cdn.acme.com', queries: 6410, percent: '4%' },
-// ];
-
-// const queryTypes = [
-//   { name: 'A', value: 45, color: '#EF7215' },
-//   { name: 'AAAA', value: 20, color: '#00B0FF' },
-//   { name: 'MX', value: 15, color: '#00796B' },
-//   { name: 'TXT', value: 10, color: '#456173' },
-//   { name: 'CNAME', value: 10, color: '#D9D9D9' },
-// ];
-
-// const errorData = [
-//   { error_type: 'NXDOMAIN', count: 287, zones: 12 },
-//   { error_type: 'SERVFAIL', count: 145, zones: 6 },
-//   { error_type: 'REFUSED', count: 38, zones: 2 },
-// ];
-
 interface Organization {
   id: string;
   name: string;
 }
 
-interface Environment {
+interface Zone {
   id: string;
   name: string;
   organization_id: string;
 }
 
-interface Zone {
-  id: string;
-  name: string;
-  environment_id: string;
-}
-
 export default function AnalyticsPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [environments, setEnvironments] = useState<Environment[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   
   const [selectedOrg, setSelectedOrg] = useState('all');
-  const [selectedEnvironment, setSelectedEnvironment] = useState('all');
   const [selectedZone, setSelectedZone] = useState('all');
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -112,65 +72,30 @@ export default function AnalyticsPage() {
     fetchOrganizations();
   }, []);
 
-  // Fetch environments when organization changes
+  // Fetch zones when organization changes
   useEffect(() => {
-    const fetchEnvironments = async () => {
+    const fetchZones = async () => {
       const supabase = createClient();
       if (selectedOrg === 'all') {
-        // Fetch all environments from all user's orgs
+        // Fetch all zones from all user's orgs
         const orgIds = organizations.map(o => o.id);
         if (orgIds.length === 0) return;
 
         const { data } = await supabase
-          .from('environments')
+          .from('zones')
           .select('id, name, organization_id')
           .in('organization_id', orgIds)
-          .order('name');
-
-        setEnvironments(data || []);
-      } else {
-        // Fetch environments for selected org
-        const { data } = await supabase
-          .from('environments')
-          .select('id, name, organization_id')
-          .eq('organization_id', selectedOrg)
-          .order('name');
-
-        setEnvironments(data || []);
-      }
-      
-      // Reset environment and zone selection
-      setSelectedEnvironment('all');
-      setSelectedZone('all');
-    };
-
-    if (organizations.length > 0) {
-      fetchEnvironments();
-    }
-  }, [selectedOrg, organizations]);
-
-  // Fetch zones when environment changes
-  useEffect(() => {
-    const fetchZones = async () => {
-      const supabase = createClient();
-      if (selectedEnvironment === 'all') {
-        // Fetch all zones from filtered environments
-        const envIds = environments.map(e => e.id);
-        if (envIds.length === 0) return;
-
-        const { data } = await supabase
-          .from('zones')
-          .select('id, name, environment_id')
-          .in('environment_id', envIds)
+          .is('deleted_at', null)
           .order('name');
 
         setZones(data || []);
       } else {
-        // Fetch zones for selected environment
+        // Fetch zones for selected org
         const { data } = await supabase
           .from('zones')
-          .select('id, name, environment_id')
-          .eq('environment_id', selectedEnvironment)
+          .select('id, name, organization_id')
+          .eq('organization_id', selectedOrg)
+          .is('deleted_at', null)
           .order('name');
 
         setZones(data || []);
@@ -180,10 +105,10 @@ export default function AnalyticsPage() {
       setSelectedZone('all');
     };
 
-    if (environments.length > 0) {
+    if (organizations.length > 0) {
       fetchZones();
     }
-  }, [selectedEnvironment, environments]);
+  }, [selectedOrg, organizations]);
 
   // Set mounted state on client
   useEffect(() => {
@@ -220,7 +145,7 @@ export default function AnalyticsPage() {
 
         {/* Filters Section */}
         <Card className="mb-4 sm:mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Organization Filter */}
             <Dropdown
               label="Organization"
@@ -231,20 +156,6 @@ export default function AnalyticsPage() {
                 ...organizations.map(org => ({
                   value: org.id,
                   label: org.name,
-                })),
-              ]}
-            />
-
-            {/* Environment Filter */}
-            <Dropdown
-              label="Environment"
-              value={selectedEnvironment}
-              onChange={setSelectedEnvironment}
-              options={[
-                { value: 'all', label: 'All Environments' },
-                ...environments.map(env => ({
-                  value: env.id,
-                  label: env.name,
                 })),
               ]}
             />
@@ -295,75 +206,6 @@ export default function AnalyticsPage() {
             Last refreshed: {isMounted ? lastRefresh.toLocaleTimeString() : '--'}
           </div>
         </Card>
-
-        {/* Overview Metrics - Commented out until DNS query logging is implemented */}
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <StatCard
-            title="Unique Domains"
-            value="238"
-            change="+12 from yesterday"
-            changeType="positive"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                />
-              </svg>
-            }
-          />
-
-          <StatCard
-            title="Error Rate"
-            value="0.34%"
-            change="-0.12% from yesterday"
-            changeType="positive"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-            }
-          />
-
-          <StatCard
-            title="Avg Query Latency"
-            value="41ms"
-            change="-3ms from yesterday"
-            changeType="positive"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            }
-          />
-        </div> */}
 
         {/* Traffic Over Time Chart */}
         <Card title="Traffic Over Time" description="DNS query volume" className="mb-6 sm:mb-8">

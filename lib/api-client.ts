@@ -303,51 +303,6 @@ export const organizationsApi = {
   },
 };
 
-// Environments API
-export const environmentsApi = {
-  /**
-   * List all environments
-   */
-  list: () => {
-    return apiClient.get('/environments');
-  },
-
-  /**
-   * List environments for an organization
-   */
-  listByOrg: (orgId: string) => {
-    return apiClient.get(`/environments/organization/${orgId}`);
-  },
-
-  /**
-   * Get environment by ID
-   */
-  get: (id: string) => {
-    return apiClient.get(`/environments/${id}`);
-  },
-
-  /**
-   * Create a new environment
-   */
-  create: (data: { name: string; org_id: string; type: string; description?: string }) => {
-    return apiClient.post('/environments', data);
-  },
-
-  /**
-   * Update an environment
-   */
-  update: (id: string, data: { name?: string; type?: string; description?: string }) => {
-    return apiClient.put(`/environments/${id}`, data);
-  },
-
-  /**
-   * Delete an environment
-   */
-  delete: (id: string) => {
-    return apiClient.delete(`/environments/${id}`);
-  },
-};
-
 // Zones API
 export const zonesApi = {
   /**
@@ -358,10 +313,10 @@ export const zonesApi = {
   },
 
   /**
-   * List zones for an environment
+   * List zones for an organization
    */
-  listByEnvironment: (envId: string) => {
-    return apiClient.get(`/zones/environment/${envId}`);
+  listByOrganization: (orgId: string) => {
+    return apiClient.get(`/zones/organization/${orgId}`);
   },
 
   /**
@@ -374,7 +329,7 @@ export const zonesApi = {
   /**
    * Create a new zone
    */
-  create: (data: { name: string; env_id: string; description?: string; admin_email?: string; negative_caching_ttl?: number }) => {
+  create: (data: { name: string; organization_id: string; description?: string; admin_email?: string; negative_caching_ttl?: number }) => {
     return apiClient.post('/zones', data);
   },
 

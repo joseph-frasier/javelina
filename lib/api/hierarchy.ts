@@ -73,9 +73,7 @@ export async function createOrganization(data: CreateOrganizationData) {
     .insert({
       organization_id: org.id,
       user_id: user.id,
-      role: 'Admin',
-      environments_count: 0,
-      zones_count: 0
+      role: 'Admin'
     });
 
   if (memberError) {

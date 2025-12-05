@@ -158,7 +158,6 @@ export interface CreatePortalSessionResponse {
  */
 export interface OrgUsage {
   org_id: string;
-  environments_count: number;
   zones_count: number;
   members_count: number;
   dns_records_count?: number;
@@ -168,8 +167,7 @@ export interface OrgUsage {
  * Usage with limits for display
  */
 export interface OrgUsageWithLimits extends OrgUsage {
-  environments_limit: number | null; // -1 = unlimited
-  zones_limit: number | null;
+  zones_limit: number | null; // -1 = unlimited
   members_limit: number | null;
   dns_records_limit: number | null;
 }

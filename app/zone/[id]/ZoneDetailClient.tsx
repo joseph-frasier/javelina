@@ -9,7 +9,10 @@ import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
-import { OrganizationDetail, EnvironmentDetail } from '@/lib/mock-hierarchy-data';
+interface OrganizationDetail {
+  id: string;
+  name: string;
+}
 import { RecordDistributionChart } from '@/components/dns/RecordDistributionChart';
 import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
@@ -44,10 +47,9 @@ interface ZoneDetailClientProps {
   zone: any;
   zoneId: string;
   organization?: OrganizationDetail | null;
-  environment?: EnvironmentDetail | null;
 }
 
-export function ZoneDetailClient({ zone, zoneId, organization, environment }: ZoneDetailClientProps) {
+export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
@@ -236,8 +238,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       setIsEditSaving(false);
       
       // Invalidate React Query cache to update sidebar
-      if (zone.environment_id) {
-        await queryClient.invalidateQueries({ queryKey: ['zones', zone.environment_id] });
+      if (zone.organization_id) {
+        await queryClient.invalidateQueries({ queryKey: ['zones', zone.organization_id] });
       }
       
       // Soft refresh to update data without losing toast
@@ -258,14 +260,14 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
       }
       
       // Invalidate React Query cache to update sidebar immediately
-      queryClient.invalidateQueries({ queryKey: ['zones', zone.environment_id] });
+      queryClient.invalidateQueries({ queryKey: ['zones', zone.organization_id] });
       
       addToast('success', `Zone ${zone.name} archived successfully`);
       setShowDeleteModal(false);
       
-      // Redirect to environment page
-      if (organization && environment) {
-        router.push(`/organization/${organization.id}/environment/${environment.id}`);
+      // Redirect to organization page
+      if (organization) {
+        router.push(`/organization/${organization.id}`);
       } else {
         router.push('/');
       }
@@ -276,10 +278,9 @@ export function ZoneDetailClient({ zone, zoneId, organization, environment }: Zo
 
   // Build breadcrumb items
   const breadcrumbItems = [];
-  if (organization && environment) {
+  if (organization) {
     breadcrumbItems.push(
       { label: organization.name, href: `/organization/${organization.id}` },
-      { label: environment.name, href: `/organization/${organization.id}/environment/${environment.id}` },
       { label: zone.name }
     );
   }

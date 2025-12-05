@@ -290,15 +290,9 @@ export async function getFlaggedZones() {
       .from('zones')
       .select(`
         *,
-        environments!inner(
+        organizations!inner(
           id,
-          name,
-          environment_type,
-          organization_id,
-          organizations!inner(
-            id,
-            name
-          )
+          name
         )
       `)
       .eq('live', false)
@@ -315,4 +309,3 @@ export async function getFlaggedZones() {
     return { error: 'Failed to get flagged zones' }
   }
 }
-

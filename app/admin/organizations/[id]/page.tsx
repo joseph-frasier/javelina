@@ -30,11 +30,11 @@ interface Member {
   profiles: { name: string; email: string };
 }
 
-interface Environment {
+interface Zone {
   id: string;
   name: string;
-  environment_type: string;
-  status: string;
+  organization_id: string;
+  live: boolean;
 }
 
 export default function AdminOrganizationDetailPage() {
@@ -43,8 +43,7 @@ export default function AdminOrganizationDetailPage() {
   const { addToast } = useToastStore();
   const [org, setOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [environments, setEnvironments] = useState<Environment[]>([]);
-  const [zones, setZones] = useState<any[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddMember, setShowAddMember] = useState(false);
@@ -73,22 +72,14 @@ export default function AdminOrganizationDetailPage() {
 
       setMembers((membersData || []) as any[]);
 
-      // Fetch environments
-      const { data: envsData } = await client
-        .from('environments')
-        .select('*')
-        .eq('organization_id', orgId);
-
-      setEnvironments((envsData || []) as Environment[]);
-
-      // Fetch zones count
+      // Fetch zones directly for this organization
       const { data: zonesData } = await client
         .from('zones')
-        .select('id', { count: 'exact' })
-        .in('environment_id', (envsData || []).map((e: Environment) => e.id))
+        .select('id, name, organization_id, live')
+        .eq('organization_id', orgId)
         .is('deleted_at', null);
 
-      setZones(zonesData || []);
+      setZones((zonesData || []) as Zone[]);
     } catch (error) {
       console.error('Failed to fetch organization data:', error);
       addToast('error', 'Failed to fetch organization data');
@@ -217,7 +208,7 @@ export default function AdminOrganizationDetailPage() {
           {/* Tabs */}
           <Card className="p-6">
             <div className="flex gap-4 mb-6 border-b border-gray-light pb-4">
-              {['overview', 'members', 'environments', 'zones'].map((tab) => (
+              {['overview', 'members', 'zones'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -235,14 +226,10 @@ export default function AdminOrganizationDetailPage() {
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-slate">Members</p>
                     <p className="text-2xl font-bold text-orange-dark mt-2">{members.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-slate">Environments</p>
-                    <p className="text-2xl font-bold text-orange-dark mt-2">{environments.length}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-slate">Zones</p>
@@ -337,42 +324,35 @@ export default function AdminOrganizationDetailPage() {
               </div>
             )}
 
-            {/* Environments Tab */}
-            {activeTab === 'environments' && (
+            {/* Zones Tab */}
+            {activeTab === 'zones' && (
               <div>
-                {environments.length === 0 ? (
-                  <p className="text-center py-8 text-gray-slate">No environments</p>
+                {zones.length === 0 ? (
+                  <p className="text-center py-8 text-gray-slate">No zones</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-light">
                           <th className="text-left py-3 px-4 font-semibold">Name</th>
-                          <th className="text-left py-3 px-4 font-semibold">Type</th>
                           <th className="text-left py-3 px-4 font-semibold">Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {environments.map((env) => (
-                          <tr key={env.id} className="border-b border-gray-light">
-                            <td className="py-3 px-4">{env.name}</td>
-                            <td className="py-3 px-4">{env.environment_type}</td>
-                            <td className="py-3 px-4">{env.status}</td>
+                        {zones.map((zone) => (
+                          <tr key={zone.id} className="border-b border-gray-light">
+                            <td className="py-3 px-4">{zone.name}</td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2 py-1 rounded text-xs ${zone.live ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                {zone.live ? 'Live' : 'Flagged'}
+                              </span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Zones Tab */}
-            {activeTab === 'zones' && (
-              <div>
-                <p className="text-center py-8 text-gray-slate">
-                  {zones.length} total zones across all environments
-                </p>
               </div>
             )}
           </Card>

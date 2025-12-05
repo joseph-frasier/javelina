@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function createZone(formData: {
-  environment_id: string
+  organization_id: string
   name: string
   description?: string
   admin_email?: string
@@ -30,7 +30,7 @@ export async function createZone(formData: {
       },
       body: JSON.stringify({
         name: formData.name,
-        environment_id: formData.environment_id,
+        organization_id: formData.organization_id,
         description: formData.description,
         admin_email: formData.admin_email,
         negative_caching_ttl: formData.negative_caching_ttl

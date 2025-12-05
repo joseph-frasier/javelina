@@ -33,29 +33,9 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
     .is('deleted_at', null)
     .single();
 
-  // Fetch environment data for health_status and last_deployed_at
-  const { data: zoneWithEnv } = await supabase
-    .from('zones')
-    .select('environment_id')
-    .eq('id', zoneId)
-    .is('deleted_at', null)
-    .single();
-
-  let healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown' = 'unknown';
-  let lastDeployedAt: string | null = null;
-
-  if (zoneWithEnv) {
-    const { data: environment } = await supabase
-      .from('environments')
-      .select('health_status, last_deployed_at')
-      .eq('id', zoneWithEnv.environment_id)
-      .single();
-
-    if (environment) {
-      healthStatus = (environment.health_status as any) || 'unknown';
-      lastDeployedAt = environment.last_deployed_at;
-    }
-  }
+  // Health status and last deployed are now zone-level (simplified after removing environments)
+  const healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown' = 'unknown';
+  const lastDeployedAt: string | null = null;
 
   // Fetch DNS records through Express API for consistency
   const dnsRecords = await getZoneDNSRecords(zoneId, zoneName);
