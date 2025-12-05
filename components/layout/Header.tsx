@@ -89,6 +89,12 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
         setIsDropdownOpen(false);
       }
       if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setIsNotificationOpen(false);
+      }
+      if (
         supportRef.current &&
         !supportRef.current.contains(event.target as Node)
       ) {
@@ -96,14 +102,14 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
       }
     }
 
-    if (isDropdownOpen || isSupportOpen) {
+    if (isDropdownOpen || isNotificationOpen || isSupportOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen, isSupportOpen]);
+  }, [isDropdownOpen, isNotificationOpen, isSupportOpen]);
 
   return (
     <header className="bg-white dark:bg-orange-dark border-b border-gray-light sticky top-0 z-50 [&]:!border-b-gray-light dark:[&]:!border-b-gray-700">
