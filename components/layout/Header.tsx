@@ -207,7 +207,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                 <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
                   <div className="p-4 border-b border-gray-light">
                     <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Need help or have feedback?</h3>
-                    <p className="text-xs text-gray-slate dark:text-gray-300 mt-1">We'd love to hear from you</p>
+                    <p className="text-xs text-gray-slate dark:text-gray-300 mt-1">We&apos;d love to hear from you</p>
                   </div>
                   <div className="p-4">
                     <div className="flex items-center justify-between gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
