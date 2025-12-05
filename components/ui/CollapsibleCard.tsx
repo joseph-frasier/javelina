@@ -85,7 +85,8 @@ export function CollapsibleCard({
     gsap.set(chevronRef.current, {
       rotation: isExpanded ? 0 : -90,
     });
-  }, [isInitialized]); // Only run once when initialized
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized]); // Only run once when initialized - isExpanded intentionally excluded
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);

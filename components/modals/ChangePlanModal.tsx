@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchPlans, type Plan, isValidUpgrade, getUpgradeType, calculateLifetimeUpgradePrice, isLifetimePlan } from '@/lib/plans-config';
 import { useToastStore } from '@/lib/toast-store';
 import { stripeApi } from '@/lib/api-client';
@@ -107,15 +107,7 @@ export function ChangePlanModal({
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadPlans();
-      setSelectedPlanCode(null); // Reset selection when opening
-      setUpgradePricing(null);
-    }
-  }, [isOpen]);
-
-  const loadPlans = async () => {
+  const loadPlans = useCallback(async () => {
     try {
       setLoading(true);
       const allPlans = await fetchPlans();
@@ -132,7 +124,15 @@ export function ChangePlanModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadPlans();
+      setSelectedPlanCode(null); // Reset selection when opening
+      setUpgradePricing(null);
+    }
+  }, [isOpen, loadPlans]);
 
   const handleSelectPlan = async (planCode: string) => {
     if (planCode === currentPlanCode) {
