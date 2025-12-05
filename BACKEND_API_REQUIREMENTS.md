@@ -32,23 +32,23 @@ Returns the authenticated user's profile data including their organization membe
     "email": "john@example.com",
     "display_name": "John",
     "title": "DevOps Engineer",
-    "phone": "+1-555-555-0101",
+    "phone": "(555) 123-4567",
     "timezone": "America/New_York",
     "bio": "DNS enthusiast",
     "avatar_url": "https://...",
     "role": "user",
     "mfa_enabled": false,
     "sso_connected": false,
-    "first_name": "John",
-    "last_name": "Doe",
-    "billing_email": "billing@example.com",
-    "billing_phone": "(555) 123-4567",
-    "billing_address": "123 Main St",
-    "billing_city": "San Francisco",
-    "billing_state": "CA",
-    "billing_zip": "94105",
-    "admin_email": "admin@example.com",
-    "admin_phone": "(555) 987-6543",
+    "last_login": "2025-01-01T00:00:00Z",
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T00:00:00Z",
+    "preferences": {},
+    "onboarding_completed": true,
+    "email_verified": true,
+    "notification_preferences": {},
+    "language": "en",
+    "status": "active",
+    "superadmin": false,
     "organizations": [
       {
         "id": "org-uuid",
@@ -104,24 +104,31 @@ Updates the authenticated user's profile data.
 ```json
 {
   "name": "John Doe",
-  "first_name": "John",
-  "last_name": "Doe",
+  "display_name": "Johnny",
   "title": "Senior DevOps Engineer",
-  "phone": "+1-555-555-0102",
+  "phone": "(555) 123-4567",
   "timezone": "America/Los_Angeles",
   "bio": "Updated bio",
-  "billing_email": "newbilling@example.com",
-  "billing_phone": "(555) 111-2222",
-  "billing_address": "456 New St",
-  "billing_city": "Los Angeles",
-  "billing_state": "CA",
-  "billing_zip": "90001",
-  "admin_email": "newadmin@example.com",
-  "admin_phone": "(555) 333-4444"
+  "language": "en",
+  "avatar_url": "https://...",
+  "preferences": {},
+  "notification_preferences": {}
 }
 ```
 
 All fields are optional - only provided fields will be updated.
+
+**Allowed update fields (from profiles table):**
+- `name` - Full name
+- `display_name` - Nickname/preferred name
+- `title` - Job title
+- `phone` - Phone number
+- `timezone` - User timezone
+- `bio` - Short bio
+- `language` - Preferred language
+- `avatar_url` - Profile picture URL
+- `preferences` - JSON preferences object
+- `notification_preferences` - Notification settings
 
 **Response (200 OK):**
 ```json
@@ -145,25 +152,30 @@ All fields are optional - only provided fields will be updated.
 **Response (400 Bad Request):**
 ```json
 {
-  "error": "Invalid email format"
+  "error": "Validation failed"
 }
 ```
 
 **Implementation Notes:**
-- Only allow users to update their own profile
-- Validate email formats for `billing_email` and `admin_email`
-- Update `updated_at` timestamp
+- Only allow users to update their own profile (user ID from JWT)
+- Update `updated_at` timestamp automatically
 - Return the updated profile
+- Do NOT allow updates to: `id`, `email`, `role`, `superadmin`, `created_at`
 
 **SQL Reference:**
 ```sql
 UPDATE profiles
 SET 
   name = COALESCE($name, name),
-  first_name = COALESCE($first_name, first_name),
-  last_name = COALESCE($last_name, last_name),
+  display_name = COALESCE($display_name, display_name),
   title = COALESCE($title, title),
-  -- ... other fields
+  phone = COALESCE($phone, phone),
+  timezone = COALESCE($timezone, timezone),
+  bio = COALESCE($bio, bio),
+  language = COALESCE($language, language),
+  avatar_url = COALESCE($avatar_url, avatar_url),
+  preferences = COALESCE($preferences, preferences),
+  notification_preferences = COALESCE($notification_preferences, notification_preferences),
   updated_at = NOW()
 WHERE id = $user_id
 RETURNING *;

@@ -5,6 +5,9 @@ import { revalidatePath } from 'next/cache'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+/**
+ * Profile data interface - matches the profiles table schema
+ */
 export interface ProfileData {
   id: string
   name: string | null
@@ -18,16 +21,16 @@ export interface ProfileData {
   role: string
   mfa_enabled?: boolean | null
   sso_connected?: boolean | null
-  first_name?: string | null
-  last_name?: string | null
-  billing_email?: string | null
-  billing_phone?: string | null
-  billing_address?: string | null
-  billing_city?: string | null
-  billing_state?: string | null
-  billing_zip?: string | null
-  admin_email?: string | null
-  admin_phone?: string | null
+  last_login?: string | null
+  created_at?: string
+  updated_at?: string
+  preferences?: Record<string, any> | null
+  onboarding_completed?: boolean | null
+  email_verified?: boolean | null
+  notification_preferences?: Record<string, any> | null
+  language?: string | null
+  status?: string | null
+  superadmin?: boolean | null
 }
 
 export interface OrganizationMembership {
@@ -75,6 +78,10 @@ export async function getProfile(): Promise<{ data?: ProfileWithOrganizations; e
 /**
  * Update the current user's profile
  * Express API Required: PUT /api/users/profile
+ * 
+ * Updatable fields (matching profiles table):
+ * - name, display_name, title, phone, timezone, bio, avatar_url
+ * - preferences, notification_preferences, language
  */
 export async function updateProfile(formData: Partial<ProfileData>): Promise<{ data?: ProfileData; error?: string }> {
   try {
@@ -107,4 +114,3 @@ export async function updateProfile(formData: Partial<ProfileData>): Promise<{ d
     return { error: error.message || 'Failed to update profile' }
   }
 }
-
