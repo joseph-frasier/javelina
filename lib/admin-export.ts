@@ -1,12 +1,14 @@
 import ExcelJS from 'exceljs';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import type { DNSRecord, DNSRecordType } from '@/types/dns';
 
 /**
  * Export utilities for admin portal
- * Supports CSV, JSON, Excel, and BIND zone file exports
+ * Supports CSV, JSON, Excel, PDF, and BIND zone file exports
  */
 
-export type ExportFormat = 'csv' | 'json' | 'excel' | 'bind';
+export type ExportFormat = 'csv' | 'json' | 'excel' | 'pdf' | 'bind';
 
 interface ExportOptions {
   filename?: string;
@@ -170,6 +172,95 @@ export async function exportToExcel(data: any[], basename: string, options: Expo
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Export data to PDF format
+ */
+export function exportToPDF(data: any[], basename: string, options: ExportOptions = {}): void {
+  if (!data || data.length === 0) {
+    throw new Error('No data to export');
+  }
+
+  const prepared = prepareData(data);
+  const headers = Object.keys(prepared[0]);
+  
+  // Create PDF document (landscape for better table fit)
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  });
+  
+  // Add title
+  const title = basename.replace(/-/g, ' ').replace(/_/g, ' ');
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(title.charAt(0).toUpperCase() + title.slice(1), 14, 15);
+  
+  // Add export date
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 22);
+  doc.text(`Total Records: ${data.length}`, 14, 27);
+  doc.setTextColor(0);
+  
+  // Format headers for display (capitalize and clean up)
+  const displayHeaders = headers.map(h => 
+    h.replace(/_/g, ' ')
+      .replace(/\./g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  );
+  
+  // Prepare table body
+  const tableBody = prepared.map(row => 
+    headers.map(header => {
+      const value = row[header];
+      // Truncate long values for PDF
+      const strValue = String(value || '');
+      return strValue.length > 50 ? strValue.substring(0, 47) + '...' : strValue;
+    })
+  );
+  
+  // Add table using autoTable
+  autoTable(doc, {
+    head: [displayHeaders],
+    body: tableBody,
+    startY: 32,
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+      overflow: 'linebreak',
+      halign: 'left'
+    },
+    headStyles: {
+      fillColor: [232, 126, 35], // Orange color matching the app theme
+      textColor: 255,
+      fontStyle: 'bold',
+      fontSize: 9
+    },
+    alternateRowStyles: {
+      fillColor: [248, 248, 248]
+    },
+    margin: { top: 32, left: 14, right: 14 },
+    didDrawPage: (data) => {
+      // Add page numbers
+      const pageCount = doc.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Page ${data.pageNumber} of ${pageCount}`,
+        doc.internal.pageSize.width - 25,
+        doc.internal.pageSize.height - 10
+      );
+    }
+  });
+  
+  const filename = options.filename || getFilename(basename, 'pdf');
+  doc.save(filename);
 }
 
 /**
@@ -395,6 +486,9 @@ export async function exportData(
         break;
       case 'excel':
         await exportToExcel(data, basename, options);
+        break;
+      case 'pdf':
+        exportToPDF(data, basename, options);
         break;
       case 'bind':
         // BIND export requires special handling with BINDExportOptions

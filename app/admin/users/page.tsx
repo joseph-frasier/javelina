@@ -12,7 +12,7 @@ import Dropdown from '@/components/ui/Dropdown';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { ExportButton } from '@/components/admin/ExportButton';
-import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
 import { adminApi } from '@/lib/api-client';
@@ -175,6 +175,12 @@ export default function AdminUsersPage() {
 
   const selectAll = () => {
     setSelectedIds(new Set(filteredUsers.map(u => u.id)));
+  };
+
+  const selectPage = () => {
+    const newSelected = new Set(selectedIds);
+    paginatedUsers.forEach(user => newSelected.add(user.id));
+    setSelectedIds(newSelected);
   };
 
   const clearSelection = () => {
@@ -370,7 +376,6 @@ export default function AdminUsersPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    clearSelection(); // Clear selection when changing pages
   };
 
   return (
@@ -578,21 +583,14 @@ export default function AdminUsersPage() {
                     <thead>
                       <tr className="border-b border-gray-light">
                         <th className="text-left py-3 px-4 w-12">
-                          <input
-                            type="checkbox"
-                            checked={paginatedUsers.length > 0 && paginatedUsers.every(user => selectedIds.has(user.id))}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                paginatedUsers.forEach(user => setSelectedIds(prev => new Set(prev).add(user.id)));
-                              } else {
-                                paginatedUsers.forEach(user => setSelectedIds(prev => {
-                                  const newSet = new Set(prev);
-                                  newSet.delete(user.id);
-                                  return newSet;
-                                }));
-                              }
-                            }}
-                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          <SelectAllCheckbox
+                            selectedCount={selectedIds.size}
+                            pageCount={paginatedUsers.length}
+                            totalCount={filteredUsers.length}
+                            pageSelectedCount={paginatedUsers.filter(u => selectedIds.has(u.id)).length}
+                            onSelectPage={selectPage}
+                            onSelectAll={selectAll}
+                            onSelectNone={clearSelection}
                           />
                         </th>
                       <th 
@@ -660,7 +658,41 @@ export default function AdminUsersPage() {
                           )}
                         </div>
                       </th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
+                        {selectedIds.size > 0 ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={handleBulkEnable}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Enable
+                            </button>
+                            <button
+                              onClick={handleBulkSuspend}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Suspend
+                            </button>
+                            <button
+                              onClick={handleBulkDelete}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            </button>
+                          </div>
+                        ) : (
+                          'Actions'
+                        )}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -748,17 +780,6 @@ export default function AdminUsersPage() {
             </p>
           )}
         </div>
-
-        {/* Bulk Action Bar */}
-        <BulkActionBar
-          selectedCount={selectedIds.size}
-          totalCount={filteredUsers.length}
-          onSelectAll={selectAll}
-          onClearSelection={clearSelection}
-          onDelete={handleBulkDelete}
-          onSuspend={handleBulkSuspend}
-          onEnable={handleBulkEnable}
-        />
 
         {/* Confirmation Modal */}
         <ConfirmationModal

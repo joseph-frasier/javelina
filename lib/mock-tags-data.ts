@@ -66,7 +66,10 @@ export const INITIAL_RECORD_TAG_ASSIGNMENTS: RecordTagAssignment[] = [
 export function getTagsForZone(zoneId: string, assignments: ZoneTagAssignment[], tags: Tag[]): Tag[] {
   const assignment = assignments.find(a => a.zoneId === zoneId);
   if (!assignment) return [];
-  return tags.filter(tag => assignment.tagIds.includes(tag.id));
+  // Preserve the order from assignment.tagIds (the order user assigned them)
+  return assignment.tagIds
+    .map(tagId => tags.find(tag => tag.id === tagId))
+    .filter((tag): tag is Tag => tag !== undefined);
 }
 
 // Helper function to get zones count for a tag
@@ -78,7 +81,10 @@ export function getZoneCountForTag(tagId: string, assignments: ZoneTagAssignment
 export function getTagsForRecord(recordId: string, assignments: RecordTagAssignment[], tags: Tag[]): Tag[] {
   const assignment = assignments.find(a => a.recordId === recordId);
   if (!assignment) return [];
-  return tags.filter(tag => assignment.tagIds.includes(tag.id));
+  // Preserve the order from assignment.tagIds (the order user assigned them)
+  return assignment.tagIds
+    .map(tagId => tags.find(tag => tag.id === tagId))
+    .filter((tag): tag is Tag => tag !== undefined);
 }
 
 // Helper function to get records count for a tag
