@@ -20,6 +20,21 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const supportRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const supportEmail = 'support@irongrove.com';
+
+  const handleCopyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(supportEmail);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy email:', err);
+    }
+  };
 
   // Get user details from Supabase auth user
   // Type assertions needed since we're extending the User type with custom properties
@@ -64,7 +79,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
     }
   }, [general.theme]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -73,16 +88,22 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
       ) {
         setIsDropdownOpen(false);
       }
+      if (
+        supportRef.current &&
+        !supportRef.current.contains(event.target as Node)
+      ) {
+        setIsSupportOpen(false);
+      }
     }
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || isSupportOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isSupportOpen]);
 
   return (
     <header className="bg-white dark:bg-orange-dark border-b border-gray-light sticky top-0 z-50 [&]:!border-b-gray-light dark:[&]:!border-b-gray-700">
@@ -149,6 +170,64 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                   </div>
                   <div className="p-8 text-center">
                     <p className="text-sm text-gray-slate dark:text-gray-300">No new notifications</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Support */}
+            <div className="relative" ref={supportRef}>
+              <button 
+                onClick={() => setIsSupportOpen(!isSupportOpen)}
+                className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
+                title="Support"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+
+              {isSupportOpen && (
+                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
+                  <div className="p-4 border-b border-gray-light">
+                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Need help or have feedback?</h3>
+                    <p className="text-xs text-gray-slate dark:text-gray-300 mt-1">We'd love to hear from you</p>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                      <span className="text-sm text-gray-slate dark:text-gray-300 truncate">{supportEmail}</span>
+                      <button
+                        onClick={handleCopyEmail}
+                        className="flex-shrink-0 p-1.5 text-gray-slate hover:text-orange transition-colors rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                        title={copied ? 'Copied!' : 'Copy email'}
+                      >
+                        {copied ? (
+                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    <a
+                      href={`mailto:${supportEmail}`}
+                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
+                    >
+                      Send Email
+                    </a>
                   </div>
                 </div>
               )}
