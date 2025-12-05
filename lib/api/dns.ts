@@ -99,55 +99,10 @@ export async function getZoneAuditLogs(zoneId: string, zoneName: string): Promis
 
 /**
  * Verify zone nameservers
- * Placeholder - will trigger actual DNS verification when backend is ready
+ * Routes through Express API via server action
+ * Express API Required: PUT /api/zones/:id/verification
  */
-export async function verifyZoneNameservers(zoneId: string): Promise<{
-  success: boolean;
-  status: 'verified' | 'pending' | 'failed';
-  message: string;
-}> {
-  const supabase = createClient();
-
-  try {
-    // Update verification status to pending
-    await supabase
-      .from('zones')
-      .update({
-        verification_status: 'pending',
-        last_verified_at: new Date().toISOString(),
-      })
-      .eq('id', zoneId);
-
-    // Mock verification delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Simulate successful verification (90% success rate)
-    const isSuccess = Math.random() > 0.1;
-    const status = isSuccess ? 'verified' : 'failed';
-
-    await supabase
-      .from('zones')
-      .update({
-        verification_status: status,
-        last_verified_at: new Date().toISOString(),
-      })
-      .eq('id', zoneId);
-
-    return {
-      success: isSuccess,
-      status,
-      message: isSuccess
-        ? 'Nameservers verified successfully'
-        : 'Verification failed - nameservers not yet propagated',
-    };
-  } catch (error) {
-    return {
-      success: false,
-      status: 'failed',
-      message: 'Verification failed - please try again',
-    };
-  }
-}
+export { verifyZoneNameservers } from '@/lib/actions/zones';
 
 /**
  * Export zone configuration as JSON

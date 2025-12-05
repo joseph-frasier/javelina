@@ -21,6 +21,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 interface Organization {
   id: string;
   name: string;
@@ -49,56 +51,94 @@ export default function AnalyticsPage() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
 
-  // Fetch organizations
+  // Fetch organizations via Express API
   useEffect(() => {
     const fetchOrganizations = async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
 
-      const { data: memberships } = await supabase
-        .from('organization_members')
-        .select('organization_id, organizations(id, name)')
-        .eq('user_id', user.id);
+      try {
+        // Get user profile which includes organizations
+        const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
 
-      const orgs = memberships?.map(m => ({
-        id: (m.organizations as any).id,
-        name: (m.organizations as any).name,
-      })) || [];
+        if (!response.ok) return;
 
-      setOrganizations(orgs);
+        const result = await response.json();
+        const profileData = result.data || result;
+        
+        const orgs = (profileData.organizations || []).map((org: any) => ({
+          id: org.id,
+          name: org.name,
+        }));
+
+        setOrganizations(orgs);
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+      }
     };
 
     fetchOrganizations();
   }, []);
 
-  // Fetch zones when organization changes
+  // Fetch zones when organization changes via Express API
   useEffect(() => {
     const fetchZones = async () => {
       const supabase = createClient();
-      if (selectedOrg === 'all') {
-        // Fetch all zones from all user's orgs
-        const orgIds = organizations.map(o => o.id);
-        if (orgIds.length === 0) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
 
-        const { data } = await supabase
-          .from('zones')
-          .select('id, name, organization_id')
-          .in('organization_id', orgIds)
-          .is('deleted_at', null)
-          .order('name');
+      try {
+        if (selectedOrg === 'all') {
+          // Fetch zones from all user's orgs
+          const allZones: Zone[] = [];
+          
+          for (const org of organizations) {
+            const response = await fetch(`${API_BASE_URL}/api/zones/organization/${org.id}`, {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
 
-        setZones(data || []);
-      } else {
-        // Fetch zones for selected org
-        const { data } = await supabase
-          .from('zones')
-          .select('id, name, organization_id')
-          .eq('organization_id', selectedOrg)
-          .is('deleted_at', null)
-          .order('name');
+            if (response.ok) {
+              const result = await response.json();
+              const zonesData = result.data || result || [];
+              allZones.push(...zonesData.map((z: any) => ({
+                id: z.id,
+                name: z.name,
+                organization_id: z.organization_id,
+              })));
+            }
+          }
 
-        setZones(data || []);
+          setZones(allZones);
+        } else {
+          // Fetch zones for selected org
+          const response = await fetch(`${API_BASE_URL}/api/zones/organization/${selectedOrg}`, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            const zonesData = result.data || result || [];
+            setZones(zonesData.map((z: any) => ({
+              id: z.id,
+              name: z.name,
+              organization_id: z.organization_id,
+            })));
+          } else {
+            setZones([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching zones:', error);
+        setZones([]);
       }
       
       // Reset zone selection

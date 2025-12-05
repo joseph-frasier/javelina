@@ -139,3 +139,62 @@ export async function deleteZone(id: string) {
     return { error: error.message || 'Failed to delete zone' }
   }
 }
+
+/**
+ * Verify zone nameservers
+ * Express API Required: PUT /api/zones/:id/verification
+ */
+export async function verifyZoneNameservers(zoneId: string): Promise<{
+  success: boolean;
+  status: 'verified' | 'pending' | 'failed';
+  message: string;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        status: 'failed',
+        message: 'Not authenticated',
+        error: 'Not authenticated'
+      };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/zones/${zoneId}/verification`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        status: 'failed',
+        message: data.error || data.message || 'Verification failed',
+        error: data.error || data.message
+      };
+    }
+
+    revalidatePath(`/zone/${zoneId}`)
+    
+    return {
+      success: data.success ?? true,
+      status: data.status || 'verified',
+      message: data.message || 'Nameservers verified successfully'
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      status: 'failed',
+      message: 'Verification failed - please try again',
+      error: error.message
+    };
+  }
+}

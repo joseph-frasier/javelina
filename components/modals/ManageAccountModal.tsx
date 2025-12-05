@@ -6,7 +6,6 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
-import { createClient } from '@/lib/supabase/client';
 
 interface ManageAccountModalProps {
   isOpen: boolean;
@@ -88,28 +87,8 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      
-      // Update the user's profile in the profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          billing_email: formData.billing_email.trim() || null,
-          billing_phone: formData.billing_phone.trim() || null,
-          billing_address: formData.billing_address.trim() || null,
-          billing_city: formData.billing_city.trim() || null,
-          billing_state: formData.billing_state.trim() || null,
-          billing_zip: formData.billing_zip.trim() || null,
-          admin_email: formData.admin_email.trim() || null,
-          admin_phone: formData.admin_phone.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-
-      // Update the local auth store
-      await updateProfile({
+      // Update profile via auth store (which routes through Express API)
+      const result = await updateProfile({
         billing_email: formData.billing_email.trim() || undefined,
         billing_phone: formData.billing_phone.trim() || undefined,
         billing_address: formData.billing_address.trim() || undefined,
@@ -119,6 +98,10 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
         admin_email: formData.admin_email.trim() || undefined,
         admin_phone: formData.admin_phone.trim() || undefined,
       });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update account information');
+      }
 
       addToast('success', 'Account information updated successfully');
       onClose();

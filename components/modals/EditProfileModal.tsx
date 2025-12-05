@@ -6,7 +6,6 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
-import { createClient } from '@/lib/supabase/client';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -55,32 +54,20 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      
       // Combine first and last name for the name field (for backward compatibility)
       const fullName = `${formData.first_name.trim()} ${formData.last_name.trim()}`;
       
-      // Update the user's profile in the profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: fullName,
-          first_name: formData.first_name.trim(),
-          last_name: formData.last_name.trim(),
-          title: formData.title.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-
-      // Update the local auth store
-      await updateProfile({
+      // Update profile via auth store (which routes through Express API)
+      const result = await updateProfile({
         name: fullName,
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         title: formData.title.trim() || undefined,
       });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update profile');
+      }
 
       addToast('success', 'Profile updated successfully');
       onClose();
