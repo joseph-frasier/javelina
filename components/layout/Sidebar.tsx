@@ -376,17 +376,17 @@ function ZonesList({
   // This creates sample tag assignments based on zone index to show the feature
   const displayAssignments = zoneTagAssignments.length > 0 
     ? zoneTagAssignments 
-    : (zones || []).map((zone, index) => {
+    : (zones || []).map((zone: { id: string; name: string }, index: number) => {
         const tagIds: string[] = [];
         // Assign different tags based on zone index for variety
         if (index % 3 === 0) tagIds.push('tag-1'); // Production (green)
         if (index % 2 === 0) tagIds.push('tag-2'); // Staging (yellow)
         if (index % 4 === 0) tagIds.push('tag-4'); // US-East (purple)
         return { zoneId: zone.id, tagIds };
-      }).filter(a => a.tagIds.length > 0);
+      }).filter((a: { zoneId: string; tagIds: string[] }) => a.tagIds.length > 0);
 
   // Sort zones alphabetically
-  const sortedZones = [...(zones || [])].sort((a, b) => {
+  const sortedZones = [...(zones || [])].sort((a: { id: string; name: string }, b: { id: string; name: string }) => {
     return sortOrder === 'asc' 
       ? a.name.localeCompare(b.name)
       : b.name.localeCompare(a.name);

@@ -19,24 +19,24 @@ export interface User {
   name: string
   email: string
   role: UserRole
-  display_name?: string
-  title?: string
-  phone?: string
-  timezone?: string
-  bio?: string
-  avatar_url?: string
-  mfa_enabled?: boolean
-  sso_connected?: boolean
-  last_login?: string
+  display_name?: string | null
+  title?: string | null
+  phone?: string | null
+  timezone?: string | null
+  bio?: string | null
+  avatar_url?: string | null
+  mfa_enabled?: boolean | null
+  sso_connected?: boolean | null
+  last_login?: string | null
   organizations?: Organization[]
   // Additional profile fields from database
-  preferences?: Record<string, any>
-  onboarding_completed?: boolean
-  email_verified?: boolean
-  notification_preferences?: Record<string, any>
-  language?: string
-  status?: string
-  superadmin?: boolean
+  preferences?: Record<string, any> | null
+  onboarding_completed?: boolean | null
+  email_verified?: boolean | null
+  notification_preferences?: Record<string, any> | null
+  language?: string | null
+  status?: string | null
+  superadmin?: boolean | null
 }
 
 interface AuthState {
@@ -202,6 +202,10 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: {
               ...result.data,
+              // Ensure required fields have non-null values
+              name: result.data.name || '',
+              email: result.data.email || '',
+              role: (result.data.role as UserRole) || 'user',
               organizations,
             },
             isAuthenticated: true,
