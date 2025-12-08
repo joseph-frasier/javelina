@@ -7,7 +7,6 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useAuthStore } from '@/lib/auth-store';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
-import { useEnvironments } from '@/lib/hooks/useEnvironments';
 import { useZones } from '@/lib/hooks/useZones';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { getTagsForZone, INITIAL_MOCK_TAGS, type Tag, type ZoneTagAssignment } from '@/lib/mock-tags-data';
@@ -29,17 +28,15 @@ export function Sidebar({
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { expandedOrgs, expandedEnvironments, toggleOrg, toggleEnvironment, selectAndExpand } = useHierarchyStore();
+  const { expandedOrgs, toggleOrg, selectAndExpand } = useHierarchyStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Refs for GSAP animations
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const envContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const zoneContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   
   // Track previous state to detect newly expanded items
   const prevExpandedOrgs = useRef<Set<string>>(new Set());
-  const prevExpandedEnvironments = useRef<Set<string>>(new Set());
 
   // Get organizations from authenticated user (already from Supabase)
   const userOrganizations = user?.organizations || [];
@@ -128,13 +125,10 @@ export function Sidebar({
               </Link>
             </div>
 
-            {/* Environments */}
+            {/* Zones (directly under organization) */}
             {expandedOrgs.has(org.id) && (
-              <EnvironmentsList
-                orgId={org.id}
-                expandedEnvironments={expandedEnvironments}
-                handleToggleEnvironment={handleToggleEnvironment}
-                envContainerRefs={envContainerRefs}
+              <ZonesList
+                organizationId={org.id}
                 zoneContainerRefs={zoneContainerRefs}
                 tags={tags}
                 zoneTagAssignments={zoneTagAssignments}
@@ -154,12 +148,12 @@ export function Sidebar({
       toggleOrg(orgId);
     } else {
       // Collapsing - animate out first
-      const container = envContainerRefs.current[orgId];
+      const container = zoneContainerRefs.current[orgId];
       if (container) {
-        const environments = container.querySelectorAll('.environment-item');
+        const zones = container.querySelectorAll('.zone-item');
         
-        // Animate environments opacity and position
-        gsap.to(environments, {
+        // Animate zones opacity and position
+        gsap.to(zones, {
           opacity: 0,
           x: -20,
           duration: 0.25,
@@ -188,49 +182,7 @@ export function Sidebar({
     }
   };
 
-  const handleToggleEnvironment = (envId: string) => {
-    const isExpanding = !expandedEnvironments.has(envId);
-    
-    if (isExpanding) {
-      // Expanding - toggle immediately
-      toggleEnvironment(envId);
-    } else {
-      // Collapsing - animate out first
-      const container = zoneContainerRefs.current[envId];
-      if (container) {
-        const zones = container.querySelectorAll('.zone-item');
-        
-        // Animate zones opacity and position
-        gsap.to(zones, {
-          opacity: 0,
-          x: -20,
-          duration: 0.25,
-          stagger: 0.02,
-          ease: 'power2.in',
-        });
-        
-        // Animate container using scaleY for smooth collapse without reflow
-        gsap.to(container, {
-          scaleY: 0,
-          transformOrigin: 'top',
-          marginTop: 0,
-          duration: 0.3,
-          delay: 0.15,
-          ease: 'power2.inOut',
-          onComplete: () => {
-            toggleEnvironment(envId);
-            // Reset transform for next expansion
-            gsap.set(container, { scaleY: 1, marginTop: '' });
-          }
-        });
-      } else {
-        // Fallback if no container
-        toggleEnvironment(envId);
-      }
-    }
-  };
-
-  // Animate environments when organizations are expanded
+  // Animate zones when organizations are expanded
   useGSAP(() => {
     // Find newly expanded org (present in current but not in previous)
     const newlyExpandedOrg = Array.from(expandedOrgs).find(
@@ -238,39 +190,7 @@ export function Sidebar({
     );
     
     if (newlyExpandedOrg) {
-      const container = envContainerRefs.current[newlyExpandedOrg];
-      if (container) {
-        const environments = container.querySelectorAll('.environment-item');
-        gsap.fromTo(
-          environments,
-          {
-            opacity: 0,
-            x: -20,
-          },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.45,
-            stagger: 0.05,
-            ease: 'power2.out',
-          }
-        );
-      }
-    }
-    
-    // Update previous state
-    prevExpandedOrgs.current = new Set(expandedOrgs);
-  }, [expandedOrgs]);
-
-  // Animate zones when environments are expanded
-  useGSAP(() => {
-    // Find newly expanded environment (present in current but not in previous)
-    const newlyExpandedEnv = Array.from(expandedEnvironments).find(
-      envId => !prevExpandedEnvironments.current.has(envId)
-    );
-    
-    if (newlyExpandedEnv) {
-      const container = zoneContainerRefs.current[newlyExpandedEnv];
+      const container = zoneContainerRefs.current[newlyExpandedOrg];
       if (container) {
         const zones = container.querySelectorAll('.zone-item');
         gsap.fromTo(
@@ -291,8 +211,8 @@ export function Sidebar({
     }
     
     // Update previous state
-    prevExpandedEnvironments.current = new Set(expandedEnvironments);
-  }, [expandedEnvironments]);
+    prevExpandedOrgs.current = new Set(expandedOrgs);
+  }, [expandedOrgs]);
 
   return (
     <>
@@ -428,129 +348,25 @@ export function Sidebar({
   );
 }
 
-// Sub-component to fetch and display environments for an organization
-function EnvironmentsList({
-  orgId,
-  expandedEnvironments,
-  handleToggleEnvironment,
-  envContainerRefs,
-  zoneContainerRefs,
-  tags,
-  zoneTagAssignments,
-}: {
-  orgId: string;
-  expandedEnvironments: Set<string>;
-  handleToggleEnvironment: (envId: string) => void;
-  envContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
-  zoneContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
-  tags: Tag[];
-  zoneTagAssignments: ZoneTagAssignment[];
-}) {
-  const { data: environments, isLoading } = useEnvironments(orgId);
-
-  if (isLoading) {
-    return (
-      <div className="ml-4 mt-1 px-2 py-1">
-        <span className="text-sm text-gray-slate">Loading...</span>
-      </div>
-    );
-  }
-
-  if (!environments || environments.length === 0) {
-    return (
-      <div className="ml-4 mt-1 px-2 py-1">
-        <span className="text-sm text-gray-slate italic">No environments</span>
-      </div>
-    );
-  }
-
-  return (
-    <div 
-      className="ml-4 mt-1 space-y-1 overflow-hidden"
-      ref={(el) => {
-        envContainerRefs.current[orgId] = el;
-      }}
-    >
-      {environments.map((environment) => (
-        <div key={environment.id} className="environment-item">
-          <div className="flex items-center group">
-            <button
-              onClick={() => handleToggleEnvironment(environment.id)}
-              className="p-1 rounded transition-colors"
-              aria-label={expandedEnvironments.has(environment.id) ? 'Collapse' : 'Expand'}
-            >
-              <svg
-                className={`w-4 h-4 text-gray-slate transition-transform ${
-                  expandedEnvironments.has(environment.id) ? 'rotate-90' : ''
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-            <Link
-              href={`/organization/${orgId}/environment/${environment.id}`}
-              className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
-              title={environment.name}
-            >
-              <svg
-                className="w-4 h-4 text-blue-electric"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                />
-              </svg>
-              <span className="text-sm text-gray-slate">{truncateName(environment.name)}</span>
-            </Link>
-          </div>
-
-          {/* Zones */}
-          {expandedEnvironments.has(environment.id) && (
-            <ZonesList 
-              environmentId={environment.id} 
-              zoneContainerRefs={zoneContainerRefs}
-              tags={tags}
-              zoneTagAssignments={zoneTagAssignments}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Helper function to truncate long names (orgs, environments, zones)
+// Helper function to truncate long names (orgs, zones)
 function truncateName(name: string, maxLength: number = 20): string {
   if (name.length <= maxLength) return name;
   return name.substring(0, maxLength) + '...';
 }
 
-// Sub-component to fetch and display zones for an environment
+// Sub-component to fetch and display zones for an organization
 function ZonesList({ 
-  environmentId, 
+  organizationId, 
   zoneContainerRefs,
   tags,
   zoneTagAssignments,
 }: { 
-  environmentId: string;
+  organizationId: string;
   zoneContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
   tags: Tag[];
   zoneTagAssignments: ZoneTagAssignment[];
 }) {
-  const { data: zones, isLoading } = useZones(environmentId);
+  const { data: zones, isLoading } = useZones(organizationId);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Use provided tags or fall back to mock data for mockup display
@@ -560,17 +376,17 @@ function ZonesList({
   // This creates sample tag assignments based on zone index to show the feature
   const displayAssignments = zoneTagAssignments.length > 0 
     ? zoneTagAssignments 
-    : (zones || []).map((zone, index) => {
+    : (zones || []).map((zone: { id: string; name: string }, index: number) => {
         const tagIds: string[] = [];
         // Assign different tags based on zone index for variety
         if (index % 3 === 0) tagIds.push('tag-1'); // Production (green)
         if (index % 2 === 0) tagIds.push('tag-2'); // Staging (yellow)
         if (index % 4 === 0) tagIds.push('tag-4'); // US-East (purple)
         return { zoneId: zone.id, tagIds };
-      }).filter(a => a.tagIds.length > 0);
+      }).filter((a: { zoneId: string; tagIds: string[] }) => a.tagIds.length > 0);
 
   // Sort zones alphabetically
-  const sortedZones = [...(zones || [])].sort((a, b) => {
+  const sortedZones = [...(zones || [])].sort((a: { id: string; name: string }, b: { id: string; name: string }) => {
     return sortOrder === 'asc' 
       ? a.name.localeCompare(b.name)
       : b.name.localeCompare(a.name);
@@ -596,7 +412,7 @@ function ZonesList({
     <div 
       className="ml-4 mt-1 overflow-hidden"
       ref={(el) => {
-        zoneContainerRefs.current[environmentId] = el;
+        zoneContainerRefs.current[organizationId] = el;
       }}
     >
       {/* Sort Toggle */}

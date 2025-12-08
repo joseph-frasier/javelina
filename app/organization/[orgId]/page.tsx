@@ -63,42 +63,11 @@ export default async function OrganizationPage({
     );
   }
 
-  // Fetch environments for this organization
-  const { data: environments, error: envError } = await supabase
-    .from('environments')
-    .select('*')
+  // Fetch zones directly for this organization (no longer through environments)
+  const { data: allZones, count: zonesCount } = await supabase
+    .from('zones')
+    .select('id, name, organization_id, live', { count: 'exact' })
     .eq('organization_id', orgId)
-    .order('created_at', { ascending: false });
-
-  // Fetch zones count for each environment
-  const environmentsWithCounts = await Promise.all(
-    (environments || []).map(async (env) => {
-      const { count: zonesCount } = await supabase
-        .from('zones')
-        .select('id', { count: 'exact', head: true })
-        .eq('environment_id', env.id)
-        .is('deleted_at', null);
-      
-      return {
-        ...env,
-        zones_count: zonesCount || 0,
-        total_records: 0 // Placeholder for future DNS records
-      };
-    })
-  );
-
-  // Fetch total zones count for this organization (through environments)
-  const { count: zonesCount } = await supabase
-    .from('zones')
-    .select('id', { count: 'exact', head: true })
-    .in('environment_id', environments?.map(e => e.id) || [])
-    .is('deleted_at', null);
-
-  // Fetch all zones for this organization with environment names
-  const { data: allZones } = await supabase
-    .from('zones')
-    .select('id, name, environment_id, live')
-    .in('environment_id', environments?.map(e => e.id) || [])
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
@@ -106,19 +75,14 @@ export default async function OrganizationPage({
   const zonesWithData = await Promise.all(
     (allZones || []).map(async (zone) => {
       const { count: recordsCount } = await supabase
-        .from('dns_records')
+        .from('zone_records')
         .select('id', { count: 'exact', head: true })
-        .eq('zone_id', zone.id)
-        .is('deleted_at', null);
-      
-      // Find the environment name
-      const environment = environments?.find(e => e.id === zone.environment_id);
+        .eq('zone_id', zone.id);
       
       return {
         id: zone.id,
         name: zone.name,
-        environment_id: zone.environment_id,
-        environment_name: environment?.name || 'Unknown',
+        organization_id: zone.organization_id,
         status: (zone.live ? 'active' : 'inactive') as 'active' | 'inactive',
         records_count: recordsCount || 0,
       };
@@ -135,8 +99,6 @@ export default async function OrganizationPage({
     name: org.name,
     description: org.description,
     role: userRole,
-    environments: environmentsWithCounts,
-    environmentsCount: environmentsWithCounts.length,
     zonesCount: zonesCount || 0,
     zones: zonesWithData,
     recentActivity: recentActivity,

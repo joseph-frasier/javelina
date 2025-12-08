@@ -3,6 +3,8 @@ import Stripe from 'stripe';
 /**
  * Central Stripe client for server-side operations.
  * 
+ * Last updated: 2025-12-05 - Reverted to test mode
+ * 
  * IMPORTANT: We intentionally pin the runtime API version to '2024-06-20' for stable billing behavior.
  * This version has been validated to properly expand PaymentIntent objects during subscription creation,
  * which is critical for our checkout flow.

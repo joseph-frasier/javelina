@@ -19,14 +19,10 @@ interface FlaggedZone {
   name: string;
   created_at: string;
   created_by: string;
-  environments: {
+  organization_id: string;
+  organizations: {
     id: string;
     name: string;
-    environment_type: string;
-    organizations: {
-      id: string;
-      name: string;
-    };
   };
 }
 
@@ -221,10 +217,7 @@ export default function AdminZonesPage() {
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mb-1">
-                          <strong>Organization:</strong> {zone.environments?.organizations?.name || 'Unknown'}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-1">
-                          <strong>Environment:</strong> {zone.environments?.name || 'Unknown'} ({zone.environments?.environment_type || 'Unknown'})
+                          <strong>Organization:</strong> {zone.organizations?.name || 'Unknown'}
                         </p>
                         <p className="text-sm text-gray-600 mb-1">
                           <strong>Created by:</strong> {zone.created_by || 'Unknown'}
@@ -314,4 +307,3 @@ export default function AdminZonesPage() {
     </AdminProtectedRoute>
   );
 }
-

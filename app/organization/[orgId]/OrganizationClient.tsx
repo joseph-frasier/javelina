@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
-import { AddEnvironmentModal } from '@/components/modals/AddEnvironmentModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
 import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
@@ -26,26 +25,10 @@ import {
   generateTagId 
 } from '@/lib/mock-tags-data';
 
-interface Environment {
-  id: string;
-  name: string;
-  organization_id: string;
-  environment_type: 'production' | 'staging' | 'development';
-  location: string | null;
-  status: 'active' | 'disabled' | 'archived';
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-  created_by: string | null;
-  zones_count?: number;
-  total_records?: number;
-}
-
 interface Zone {
   id: string;
   name: string;
-  environment_id: string;
-  environment_name: string;
+  organization_id: string;
   status: 'active' | 'inactive';
   records_count: number;
 }
@@ -62,8 +45,6 @@ interface OrganizationData {
   name: string;
   description: string | null;
   role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
-  environments: Environment[];
-  environmentsCount: number;
   zonesCount: number;
   zones: Zone[];
   recentActivity: ActivityLog[];
@@ -80,7 +61,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
-  const [isAddEnvModalOpen, setIsAddEnvModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
@@ -304,12 +284,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               </svg>
               Create Tag
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setIsAddEnvModalOpen(true)} className="justify-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              Add Environment
-            </Button>
             <Button variant="secondary" size="sm" onClick={() => setIsAddZoneModalOpen(true)} className="justify-center">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -437,7 +411,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
           {/* Right Column - Tags & Zones */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Tags Manager Card (Replaces Environments) */}
+            {/* Tags Manager Card */}
             <TagsManagerCard
               tags={mockTags}
               assignments={zoneTagAssignments}
@@ -510,12 +484,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         onClose={() => setIsAddZoneModalOpen(false)}
         organizationId={org.id}
         organizationName={org.name}
-        environmentId=""
-        environmentName=""
-        environments={org.environments.map(env => ({
-          id: env.id,
-          name: env.name
-        }))}
       />
 
       {/* Edit Organization Modal */}
@@ -530,18 +498,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         organization={org}
-      />
-
-      {/* Add Environment Modal */}
-      <AddEnvironmentModal
-        isOpen={isAddEnvModalOpen}
-        onClose={() => setIsAddEnvModalOpen(false)}
-        organizationId={org.id}
-        organizationName={org.name}
-        onSuccess={() => {
-          setIsAddEnvModalOpen(false);
-          router.refresh();
-        }}
       />
     </>
   );

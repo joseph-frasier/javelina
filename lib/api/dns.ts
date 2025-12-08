@@ -33,29 +33,9 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
     .is('deleted_at', null)
     .single();
 
-  // Fetch environment data for health_status and last_deployed_at
-  const { data: zoneWithEnv } = await supabase
-    .from('zones')
-    .select('environment_id')
-    .eq('id', zoneId)
-    .is('deleted_at', null)
-    .single();
-
-  let healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown' = 'unknown';
-  let lastDeployedAt: string | null = null;
-
-  if (zoneWithEnv) {
-    const { data: environment } = await supabase
-      .from('environments')
-      .select('health_status, last_deployed_at')
-      .eq('id', zoneWithEnv.environment_id)
-      .single();
-
-    if (environment) {
-      healthStatus = (environment.health_status as any) || 'unknown';
-      lastDeployedAt = environment.last_deployed_at;
-    }
-  }
+  // Health status and last deployed are now zone-level (simplified after removing environments)
+  const healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown' = 'unknown';
+  const lastDeployedAt: string | null = null;
 
   // Fetch DNS records through Express API for consistency
   const dnsRecords = await getZoneDNSRecords(zoneId, zoneName);
@@ -119,55 +99,10 @@ export async function getZoneAuditLogs(zoneId: string, zoneName: string): Promis
 
 /**
  * Verify zone nameservers
- * Placeholder - will trigger actual DNS verification when backend is ready
+ * Routes through Express API via server action
+ * Express API Required: PUT /api/zones/:id/verification
  */
-export async function verifyZoneNameservers(zoneId: string): Promise<{
-  success: boolean;
-  status: 'verified' | 'pending' | 'failed';
-  message: string;
-}> {
-  const supabase = createClient();
-
-  try {
-    // Update verification status to pending
-    await supabase
-      .from('zones')
-      .update({
-        verification_status: 'pending',
-        last_verified_at: new Date().toISOString(),
-      })
-      .eq('id', zoneId);
-
-    // Mock verification delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Simulate successful verification (90% success rate)
-    const isSuccess = Math.random() > 0.1;
-    const status = isSuccess ? 'verified' : 'failed';
-
-    await supabase
-      .from('zones')
-      .update({
-        verification_status: status,
-        last_verified_at: new Date().toISOString(),
-      })
-      .eq('id', zoneId);
-
-    return {
-      success: isSuccess,
-      status,
-      message: isSuccess
-        ? 'Nameservers verified successfully'
-        : 'Verification failed - nameservers not yet propagated',
-    };
-  } catch (error) {
-    return {
-      success: false,
-      status: 'failed',
-      message: 'Verification failed - please try again',
-    };
-  }
-}
+export { verifyZoneNameservers } from '@/lib/actions/zones';
 
 /**
  * Export zone configuration as JSON

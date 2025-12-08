@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function createZone(formData: {
-  environment_id: string
+  organization_id: string
   name: string
   description?: string
   admin_email?: string
@@ -30,7 +30,7 @@ export async function createZone(formData: {
       },
       body: JSON.stringify({
         name: formData.name,
-        environment_id: formData.environment_id,
+        organization_id: formData.organization_id,
         description: formData.description,
         admin_email: formData.admin_email,
         negative_caching_ttl: formData.negative_caching_ttl
@@ -137,5 +137,64 @@ export async function deleteZone(id: string) {
     return { success: true }
   } catch (error: any) {
     return { error: error.message || 'Failed to delete zone' }
+  }
+}
+
+/**
+ * Verify zone nameservers
+ * Express API Required: PUT /api/zones/:id/verification
+ */
+export async function verifyZoneNameservers(zoneId: string): Promise<{
+  success: boolean;
+  status: 'verified' | 'pending' | 'failed';
+  message: string;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        status: 'failed',
+        message: 'Not authenticated',
+        error: 'Not authenticated'
+      };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/zones/${zoneId}/verification`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        status: 'failed',
+        message: data.error || data.message || 'Verification failed',
+        error: data.error || data.message
+      };
+    }
+
+    revalidatePath(`/zone/${zoneId}`)
+    
+    return {
+      success: data.success ?? true,
+      status: data.status || 'verified',
+      message: data.message || 'Nameservers verified successfully'
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      status: 'failed',
+      message: 'Verification failed - please try again',
+      error: error.message
+    };
   }
 }

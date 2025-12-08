@@ -11,8 +11,7 @@ import { getTagsForZone } from '@/lib/mock-tags-data';
 interface Zone {
   id: string;
   name: string;
-  environment_id: string;
-  environment_name?: string;
+  organization_id: string;
   status?: 'active' | 'inactive';
   records_count?: number;
 }

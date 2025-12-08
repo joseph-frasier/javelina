@@ -2,26 +2,16 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createClient } from '@/lib/supabase/client'
 import { getAuthCallbackURL } from '@/lib/utils/get-url'
+import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export type UserRole = 'user' | 'superuser';
 export type RBACRole = 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
-export type EnvironmentType = 'production' | 'staging' | 'development';
-
-export interface Environment {
-  id: string;
-  name: string;
-  type: EnvironmentType;
-  zones_count: number;
-  role?: RBACRole; // Optional: environment-level role override
-}
 
 export interface Organization {
   id: string;
   name: string;
   role: RBACRole;
-  environments_count: number;
-  environments?: Environment[];
 }
 
 export interface User {
@@ -29,27 +19,24 @@ export interface User {
   name: string
   email: string
   role: UserRole
-  display_name?: string
-  title?: string
-  phone?: string
-  timezone?: string
-  bio?: string
-  avatar_url?: string
-  mfa_enabled?: boolean
-  sso_connected?: boolean
-  last_login?: string
+  display_name?: string | null
+  title?: string | null
+  phone?: string | null
+  timezone?: string | null
+  bio?: string | null
+  avatar_url?: string | null
+  mfa_enabled?: boolean | null
+  sso_connected?: boolean | null
+  last_login?: string | null
   organizations?: Organization[]
-  // New profile fields
-  first_name?: string
-  last_name?: string
-  billing_email?: string
-  billing_phone?: string
-  billing_address?: string
-  billing_city?: string
-  billing_state?: string
-  billing_zip?: string
-  admin_email?: string
-  admin_phone?: string
+  // Additional profile fields from database
+  preferences?: Record<string, any> | null
+  onboarding_completed?: boolean | null
+  email_verified?: boolean | null
+  notification_preferences?: Record<string, any> | null
+  language?: string | null
+  status?: string | null
+  superadmin?: boolean | null
 }
 
 interface AuthState {
@@ -87,30 +74,6 @@ const mockUsers: User[] = [
         id: 'org_company',
         name: 'Company Corp',
         role: 'Editor',
-        environments_count: 3,
-        environments: [
-          {
-            id: 'env_prod',
-            name: 'Production',
-            type: 'production',
-            zones_count: 25,
-            role: 'Editor'
-          },
-          {
-            id: 'env_staging',
-            name: 'Staging',
-            type: 'staging',
-            zones_count: 15,
-            role: 'Editor'
-          },
-          {
-            id: 'env_dev',
-            name: 'Development',
-            type: 'development',
-            zones_count: 5,
-            role: 'Admin'
-          }
-        ]
       }
     ]
   },
@@ -133,52 +96,11 @@ const mockUsers: User[] = [
         id: 'org_company',
         name: 'Company Corp',
         role: 'SuperAdmin',
-        environments_count: 3,
-        environments: [
-          {
-            id: 'env_prod',
-            name: 'Production',
-            type: 'production',
-            zones_count: 120,
-            role: 'SuperAdmin'
-          },
-          {
-            id: 'env_staging',
-            name: 'Staging',
-            type: 'staging',
-            zones_count: 80,
-            role: 'SuperAdmin'
-          },
-          {
-            id: 'env_dev',
-            name: 'Development',
-            type: 'development',
-            zones_count: 34,
-            role: 'SuperAdmin'
-          }
-        ]
       },
       {
         id: 'org_personal',
         name: 'Personal Projects',
         role: 'Admin',
-        environments_count: 2,
-        environments: [
-          {
-            id: 'env_personal_prod',
-            name: 'Production',
-            type: 'production',
-            zones_count: 5,
-            role: 'Admin'
-          },
-          {
-            id: 'env_personal_dev',
-            name: 'Development',
-            type: 'development',
-            zones_count: 3,
-            role: 'Admin'
-          }
-        ]
       }
     ]
   }
@@ -235,12 +157,12 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Fetch user profile from database
+      // Fetch user profile via Express API
       fetchProfile: async () => {
         const supabase = createClient()
 
         try {
-          // Get the session first to ensure JWT is available
+          // Get the session first to ensure user is authenticated
           const {
             data: { session },
           } = await supabase.auth.getSession()
@@ -252,16 +174,12 @@ export const useAuthStore = create<AuthState>()(
 
           const supabaseUser = session.user
 
-          // Fetch profile from profiles table (now with valid JWT in session)
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', supabaseUser.id)
-            .single()
+          // Fetch profile with organizations from Express API via server action
+          const result = await getProfile()
 
-          if (profileError) {
-            console.error('Error fetching profile:', profileError)
-            // If profile doesn't exist yet, create a basic one
+          if (result.error || !result.data) {
+            console.error('Error fetching profile:', result.error)
+            // If profile doesn't exist yet, create a basic one from auth data
             set({
               user: {
                 id: supabaseUser.id,
@@ -274,50 +192,20 @@ export const useAuthStore = create<AuthState>()(
             return
           }
 
-          // Fetch organizations
-          const { data: memberships } = await supabase
-            .from('organization_members')
-            .select(
-              `
-              role,
-              organizations:organization_id (
-                id,
-                name,
-                environments_count
-              )
-            `
-            )
-            .eq('user_id', supabaseUser.id)
-
-          // Fetch zones_count for each organization from environments table
-          const organizations: Organization[] = await Promise.all(
-            (memberships || []).map(async (m: any) => {
-              const orgId = m.organizations.id
-              
-              // Get total zones count by summing zones_count from all environments
-              const { data: environments } = await supabase
-                .from('environments')
-                .select('zones_count')
-                .eq('organization_id', orgId)
-              
-              const zones_count = environments?.reduce(
-                (sum: number, env: any) => sum + (env.zones_count || 0),
-                0
-              ) || 0
-              
-              return {
-                id: m.organizations.id,
-                name: m.organizations.name,
-                role: m.role,
-                environments_count: m.organizations.environments_count || 0,
-                zones_count,
-              }
-            })
-          )
+          // Map organizations to Organization interface
+          const organizations: Organization[] = (result.data.organizations || []).map((org) => ({
+            id: org.id,
+            name: org.name,
+            role: org.role,
+          }))
 
           set({
             user: {
-              ...profileData,
+              ...result.data,
+              // Ensure required fields have non-null values
+              name: result.data.name || '',
+              email: result.data.email || '',
+              role: (result.data.role as UserRole) || 'user',
               organizations,
             },
             isAuthenticated: true,
@@ -486,32 +374,25 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Update user profile
+      // Update user profile via Express API
       updateProfile: async (updates: Partial<User>) => {
-        const supabase = createClient()
         const currentUser = get().user
 
         if (!currentUser) {
           return { success: false, error: 'No user logged in' }
         }
 
-        try {
-          const { error } = await supabase
-            .from('profiles')
-            .update(updates)
-            .eq('id', currentUser.id)
+        // Call server action which routes through Express API
+        const result = await updateProfileAction(updates)
 
-          if (error) {
-            return { success: false, error: error.message }
-          }
-
-          // Refetch profile to get updated data
-          await get().fetchProfile()
-
-          return { success: true }
-        } catch (error: any) {
-          return { success: false, error: error.message || 'An error occurred' }
+        if (result.error) {
+          return { success: false, error: result.error }
         }
+
+        // Refetch profile to get updated data
+        await get().fetchProfile()
+
+        return { success: true }
       },
 
       // Logout

@@ -4,34 +4,45 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
-import { createClient } from '@/lib/supabase/client';
 
 interface ManageAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Format phone number to (XXX) XXX-XXXX format
-const formatPhoneNumber = (value: string): string => {
-  // Remove all non-digit characters
-  const digits = value.replace(/\D/g, '');
-  
-  // Limit to 10 digits
-  const limitedDigits = digits.slice(0, 10);
-  
-  // Format based on length
-  if (limitedDigits.length === 0) {
-    return '';
-  } else if (limitedDigits.length <= 3) {
-    return `(${limitedDigits}`;
-  } else if (limitedDigits.length <= 6) {
-    return `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3)}`;
-  } else {
-    return `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3, 6)}-${limitedDigits.slice(6)}`;
-  }
-};
+// Common timezones
+const timezoneOptions = [
+  { value: '', label: 'Select timezone...' },
+  { value: 'America/New_York', label: 'Eastern Time (US)' },
+  { value: 'America/Chicago', label: 'Central Time (US)' },
+  { value: 'America/Denver', label: 'Mountain Time (US)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (US)' },
+  { value: 'America/Phoenix', label: 'Arizona Time' },
+  { value: 'America/Anchorage', label: 'Alaska Time' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time' },
+  { value: 'Europe/London', label: 'London (GMT)' },
+  { value: 'Europe/Paris', label: 'Paris (CET)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
+  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+  { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
+  { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+  { value: 'UTC', label: 'UTC' },
+];
+
+// Language options
+const languageOptions = [
+  { value: '', label: 'Select language...' },
+  { value: 'en', label: 'English' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'fr', label: 'French' },
+  { value: 'de', label: 'German' },
+  { value: 'ja', label: 'Japanese' },
+  { value: 'zh', label: 'Chinese' },
+];
 
 export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps) {
   const { user, updateProfile } = useAuthStore();
@@ -39,92 +50,42 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    billing_email: '',
-    billing_phone: '',
-    billing_address: '',
-    billing_city: '',
-    billing_state: '',
-    billing_zip: '',
-    admin_email: '',
-    admin_phone: '',
+    timezone: '',
+    language: '',
+    bio: '',
   });
 
   useEffect(() => {
     if (isOpen && user) {
       setFormData({
-        billing_email: user.billing_email || '',
-        billing_phone: user.billing_phone || '',
-        billing_address: user.billing_address || '',
-        billing_city: user.billing_city || '',
-        billing_state: user.billing_state || '',
-        billing_zip: user.billing_zip || '',
-        admin_email: user.admin_email || '',
-        admin_phone: user.admin_phone || '',
+        timezone: user.timezone || '',
+        language: user.language || '',
+        bio: user.bio || '',
       });
     }
   }, [isOpen, user]);
 
-  // Email validation helper
-  const isValidEmail = (email: string): boolean => {
-    if (!email.trim()) return true; // Empty is okay (optional field)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate email formats
-    if (formData.billing_email && !isValidEmail(formData.billing_email)) {
-      addToast('error', 'Please enter a valid billing email address');
-      return;
-    }
-
-    if (formData.admin_email && !isValidEmail(formData.admin_email)) {
-      addToast('error', 'Please enter a valid admin email address');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      
-      // Update the user's profile in the profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          billing_email: formData.billing_email.trim() || null,
-          billing_phone: formData.billing_phone.trim() || null,
-          billing_address: formData.billing_address.trim() || null,
-          billing_city: formData.billing_city.trim() || null,
-          billing_state: formData.billing_state.trim() || null,
-          billing_zip: formData.billing_zip.trim() || null,
-          admin_email: formData.admin_email.trim() || null,
-          admin_phone: formData.admin_phone.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-
-      // Update the local auth store
-      await updateProfile({
-        billing_email: formData.billing_email.trim() || undefined,
-        billing_phone: formData.billing_phone.trim() || undefined,
-        billing_address: formData.billing_address.trim() || undefined,
-        billing_city: formData.billing_city.trim() || undefined,
-        billing_state: formData.billing_state.trim() || undefined,
-        billing_zip: formData.billing_zip.trim() || undefined,
-        admin_email: formData.admin_email.trim() || undefined,
-        admin_phone: formData.admin_phone.trim() || undefined,
+      // Update profile via auth store (which routes through Express API)
+      const result = await updateProfile({
+        timezone: formData.timezone || undefined,
+        language: formData.language || undefined,
+        bio: formData.bio.trim() || undefined,
       });
 
-      addToast('success', 'Account information updated successfully');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update account settings');
+      }
+
+      addToast('success', 'Account settings updated successfully');
       onClose();
     } catch (error: any) {
       console.error('Account update error:', error);
-      addToast('error', error.message || 'Failed to update account information');
+      addToast('error', error.message || 'Failed to update account settings');
     } finally {
       setIsLoading(false);
     }
@@ -133,181 +94,74 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
   const handleCancel = () => {
     if (user) {
       setFormData({
-        billing_email: user.billing_email || '',
-        billing_phone: user.billing_phone || '',
-        billing_address: user.billing_address || '',
-        billing_city: user.billing_city || '',
-        billing_state: user.billing_state || '',
-        billing_zip: user.billing_zip || '',
-        admin_email: user.admin_email || '',
-        admin_phone: user.admin_phone || '',
+        timezone: user.timezone || '',
+        language: user.language || '',
+        bio: user.bio || '',
       });
     }
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel} title="Manage Account" size="large">
+    <Modal isOpen={isOpen} onClose={handleCancel} title="Account Settings" size="medium">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section 1: Billing Contact */}
+        {/* Timezone */}
         <div>
-          <h3 className="text-sm font-semibold text-orange-dark dark:text-orange mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-            Billing Contact
-          </h3>
-          <div className="space-y-4">
-            {/* Billing Email & Phone - Side by Side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label 
-                  htmlFor="billing_email" 
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-                >
-                  Billing Contact Email
-                </label>
-                <Input
-                  id="billing_email"
-                  type="email"
-                  placeholder="billing@example.com"
-                  value={formData.billing_email}
-                  onChange={(e) => setFormData({ ...formData, billing_email: e.target.value })}
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <label 
-                  htmlFor="billing_phone" 
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-                >
-                  Billing Phone Number
-                </label>
-                <Input
-                  id="billing_phone"
-                  type="tel"
-                  placeholder="(555) 123-4567"
-                  value={formData.billing_phone}
-                  onChange={(e) => setFormData({ ...formData, billing_phone: formatPhoneNumber(e.target.value) })}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            {/* Billing Address */}
-            <div>
-              <label 
-                htmlFor="billing_address" 
-                className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-              >
-                Billing Address
-              </label>
-              <Input
-                id="billing_address"
-                type="text"
-                placeholder="123 Main Street"
-                value={formData.billing_address}
-                onChange={(e) => setFormData({ ...formData, billing_address: e.target.value })}
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* City, State, Zip - Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="col-span-2">
-                <label 
-                  htmlFor="billing_city" 
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-                >
-                  City
-                </label>
-                <Input
-                  id="billing_city"
-                  type="text"
-                  placeholder="City"
-                  value={formData.billing_city}
-                  onChange={(e) => setFormData({ ...formData, billing_city: e.target.value })}
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <label 
-                  htmlFor="billing_state" 
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-                >
-                  State
-                </label>
-                <Input
-                  id="billing_state"
-                  type="text"
-                  placeholder="CA"
-                  value={formData.billing_state}
-                  onChange={(e) => setFormData({ ...formData, billing_state: e.target.value })}
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <label 
-                  htmlFor="billing_zip" 
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-                >
-                  Zip Code
-                </label>
-                <Input
-                  id="billing_zip"
-                  type="text"
-                  placeholder="90210"
-                  value={formData.billing_zip}
-                  onChange={(e) => setFormData({ ...formData, billing_zip: e.target.value })}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-          </div>
+          <Dropdown
+            label="Timezone"
+            value={formData.timezone}
+            onChange={(value) => setFormData({ ...formData, timezone: value })}
+            options={timezoneOptions}
+          />
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            Used for displaying dates and times
+          </p>
         </div>
 
-        {/* Section 2: Admin Contact */}
+        {/* Language */}
         <div>
-          <h3 className="text-sm font-semibold text-orange-dark dark:text-orange mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-            Admin Contact
-          </h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-            The account owner or decision maker for this account
+          <Dropdown
+            label="Language"
+            value={formData.language}
+            onChange={(value) => setFormData({ ...formData, language: value })}
+            options={languageOptions}
+          />
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            Preferred language for the interface
           </p>
-          <div className="space-y-4">
-            {/* Admin Email & Phone - Side by Side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label 
-                  htmlFor="admin_email" 
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-                >
-                  Admin Contact Email
-                </label>
-                <Input
-                  id="admin_email"
-                  type="email"
-                  placeholder="admin@example.com"
-                  value={formData.admin_email}
-                  onChange={(e) => setFormData({ ...formData, admin_email: e.target.value })}
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <label 
-                  htmlFor="admin_phone" 
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-                >
-                  Admin Phone Number
-                </label>
-                <Input
-                  id="admin_phone"
-                  type="tel"
-                  placeholder="(555) 987-6543"
-                  value={formData.admin_phone}
-                  onChange={(e) => setFormData({ ...formData, admin_phone: formatPhoneNumber(e.target.value) })}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-          </div>
+        </div>
+
+        {/* Bio */}
+        <div>
+          <label 
+            htmlFor="bio" 
+            className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
+          >
+            Bio
+          </label>
+          <textarea
+            id="bio"
+            rows={3}
+            placeholder="Tell us a bit about yourself..."
+            value={formData.bio}
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+            disabled={isLoading}
+            className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+            maxLength={500}
+          />
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            {formData.bio.length}/500 characters
+          </p>
+        </div>
+
+        {/* Billing Notice */}
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium text-gray-900 dark:text-gray-100">Billing Information</span>
+            <br />
+            Billing details are managed through your subscription settings. 
+            Visit the billing page for your organization to update payment information.
+          </p>
         </div>
 
         {/* Action Buttons */}
@@ -336,4 +190,3 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
     </Modal>
   );
 }
-

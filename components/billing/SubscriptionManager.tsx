@@ -46,10 +46,8 @@ export function SubscriptionManager({
       // Build usage data - all limits are now unlimited (managed by Launch Darkly)
       const usageData: OrgUsageWithLimits = {
         org_id: orgId,
-        environments_count: 0, // TODO: Fetch actual counts
-        zones_count: 0,
+        zones_count: 0, // TODO: Fetch actual counts
         members_count: 0,
-        environments_limit: -1, // Unlimited
         zones_limit: -1, // Unlimited
         members_limit: -1, // Unlimited
         dns_records_limit: -1, // Unlimited
