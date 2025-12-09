@@ -142,6 +142,105 @@ if (recordData.type === 'PTR') {
 }
 ```
 
+### 5. PTR Record Name Validation by Reverse Zone Type (Required)
+
+Add helper function to determine IPv4 vs IPv6 reverse zone type:
+
+```javascript
+/**
+ * Determines if a reverse zone is IPv4 or IPv6
+ */
+function getReverseZoneType(zoneName) {
+  if (zoneName.endsWith('.in-addr.arpa')) return 'ipv4';
+  if (zoneName.endsWith('.ip6.arpa')) return 'ipv6';
+  return null;
+}
+```
+
+Add PTR name validation function:
+
+```javascript
+/**
+ * Validates PTR record name based on reverse zone type
+ */
+function validatePTRRecordName(name, zoneName) {
+  // Allow apex
+  if (name === '@' || name === '') {
+    return { valid: true };
+  }
+  
+  const reverseType = getReverseZoneType(zoneName);
+  
+  if (!reverseType) {
+    return {
+      valid: false,
+      error: 'PTR records are only allowed in reverse zones'
+    };
+  }
+  
+  if (reverseType === 'ipv4') {
+    // IPv4 reverse: must be an integer 0-255
+    const num = parseInt(name, 10);
+    if (!/^\d+$/.test(name) || isNaN(num) || num < 0 || num > 255) {
+      return {
+        valid: false,
+        error: 'PTR name in IPv4 reverse zone must be an integer between 0 and 255'
+      };
+    }
+  } else if (reverseType === 'ipv6') {
+    // IPv6 reverse: must be a single hexadecimal nibble
+    if (!/^[0-9a-fA-F]$/.test(name)) {
+      return {
+        valid: false,
+        error: 'PTR name in IPv6 reverse zone must be a single hexadecimal digit (0-9, a-f)'
+      };
+    }
+  }
+  
+  return { valid: true };
+}
+```
+
+Apply validation in PTR record handling:
+
+```javascript
+if (recordData.type === 'PTR') {
+  // Existing zone type validation
+  if (!isReverseZone(zone.name)) {
+    return res.status(400).json({
+      error: 'PTR records are only allowed in reverse zones (zones ending in .in-addr.arpa or .ip6.arpa)'
+    });
+  }
+  
+  // Existing value validation
+  if (!isValidDomain(recordData.value)) {
+    return res.status(400).json({
+      error: 'PTR record must point to a valid hostname (e.g., server.example.com)'
+    });
+  }
+  
+  // NEW: Name validation based on reverse zone type
+  const nameValidation = validatePTRRecordName(recordData.name, zone.name);
+  if (!nameValidation.valid) {
+    return res.status(400).json({
+      error: nameValidation.error
+    });
+  }
+}
+```
+
+#### PTR Name Validation Rules
+
+**IPv4 Reverse Zones** (`*.in-addr.arpa`):
+- Valid names: `@`, `` (empty), or integers `0` through `255`
+- Examples: `5`, `10`, `255`, `@`
+- Invalid: `256`, `-1`, `1.2`, `a`, `0f`, `subdomain`
+
+**IPv6 Reverse Zones** (`*.ip6.arpa`):
+- Valid names: `@`, `` (empty), or single hex digits `0-9`, `a-f` (case insensitive)
+- Examples: `0`, `5`, `a`, `f`, `@`
+- Invalid: `10`, `g`, `0a`, `subdomain`, `1.2`
+
 ## Testing Checklist
 
 After implementing these changes, test the following scenarios:
