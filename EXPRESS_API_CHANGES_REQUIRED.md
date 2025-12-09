@@ -164,9 +164,12 @@ Add PTR name validation function:
  * Validates PTR record name based on reverse zone type
  */
 function validatePTRRecordName(name, zoneName) {
-  // Allow apex
+  // PTR records cannot be at zone root
   if (name === '@' || name === '') {
-    return { valid: true };
+    return {
+      valid: false,
+      error: 'PTR records cannot be created at zone root. Specify a valid name.'
+    };
   }
   
   const reverseType = getReverseZoneType(zoneName);
@@ -232,14 +235,16 @@ if (recordData.type === 'PTR') {
 #### PTR Name Validation Rules
 
 **IPv4 Reverse Zones** (`*.in-addr.arpa`):
-- Valid names: `@`, `` (empty), or integers `0` through `255`
-- Examples: `5`, `10`, `255`, `@`
-- Invalid: `256`, `-1`, `1.2`, `a`, `0f`, `subdomain`
+- Valid names: Integers `0` through `255` only
+- Examples: `5`, `10`, `255`
+- Invalid: `@`, `` (empty/root), `256`, `-1`, `1.2`, `a`, `0f`, `subdomain`
 
 **IPv6 Reverse Zones** (`*.ip6.arpa`):
-- Valid names: `@`, `` (empty), or single hex digits `0-9`, `a-f` (case insensitive)
-- Examples: `0`, `5`, `a`, `f`, `@`
-- Invalid: `10`, `g`, `0a`, `subdomain`, `1.2`
+- Valid names: Single hex digits `0-9`, `a-f` (case insensitive) only
+- Examples: `0`, `5`, `a`, `f`
+- Invalid: `@`, `` (empty/root), `10`, `g`, `0a`, `subdomain`, `1.2`
+
+**Note**: PTR records cannot be created at the zone root. They must always have a specific name.
 
 ## Testing Checklist
 
