@@ -149,8 +149,8 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     description: 'Pointer Record (Reverse DNS)',
     requiresPriority: false,
     defaultTTL: 3600,
-    placeholder: '1.0.168.192.in-addr.arpa or *.ip6.arpa',
-    hint: 'Enter reverse DNS pointer. For IPv4: reverse IP + .in-addr.arpa (e.g., 1.0.168.192.in-addr.arpa). For IPv6: use .ip6.arpa format.',
+    placeholder: 'server.example.com',
+    hint: 'Enter the target hostname (e.g., server.example.com). PTR records are only available in reverse zones.',
   },
 };
 
