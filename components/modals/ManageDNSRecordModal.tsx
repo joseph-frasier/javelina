@@ -309,11 +309,12 @@ export function ManageDNSRecordModal({
                 
                 const isDisabled = option.disabled || false;
                 
-                const button = (
+                return (
                   <button
                     type="button"
                     onClick={() => !isDisabled && handleTypeChange(option.value as DNSRecordType)}
                     disabled={isDisabled}
+                    title={isDisabled ? 'Under Development' : undefined}
                     className={clsx(
                       'w-full flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all text-center relative',
                       isDisabled && 'cursor-not-allowed opacity-50 bg-gray-50 dark:bg-gray-800/50',
@@ -355,8 +356,6 @@ export function ManageDNSRecordModal({
                     {button}
                   </div>
                 );
-                return button;
->>>>>>> cd95c39 (feat: Add RFC 3597 (Generic DNS record) placeholder to record type selector)
               })}
             </div>
           </div>
