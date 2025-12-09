@@ -2,44 +2,19 @@
 
 A modern DNS management platform built with Next.js, offering enterprise-grade DNS record management, multi-organization support, and comprehensive billing integration.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-- **DNS Management**: Create, update, and manage DNS records with an intuitive interface
-- **Multi-Organization Support**: Manage multiple organizations and environments
-- **Role-Based Access Control**: Fine-grained permissions for admins, users, and organizations
-- **Billing & Subscriptions**: Stripe-powered subscription management with multiple plan tiers
-- **Admin Panel**: Comprehensive admin dashboard for user, organization, and zone management
-- **Audit Trail**: Complete audit logging for DNS changes and system events
-- **Real-time Analytics**: Monitor DNS performance and usage metrics
-- **OAuth Authentication**: Support for Google and GitHub OAuth providers
-- **AI Chat Assistant**: Built-in AI-powered help widget
-- **Mock Mode**: Development-friendly mock data for testing without backend dependencies
-
-## 🛠 Tech Stack
-
-- **Framework**: Next.js 14+ (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand
-- **UI Components**: Custom component library with Radix UI primitives
-- **Database**: PostgreSQL (via Supabase)
-- **Authentication**: Supabase Auth
-- **Payment Processing**: Stripe
-- **Deployment**: Vercel
-
-## 📋 Prerequisites
-
-- Node.js 18+ and npm/yarn
-- PostgreSQL (or Supabase account)
+### Prerequisites
+- Node.js 18+ and npm
+- PostgreSQL database (via Supabase account)
 - Stripe account (for billing features)
-- Google Cloud Console credentials (for OAuth)
-- GitHub OAuth App (for OAuth)
+- External Express.js backend API (separate repository)
 
-## 🔧 Installation
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/javelina.git
+   git clone https://github.com/joseph-frasier/javelina.git
    cd javelina
    ```
 
@@ -48,9 +23,9 @@ A modern DNS management platform built with Next.js, offering enterprise-grade D
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Configure environment variables**
 
-   Create a `.env.local` file in the root directory:
+   Create a `.env.local` file:
    ```env
    # Supabase
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -59,177 +34,612 @@ A modern DNS management platform built with Next.js, offering enterprise-grade D
    # Stripe
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 
-   # Backend API (External)
+   # Backend API
    NEXT_PUBLIC_API_URL=your_backend_api_url
 
-   # App Configuration
+   # Optional: Mock Mode (development without backend)
    NEXT_PUBLIC_MOCK_MODE=false
    ```
 
-## 🗄 Database Setup
+4. **Run development server**
+   ```bash
+   npm run dev
+   ```
+   
+   Frontend will start at **http://localhost:3000**
 
-1.   Project uses supabase cloud DB so just confirm that supabase env vars are correct.
+### Mock Mode (No Backend Required)
 
-## 🚀 Quick Start
-
-### Development Mode
-```bash
-npm run dev
-```
-
-The frontend will start at:
-- **Frontend**: http://localhost:3000
-
-**Note**: This frontend connects to an external backend API. Make sure `NEXT_PUBLIC_API_URL` is configured in your `.env.local` file.
-
-### Production Build
-```bash
-npm run build       # Build for production
-npm run start       # Run in production mode
-```
-
-📖 See [DEV_SCRIPTS_README.md](./DEV_SCRIPTS_README.md) for detailed development documentation.
-
-### Mock Mode
-
-For development without a backend, enable mock mode:
+Enable mock mode for development:
 ```env
 NEXT_PUBLIC_MOCK_MODE=true
 ```
 
-This will use local mock data instead of making API calls.
+Mock credentials:
+- `sarah.chen@company.com` / `password123`
+- `marcus.rodriguez@company.com` / `admin2024`
+
+## 📋 Current Functionality
+
+### 🔐 Authentication & Authorization
+
+**Authentication Methods:**
+- Email/password authentication via Supabase Auth
+- OAuth providers:
+  - Google OAuth (configurable)
+  - GitHub OAuth (configurable)
+- Password reset flow with email verification
+- Email verification on signup
+- Automatic JWT token management
+- Session persistence and refresh
+
+**Authorization System:**
+- **User Roles**: SuperAdmin (system-wide), Standard User
+- **Organization Roles**: 
+  - SuperAdmin (full org control)
+  - Admin (user & resource management)
+  - Editor (content management)
+  - Viewer (read-only access)
+- Row Level Security (RLS) enforced at database level
+- Protected routes with automatic redirects
+- Admin-only access controls
+
+### 🏢 Organization Management
+
+**Organization Features:**
+- Create and manage multiple organizations
+- Organization settings and configuration
+- Custom organization metadata
+- Stripe customer integration per organization
+- Organization deletion with cascading cleanup
+
+**Team Management:**
+- Invite users to organizations via email
+- Assign and modify user roles
+- Remove team members
+- View team member activity
+- Pending invitation management
+
+### 🌐 DNS Zone Management
+
+**Zone Operations:**
+- Create DNS zones under organizations
+- Configure zone settings:
+  - Zone name and description
+  - Zone type (primary, secondary, redirect)
+  - TTL settings
+  - Admin email
+- Zone verification with nameserver checks
+- Verification status tracking
+- Zone activation/deactivation
+- Zone deletion with record cleanup
+
+**Zone Information:**
+- SOA serial tracking
+- Nameserver assignment
+- Record count display
+- Last verification timestamp
+- Zone health status
+
+### 📝 DNS Records Management
+
+**Record Types Supported:**
+- A (IPv4 address)
+- AAAA (IPv6 address)
+- CNAME (Canonical name)
+- MX (Mail exchange)
+- TXT (Text records)
+- NS (Name server)
+- PTR (Pointer)
+- SRV (Service)
+- CAA (Certificate Authority Authorization)
+
+**Record Operations:**
+- Create new DNS records
+- Edit existing records
+- Delete records (single or bulk)
+- Duplicate records
+- View detailed record information
+- Record validation before saving
+
+**Record Management Features:**
+- Search and filter records by type
+- Sort by name, type, or TTL
+- Bulk selection and actions
+- Record detail modal with full information
+- TTL heatmap visualization
+- Record distribution charts
+
+### 💳 Billing & Subscriptions
+
+**Subscription Plans:**
+
+| Plan | Monthly | Lifetime | Features |
+|------|---------|----------|----------|
+| **Starter** | $9.95/mo | $238.80 | 1 org, 1 user, 2 zones, 200 records, 5M queries/mo |
+| **Pro** | $49.95/mo | $1,198.80 | 1 org, 5 users, 20 zones, 2K records, 50M queries/mo |
+| **Business** | $199.95/mo | $4,776.00 | 1 org, 20 users, 50 zones, 5K records, 500M queries/mo |
+| **Enterprise** | Contact Sales | Contact Sales | Unlimited everything, custom roles, SSO, SLA |
+
+**Billing Features:**
+- Multiple payment options (monthly subscription or lifetime)
+- Stripe Checkout integration
+- Secure payment processing with Stripe Elements
+- Subscription status tracking
+- Plan upgrade/downgrade with automatic proration
+- Lifetime plan upgrades (pay difference)
+- Cancel subscriptions (at period end)
+- Stripe Customer Portal access
+- Invoice history viewing
+- Payment method management
+- Usage tracking and display
+
+**Payment Flows:**
+- New subscription checkout
+- Plan change with proration calculation
+- Lifetime plan purchase
+- Upgrade between lifetime tiers
+- Webhook-driven status updates
+
+### 👤 User Profile & Settings
+
+**Profile Management:**
+- Edit profile information (name, title, phone)
+- Update display name and bio
+- Upload and manage avatar
+- Timezone configuration
+- Language preferences
+- Contact information management
+
+**Account Settings:**
+- Change password
+- Update email address
+- MFA enable/disable (UI ready)
+- Connect OAuth providers (Google, GitHub)
+- View last login time
+- Account status display
+
+**User Settings Sections:**
+- General Settings (profile, preferences)
+- Security Settings (password, MFA, OAuth)
+- Billing & Subscriptions (per organization)
+- Access Control (organization roles, permissions)
+- Audit Logs (user activity history)
+
+### 📊 Dashboard & Analytics
+
+**Main Dashboard:**
+- Welcome guidance for new users
+- Quick action cards
+- Organization selector
+- Recent activity feed
+- Quick navigation to zones and settings
+- Usage statistics overview
+
+**Analytics Page:**
+- Filter by organization and zone
+- Query volume charts
+- DNS record distribution
+- Zone health monitoring
+- Time-based analytics
+- Export analytics data
+
+**Visualizations:**
+- Record type distribution pie charts
+- TTL heatmaps
+- Query volume over time
+- Zone verification status
+
+### 🔧 Admin Panel
+
+**Admin Dashboard:**
+- System-wide statistics
+- User growth metrics
+- Organization count
+- Total zones and records
+- Recent system activity
+- Quick action buttons
+
+**User Management:**
+- View all users with search and filtering
+- Bulk user selection
+- User role management (promote to SuperAdmin)
+- User impersonation for support
+- Delete users with confirmation
+- Export user data (Excel, PDF)
+- View user details and organizations
+
+**Organization Management:**
+- View all organizations
+- Organization statistics
+- Subscription status per org
+- Delete organizations
+- Export organization data
+- Quick actions menu
+
+**Zone Management:**
+- View all zones across organizations
+- Zone status monitoring
+- Bulk zone operations
+- Export zone configurations
+
+**Audit Logs:**
+- System-wide activity tracking
+- Filter by user, action, resource
+- Date range selection
+- Export audit logs
+- Detailed activity information
+
+**Discount Codes:**
+- Create and manage discount codes (backend feature)
+- Code expiration and usage limits
+- Apply to specific plans
+
+**Admin Features:**
+- User impersonation banner
+- Exit impersonation
+- Bulk data export
+- Pagination for large datasets
+- Quick actions dropdown
+- Select all functionality
+
+### 🏷️ Tagging System
+
+**Tag Management:**
+- Create custom tags
+- Assign tags to zones
+- Color-coded tag display
+- Filter zones by tags
+- Tag usage tracking
+- Delete unused tags
+
+### 📋 Audit Trail
+
+**Activity Logging:**
+- All user actions logged
+- DNS record change tracking
+- Organization modifications
+- User access events
+- Timestamp and IP address capture
+- User agent tracking
+
+**Audit Information:**
+- Action type
+- Resource affected
+- Old and new values (for updates)
+- Actor information
+- Context metadata
+
+### 💬 AI Chat Assistant
+
+**Help Widget:**
+- AI-powered assistance
+- Context-aware help
+- Quick answers to common questions
+- Expandable chat interface
+- Minimizable widget
+
+### 🎨 UI/UX Features
+
+**Interface Components:**
+- Responsive design (mobile, tablet, desktop)
+- Dark mode ready (system preference)
+- Toast notifications for feedback
+- Modal dialogs for forms
+- Breadcrumb navigation
+- Loading states and skeletons
+- Empty state displays
+- Error handling with user-friendly messages
+- Form validation with inline errors
+- Confirmation dialogs for destructive actions
+
+**Navigation:**
+- Persistent sidebar with org selector
+- Header with user menu
+- Breadcrumb trails
+- Quick actions from header
+- Mobile-responsive hamburger menu
+
+**Data Display:**
+- Sortable tables
+- Searchable lists
+- Pagination controls
+- Bulk selection checkboxes
+- Status badges and indicators
+- Progress meters
+- Charts and visualizations
+
+### 🔄 State Management
+
+**Client State (Zustand):**
+- Authentication state
+- User profile data
+- Subscription information
+- Organization hierarchy
+- Settings preferences
+- Toast notifications
+
+**Server State (TanStack Query):**
+- Organizations data
+- Zones and records
+- Subscription status
+- Analytics data
+- Automatic cache invalidation
+- Background refetching
+
+### 🔒 Security Features
+
+**Data Protection:**
+- JWT-based authentication
+- Row Level Security (RLS) policies
+- Secure API communication
+- CORS configuration
+- Input validation and sanitization
+- SQL injection prevention
+- XSS protection
+
+**Access Control:**
+- Role-based permissions
+- Resource-level authorization
+- Organization isolation
+- Admin-only routes
+- Protected API endpoints
+
+### 📱 Pages & Routes
+
+**Public Pages:**
+- `/login` - Login with email or OAuth
+- `/signup` - User registration
+- `/forgot-password` - Password reset request
+- `/reset-password` - Password reset form
+- `/pricing` - Plan selection and comparison
+- `/email-verified` - Email confirmation success
+
+**Authenticated Pages:**
+- `/` - Main dashboard / welcome
+- `/organization/[orgId]` - Organization overview with zones
+- `/zone/[id]` - Zone detail with DNS records
+- `/analytics` - Analytics dashboard
+- `/profile` - User profile
+- `/settings` - User settings with tabs:
+  - General Settings
+  - Security Settings
+  - Billing & Subscriptions
+  - Access Control
+  - Audit Logs
+
+**Admin Pages (SuperAdmin only):**
+- `/admin` - Admin dashboard
+- `/admin/login` - Admin login portal
+- `/admin/users` - User management
+- `/admin/organizations` - Organization management
+- `/admin/zones` - Zone management
+- `/admin/audit` - System audit logs
+- `/admin/discounts` - Discount code management
+
+**Billing Pages:**
+- `/checkout` - Stripe checkout page
+- `/stripe/success` - Payment success
+- `/stripe/cancel` - Payment cancelled
+- `/settings/billing` - Billing management
+
+**Utility Pages:**
+- `/test-api` - API connectivity testing
+- `/auth/callback` - OAuth callback handler
+- `/auth/signout` - Logout handler
+
+### 🛠 Development Features
+
+**Mock Mode:**
+- Complete mock data for all features
+- Simulated API responses
+- Mock authentication
+- Test organizations and zones
+- No backend required for UI development
+
+**Developer Tools:**
+- Environment switcher scripts
+- API testing page
+- TypeScript strict mode
+- ESLint configuration
+- Hot module replacement
+
+## 🛠 Tech Stack
+
+- **Framework**: Next.js 15+ (App Router)
+- **Language**: TypeScript 5.7+
+- **Runtime**: React 19
+- **Styling**: Tailwind CSS 3.4+
+- **State Management**: Zustand 5.0+
+- **Data Fetching**: TanStack Query 5.6+
+- **Database**: PostgreSQL (via Supabase 2.74+)
+- **Authentication**: Supabase Auth
+- **Payment Processing**: Stripe 19+
+- **Deployment**: Vercel
 
 ## 📚 Project Structure
 
 ```
 javelina/
-├── app/                      # Next.js app directory
+├── app/                      # Next.js app directory (App Router)
 │   ├── admin/               # Admin panel pages
-│   ├── api/                 # API routes
-│   ├── auth/                # Authentication flows
-│   ├── organization/        # Organization management
-│   ├── zone/                # DNS zone management
+│   ├── analytics/           # Analytics dashboard
+│   ├── auth/                # Auth callbacks
+│   ├── checkout/            # Payment checkout
+│   ├── login/               # Login page
+│   ├── organization/        # Org pages
+│   ├── pricing/             # Pricing page
+│   ├── profile/             # User profile
+│   ├── settings/            # User settings
+│   ├── zone/                # Zone detail pages
 │   └── ...
 ├── components/              # React components
-│   ├── admin/              # Admin-specific components
-│   ├── auth/               # Authentication components
-│   ├── dns/                # DNS management components
+│   ├── admin/              # Admin components
+│   ├── auth/               # Auth components
 │   ├── billing/            # Billing components
-│   └── ui/                 # Reusable UI components
-├── lib/                     # Utility libraries
+│   ├── chat/               # AI chat widget
+│   ├── dns/                # DNS components
+│   ├── modals/             # Modal dialogs
+│   └── ui/                 # Reusable UI
+├── lib/                     # Business logic
 │   ├── actions/            # Server actions
 │   ├── api/                # API clients
-│   ├── hooks/              # Custom React hooks
-│   └── supabase/           # Supabase utilities
-├── supabase/               # Database migrations and schemas
-├── types/                   # TypeScript type definitions
+│   ├── hooks/              # Custom hooks
+│   ├── supabase/           # Supabase utils
+│   └── *-store.ts          # State stores
+├── supabase/               # Database
+│   └── migrations/         # SQL migrations
+├── types/                   # TypeScript types
 └── public/                 # Static assets
 ```
 
-## 🔐 Authentication Setup
+## 🗄 Database Schema
 
-### Email/Password Authentication
-Email/password authentication is enabled by default through Supabase.
-
-### OAuth Setup
-For detailed OAuth setup instructions, see:
-- Frontend: Check existing OAuth configuration in `lib/auth-store.ts`
-- Supabase Dashboard: Configure OAuth providers in Authentication → Providers
-
-Supported providers:
-- Google OAuth
-- GitHub OAuth
-
-## 💳 Stripe Integration
-
-1. **Configure Stripe products**
-   - Create products in Stripe Dashboard
-   - Update plan IDs in `lib/plans-config.ts`
-
-2. **Set up webhooks**
-   ```bash
-   stripe listen --forward-to localhost:3000/api/webhooks/stripe
-   ```
-
-3. **Configure webhook endpoint** in production
-   - See `STRIPE_WEBHOOK_SETUP.md` for details
-
-## 🔒 Admin Features
-
-### Creating an Admin User
-
-Run the admin seed script:
-```bash
-psql -h your_host -U postgres -d postgres -f supabase/seed-admin-user.sql
+**Current Hierarchy:**
+```
+Organizations → Zones → Zone Records
 ```
 
-### Admin Access
-- Navigate to `/admin/login`
-- Admin dashboard: `/admin`
-- Features:
-  - User management
-  - Organization management
-  - Zone management
-  - Audit logs
-  - User impersonation
+**Core Tables:**
+- `profiles` - Extended user information
+- `organizations` - Organization data
+- `organization_members` - User-org relationships
+- `zones` - DNS zones
+- `zone_records` - DNS records
+- `plans` - Subscription plans
+- `subscriptions` - Organization subscriptions
+- `audit_logs` - Activity tracking
+
+**Security:**
+- Row Level Security (RLS) enabled on all tables
+- JWT-based authentication
+- Role-based access policies
+
+## 💳 Stripe Setup
+
+1. **Create products** in Stripe Dashboard
+2. **Configure webhook endpoint**:
+   ```bash
+   # Local development
+   stripe listen --forward-to localhost:3000/api/webhooks/stripe
+   ```
+3. **Update environment variables**:
+   ```env
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   ```
+
+**Webhook Events:**
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_succeeded`
+- `invoice.payment_failed`
+- `payment_intent.succeeded`
+
+## 🔐 OAuth Setup
+
+### Google OAuth
+1. Create OAuth credentials in Google Cloud Console
+2. Add authorized redirect URI: `https://[project].supabase.co/auth/v1/callback`
+3. Configure in Supabase Dashboard → Authentication → Providers
+
+### GitHub OAuth
+1. Create OAuth App in GitHub Settings
+2. Add callback URL: `https://[project].supabase.co/auth/v1/callback`
+3. Configure in Supabase Dashboard → Authentication → Providers
 
 ## 📊 Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+```bash
+# Development
+npm run dev          # Start dev server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
 
-### Utilities
-- `./scripts/switch-env.sh` - Switch between development environments
+# Environment Management
+npm run env:dev      # Switch to dev environment
+npm run env:prod     # Switch to prod environment
+npm run env:status   # Check current environment
+```
 
 ## 🧪 Testing
 
-Access the test API page at `/test-api` to verify backend connectivity and API functionality.
+**Manual Testing:**
+1. Authentication flows (email, OAuth)
+2. Organization CRUD operations
+3. Zone and record management
+4. Subscription checkout
+5. Plan upgrades
+6. Admin features
+
+**Test Page:**
+- Navigate to `/test-api` for backend connectivity testing
 
 ## 🌐 Deployment
 
-### Vercel Deployment
-1. Connect your repository to Vercel
-2. Configure environment variables (including `NEXT_PUBLIC_API_URL` for your backend)
-3. Deploy
+### Frontend (Vercel)
 
-Configuration file provided:
-- `vercel.json`
+1. Connect GitHub repository to Vercel
+2. Configure environment variables
+3. Set build command: `npm run build`
+4. Set output directory: `.next`
+5. Deploy
 
-**Note**: Backend is deployed separately. Update `NEXT_PUBLIC_API_URL` to point to your production backend API.
+**Branch Deployment:**
+- `main` → Production
+- `dev` → Development preview
 
-## 🤝 Contributing
+### Backend
 
-1. Create a feature branch (`git checkout -b feature/amazing-feature`)
-2. Commit your changes (`git commit -m 'Add some amazing feature'`)
-3. Push to the branch (`git push origin feature/amazing-feature`)
-4. Open a Pull Request
-
-## 📄 Documentation
-
-Additional documentation can be found in:
-- `documentation/JAVELINA_DOCUMENTATION.md` - Comprehensive platform documentation
-- `DEV_SCRIPTS_README.md` - Development scripts and workflow guide
-- `ENVIRONMENT_SETUP.md` - Environment setup guide
-- `STRIPE_WEBHOOK_SETUP.md` - Stripe webhook integration guide
-- `supabase/README.md` - Database schema and migration info
+The Express.js backend is deployed separately. Ensure:
+- Backend accessible at `NEXT_PUBLIC_API_URL`
+- All environment variables configured
+- Stripe webhooks configured
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+**OAuth Issues:**
+- Verify redirect URIs in OAuth provider settings
+- Check Supabase Auth configuration
+- Ensure callback route is accessible
 
-**Issue**: OAuth not working
-- **Solution**: Verify OAuth credentials in Supabase dashboard and environment variables
+**Stripe Issues:**
+- Verify webhook secret matches environment variable
+- Check Stripe dashboard for failed events
+- Test with Stripe test cards
 
-**Issue**: Stripe webhooks failing
-- **Solution**: Check webhook secret and ensure endpoint is accessible
+**Backend Connection:**
+- Verify `NEXT_PUBLIC_API_URL` is correct
+- Check backend is running
+- Test with `/test-api` page
 
-**Issue**: Database connection errors
-- **Solution**: Verify Supabase credentials and network connectivity
+**Database Issues:**
+- Verify Supabase credentials
+- Check RLS policies
+- Ensure migrations are applied
 
-**Issue**: Mock mode not working
-- **Solution**: Ensure `NEXT_PUBLIC_MOCK_MODE=true` in `.env.local`
+## 🔧 Environment Variables
+
+```env
+# Required
+NEXT_PUBLIC_SUPABASE_URL=              # Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=         # Supabase anon key
+NEXT_PUBLIC_API_URL=                    # Backend API URL
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=    # Stripe publishable key
+
+# Optional
+NEXT_PUBLIC_MOCK_MODE=false            # Enable mock mode
+NEXT_PUBLIC_APP_URL=                   # Frontend URL
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request to `dev` branch
 
 ## 📝 License
 
@@ -239,9 +649,8 @@ Additional documentation can be found in:
 
 [Add author information here]
 
-## 🙏 Acknowledgments
+---
 
-- Built with Next.js, Supabase, and Stripe
-- UI components inspired by Radix UI and shadcn/ui
-
-
+**Version**: 0.1.0  
+**Last Updated**: December 2024  
+**Repository**: https://github.com/joseph-frasier/javelina
