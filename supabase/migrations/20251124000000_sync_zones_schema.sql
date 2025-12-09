@@ -16,3 +16,5 @@ COMMENT ON TABLE public.zones IS 'DNS zones with soft delete and activation supp
 COMMENT ON COLUMN public.zones.deleted_at IS 'Timestamp when zone was soft deleted';
 COMMENT ON COLUMN public.zones.live IS 'Whether zone is active/live';
 
+
+

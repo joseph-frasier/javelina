@@ -141,3 +141,5 @@ DROP INDEX IF EXISTS idx_zones_environment_live;
 - All operations use `IF NOT EXISTS` or `IF EXISTS` clauses
 - The dev branch already has these changes applied via separate migrations
 
+
+

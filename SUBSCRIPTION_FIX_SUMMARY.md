@@ -211,3 +211,5 @@ If issues persist after applying these fixes:
 3. Verify Stripe webhook configuration
 4. Check that `SUPABASE_SERVICE_ROLE_KEY` is set correctly
 
+
+

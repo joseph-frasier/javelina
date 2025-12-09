@@ -1,7 +1,7 @@
 'use client';
 
 import { TagBadge } from '@/components/ui/TagBadge';
-import type { Tag } from '@/lib/mock-tags-data';
+import type { Tag } from '@/lib/api-client';
 
 interface FavoriteTagsSidebarProps {
   tags: Tag[];
@@ -18,7 +18,7 @@ export function FavoriteTagsSidebar({
   onClearFilters,
   isCollapsed = false,
 }: FavoriteTagsSidebarProps) {
-  const favoriteTags = tags.filter(tag => tag.isFavorite);
+  const favoriteTags = tags.filter(tag => tag.is_favorite);
   const hasActiveFilters = activeTagIds.length > 0;
 
   if (favoriteTags.length === 0) {
