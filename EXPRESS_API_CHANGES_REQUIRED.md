@@ -92,21 +92,53 @@ if (req.body.nameservers) {
 // Root NS records should be created/managed by the DNS service backend
 ```
 
-### 3. PTR Record Validation (Optional)
+### 3. Zone-Type-Based Record Validation (Required)
 
-For enhanced validation, you may want to add PTR-specific validation:
+Add a helper function to determine zone type:
+
+```javascript
+function isReverseZone(zoneName) {
+  return zoneName.endsWith('.in-addr.arpa') || zoneName.endsWith('.ip6.arpa');
+}
+```
+
+Then add zone-type-based validation after fetching the zone:
+
+```javascript
+// Determine zone type
+const reverseZone = isReverseZone(zone.name);
+
+// Define allowed record types based on zone type
+const forwardRecordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA', 'NS'];
+const reverseRecordTypes = ['PTR', 'NS'];
+
+// Validate record type for reverse zones
+if (reverseZone && !reverseRecordTypes.includes(recordData.type)) {
+  return res.status(400).json({
+    error: `Invalid record type for reverse zone. Reverse zones only support: ${reverseRecordTypes.join(', ')}`
+  });
+}
+
+// Validate PTR records are only in reverse zones
+if (!reverseZone && recordData.type === 'PTR') {
+  return res.status(400).json({
+    error: 'PTR records are only allowed in reverse zones (zones ending in .in-addr.arpa or .ip6.arpa)'
+  });
+}
+```
+
+### 4. PTR Record Value Validation
+
+Add PTR-specific value validation:
 
 ```javascript
 if (recordData.type === 'PTR') {
-  // Validate that the value is a valid domain name
+  // Validate that the value is a valid hostname
   if (!isValidDomain(recordData.value)) {
     return res.status(400).json({
-      error: 'PTR record must point to a valid domain name'
+      error: 'PTR record must point to a valid hostname (e.g., server.example.com)'
     });
   }
-  
-  // Optionally validate reverse DNS format for the name field
-  // This is informational since PTR records can technically exist in forward zones
 }
 ```
 

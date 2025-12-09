@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
-import { validateDNSRecord, getFQDN } from '@/lib/utils/dns-validation';
+import { validateDNSRecord, getFQDN, isReverseZone } from '@/lib/utils/dns-validation';
 
 interface ManageDNSRecordModalProps {
   isOpen: boolean;
@@ -20,8 +20,8 @@ interface ManageDNSRecordModalProps {
   existingRecords: DNSRecord[];
 }
 
-// SOA is intentionally excluded - it should only be edited, not manually created
-const recordTypeOptions = [
+// All possible record types (SOA is intentionally excluded - it should only be edited, not manually created)
+const allRecordTypeOptions = [
   { value: 'A', label: 'A - IPv4 Address', disabled: false },
   { value: 'AAAA', label: 'AAAA - IPv6 Address', disabled: false },
   { value: 'CNAME', label: 'CNAME - Canonical Name', disabled: false },
@@ -34,6 +34,12 @@ const recordTypeOptions = [
   { value: 'RFC3597', label: 'Generic (RFC 3597)', disabled: true },
 ];
 
+// Record types allowed in forward zones
+const forwardRecordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA', 'NS'];
+
+// Record types allowed in reverse zones
+const reverseRecordTypes = ['PTR', 'NS'];
+
 export function ManageDNSRecordModal({
   isOpen,
   onClose,
@@ -43,6 +49,12 @@ export function ManageDNSRecordModal({
   zoneName,
   existingRecords,
 }: ManageDNSRecordModalProps) {
+  // Determine zone type and filter available record types
+  const isReverse = isReverseZone(zoneName);
+  const allowedTypes = isReverse ? reverseRecordTypes : forwardRecordTypes;
+  const recordTypeOptions = allRecordTypeOptions.filter(option => 
+    allowedTypes.includes(option.value) || option.disabled
+  );
   const [formData, setFormData] = useState<DNSRecordFormData>({
     name: '',
     type: 'A',
@@ -72,10 +84,11 @@ export function ManageDNSRecordModal({
         const isPreset = TTL_PRESETS.some(p => p.value === record.ttl);
         setCustomTTL(!isPreset);
       } else {
-        // Reset for add mode
+        // Reset for add mode - default to first allowed type for the zone
+        const defaultType = (isReverse ? 'PTR' : 'A') as DNSRecordType;
         setFormData({
           name: '',
-          type: 'A',
+          type: defaultType,
           value: '',
           ttl: 3600,
           comment: '',
@@ -85,7 +98,7 @@ export function ManageDNSRecordModal({
       setErrors({});
       setWarnings([]);
     }
-  }, [isOpen, mode, record]);
+  }, [isOpen, mode, record, isReverse]);
 
   // Real-time validation
   useEffect(() => {
