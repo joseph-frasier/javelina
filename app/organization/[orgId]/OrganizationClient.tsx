@@ -185,8 +185,8 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   };
 
   const getAssignedTagIds = (zoneId: string): string[] => {
-    const assignment = zoneTagAssignments.find(a => a.zoneId === zoneId);
-    return assignment?.tagIds || [];
+    const assignment = zoneTagAssignments.find(a => a.zone_id === zoneId);
+    return assignment?.tag_ids || [];
   };
 
   // Memoize assigned tag IDs for the selected zone to prevent useEffect re-triggers in modal
