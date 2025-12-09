@@ -276,15 +276,13 @@ export function ManageDNSRecordModal({
                 
                 const isDisabled = option.disabled || false;
                 
-                return (
+                const button = (
                   <button
-                    key={option.value}
                     type="button"
                     onClick={() => !isDisabled && handleTypeChange(option.value as DNSRecordType)}
                     disabled={isDisabled}
-                    title={isDisabled ? 'Under Development' : undefined}
                     className={clsx(
-                      'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all text-center',
+                      'w-full flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all text-center relative',
                       isDisabled && 'cursor-not-allowed opacity-50 bg-gray-50 dark:bg-gray-800/50',
                       !isDisabled && isSelected && 'border-orange bg-orange/10 dark:bg-orange/20',
                       !isDisabled && !isSelected && 'border-gray-200 dark:border-gray-700 hover:border-orange/50 dark:hover:border-orange/50 bg-white dark:bg-gray-800'
@@ -303,6 +301,26 @@ export function ManageDNSRecordModal({
                       {info.description}
                     </div>
                   </button>
+                );
+                
+                // Wrap disabled buttons in a div with custom tooltip
+                if (isDisabled) {
+                  return (
+                    <div key={option.value} className="relative group">
+                      {button}
+                      {/* Custom tooltip */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap pointer-events-none z-50">
+                        Under Development
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={option.value}>
+                    {button}
+                  </div>
                 );
               })}
             </div>
