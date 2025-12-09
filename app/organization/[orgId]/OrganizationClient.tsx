@@ -153,7 +153,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   // Get zone count for a tag (for delete confirmation)
   const getZoneCountForTag = (tagId: string): number => {
-    return zoneTagAssignments.filter(a => a.tagIds.includes(tagId)).length;
+    return zoneTagAssignments.filter(a => a.tag_ids.includes(tagId)).length;
   };
 
   // Toggle tag in/out of active filter (multi-select)
