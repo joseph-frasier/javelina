@@ -350,17 +350,17 @@ export function validateDNSRecord(
         errors.value = 'Invalid domain name';
       }
       
+      // Prevent CNAME at zone root
+      if (formData.name === '@' || formData.name === '') {
+        errors.name = 'The domain root (@) cannot be a CNAME. Please use a subdomain instead.';
+      }
+      
       // Check for CNAME conflicts
       const cnameConflicts = existingRecords.filter(
         r => r.name === formData.name && r.id !== recordId
       );
       if (cnameConflicts.length > 0) {
         errors.value = 'CNAME records cannot coexist with other records at the same name';
-      }
-      
-      // Warn about apex CNAME
-      if (formData.name === '@' || formData.name === '') {
-        warnings.push('CNAME at zone apex (@) may cause issues with some DNS implementations');
       }
       break;
       
