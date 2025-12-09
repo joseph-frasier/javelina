@@ -37,7 +37,26 @@ if (recordData.type === 'NS') {
 }
 ```
 
-##### B. Add PTR Record Type Support
+##### B. Add CNAME Root Record Restriction
+Prevent users from creating or updating CNAME records at the zone root:
+
+```javascript
+// Validation logic to add
+if (recordData.type === 'CNAME') {
+  const normalizedName = recordData.name.trim();
+  const isRootCNAME = normalizedName === '@' || 
+                      normalizedName === '' || 
+                      normalizedName === zoneName;
+  
+  if (isRootCNAME) {
+    return res.status(400).json({
+      error: 'The domain root (@) cannot be a CNAME. Please use a subdomain instead.'
+    });
+  }
+}
+```
+
+##### C. Add PTR Record Type Support
 Update the record type validation to include 'PTR':
 
 ```javascript
@@ -50,7 +69,7 @@ if (!validRecordTypes.includes(recordData.type)) {
 }
 ```
 
-##### C. Update TTL Validation
+##### D. Update TTL Validation
 Change minimum TTL from 60 seconds to 10 seconds:
 
 ```javascript
@@ -256,6 +275,13 @@ After implementing these changes, test the following scenarios:
 - [ ] Attempt to create NS record with name matching zone name → Should fail with appropriate error
 - [ ] Create NS record with subdomain name (e.g., 'dev') → Should succeed
 - [ ] Attempt to update existing root NS record → Should fail with appropriate error
+
+### CNAME Record Validation
+- [ ] Attempt to create CNAME record with name '@' → Should fail with appropriate error
+- [ ] Attempt to create CNAME record with name '' (empty) → Should fail with appropriate error
+- [ ] Attempt to create CNAME record with name matching zone name → Should fail with appropriate error
+- [ ] Create CNAME record with subdomain name (e.g., 'www') → Should succeed
+- [ ] Attempt to update existing CNAME to root → Should fail with appropriate error
 
 ### PTR Record Support
 - [ ] Create PTR record with valid domain as value → Should succeed
