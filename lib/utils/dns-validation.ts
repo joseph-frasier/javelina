@@ -73,8 +73,8 @@ export function isValidTTL(ttl: number): { valid: boolean; error?: string } {
   if (!Number.isInteger(ttl)) {
     return { valid: false, error: 'TTL must be an integer' };
   }
-  if (ttl < 60) {
-    return { valid: false, error: 'TTL must be at least 60 seconds' };
+  if (ttl < 10) {
+    return { valid: false, error: 'TTL must be at least 10 seconds' };
   }
   if (ttl > 604800) {
     return { valid: false, error: 'TTL must not exceed 604800 seconds (7 days)' };
@@ -187,12 +187,75 @@ export function validateTXTRecord(value: string): { valid: boolean; error?: stri
 }
 
 /**
+ * Validates PTR record format for reverse DNS
+ */
+export function validatePTRRecord(value: string): { valid: boolean; error?: string } {
+  // PTR records should point to a valid domain name
+  // The record name itself should be in reverse DNS format (validated separately)
+  
+  if (!isValidDomain(value)) {
+    return { valid: false, error: 'PTR record must point to a valid domain name' };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Validates if a record name is in reverse DNS format
+ */
+export function isValidReverseDNSName(name: string): boolean {
+  // IPv4 reverse DNS: X.X.X.X.in-addr.arpa
+  const ipv4ReverseRegex = /^(\d{1,3}\.){3}\d{1,3}\.in-addr\.arpa$/;
+  
+  // IPv6 reverse DNS: *.*.*.*.ip6.arpa (nibble format)
+  const ipv6ReverseRegex = /^([0-9a-fA-F]\.){1,32}ip6\.arpa$/;
+  
+  // Allow @ or empty for zone apex (for reverse zones)
+  if (name === '@' || name === '') return true;
+  
+  // Allow partial reverse DNS names (subdomains within reverse zones)
+  const ipv4PartialRegex = /^(\d{1,3}\.?)+$/;
+  const ipv6PartialRegex = /^([0-9a-fA-F]\.?)+$/;
+  
+  return ipv4ReverseRegex.test(name) || 
+         ipv6ReverseRegex.test(name) ||
+         ipv4PartialRegex.test(name) ||
+         ipv6PartialRegex.test(name);
+}
+
+/**
+ * Validates NS record placement - prevents creation at zone root
+ */
+export function validateNSRecordPlacement(
+  name: string, 
+  zoneName: string
+): { valid: boolean; error?: string } {
+  // Normalize the name
+  const normalizedName = name.trim();
+  
+  // Check if this is a root NS record
+  const isRootNS = normalizedName === '@' || 
+                   normalizedName === '' || 
+                   normalizedName === zoneName;
+  
+  if (isRootNS) {
+    return {
+      valid: false,
+      error: 'NS records at zone root are system-managed and cannot be created or modified by users. NS records are only allowed for subdomains (e.g., "dev" for delegation).'
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
  * Main validation function for DNS records
  */
 export function validateDNSRecord(
   formData: DNSRecordFormData,
   existingRecords: DNSRecord[] = [],
-  recordId?: string
+  recordId?: string,
+  zoneName?: string
 ): DNSValidationResult {
   const errors: Record<string, string> = {};
   const warnings: string[] = [];
@@ -255,13 +318,11 @@ export function validateDNSRecord(
         errors.value = 'Invalid nameserver domain';
       }
       
-      // Check NS record count for apex
-      if (formData.name === '@' || formData.name === '') {
-        const nsRecords = existingRecords.filter(
-          r => r.type === 'NS' && (r.name === '@' || r.name === '') && r.id !== recordId
-        );
-        if (nsRecords.length < 1) {
-          warnings.push('Zones should have at least 2 NS records for redundancy');
+      // Validate NS record placement - prevent root NS records
+      if (zoneName) {
+        const placementValidation = validateNSRecordPlacement(formData.name, zoneName);
+        if (!placementValidation.valid) {
+          errors.name = placementValidation.error || 'Invalid NS record placement';
         }
       }
       break;
@@ -292,6 +353,21 @@ export function validateDNSRecord(
       
     case 'SOA':
       warnings.push('SOA records are auto-managed. Manual modification not recommended.');
+      break;
+      
+    case 'PTR':
+      const ptrValidation = validatePTRRecord(formData.value);
+      if (!ptrValidation.valid) {
+        errors.value = ptrValidation.error || 'Invalid PTR record';
+      }
+      
+      // Optionally validate if the name looks like reverse DNS
+      // This is informational - PTR records can technically be used in forward zones too
+      if (formData.name && formData.name !== '@' && formData.name !== '') {
+        if (!isValidReverseDNSName(formData.name) && !isValidRecordName(formData.name)) {
+          warnings.push('PTR record names are typically in reverse DNS format (e.g., 1.0.168.192.in-addr.arpa)');
+        }
+      }
       break;
   }
   

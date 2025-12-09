@@ -78,7 +78,6 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [editFormData, setEditFormData] = useState({
     name: zone.name || '',
     description: zone.description || '',
-    nameservers: zone.nameservers ? zone.nameservers.join('\n') : '',
     admin_email: zone.admin_email || 'admin@example.com',
     negative_caching_ttl: zone.negative_caching_ttl || 3600,
   });
@@ -475,36 +474,14 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
             />
           </div>
 
-          {/* Nameservers */}
-          <div>
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Nameservers</label>
-            <textarea
-              value={editFormData.nameservers}
-              onChange={(e) => setEditFormData({ ...editFormData, nameservers: e.target.value })}
-              placeholder="One nameserver per line (e.g., ns1.example.com)"
-              rows={4}
-              className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent font-mono text-xs disabled:bg-gray-light disabled:cursor-not-allowed"
-            />
-          </div>
-
           {/* SOA Configuration Section */}
           <div className="pt-4 border-t border-gray-light dark:border-gray-700">
             <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">SOA Configuration</h3>
+            <p className="text-xs text-gray-slate mb-4">
+              Root NS records are system-managed by the DNS service. SOA settings control zone metadata.
+            </p>
             
             <div className="space-y-4">
-              {/* Primary Nameserver (Read-only, derived) */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                  Primary Nameserver <span className="text-gray-400">(read-only)</span>
-                </label>
-                <Input
-                  type="text"
-                  value={editFormData.nameservers.split('\n')[0] || 'ns1.example.com'}
-                  disabled
-                  className="bg-gray-100 dark:bg-gray-700"
-                />
-                <p className="mt-1 text-xs text-gray-slate">Derived from first nameserver listed above</p>
-              </div>
 
               {/* Admin Email */}
               <div>
