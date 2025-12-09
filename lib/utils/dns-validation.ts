@@ -272,8 +272,10 @@ export function validatePTRRecordName(
   name: string,
   zoneName: string
 ): { valid: boolean; error?: string } {
-  // Allow apex
-  if (name === '@' || name === '') return { valid: true };
+  // PTR records cannot be at zone root
+  if (name === '@' || name === '') {
+    return { valid: false, error: 'PTR records cannot be created at zone root. Specify a valid name.' };
+  }
   
   const reverseType = getReverseZoneType(zoneName);
   
