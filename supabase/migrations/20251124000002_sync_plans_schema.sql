@@ -13,3 +13,5 @@ CHECK (billing_interval IS NULL OR billing_interval = ANY (ARRAY['month'::text, 
 -- Update comment
 COMMENT ON COLUMN public.plans.billing_interval IS 'Billing cycle: month, year, or NULL for free/custom plans';
 
+
+
