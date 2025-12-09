@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { TagBadge } from '@/components/ui/TagBadge';
-import type { Tag, ZoneTagAssignment } from '@/lib/mock-tags-data';
-import { getTagsForZone } from '@/lib/mock-tags-data';
+import type { Tag, ZoneTagAssignment } from '@/lib/api-client';
 
 interface Zone {
   id: string;
@@ -50,10 +49,9 @@ export function ZonesList({
   // Filter zones by search query and active tags
   const filteredZones = zones.filter(zone => {
     // Get tags for this zone
-    const zoneTags = tags.filter(tag => {
-      const assignment = assignments.find(a => a.zoneId === zone.id);
-      return assignment?.tagIds?.includes(tag.id);
-    });
+    const assignment = assignments.find(a => a.zone_id === zone.id);
+    const zoneTagIds = assignment?.tag_ids || [];
+    const zoneTags = tags.filter(tag => zoneTagIds.includes(tag.id));
 
     // Check search query match (zone name or any tag name)
     const query = searchQuery.toLowerCase().trim();
@@ -63,10 +61,7 @@ export function ZonesList({
 
     // Check tag filter match
     const matchesTagFilter = activeTagIds.length === 0 || 
-      activeTagIds.some(tagId => {
-        const assignment = assignments.find(a => a.zoneId === zone.id);
-        return assignment?.tagIds?.includes(tagId);
-      });
+      activeTagIds.some(tagId => zoneTagIds.includes(tagId));
 
     return matchesSearch && matchesTagFilter;
   });
@@ -226,7 +221,9 @@ export function ZonesList({
         <>
           <div className="space-y-3 mt-4">
             {paginatedZones.map((zone) => {
-              const zoneTags = getTagsForZone(zone.id, assignments, tags);
+              const assignment = assignments.find(a => a.zone_id === zone.id);
+              const zoneTagIds = assignment?.tag_ids || [];
+              const zoneTags = tags.filter(tag => zoneTagIds.includes(tag.id));
               
               return (
               <div

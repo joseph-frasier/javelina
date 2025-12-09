@@ -4,8 +4,7 @@ import { useState, useRef, useCallback, useId } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { TagBadge } from '@/components/ui/TagBadge';
-import type { Tag, ZoneTagAssignment } from '@/lib/mock-tags-data';
-import { getZoneCountForTag } from '@/lib/mock-tags-data';
+import type { Tag, ZoneTagAssignment } from '@/lib/api-client';
 
 // Drag and drop imports
 import {
@@ -310,7 +309,7 @@ export function TagsManagerCard({
                 }}
               >
                 {tags.map((tag) => {
-                  const zoneCount = getZoneCountForTag(tag.id, assignments);
+                  const zoneCount = tag.zone_count || 0;
                   const isActive = activeTagIds.includes(tag.id);
 
                   return (

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { TagBadge } from '@/components/ui/TagBadge';
-import type { Tag } from '@/lib/mock-tags-data';
+import type { Tag } from '@/lib/api-client';
 
 interface AssignTagsModalProps {
   isOpen: boolean;

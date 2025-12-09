@@ -599,6 +599,89 @@ export interface DiscountRedemption {
   organization_name?: string;
 }
 
+// Tags API
+export const tagsApi = {
+  /**
+   * List all tags for an organization
+   */
+  list: (org_id: string): Promise<{
+    tags: Tag[];
+    assignments: ZoneTagAssignment[];
+  }> => {
+    return apiClient.get(`/tags?org_id=${org_id}`);
+  },
+
+  /**
+   * Create a new tag
+   */
+  create: (data: {
+    organization_id: string;
+    name: string;
+    color: string;
+  }): Promise<Tag> => {
+    return apiClient.post('/tags', data);
+  },
+
+  /**
+   * Update a tag
+   */
+  update: (id: string, data: {
+    name?: string;
+    color?: string;
+    is_favorite?: boolean;
+    display_order?: number;
+  }): Promise<Tag> => {
+    return apiClient.put(`/tags/${id}`, data);
+  },
+
+  /**
+   * Delete a tag
+   */
+  delete: (id: string): Promise<{
+    success: boolean;
+    message: string;
+    zone_assignments_removed: number;
+  }> => {
+    return apiClient.delete(`/tags/${id}`);
+  },
+
+  /**
+   * Get tags assigned to a zone
+   */
+  getZoneTags: (zoneId: string): Promise<Tag[]> => {
+    return apiClient.get(`/tags/zones/${zoneId}`);
+  },
+
+  /**
+   * Update tag assignments for a zone
+   */
+  updateZoneTags: (zoneId: string, tag_ids: string[]): Promise<{
+    zone_id: string;
+    tag_ids: string[];
+  }> => {
+    return apiClient.put(`/tags/zones/${zoneId}`, { tag_ids });
+  },
+};
+
+// Types for tags API
+export interface Tag {
+  id: string;
+  organization_id: string;
+  name: string;
+  color: string;
+  is_favorite: boolean;
+  display_order: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  zone_count?: number;
+}
+
+export interface ZoneTagAssignment {
+  zone_id: string;
+  tag_ids: string[];
+}
+
 // Export everything
 export default apiClient;
 

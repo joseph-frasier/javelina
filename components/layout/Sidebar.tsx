@@ -8,22 +8,18 @@ import gsap from 'gsap';
 import { useAuthStore } from '@/lib/auth-store';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useZones } from '@/lib/hooks/useZones';
+import { useTags } from '@/lib/hooks/useTags';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
-import { getTagsForZone, INITIAL_MOCK_TAGS, type Tag, type ZoneTagAssignment } from '@/lib/mock-tags-data';
+import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
   onMobileMenuClose?: () => void;
-  // Optional tag props for displaying tag dots on zones
-  tags?: Tag[];
-  zoneTagAssignments?: ZoneTagAssignment[];
 }
 
 export function Sidebar({ 
   isMobileMenuOpen = false, 
   onMobileMenuClose,
-  tags = [],
-  zoneTagAssignments = [],
 }: SidebarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
@@ -130,8 +126,6 @@ export function Sidebar({
               <ZonesList
                 organizationId={org.id}
                 zoneContainerRefs={zoneContainerRefs}
-                tags={tags}
-                zoneTagAssignments={zoneTagAssignments}
               />
             )}
           </div>
@@ -358,32 +352,17 @@ function truncateName(name: string, maxLength: number = 20): string {
 function ZonesList({ 
   organizationId, 
   zoneContainerRefs,
-  tags,
-  zoneTagAssignments,
 }: { 
   organizationId: string;
   zoneContainerRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
-  tags: Tag[];
-  zoneTagAssignments: ZoneTagAssignment[];
 }) {
   const { data: zones, isLoading } = useZones(organizationId);
+  const { data: tagsData } = useTags(organizationId);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Use provided tags or fall back to mock data for mockup display
-  const displayTags = tags.length > 0 ? tags : INITIAL_MOCK_TAGS;
-  
-  // Generate mock assignments if none provided (for mockup purposes)
-  // This creates sample tag assignments based on zone index to show the feature
-  const displayAssignments = zoneTagAssignments.length > 0 
-    ? zoneTagAssignments 
-    : (zones || []).map((zone: { id: string; name: string }, index: number) => {
-        const tagIds: string[] = [];
-        // Assign different tags based on zone index for variety
-        if (index % 3 === 0) tagIds.push('tag-1'); // Production (green)
-        if (index % 2 === 0) tagIds.push('tag-2'); // Staging (yellow)
-        if (index % 4 === 0) tagIds.push('tag-4'); // US-East (purple)
-        return { zoneId: zone.id, tagIds };
-      }).filter((a: { zoneId: string; tagIds: string[] }) => a.tagIds.length > 0);
+  // Get tags and assignments from the hook
+  const displayTags = tagsData?.tags || [];
+  const displayAssignments = tagsData?.assignments || [];
 
   // Sort zones alphabetically
   const sortedZones = [...(zones || [])].sort((a: { id: string; name: string }, b: { id: string; name: string }) => {
@@ -438,7 +417,9 @@ function ZonesList({
       <div className="space-y-1">
       {sortedZones.map((zone) => {
         // Get tags assigned to this zone
-        const zoneTags = getTagsForZone(zone.id, displayAssignments, displayTags);
+        const assignment = displayAssignments.find(a => a.zone_id === zone.id);
+        const zoneTagIds = assignment?.tag_ids || [];
+        const zoneTags = displayTags.filter(tag => zoneTagIds.includes(tag.id));
         
         return (
           <Link

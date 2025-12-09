@@ -5,12 +5,13 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { TagBadge } from '@/components/ui/TagBadge';
-import { TAG_COLORS, generateTagId, type Tag } from '@/lib/mock-tags-data';
+import { TAG_COLORS } from '@/lib/mock-tags-data';
+import { type Tag } from '@/lib/api-client';
 
 interface CreateTagModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateTag: (tag: Tag) => void;
+  onCreateTag: (tag: { name: string; color: string }) => void;
   existingTags: Tag[];
   // Edit mode props
   tagToEdit?: Tag | null;
@@ -101,11 +102,9 @@ export function CreateTagModal({
       onEditTag(updatedTag);
     } else {
       // Create new tag
-      const newTag: Tag = {
-        id: generateTagId(),
+      const newTag = {
         name: name.trim(),
         color: selectedColor,
-        isFavorite: false,
       };
       onCreateTag(newTag);
     }

@@ -24,3 +24,5 @@ ON public.subscriptions(status);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_org_id 
 ON public.subscriptions(org_id);
 
+
+
