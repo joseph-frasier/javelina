@@ -27,7 +27,7 @@ export function useTags(organizationId: string | null) {
  */
 export function useCreateTag(organizationId: string) {
   const queryClient = useQueryClient();
-  const { showToast } = useToastStore();
+  const { addToast } = useToastStore();
 
   return useMutation({
     mutationFn: (data: { name: string; color: string }) => {
@@ -39,11 +39,11 @@ export function useCreateTag(organizationId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-      showToast('Tag created successfully', 'success');
+      addToast('success', 'Tag created successfully');
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to create tag';
-      showToast(message, 'error');
+      addToast('error', message);
     },
   });
 }
@@ -53,7 +53,7 @@ export function useCreateTag(organizationId: string) {
  */
 export function useUpdateTag(organizationId: string) {
   const queryClient = useQueryClient();
-  const { showToast } = useToastStore();
+  const { addToast } = useToastStore();
 
   return useMutation({
     mutationFn: ({ 
@@ -72,11 +72,11 @@ export function useUpdateTag(organizationId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-      showToast('Tag updated successfully', 'success');
+      addToast('success', 'Tag updated successfully');
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to update tag';
-      showToast(message, 'error');
+      addToast('error', message);
     },
   });
 }
@@ -86,7 +86,7 @@ export function useUpdateTag(organizationId: string) {
  */
 export function useDeleteTag(organizationId: string) {
   const queryClient = useQueryClient();
-  const { showToast } = useToastStore();
+  const { addToast } = useToastStore();
 
   return useMutation({
     mutationFn: (tagId: string) => {
@@ -98,11 +98,11 @@ export function useDeleteTag(organizationId: string) {
       const message = count > 0 
         ? `Tag deleted and removed from ${count} zone${count !== 1 ? 's' : ''}`
         : 'Tag deleted successfully';
-      showToast(message, 'success');
+      addToast('success', message);
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to delete tag';
-      showToast(message, 'error');
+      addToast('error', message);
     },
   });
 }
@@ -112,7 +112,7 @@ export function useDeleteTag(organizationId: string) {
  */
 export function useUpdateZoneTags(organizationId: string) {
   const queryClient = useQueryClient();
-  const { showToast } = useToastStore();
+  const { addToast } = useToastStore();
 
   return useMutation({
     mutationFn: ({ zoneId, tagIds }: { zoneId: string; tagIds: string[] }) => {
@@ -120,11 +120,11 @@ export function useUpdateZoneTags(organizationId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-      showToast('Tags updated successfully', 'success');
+      addToast('success', 'Tags updated successfully');
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to update tags';
-      showToast(message, 'error');
+      addToast('error', message);
     },
   });
 }
@@ -134,7 +134,7 @@ export function useUpdateZoneTags(organizationId: string) {
  */
 export function useReorderTags(organizationId: string) {
   const queryClient = useQueryClient();
-  const { showToast } = useToastStore();
+  const { addToast } = useToastStore();
 
   return useMutation({
     mutationFn: async (reorderedTags: Tag[]) => {
@@ -150,7 +150,7 @@ export function useReorderTags(organizationId: string) {
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to reorder tags';
-      showToast(message, 'error');
+      addToast('error', message);
     },
   });
 }
@@ -169,9 +169,9 @@ export function useToggleTagFavorite(organizationId: string) {
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
     },
     onError: (error: any) => {
-      const { showToast } = useToastStore.getState();
+      const { addToast } = useToastStore.getState();
       const message = error?.message || 'Failed to update favorite status';
-      showToast(message, 'error');
+      addToast('error', message);
     },
   });
 }
