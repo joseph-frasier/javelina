@@ -291,86 +291,90 @@ function CheckoutContent() {
 
                 <div className="border-t border-gray-light"></div>
 
-                {/* Discount Code Input */}
-                <div>
-                  <label className="block text-sm font-medium text-orange-dark mb-2">
-                    Have a discount code?
-                  </label>
-                  {appliedDiscount ? (
-                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="font-medium text-green-700">{appliedDiscount.code}</span>
-                        <span className="text-sm text-green-600">
-                          {appliedDiscount.discount_type === 'percent_off' 
-                            ? `${appliedDiscount.discount_value}% off`
-                            : `-$${(appliedDiscount.discount_value / 100).toFixed(2)}`
-                          }
-                        </span>
-                      </div>
-                      <button
-                        onClick={handleRemoveDiscount}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                        aria-label="Remove discount"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={discountCode}
-                        onChange={(e) => {
-                          setDiscountCode(e.target.value.toUpperCase());
-                          setDiscountError(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleApplyDiscount();
-                          }
-                        }}
-                        placeholder="Enter code"
-                        className="flex-1 px-3 py-2 border border-gray-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
-                        disabled={isValidatingDiscount}
-                      />
-                      <button
-                        onClick={handleApplyDiscount}
-                        disabled={!discountCode.trim() || isValidatingDiscount}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isValidatingDiscount ? (
-                          <div className="flex items-center space-x-1">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                {/* Discount Code Input - Hidden for lifetime plans */}
+                {!isLifetime && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-orange-dark mb-2">
+                        Have a discount code?
+                      </label>
+                      {appliedDiscount ? (
+                        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="font-medium text-green-700">{appliedDiscount.code}</span>
+                            <span className="text-sm text-green-600">
+                              {appliedDiscount.discount_type === 'percent_off' 
+                                ? `${appliedDiscount.discount_value}% off`
+                                : `-$${(appliedDiscount.discount_value / 100).toFixed(2)}`
+                              }
+                            </span>
                           </div>
-                        ) : (
-                          'Apply'
-                        )}
-                      </button>
+                          <button
+                            onClick={handleRemoveDiscount}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            aria-label="Remove discount"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            value={discountCode}
+                            onChange={(e) => {
+                              setDiscountCode(e.target.value.toUpperCase());
+                              setDiscountError(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleApplyDiscount();
+                              }
+                            }}
+                            placeholder="Enter code"
+                            className="flex-1 px-3 py-2 border border-gray-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                            disabled={isValidatingDiscount}
+                          />
+                          <button
+                            onClick={handleApplyDiscount}
+                            disabled={!discountCode.trim() || isValidatingDiscount}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isValidatingDiscount ? (
+                              <div className="flex items-center space-x-1">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                              </div>
+                            ) : (
+                              'Apply'
+                            )}
+                          </button>
+                        </div>
+                      )}
+                      {discountError && (
+                        <p className="mt-2 text-sm text-red-600">{discountError}</p>
+                      )}
                     </div>
-                  )}
-                  {discountError && (
-                    <p className="mt-2 text-sm text-red-600">{discountError}</p>
-                  )}
-                </div>
 
-                {/* Discount Breakdown */}
-                {appliedDiscount && (
-                  <div className="space-y-2 py-3 border-t border-gray-light">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-slate">Subtotal</span>
-                      <span className="text-gray-700">${Number(checkoutData.plan_price).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-green-600">Discount ({appliedDiscount.code})</span>
-                      <span className="text-green-600">-${appliedDiscount.discounted_amount.toFixed(2)}</span>
-                    </div>
-                  </div>
+                    {/* Discount Breakdown */}
+                    {appliedDiscount && (
+                      <div className="space-y-2 py-3 border-t border-gray-light">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-slate">Subtotal</span>
+                          <span className="text-gray-700">${Number(checkoutData.plan_price).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-green-600">Discount ({appliedDiscount.code})</span>
+                          <span className="text-green-600">-${appliedDiscount.discounted_amount.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Total */}
@@ -504,8 +508,8 @@ function CheckoutContent() {
                     </div>
                   )}
 
-                  {/* Discount Applied Badge */}
-                  {appliedDiscount && !isUpgrade && (
+                  {/* Discount Applied Badge - Hidden for lifetime plans */}
+                  {appliedDiscount && !isUpgrade && !isLifetime && (
                     <div className="space-y-2 py-3 border-t border-gray-light dark:border-gray-700">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-slate dark:text-gray-400">Subtotal</span>
