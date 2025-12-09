@@ -171,6 +171,12 @@ export function ManageDNSRecordModal({
         return 'Hex nibble 0-f (e.g., a)';
       }
     }
+    if (formData.type === 'CNAME') {
+      return 'Subdomain (e.g., www, blog, api)';
+    }
+    if (formData.type === 'NS') {
+      return 'Subdomain (e.g., dev, staging, prod)';
+    }
     return '@ (root) or subdomain (e.g., www, blog, mail)';
   };
 
