@@ -75,6 +75,15 @@ export function isReverseZone(zoneName: string): boolean {
 }
 
 /**
+ * Determines if a reverse zone is IPv4 (.in-addr.arpa) or IPv6 (.ip6.arpa)
+ */
+export function getReverseZoneType(zoneName: string): 'ipv4' | 'ipv6' | null {
+  if (zoneName.endsWith('.in-addr.arpa')) return 'ipv4';
+  if (zoneName.endsWith('.ip6.arpa')) return 'ipv6';
+  return null;
+}
+
+/**
  * Validates TTL value
  */
 export function isValidTTL(ttl: number): { valid: boolean; error?: string } {
@@ -257,6 +266,45 @@ export function validateNSRecordPlacement(
 }
 
 /**
+ * Validates PTR record name based on reverse zone type
+ */
+export function validatePTRRecordName(
+  name: string,
+  zoneName: string
+): { valid: boolean; error?: string } {
+  // Allow apex
+  if (name === '@' || name === '') return { valid: true };
+  
+  const reverseType = getReverseZoneType(zoneName);
+  
+  if (!reverseType) {
+    // Should never happen since we already validate PTR is only in reverse zones
+    return { valid: false, error: 'PTR records are only allowed in reverse zones' };
+  }
+  
+  if (reverseType === 'ipv4') {
+    // IPv4 reverse: must be an integer 0-255
+    const num = parseInt(name, 10);
+    if (!/^\d+$/.test(name) || isNaN(num) || num < 0 || num > 255) {
+      return {
+        valid: false,
+        error: 'PTR name in IPv4 reverse zone must be an integer between 0 and 255'
+      };
+    }
+  } else if (reverseType === 'ipv6') {
+    // IPv6 reverse: must be a single hexadecimal nibble (0-9, a-f)
+    if (!/^[0-9a-fA-F]$/.test(name)) {
+      return {
+        valid: false,
+        error: 'PTR name in IPv6 reverse zone must be a single hexadecimal digit (0-9, a-f)'
+      };
+    }
+  }
+  
+  return { valid: true };
+}
+
+/**
  * Main validation function for DNS records
  */
 export function validateDNSRecord(
@@ -372,6 +420,14 @@ export function validateDNSRecord(
       // Validate that PTR records are only used in reverse zones
       if (zoneName && !isReverseZone(zoneName)) {
         errors.type = 'PTR records are only allowed in reverse zones (zones ending in .in-addr.arpa or .ip6.arpa)';
+      }
+      
+      // Validate PTR record name based on reverse zone type
+      if (zoneName && isReverseZone(zoneName)) {
+        const nameValidation = validatePTRRecordName(formData.name, zoneName);
+        if (!nameValidation.valid) {
+          errors.name = nameValidation.error || 'Invalid PTR record name';
+        }
       }
       break;
   }
