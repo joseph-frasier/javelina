@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
 import { validateDNSRecord, getFQDN } from '@/lib/utils/dns-validation';
@@ -22,15 +23,16 @@ interface ManageDNSRecordModalProps {
 
 // SOA is intentionally excluded - it should only be edited, not manually created
 const recordTypeOptions = [
-  { value: 'A', label: 'A - IPv4 Address' },
-  { value: 'AAAA', label: 'AAAA - IPv6 Address' },
-  { value: 'CNAME', label: 'CNAME - Canonical Name' },
-  { value: 'MX', label: 'MX - Mail Exchange' },
-  { value: 'NS', label: 'NS - Name Server' },
-  { value: 'TXT', label: 'TXT - Text Record' },
-  { value: 'SRV', label: 'SRV - Service Record' },
-  { value: 'CAA', label: 'CAA - Certificate Authority Authorization' },
-  { value: 'PTR', label: 'PTR - Pointer Record (Reverse DNS)' },
+  { value: 'A', label: 'A - IPv4 Address', disabled: false },
+  { value: 'AAAA', label: 'AAAA - IPv6 Address', disabled: false },
+  { value: 'CNAME', label: 'CNAME - Canonical Name', disabled: false },
+  { value: 'MX', label: 'MX - Mail Exchange', disabled: false },
+  { value: 'NS', label: 'NS - Name Server', disabled: false },
+  { value: 'TXT', label: 'TXT - Text Record', disabled: false },
+  { value: 'SRV', label: 'SRV - Service Record', disabled: false },
+  { value: 'CAA', label: 'CAA - Certificate Authority Authorization', disabled: false },
+  { value: 'PTR', label: 'PTR - Pointer Record (Reverse DNS)', disabled: false },
+  { value: 'RFC3597', label: 'Generic (RFC 3597)', disabled: true },
 ];
 
 export function ManageDNSRecordModal({
@@ -189,7 +191,14 @@ export function ManageDNSRecordModal({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {recordTypeOptions.map((option) => {
                 const isSelected = formData.type === option.value;
-                const info = RECORD_TYPE_INFO[option.value as DNSRecordType];
+                const info = RECORD_TYPE_INFO[option.value as DNSRecordType] || {
+                  description: 'Generic/Unknown record type',
+                  label: option.value,
+                  requiresPriority: false,
+                  defaultTTL: 3600,
+                  placeholder: '',
+                  hint: ''
+                };
                 
                 // SVG Icons for each record type
                 const getIcon = () => {
@@ -249,27 +258,44 @@ export function ManageDNSRecordModal({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                       );
+                    case 'PTR':
+                      return (
+                        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      );
+                    case 'RFC3597':
+                      return (
+                        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                      );
                     default:
                       return null;
                   }
                 };
                 
-                return (
+                const isDisabled = option.disabled || false;
+                
+                const button = (
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => handleTypeChange(option.value as DNSRecordType)}
+                    onClick={() => !isDisabled && handleTypeChange(option.value as DNSRecordType)}
+                    disabled={isDisabled}
                     className={clsx(
                       'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all text-center',
-                      isSelected
-                        ? 'border-orange bg-orange/10 dark:bg-orange/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-orange/50 dark:hover:border-orange/50 bg-white dark:bg-gray-800'
+                      isDisabled && 'cursor-not-allowed opacity-50 bg-gray-50 dark:bg-gray-800/50',
+                      !isDisabled && isSelected && 'border-orange bg-orange/10 dark:bg-orange/20',
+                      !isDisabled && !isSelected && 'border-gray-200 dark:border-gray-700 hover:border-orange/50 dark:hover:border-orange/50 bg-white dark:bg-gray-800'
                     )}
                   >
                     {getIcon()}
                     <div className={clsx(
                       'text-xs font-semibold mb-0.5',
-                      isSelected ? 'text-orange' : 'text-gray-900 dark:text-gray-100'
+                      isDisabled && 'text-gray-400 dark:text-gray-600',
+                      !isDisabled && isSelected && 'text-orange',
+                      !isDisabled && !isSelected && 'text-gray-900 dark:text-gray-100'
                     )}>
                       {option.value}
                     </div>
@@ -278,6 +304,17 @@ export function ManageDNSRecordModal({
                     </div>
                   </button>
                 );
+                
+                // Wrap disabled options with tooltip
+                if (isDisabled) {
+                  return (
+                    <Tooltip key={option.value} content="Under Development">
+                      {button}
+                    </Tooltip>
+                  );
+                }
+                
+                return button;
               })}
             </div>
           </div>
