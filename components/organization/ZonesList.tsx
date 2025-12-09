@@ -51,9 +51,13 @@ export function ZonesList({
     // Get tags for this zone
     const assignment = assignments.find(a => a.zone_id === zone.id);
     const zoneTagIds = assignment?.tag_ids || [];
+<<<<<<< HEAD
     const zoneTags = zoneTagIds
       .map(tagId => tags.find(tag => tag.id === tagId))
       .filter((tag): tag is Tag => tag !== undefined);
+=======
+    const zoneTags = tags.filter(tag => zoneTagIds.includes(tag.id));
+>>>>>>> 3753155 (Implement zone tagging system)
 
     // Check search query match (zone name or any tag name)
     const query = searchQuery.toLowerCase().trim();
@@ -225,9 +229,13 @@ export function ZonesList({
             {paginatedZones.map((zone) => {
               const assignment = assignments.find(a => a.zone_id === zone.id);
               const zoneTagIds = assignment?.tag_ids || [];
+<<<<<<< HEAD
               const zoneTags = zoneTagIds
                 .map(tagId => tags.find(tag => tag.id === tagId))
                 .filter((tag): tag is Tag => tag !== undefined);
+=======
+              const zoneTags = tags.filter(tag => zoneTagIds.includes(tag.id));
+>>>>>>> 3753155 (Implement zone tagging system)
               
               return (
               <div
