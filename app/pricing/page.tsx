@@ -378,10 +378,10 @@ function PricingContent() {
             </div>
             <div className="bg-white rounded-lg border border-gray-light p-4">
               <h3 className="text-base font-bold text-orange-dark mb-1">
-                Do you offer a money-back guarantee?
+                Can I migrate my existing DNS records?
               </h3>
               <p className="text-sm text-gray-slate font-regular">
-                Yes! All plans come with a 14-day money-back guarantee. If you&apos;re not satisfied with Javelina, we&apos;ll refund your payment in full, no questions asked.
+                Yes! You can easily import your existing DNS records from other providers. We support bulk imports via CSV and BIND zone file formats, making the migration process quick and seamless.
               </p>
             </div>
           </div>
