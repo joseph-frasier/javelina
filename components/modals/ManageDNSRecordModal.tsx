@@ -355,6 +355,8 @@ export function ManageDNSRecordModal({
                     {button}
                   </div>
                 );
+                return button;
+>>>>>>> cd95c39 (feat: Add RFC 3597 (Generic DNS record) placeholder to record type selector)
               })}
             </div>
           </div>
