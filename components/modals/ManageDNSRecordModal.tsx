@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
-import { validateDNSRecord, getFQDN, isReverseZone } from '@/lib/utils/dns-validation';
+import { validateDNSRecord, getFQDN, isReverseZone, getReverseZoneType } from '@/lib/utils/dns-validation';
 
 interface ManageDNSRecordModalProps {
   isOpen: boolean;
@@ -158,6 +158,20 @@ export function ManageDNSRecordModal({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Get appropriate placeholder for Name field based on record type and zone type
+  const getNamePlaceholder = () => {
+    if (formData.type === 'PTR' && zoneName) {
+      const reverseType = getReverseZoneType(zoneName);
+      if (reverseType === 'ipv4') {
+        return '@ (root) or integer 0-255 (e.g., 5 for 192.0.2.5)';
+      }
+      if (reverseType === 'ipv6') {
+        return '@ (root) or hex nibble 0-f (e.g., a)';
+      }
+    }
+    return '@ (root) or subdomain (e.g., www, blog, mail)';
   };
 
   const typeInfo = RECORD_TYPE_INFO[formData.type];
@@ -347,7 +361,7 @@ export function ManageDNSRecordModal({
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               error={errors.name}
-              placeholder="@ (root) or subdomain (e.g., www, blog, mail)"
+              placeholder={getNamePlaceholder()}
               helperText={`FQDN: ${fqdn}`}
             />
           </div>
