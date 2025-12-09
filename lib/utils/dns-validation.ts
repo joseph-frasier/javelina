@@ -67,6 +67,14 @@ export function isValidRecordName(name: string): boolean {
 }
 
 /**
+ * Determines if a zone is a reverse zone based on its name
+ * Reverse zones end with .in-addr.arpa (IPv4) or .ip6.arpa (IPv6)
+ */
+export function isReverseZone(zoneName: string): boolean {
+  return zoneName.endsWith('.in-addr.arpa') || zoneName.endsWith('.ip6.arpa');
+}
+
+/**
  * Validates TTL value
  */
 export function isValidTTL(ttl: number): { valid: boolean; error?: string } {
@@ -361,12 +369,9 @@ export function validateDNSRecord(
         errors.value = ptrValidation.error || 'Invalid PTR record';
       }
       
-      // Optionally validate if the name looks like reverse DNS
-      // This is informational - PTR records can technically be used in forward zones too
-      if (formData.name && formData.name !== '@' && formData.name !== '') {
-        if (!isValidReverseDNSName(formData.name) && !isValidRecordName(formData.name)) {
-          warnings.push('PTR record names are typically in reverse DNS format (e.g., 1.0.168.192.in-addr.arpa)');
-        }
+      // Validate that PTR records are only used in reverse zones
+      if (zoneName && !isReverseZone(zoneName)) {
+        errors.type = 'PTR records are only allowed in reverse zones (zones ending in .in-addr.arpa or .ip6.arpa)';
       }
       break;
   }
