@@ -6,7 +6,6 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
-import { Tooltip } from '@/components/ui/Tooltip';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
 import { validateDNSRecord, getFQDN } from '@/lib/utils/dns-validation';
@@ -277,12 +276,13 @@ export function ManageDNSRecordModal({
                 
                 const isDisabled = option.disabled || false;
                 
-                const button = (
+                return (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => !isDisabled && handleTypeChange(option.value as DNSRecordType)}
                     disabled={isDisabled}
+                    title={isDisabled ? 'Under Development' : undefined}
                     className={clsx(
                       'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all text-center',
                       isDisabled && 'cursor-not-allowed opacity-50 bg-gray-50 dark:bg-gray-800/50',
@@ -304,17 +304,6 @@ export function ManageDNSRecordModal({
                     </div>
                   </button>
                 );
-                
-                // Wrap disabled options with tooltip
-                if (isDisabled) {
-                  return (
-                    <Tooltip key={option.value} content="Under Development">
-                      {button}
-                    </Tooltip>
-                  );
-                }
-                
-                return button;
               })}
             </div>
           </div>
