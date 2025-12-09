@@ -2,7 +2,7 @@
  * DNS Record Types and Interfaces
  */
 
-export type DNSRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SRV' | 'CAA' | 'SOA';
+export type DNSRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SRV' | 'CAA' | 'SOA' | 'PTR';
 
 export interface DNSRecord {
   id: string;
@@ -53,17 +53,14 @@ export interface DNSExportOptions {
   includeComments?: boolean;
 }
 
-// Common TTL presets
+// Common TTL presets (15 minutes to 1 day)
 export const TTL_PRESETS = [
-  { value: 60, label: '1 minute' },
-  { value: 300, label: '5 minutes' },
   { value: 900, label: '15 minutes' },
   { value: 1800, label: '30 minutes' },
   { value: 3600, label: '1 hour' },
   { value: 14400, label: '4 hours' },
   { value: 43200, label: '12 hours' },
   { value: 86400, label: '1 day' },
-  { value: 604800, label: '1 week' },
 ] as const;
 
 // Record type metadata
@@ -146,6 +143,14 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     defaultTTL: 86400,
     placeholder: 'System-generated from zone properties',
     hint: 'SOA data is automatically generated from zone properties. Edit SOA settings in zone configuration.',
+  },
+  PTR: {
+    label: 'PTR',
+    description: 'Pointer Record (Reverse DNS)',
+    requiresPriority: false,
+    defaultTTL: 3600,
+    placeholder: '1.0.168.192.in-addr.arpa or *.ip6.arpa',
+    hint: 'Enter reverse DNS pointer. For IPv4: reverse IP + .in-addr.arpa (e.g., 1.0.168.192.in-addr.arpa). For IPv6: use .ip6.arpa format.',
   },
 };
 
