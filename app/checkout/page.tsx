@@ -289,7 +289,8 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-light"></div>
+                {/* Divider - Only show for non-lifetime plans with discount section */}
+                {!isLifetime && <div className="border-t border-gray-light"></div>}
 
                 {/* Discount Code Input - Hidden for lifetime plans */}
                 {!isLifetime && (
@@ -406,7 +407,7 @@ function CheckoutContent() {
                 </Button>
 
                 {/* Fine Print */}
-                <div className="pt-4 border-t border-gray-light">
+                <div className="pt-4 -mx-8 px-8 border-t border-gray-light">
                   {isLifetime ? (
                     <p className="text-xs text-gray-slate font-light text-center">
                       This is a one-time payment for lifetime access. 
