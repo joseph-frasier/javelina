@@ -265,6 +265,87 @@ if (recordData.type === 'PTR') {
 
 **Note**: PTR records cannot be created at the zone root. They must always have a specific name.
 
+### 6. DNS Record Comment Field Support (Required)
+
+The `comment` field must be included in all DNS record operations. Currently, the comment field is being saved but not returned by the API.
+
+#### Required Changes
+
+**Location**: All DNS records endpoints
+
+**GET /api/dns-records/zone/:zoneId** - List records for a zone:
+```javascript
+// Ensure the SELECT query includes the comment column
+const { data: records, error } = await supabase
+  .from('zone_records')
+  .select('id, zone_id, name, type, value, ttl, comment, created_at, updated_at')
+  .eq('zone_id', zoneId);
+```
+
+**GET /api/dns-records/:id** - Get single record:
+```javascript
+// Ensure the SELECT query includes the comment column
+const { data: record, error } = await supabase
+  .from('zone_records')
+  .select('id, zone_id, name, type, value, ttl, comment, created_at, updated_at')
+  .eq('id', recordId)
+  .single();
+```
+
+**POST /api/dns-records** - Create new record:
+```javascript
+// Accept comment in request body
+const { name, type, value, ttl, comment, zone_id } = req.body;
+
+// Include comment when inserting
+const { data: record, error } = await supabase
+  .from('zone_records')
+  .insert({
+    zone_id,
+    name,
+    type,
+    value,
+    ttl,
+    comment: comment || null  // Store null if empty
+  })
+  .select('id, zone_id, name, type, value, ttl, comment, created_at, updated_at')
+  .single();
+
+// Return the created record with comment
+return res.json({ data: record });
+```
+
+**PUT /api/dns-records/:id** - Update existing record:
+```javascript
+// Accept comment in request body
+const { name, type, value, ttl, comment } = req.body;
+
+// Include comment when updating
+const { data: record, error } = await supabase
+  .from('zone_records')
+  .update({
+    name,
+    type,
+    value,
+    ttl,
+    comment: comment || null,  // Store null if empty
+    updated_at: new Date().toISOString()
+  })
+  .eq('id', recordId)
+  .select('id, zone_id, name, type, value, ttl, comment, created_at, updated_at')
+  .single();
+
+// Return the updated record with comment
+return res.json({ data: record });
+```
+
+#### Why This Is Important
+
+- Users can add comments/notes to DNS records for documentation
+- Comments help teams understand the purpose of specific records
+- The frontend already supports creating and editing comments
+- Without backend support, comments are lost or not displayed
+
 ## Testing Checklist
 
 After implementing these changes, test the following scenarios:
@@ -297,6 +378,15 @@ After implementing these changes, test the following scenarios:
 - [ ] Attempt to create zone with nameservers field → Should be ignored (not stored)
 - [ ] Attempt to update zone with nameservers field → Should be ignored (not stored)
 - [ ] GET zone endpoint should not return nameservers field → Should succeed
+
+### Comment Field Support
+- [ ] Create DNS record with comment → Should succeed and return comment
+- [ ] Create DNS record without comment → Should succeed and return null comment
+- [ ] Update DNS record with new comment → Should succeed and return updated comment
+- [ ] Update DNS record to remove comment (empty string) → Should succeed and return null comment
+- [ ] GET single record should include comment field → Should succeed
+- [ ] GET zone records should include comment field for all records → Should succeed
+- [ ] Comment field persists when editing other record fields → Should succeed
 
 ## Migration Notes
 
