@@ -63,6 +63,19 @@ export function DNSRecordsTable({
   const filteredRecords = useMemo(() => {
     let filtered = records;
     
+    // Filter out root NS records (system-managed, not user-editable)
+    // Root NS records are where type=NS and name is '@', '', or matches zoneName
+    filtered = filtered.filter(record => {
+      if (record.type === 'NS') {
+        const normalizedName = record.name.trim();
+        const isRootNS = normalizedName === '@' || 
+                        normalizedName === '' || 
+                        normalizedName === zoneName;
+        return !isRootNS; // Exclude root NS records
+      }
+      return true; // Include all other records
+    });
+    
     // Apply search query filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -79,7 +92,7 @@ export function DNSRecordsTable({
     // Priority filter removed - priority is now part of the value field (not a separate column)
     
     return filtered;
-  }, [records, searchQuery, statusFilters, priorityFilters, priorityRanges]);
+  }, [records, searchQuery, statusFilters, priorityFilters, priorityRanges, zoneName]);
 
   // Sort records
   const filteredAndSortedRecords = useMemo(() => {
