@@ -165,10 +165,10 @@ export function ManageDNSRecordModal({
     if (formData.type === 'PTR' && zoneName) {
       const reverseType = getReverseZoneType(zoneName);
       if (reverseType === 'ipv4') {
-        return '@ (root) or integer 0-255 (e.g., 5 for 192.0.2.5)';
+        return 'Integer 0-255 (e.g., 5 for 192.0.2.5)';
       }
       if (reverseType === 'ipv6') {
-        return '@ (root) or hex nibble 0-f (e.g., a)';
+        return 'Hex nibble 0-f (e.g., a)';
       }
     }
     return '@ (root) or subdomain (e.g., www, blog, mail)';
