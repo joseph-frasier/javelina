@@ -30,6 +30,7 @@ const recordTypeOptions = [
   { value: 'TXT', label: 'TXT - Text Record' },
   { value: 'SRV', label: 'SRV - Service Record' },
   { value: 'CAA', label: 'CAA - Certificate Authority Authorization' },
+  { value: 'PTR', label: 'PTR - Pointer Record (Reverse DNS)' },
 ];
 
 export function ManageDNSRecordModal({
@@ -92,12 +93,13 @@ export function ManageDNSRecordModal({
     const validation = validateDNSRecord(
       formData,
       existingRecords,
-      record?.id
+      record?.id,
+      zoneName
     );
     
     setErrors(validation.errors);
     setWarnings(validation.warnings);
-  }, [formData, existingRecords, record?.id, isOpen]);
+  }, [formData, existingRecords, record?.id, isOpen, zoneName]);
 
   const handleTypeChange = (type: DNSRecordType) => {
     const typeInfo = RECORD_TYPE_INFO[type];
@@ -311,11 +313,14 @@ export function ManageDNSRecordModal({
                   label="TTL (seconds)"
                   type="number"
                   value={formData.ttl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ttl: parseInt(e.target.value, 10) || 60 }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ttl: parseInt(e.target.value, 10) || 10 }))}
                   error={errors.ttl}
-                  min={60}
+                  min={10}
                   max={604800}
                 />
+                <p className="mt-1 text-xs text-gray-slate">
+                  Minimum: 10 seconds. Recommended range: 15 minutes to 1 day.
+                </p>
                 <button
                   type="button"
                   onClick={() => {
@@ -342,6 +347,7 @@ export function ManageDNSRecordModal({
                 formData.type === 'TXT' ? 'Text Value' :
                 formData.type === 'SRV' ? 'Target' :
                 formData.type === 'CAA' ? 'CAA Value' :
+                formData.type === 'PTR' ? 'Target Domain' :
                 'Value'
               }
               type="text"
