@@ -419,7 +419,9 @@ function ZonesList({
         // Get tags assigned to this zone
         const assignment = displayAssignments.find(a => a.zone_id === zone.id);
         const zoneTagIds = assignment?.tag_ids || [];
-        const zoneTags = displayTags.filter(tag => zoneTagIds.includes(tag.id));
+        const zoneTags = zoneTagIds
+          .map(tagId => displayTags.find(tag => tag.id === tagId))
+          .filter((tag): tag is Tag => tag !== undefined);
         
         return (
           <Link
