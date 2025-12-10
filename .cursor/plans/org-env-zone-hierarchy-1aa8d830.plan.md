@@ -1,4 +1,36 @@
-<!-- 1aa8d830-a95f-43f4-b6ca-7cfd8ca3e8a8 9db40176-49b6-4961-a7d1-7f1a4c6017d1 -->
+---
+name: Organization → Environments → Zones Hierarchy Implementation
+overview: ""
+todos:
+  - id: ef115add-0fcc-42ca-bc82-85761a5437e7
+    content: "Create/update data models: hierarchy-store.ts, update auth-store.ts with Environment interface, create mock-hierarchy-data.ts"
+    status: pending
+  - id: 78d094f6-5c7b-46a3-ad29-2999422d3abe
+    content: Update Sidebar.tsx to show Org → Env → Zone hierarchy with proper routes
+    status: pending
+  - id: 0e62ce99-391a-4f8a-ad4e-786b1b6ef42f
+    content: Update Organization page to display environments instead of projects
+    status: pending
+  - id: effc11bc-8571-4e5b-a646-82b1386e08b5
+    content: Create new Environment detail page showing all zones in that environment
+    status: pending
+  - id: 95e33ade-b7d8-4ba7-986e-433fb50e13b1
+    content: Update Zone detail page to show org/env context with breadcrumbs
+    status: pending
+  - id: cb607214-620f-4ecf-a825-6d9ec4677e5f
+    content: Update Dashboard to aggregate stats across all organizations
+    status: pending
+  - id: a782d188-73b9-4751-9d46-e9bc047e64ad
+    content: Implement RBAC helpers in permissions.ts for org and environment-level access control
+    status: pending
+  - id: 15b57929-99d2-4867-bf28-c969a3899843
+    content: "Create reusable UI components: EnvironmentBadge, Breadcrumb, EnvironmentCard"
+    status: pending
+  - id: 0698b08a-1aee-4ccb-bd91-3a6bfbd51c88
+    content: Remove old project routes and update all internal links to new structure
+    status: pending
+---
+
 # Organization → Environments → Zones Hierarchy Implementation
 
 ## Architecture Changes
@@ -55,7 +87,7 @@
 - Display user's environment-level role if different from org role
 - "Add Zone" button (Editors and above)
 
-**Zone Detail (`app/zone/[id]/page.tsx` and `ZoneDetailClient.tsx`):**
+**Zone Detail (`app/zone/[id]/page.tsx `and `ZoneDetailClient.tsx`):**
 
 - Keep existing functionality
 - Add context display: show which Org → Env this zone belongs to
@@ -191,15 +223,3 @@
 9. Add UI components (badges, breadcrumbs, cards)
 10. Update all pages to use new data structure
 11. Test navigation flow and role-based rendering
-
-### To-dos
-
-- [ ] Create/update data models: hierarchy-store.ts, update auth-store.ts with Environment interface, create mock-hierarchy-data.ts
-- [ ] Update Sidebar.tsx to show Org → Env → Zone hierarchy with proper routes
-- [ ] Update Organization page to display environments instead of projects
-- [ ] Create new Environment detail page showing all zones in that environment
-- [ ] Update Zone detail page to show org/env context with breadcrumbs
-- [ ] Update Dashboard to aggregate stats across all organizations
-- [ ] Implement RBAC helpers in permissions.ts for org and environment-level access control
-- [ ] Create reusable UI components: EnvironmentBadge, Breadcrumb, EnvironmentCard
-- [ ] Remove old project routes and update all internal links to new structure
