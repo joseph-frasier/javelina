@@ -423,12 +423,18 @@ function ZonesList({
         const assignment = displayAssignments.find(a => a.zone_id === zone.id);
         const zoneTagIds = assignment?.tag_ids || [];
 <<<<<<< HEAD
+<<<<<<< HEAD
         const zoneTags = zoneTagIds
           .map(tagId => displayTags.find(tag => tag.id === tagId))
           .filter((tag): tag is Tag => tag !== undefined);
 =======
         const zoneTags = displayTags.filter(tag => zoneTagIds.includes(tag.id));
 >>>>>>> 3753155 (Implement zone tagging system)
+=======
+        const zoneTags = zoneTagIds
+          .map(tagId => displayTags.find(tag => tag.id === tagId))
+          .filter((tag): tag is Tag => tag !== undefined);
+>>>>>>> 519c47d (Fix tag ordering on zones and add optimistic updates for tag interactions)
         
         return (
           <Link
