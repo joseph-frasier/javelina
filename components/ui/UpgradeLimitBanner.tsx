@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 
 interface UpgradeLimitBannerProps {
@@ -61,7 +61,17 @@ export function UpgradeLimitBanner({
   variant = 'banner',
   organizationId,
 }: UpgradeLimitBannerProps) {
+  const router = useRouter();
   const labels = RESOURCE_LABELS[resourceType] || { singular: resourceType, plural: resourceType };
+  
+  // Navigate to billing page with modal open, or pricing page if no org
+  const handleUpgradeClick = () => {
+    if (organizationId) {
+      router.push(`/settings/billing/${organizationId}?openModal=true`);
+    } else {
+      router.push('/pricing');
+    }
+  };
   
   // Don't show for unlimited plans
   if (maxCount === -1) {
@@ -120,9 +130,12 @@ export function UpgradeLimitBanner({
           )}
         </svg>
         <span className="flex-1">{message}</span>
-        <Link href="/pricing" className="font-medium underline hover:no-underline">
+        <button 
+          onClick={handleUpgradeClick}
+          className="font-medium underline hover:no-underline"
+        >
           Upgrade
-        </Link>
+        </button>
       </div>
     );
   }
@@ -176,11 +189,9 @@ export function UpgradeLimitBanner({
           </div>
           
           <div className="mt-4">
-            <Link href="/pricing">
-              <Button variant="primary" size="sm">
-                Upgrade Plan
-              </Button>
-            </Link>
+            <Button variant="primary" size="sm" onClick={handleUpgradeClick}>
+              Upgrade Plan
+            </Button>
           </div>
         </div>
       </div>
