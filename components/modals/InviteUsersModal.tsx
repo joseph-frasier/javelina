@@ -175,7 +175,6 @@ export function InviteUsersModal({
               { value: 'Admin', label: 'Admin - Can manage resources' },
               { value: 'SuperAdmin', label: 'SuperAdmin - Full access' },
             ]}
-            disabled={isLoading || isAtMemberLimit}
           />
           <p className="mt-1 text-xs text-gray-slate dark:text-gray-light">
             Select the permission level for this team member
