@@ -173,44 +173,28 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           general: { ...state.general, ...settings }
         }));
-        get().addAuditLog({
-          user: 'current@user.com',
-          category: 'General',
-          action: 'Updated general settings'
-        });
+        // Audit logging removed - should be handled by backend for proper user attribution and persistence
       },
 
       updateSecuritySettings: (settings) => {
         set((state) => ({
           security: { ...state.security, ...settings }
         }));
-        get().addAuditLog({
-          user: 'current@user.com',
-          category: 'Security',
-          action: 'Updated security settings'
-        });
+        // Audit logging removed - should be handled by backend for proper user attribution and persistence
       },
 
       updateAccessSettings: (settings) => {
         set((state) => ({
           access: { ...state.access, ...settings }
         }));
-        get().addAuditLog({
-          user: 'current@user.com',
-          category: 'Access',
-          action: 'Updated access settings'
-        });
+        // Audit logging removed - should be handled by backend for proper user attribution and persistence
       },
 
       updateIntegrationSettings: (settings) => {
         set((state) => ({
           integrations: { ...state.integrations, ...settings }
         }));
-        get().addAuditLog({
-          user: 'current@user.com',
-          category: 'Integrations',
-          action: 'Updated integration settings'
-        });
+        // Audit logging removed - should be handled by backend for proper user attribution and persistence
       },
 
       addAuditLog: (entry) => {

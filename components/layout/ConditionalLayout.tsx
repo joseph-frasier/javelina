@@ -43,7 +43,10 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
     <>
       <div className="flex flex-col h-screen">
         {isImpersonating && <ImpersonationBanner />}
-        <Header onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+        <Header 
+          onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+          isMobileMenuOpen={isMobileMenuOpen}
+        />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar 
             isMobileMenuOpen={isMobileMenuOpen} 
