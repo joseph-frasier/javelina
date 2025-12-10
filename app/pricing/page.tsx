@@ -2,6 +2,7 @@
 
 import { useState, Suspense, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Script from 'next/script';
 import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
 import Button from '@/components/ui/Button';
@@ -14,6 +15,9 @@ import type { Plan } from '@/lib/plans-config';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { PRICING_FAQS } from '@/lib/constants/faq';
+import { generateFAQSchema, generateSoftwareApplicationSchema } from '@/lib/utils/structured-data';
+import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumbs';
 
 function PricingContent() {
   const router = useRouter();
@@ -138,12 +142,56 @@ function PricingContent() {
     );
   }
 
+  // Generate structured data for SEO
+  const faqSchema = generateFAQSchema(PRICING_FAQS);
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Pricing', url: '/pricing' }
+  ]);
+  const softwareSchema = generateSoftwareApplicationSchema({
+    name: 'Javelina DNS Management',
+    description: 'Take control of your DNS with Javelina. Manage zones, records, and organizations with ease.',
+    applicationCategory: 'BusinessApplication',
+    offers: PLANS_CONFIG.filter(p => p.monthly && !p.code.includes('_lifetime') && p.id !== 'enterprise').map(plan => ({
+      name: plan.name,
+      description: plan.description,
+      price: plan.monthly!.amount.toString(),
+      priceCurrency: 'USD',
+      billingDuration: 'P1M', // ISO 8601 duration: 1 month
+    })),
+    features: [
+      'DNS zone management',
+      'Record management (A, AAAA, CNAME, MX, TXT, etc.)',
+      'Organization and team management',
+      'Bulk import/export (CSV, BIND)',
+      'Tag-based organization',
+      'Real-time updates',
+    ],
+  });
+
   return (
     <div className="min-h-screen bg-orange-light">
+      {/* Structured Data for SEO */}
+      <Script
+        id="faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <Script
+        id="breadcrumb-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <Script
+        id="software-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
+
       {/* Header */}
-      <div className="border-b border-gray-light bg-white">
+      <header className="border-b border-gray-light bg-white" role="banner">
         <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
-          <Link href="/" className="inline-block cursor-pointer">
+          <Link href="/" className="inline-block cursor-pointer" aria-label="Go to home page">
             <Logo width={150} height={60} />
           </Link>
           <Breadcrumb 
@@ -153,14 +201,14 @@ function PricingContent() {
             ]}
           />
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
 
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-black text-orange-dark mb-2">
+        <section className="text-center mb-12" aria-labelledby="pricing-hero-heading">
+          <h1 id="pricing-hero-heading" className="text-3xl font-black text-orange-dark mb-2">
             {isOnboarding ? 'Choose Your Plan' : 'Pricing Plans'}
           </h1>
           <p className="text-base text-gray-slate font-light max-w-2xl mx-auto">
@@ -168,12 +216,12 @@ function PricingContent() {
               ? 'Select the plan that best fits your needs. You can upgrade or downgrade anytime.'
               : 'Start managing your DNS infrastructure with confidence. Select the plan that fits your needs.'}
           </p>
-        </div>
+        </section>
 
         {/* Lifetime Plans Section */}
-        <div className="mb-12">
+        <section className="mb-12" aria-labelledby="lifetime-plans-heading">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-orange-dark mb-2">
+            <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
               Lifetime Plans
             </h2>
             <p className="text-sm text-gray-slate font-light">
@@ -206,7 +254,7 @@ function PricingContent() {
               );
             })}
           </div>
-        </div>
+        </section>
 
         {/* Enterprise Lifetime Plan - Full Width */}
         {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
@@ -262,9 +310,9 @@ function PricingContent() {
         ))}
 
         {/* Monthly Subscription Plans Section */}
-        <div className="mb-12">
+        <section className="mb-12" aria-labelledby="monthly-plans-heading">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-orange-dark mb-2">
+            <h2 id="monthly-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
               Monthly Subscriptions
             </h2>
             <p className="text-sm text-gray-slate font-light">
@@ -297,7 +345,7 @@ function PricingContent() {
               );
             })}
           </div>
-        </div>
+        </section>
 
         {/* Enterprise Subscription Plan - Full Width Bottom Section */}
         {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (
@@ -353,40 +401,28 @@ function PricingContent() {
         ))}
 
         {/* FAQ Section */}
-        <div className="mt-8 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-orange-dark text-center mb-6">
+        <section className="mt-8 max-w-3xl mx-auto" aria-labelledby="faq-heading">
+          <h2 id="faq-heading" className="text-2xl font-bold text-orange-dark text-center mb-6">
             Frequently Asked Questions
           </h2>
-          <div className="space-y-4">
-            <div className="bg-white rounded-lg border border-gray-light p-4">
-              <h3 className="text-base font-bold text-orange-dark mb-1">
-                Can I change my plan later?
-              </h3>
-              <p className="text-sm text-gray-slate font-regular">
-                Yes! You can upgrade or downgrade your plan at any time. Changes
-                will be prorated and reflected in your next billing cycle.
-              </p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-light p-4">
-              <h3 className="text-base font-bold text-orange-dark mb-1">
-                What payment methods do you accept?
-              </h3>
-              <p className="text-sm text-gray-slate font-regular">
-                We accept all major credit cards (Visa, Mastercard, American
-                Express) and support automatic billing for your convenience.
-              </p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-light p-4">
-              <h3 className="text-base font-bold text-orange-dark mb-1">
-                Can I migrate my existing DNS records?
-              </h3>
-              <p className="text-sm text-gray-slate font-regular">
-                Yes! You can easily import your existing DNS records from other providers. We support bulk imports via CSV and BIND zone file formats, making the migration process quick and seamless.
-              </p>
-            </div>
+          <div className="space-y-4" role="list">
+            {PRICING_FAQS.map((faq, index) => (
+              <article
+                key={index}
+                className="bg-white rounded-lg border border-gray-light p-4"
+                role="listitem"
+              >
+                <h3 className="text-base font-bold text-orange-dark mb-1">
+                  {faq.question}
+                </h3>
+                <p className="text-sm text-gray-slate font-regular">
+                  {faq.answer}
+                </p>
+              </article>
+            ))}
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
 
       {/* Organization Creation Modal */}
       <AddOrganizationModal

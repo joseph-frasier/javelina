@@ -112,7 +112,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
   }, [isDropdownOpen, isNotificationOpen, isSupportOpen]);
 
   return (
-    <header className="bg-white dark:bg-orange-dark border-b border-gray-light sticky top-0 z-50 [&]:!border-b-gray-light dark:[&]:!border-b-gray-700">
+    <header className="bg-white dark:bg-orange-dark border-b border-gray-light sticky top-0 z-50 [&]:!border-b-gray-light dark:[&]:!border-b-gray-700" role="banner">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
@@ -120,14 +120,15 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
             <button
               onClick={onMenuToggle}
               className="md:hidden p-2 rounded-md text-gray-slate hover:text-orange hover:bg-gray-light/30 transition-colors"
-              aria-label="Toggle menu"
+              aria-label="Toggle navigation menu"
+              aria-expanded="false"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
 
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center" aria-label="Go to home page">
               <Logo
                 width={325}
                 height={130}
@@ -138,7 +139,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
           </div>
 
           <div className="flex items-center space-x-6">
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-6" role="navigation" aria-label="Main navigation">
               <Link
                 href="/analytics"
                 className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
@@ -150,12 +151,16 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
               <button 
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                 className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
+                aria-label="View notifications"
+                aria-expanded={isNotificationOpen}
+                aria-haspopup="true"
               >
                 <svg
                   className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -167,10 +172,10 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
               </button>
 
               {isNotificationOpen && (
-                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
+                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50" role="dialog" aria-labelledby="notifications-heading">
                   <div className="p-4 border-b border-gray-light flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Notifications</h3>
-                    <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
+                    <h3 id="notifications-heading" className="text-sm font-semibold text-orange-dark dark:text-orange">Notifications</h3>
+                    <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium" aria-label="Clear all notifications">
                       Clear All
                     </button>
                   </div>
@@ -186,13 +191,16 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
               <button 
                 onClick={() => setIsSupportOpen(!isSupportOpen)}
                 className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
-                title="Support"
+                aria-label="Contact support"
+                aria-expanded={isSupportOpen}
+                aria-haspopup="true"
               >
                 <svg
                   className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -204,18 +212,18 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
               </button>
 
               {isSupportOpen && (
-                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50">
+                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50" role="dialog" aria-labelledby="support-heading">
                   <div className="p-4 border-b border-gray-light">
-                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Need help or have feedback?</h3>
+                    <h3 id="support-heading" className="text-sm font-semibold text-orange-dark dark:text-orange">Need help or have feedback?</h3>
                     <p className="text-xs text-gray-slate dark:text-gray-300 mt-1">We&apos;d love to hear from you</p>
                   </div>
                   <div className="p-4">
                     <div className="flex items-center justify-between gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-                      <span className="text-sm text-gray-slate dark:text-gray-300 truncate">{supportEmail}</span>
+                      <span className="text-sm text-gray-slate dark:text-gray-300 truncate" aria-label="Support email address">{supportEmail}</span>
                       <button
                         onClick={handleCopyEmail}
                         className="flex-shrink-0 p-1.5 text-gray-slate hover:text-orange transition-colors rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
-                        title={copied ? 'Copied!' : 'Copy email'}
+                        aria-label={copied ? 'Email copied to clipboard' : 'Copy email address to clipboard'}
                       >
                         {copied ? (
                           <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,13 +264,15 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                 placeholder="Search everything..."
                 className="w-64 px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                 disabled
-                title="Global search coming soon"
+                aria-label="Global search (coming soon)"
+                aria-disabled="true"
               />
               <svg
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -271,7 +281,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
-              <div className="absolute hidden group-hover:block top-full left-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap z-10">
+              <div className="absolute hidden group-hover:block top-full left-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap z-10" role="tooltip">
                 Coming soon
               </div>
             </div>
@@ -280,29 +290,32 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-orange-dark transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 overflow-hidden"
+                aria-label={`User menu for ${userName}`}
+                aria-expanded={isDropdownOpen}
+                aria-haspopup="true"
               >
                 {userAvatarUrl ? (
                   <img
                     src={userAvatarUrl}
-                    alt="User avatar"
+                    alt={`${userName} avatar`}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-white font-bold text-base">
+                  <span className="text-white font-bold text-base" aria-hidden="true">
                     {userInitial}
                   </span>
                 )}
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden" role="menu" aria-labelledby="user-menu-heading">
                   <div className="p-4 border-b border-gray-light">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center overflow-hidden">
+                      <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center overflow-hidden" aria-hidden="true">
                         {userAvatarUrl ? (
                           <img
                             src={userAvatarUrl}
-                            alt="User avatar"
+                            alt=""
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -312,7 +325,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-orange-dark dark:text-white truncate">
+                        <p id="user-menu-heading" className="text-sm font-medium text-orange-dark dark:text-white truncate">
                           {userName}
                         </p>
                         <p className="text-xs text-gray-slate truncate">
@@ -331,6 +344,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                       href="/profile"
                       className="block px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
                       onClick={() => setIsDropdownOpen(false)}
+                      role="menuitem"
                     >
                       Profile
                     </Link>
@@ -338,12 +352,14 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                       href="/settings"
                       className="block px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
                       onClick={() => setIsDropdownOpen(false)}
+                      role="menuitem"
                     >
                       Settings
                     </Link>
                     <button
                       className="w-full text-left px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
                       onClick={handleLogout}
+                      role="menuitem"
                     >
                       Sign out
                     </button>
