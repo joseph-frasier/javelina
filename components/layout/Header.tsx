@@ -10,9 +10,10 @@ import { Logo } from '@/components/ui/Logo';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
+  isMobileMenuOpen?: boolean;
 }
 
-export function Header({ onMenuToggle }: HeaderProps = {}) {
+export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps = {}) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { general, setTheme } = useSettingsStore();
@@ -121,7 +122,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
               onClick={onMenuToggle}
               className="md:hidden p-2 rounded-md text-gray-slate hover:text-orange hover:bg-gray-light/30 transition-colors"
               aria-label="Toggle navigation menu"
-              aria-expanded="false"
+              aria-expanded={isMobileMenuOpen}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
