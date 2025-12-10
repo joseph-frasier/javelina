@@ -69,6 +69,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
+  const [planCode, setPlanCode] = useState<string | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const [isLifetimePlan, setIsLifetimePlan] = useState(false);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
@@ -197,11 +198,12 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   }, [selectedZoneForTags, zoneTagAssignments]);
   // ============================================
 
-  // Check if this is the newest plan and get plan name
+  // Check if this is the newest plan and get plan name/code
   useEffect(() => {
     const checkPlan = async () => {
       setIsLoadingPlan(true);
       try {
+        // Fetch all orgs to check if this is the newest
         const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
         
         if (orgsWithSubscriptions && orgsWithSubscriptions.length > 0) {
@@ -211,11 +213,19 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           const isNewest = mostRecentOrg.org_id === org.id;
           setIsNewestPlan(isNewest);
           
-          // Get plan name for current org
+          // Get plan name from the list (plan_code might not be in this response)
           const currentOrgData = orgsWithSubscriptions.find((o: any) => o.org_id === org.id);
           if (currentOrgData?.plan_name) {
             setPlanName(currentOrgData.plan_name);
           }
+        }
+        
+        // Fetch current subscription to get the plan_code (this API returns it)
+        const currentSub = await subscriptionsApi.getCurrent(org.id);
+        if (currentSub?.subscription?.plan_code) {
+          setPlanCode(currentSub.subscription.plan_code);
+        } else if (currentSub?.plan?.code) {
+          setPlanCode(currentSub.plan.code);
         }
       } catch (error) {
         console.error('Error checking plan:', error);
@@ -471,6 +481,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         onClose={() => setIsAddZoneModalOpen(false)}
         organizationId={org.id}
         organizationName={org.name}
+        planCode={planCode || undefined}
       />
 
       {/* Edit Organization Modal */}
