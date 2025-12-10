@@ -145,12 +145,36 @@ export function useReorderTags(organizationId: string) {
       await Promise.all(updates);
       return reorderedTags;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
+    // Optimistically update the UI before the mutation completes
+    onMutate: async (reorderedTags: Tag[]) => {
+      // Cancel any outgoing refetches to avoid overwriting our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tags', organizationId] });
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData<{ tags: Tag[]; assignments: ZoneTagAssignment[] }>(['tags', organizationId]);
+
+      // Optimistically update to the new value
+      if (previousData) {
+        queryClient.setQueryData(['tags', organizationId], {
+          ...previousData,
+          tags: reorderedTags,
+        });
+      }
+
+      // Return context with the previous data for rollback on error
+      return { previousData };
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
+      // Roll back to the previous state on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['tags', organizationId], context.previousData);
+      }
       const message = error?.message || 'Failed to reorder tags';
       addToast('error', message);
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the correct server state
+      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
     },
   });
 }
@@ -165,13 +189,41 @@ export function useToggleTagFavorite(organizationId: string) {
     mutationFn: ({ tagId, isFavorite }: { tagId: string; isFavorite: boolean }) => {
       return tagsApi.update(tagId, { is_favorite: !isFavorite });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
+    // Optimistically update the UI before the mutation completes
+    onMutate: async ({ tagId, isFavorite }: { tagId: string; isFavorite: boolean }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['tags', organizationId] });
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData<{ tags: Tag[]; assignments: ZoneTagAssignment[] }>(['tags', organizationId]);
+
+      // Optimistically update to the new value
+      if (previousData) {
+        queryClient.setQueryData(['tags', organizationId], {
+          ...previousData,
+          tags: previousData.tags.map(tag => 
+            tag.id === tagId 
+              ? { ...tag, is_favorite: !isFavorite }
+              : tag
+          ),
+        });
+      }
+
+      // Return context with the previous data for rollback on error
+      return { previousData };
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
+      // Roll back to the previous state on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['tags', organizationId], context.previousData);
+      }
       const { addToast } = useToastStore.getState();
       const message = error?.message || 'Failed to update favorite status';
       addToast('error', message);
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the correct server state
+      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
     },
   });
 }
