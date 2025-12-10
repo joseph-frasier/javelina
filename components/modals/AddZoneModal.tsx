@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
@@ -43,7 +43,14 @@ export function AddZoneModal({
   
   // Plan limits and usage tracking
   const { limits, tier, wouldExceedLimit } = usePlanLimits(planCode);
-  const { usage, isLoading: isLoadingUsage } = useUsageCounts(organizationId);
+  const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsageCounts(organizationId);
+  
+  // Refetch usage counts when modal opens to get fresh data
+  useEffect(() => {
+    if (isOpen) {
+      refetchUsage();
+    }
+  }, [isOpen, refetchUsage]);
   
   // Check if at zone limit
   const currentZoneCount = usage?.zones ?? 0;

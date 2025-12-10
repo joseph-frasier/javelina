@@ -43,7 +43,7 @@ interface UseUsageCountsReturn {
  */
 export function useUsageCounts(organizationId: string | null | undefined): UseUsageCountsReturn {
   const [usage, setUsage] = useState<UsageCounts | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);  // Start as loading until first fetch completes
   const [error, setError] = useState<string | null>(null);
 
   const fetchUsage = useCallback(async () => {
