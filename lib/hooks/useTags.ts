@@ -27,11 +27,7 @@ export function useTags(organizationId: string | null) {
  */
 export function useCreateTag(organizationId: string) {
   const queryClient = useQueryClient();
-<<<<<<< HEAD
   const { addToast } = useToastStore();
-=======
-  const { showToast } = useToastStore();
->>>>>>> 3753155 (Implement zone tagging system)
 
   return useMutation({
     mutationFn: (data: { name: string; color: string }) => {
@@ -43,19 +39,11 @@ export function useCreateTag(organizationId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-<<<<<<< HEAD
       addToast('success', 'Tag created successfully');
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to create tag';
       addToast('error', message);
-=======
-      showToast('Tag created successfully', 'success');
-    },
-    onError: (error: any) => {
-      const message = error?.message || 'Failed to create tag';
-      showToast(message, 'error');
->>>>>>> 3753155 (Implement zone tagging system)
     },
   });
 }
@@ -65,11 +53,7 @@ export function useCreateTag(organizationId: string) {
  */
 export function useUpdateTag(organizationId: string) {
   const queryClient = useQueryClient();
-<<<<<<< HEAD
   const { addToast } = useToastStore();
-=======
-  const { showToast } = useToastStore();
->>>>>>> 3753155 (Implement zone tagging system)
 
   return useMutation({
     mutationFn: ({ 
@@ -88,19 +72,11 @@ export function useUpdateTag(organizationId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-<<<<<<< HEAD
       addToast('success', 'Tag updated successfully');
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to update tag';
       addToast('error', message);
-=======
-      showToast('Tag updated successfully', 'success');
-    },
-    onError: (error: any) => {
-      const message = error?.message || 'Failed to update tag';
-      showToast(message, 'error');
->>>>>>> 3753155 (Implement zone tagging system)
     },
   });
 }
@@ -110,11 +86,7 @@ export function useUpdateTag(organizationId: string) {
  */
 export function useDeleteTag(organizationId: string) {
   const queryClient = useQueryClient();
-<<<<<<< HEAD
   const { addToast } = useToastStore();
-=======
-  const { showToast } = useToastStore();
->>>>>>> 3753155 (Implement zone tagging system)
 
   return useMutation({
     mutationFn: (tagId: string) => {
@@ -126,19 +98,11 @@ export function useDeleteTag(organizationId: string) {
       const message = count > 0 
         ? `Tag deleted and removed from ${count} zone${count !== 1 ? 's' : ''}`
         : 'Tag deleted successfully';
-<<<<<<< HEAD
       addToast('success', message);
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to delete tag';
       addToast('error', message);
-=======
-      showToast(message, 'success');
-    },
-    onError: (error: any) => {
-      const message = error?.message || 'Failed to delete tag';
-      showToast(message, 'error');
->>>>>>> 3753155 (Implement zone tagging system)
     },
   });
 }
@@ -148,11 +112,7 @@ export function useDeleteTag(organizationId: string) {
  */
 export function useUpdateZoneTags(organizationId: string) {
   const queryClient = useQueryClient();
-<<<<<<< HEAD
   const { addToast } = useToastStore();
-=======
-  const { showToast } = useToastStore();
->>>>>>> 3753155 (Implement zone tagging system)
 
   return useMutation({
     mutationFn: ({ zoneId, tagIds }: { zoneId: string; tagIds: string[] }) => {
@@ -160,19 +120,11 @@ export function useUpdateZoneTags(organizationId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-<<<<<<< HEAD
       addToast('success', 'Tags updated successfully');
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to update tags';
       addToast('error', message);
-=======
-      showToast('Tags updated successfully', 'success');
-    },
-    onError: (error: any) => {
-      const message = error?.message || 'Failed to update tags';
-      showToast(message, 'error');
->>>>>>> 3753155 (Implement zone tagging system)
     },
   });
 }
@@ -182,11 +134,7 @@ export function useUpdateZoneTags(organizationId: string) {
  */
 export function useReorderTags(organizationId: string) {
   const queryClient = useQueryClient();
-<<<<<<< HEAD
   const { addToast } = useToastStore();
-=======
-  const { showToast } = useToastStore();
->>>>>>> 3753155 (Implement zone tagging system)
 
   return useMutation({
     mutationFn: async (reorderedTags: Tag[]) => {
@@ -197,7 +145,6 @@ export function useReorderTags(organizationId: string) {
       await Promise.all(updates);
       return reorderedTags;
     },
-<<<<<<< HEAD
     // Optimistically update the UI before the mutation completes
     onMutate: async (reorderedTags: Tag[]) => {
       // Cancel any outgoing refetches to avoid overwriting our optimistic update
@@ -229,15 +176,6 @@ export function useReorderTags(organizationId: string) {
       // Always refetch after error or success to ensure we have the correct server state
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
     },
-=======
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-    },
-    onError: (error: any) => {
-      const message = error?.message || 'Failed to reorder tags';
-      showToast(message, 'error');
-    },
->>>>>>> 3753155 (Implement zone tagging system)
   });
 }
 
@@ -251,7 +189,6 @@ export function useToggleTagFavorite(organizationId: string) {
     mutationFn: ({ tagId, isFavorite }: { tagId: string; isFavorite: boolean }) => {
       return tagsApi.update(tagId, { is_favorite: !isFavorite });
     },
-<<<<<<< HEAD
     // Optimistically update the UI before the mutation completes
     onMutate: async ({ tagId, isFavorite }: { tagId: string; isFavorite: boolean }) => {
       // Cancel any outgoing refetches
@@ -288,16 +225,5 @@ export function useToggleTagFavorite(organizationId: string) {
       // Always refetch after error or success to ensure we have the correct server state
       queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
     },
-=======
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
-    },
-    onError: (error: any) => {
-      const { showToast } = useToastStore.getState();
-      const message = error?.message || 'Failed to update favorite status';
-      showToast(message, 'error');
-    },
->>>>>>> 3753155 (Implement zone tagging system)
   });
 }
-
