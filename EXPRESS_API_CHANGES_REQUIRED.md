@@ -441,6 +441,8 @@ Replace the current domain validation regex to allow underscores:
 /**
  * Validates domain name format
  * Allows: alphanumerics, hyphens, underscores, dots, and optional trailing dot
+ * Maximum length: 255 characters
+ * Maximum label length: 63 characters
  */
 function isValidDomain(domain) {
   // Allow @ for apex
@@ -451,15 +453,15 @@ function isValidDomain(domain) {
     domain = domain.slice(2);
   }
   
+  // Check total length (255 characters for hostnames/domains)
+  if (domain.length > 255) return false;
+  
   // Domain name regex - allows alphanumerics, hyphens, underscores, and trailing dot
   // Note: Underscores are technically not RFC-compliant for hostnames but are commonly used
   // (e.g., _dmarc, _domainkey) and are allowed here for flexibility
   const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*\.?$/;
   
   if (!domainRegex.test(domain)) return false;
-  
-  // Check total length
-  if (domain.length > 253) return false;
   
   // Check each label length
   // Filter out empty labels caused by trailing dots (e.g., "example.com." splits to ["example", "com", ""])
@@ -681,7 +683,7 @@ After implementing these changes, test the following scenarios:
 - [ ] Create PTR with trailing dot in target → Should succeed
 - [ ] Reject hostname starting with hyphen (e.g., `-invalid.com`) → Should fail
 - [ ] Reject hostname with empty label (e.g., `example..com`) → Should fail
-- [ ] Reject hostname exceeding 253 characters → Should fail
+- [ ] Reject hostname exceeding 255 characters → Should fail
 - [ ] Reject hostname with label exceeding 63 characters → Should fail
 
 ### Record Name Validation

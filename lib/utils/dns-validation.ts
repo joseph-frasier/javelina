@@ -26,6 +26,8 @@ export function isValidIPv6(ip: string): boolean {
 /**
  * Validates domain name format
  * Allows: alphanumerics, hyphens, underscores, dots, and optional trailing dot
+ * Maximum length: 255 characters
+ * Maximum label length: 63 characters
  */
 export function isValidDomain(domain: string): boolean {
   // Allow @ for apex
@@ -36,15 +38,15 @@ export function isValidDomain(domain: string): boolean {
     domain = domain.slice(2);
   }
   
+  // Check total length (255 characters for hostnames/domains)
+  if (domain.length > 255) return false;
+  
   // Domain name regex - allows alphanumerics, hyphens, underscores, and trailing dot
   // Note: Underscores are technically not RFC-compliant for hostnames but are commonly used
   // (e.g., _dmarc, _domainkey) and are allowed here for flexibility
   const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*\.?$/;
   
   if (!domainRegex.test(domain)) return false;
-  
-  // Check total length
-  if (domain.length > 253) return false;
   
   // Check each label length
   // Filter out empty labels caused by trailing dots (e.g., "example.com." splits to ["example", "com", ""])
