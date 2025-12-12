@@ -440,7 +440,7 @@ Replace the current domain validation regex to allow underscores:
 ```javascript
 /**
  * Validates domain name format
- * Allows: alphanumerics, hyphens, underscores, dots, and optional trailing dot
+ * Allows: alphanumerics, backslash, hyphens, underscores, dots, and optional trailing dot
  * Maximum length: 255 characters
  * Maximum label length: 63 characters
  */
@@ -456,10 +456,9 @@ function isValidDomain(domain) {
   // Check total length (255 characters for hostnames/domains)
   if (domain.length > 255) return false;
   
-  // Domain name regex - allows alphanumerics, hyphens, underscores, and trailing dot
-  // Note: Underscores are technically not RFC-compliant for hostnames but are commonly used
-  // (e.g., _dmarc, _domainkey) and are allowed here for flexibility
-  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*\.?$/;
+  // Domain name regex - allows alphanumerics, backslash, hyphens, underscores, and trailing dot
+  // Note: Underscores and backslashes are technically not RFC-compliant for hostnames but are allowed here for flexibility
+  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?)*\.?$/;
   
   if (!domainRegex.test(domain)) return false;
   
@@ -472,8 +471,9 @@ function isValidDomain(domain) {
 
 ##### Key Changes from Previous Validation
 
-1. **Underscores Allowed**: Added `_` to the character class `[a-zA-Z0-9_-]`
-2. **Trailing Dot Allowed**: The regex already ends with `\.?$` which allows an optional trailing dot
+1. **Backslashes Allowed**: Added `\` to the character class `[a-zA-Z0-9_\-\\]`
+2. **Underscores Allowed**: Added `_` to the character class
+3. **Trailing Dot Allowed**: The regex already ends with `\.?$` which allows an optional trailing dot
 
 ##### Apply to These Record Types
 
@@ -521,7 +521,7 @@ Create or update the record name validation function:
 ```javascript
 /**
  * Validates DNS record name
- * Allows: alphanumerics, hyphens, underscores, dots
+ * Allows: alphanumerics, backslash, hyphens, underscores, dots
  * Maximum length: 253 characters
  * Maximum label length: 63 characters
  */
@@ -541,8 +541,8 @@ function isValidRecordName(name) {
   }
   
   // Check for valid characters and format
-  // Allows: alphanumerics, hyphens, underscores, dots
-  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*$/;
+  // Allows: alphanumerics, backslash, hyphens, underscores, dots
+  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?)*$/;
   
   if (!nameRegex.test(name)) {
     return false;
@@ -564,7 +564,7 @@ function isValidRecordName(name) {
 // Validate record name
 if (!isValidRecordName(recordData.name)) {
   return res.status(400).json({
-    error: 'Invalid record name format. Allowed: alphanumerics, hyphens, underscores, dots. Max 253 chars total, 63 chars per label.'
+    error: 'Invalid record name format. Allowed: alphanumerics, backslash, hyphens, underscores, dots. Max 253 chars total, 63 chars per label.'
   });
 }
 ```
@@ -573,6 +573,7 @@ if (!isValidRecordName(recordData.name)) {
 
 **Characters Allowed**: 
 - Alphanumerics: `a-z`, `A-Z`, `0-9`
+- Backslash: `\`
 - Hyphens: `-`
 - Underscores: `_`
 - Dots: `.` (for separating labels)

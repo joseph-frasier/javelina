@@ -25,7 +25,7 @@ export function isValidIPv6(ip: string): boolean {
 
 /**
  * Validates domain name format
- * Allows: alphanumerics, hyphens, underscores, dots, and optional trailing dot
+ * Allows: alphanumerics, backslash, hyphens, underscores, dots, and optional trailing dot
  * Maximum length: 255 characters
  * Maximum label length: 63 characters
  */
@@ -41,10 +41,9 @@ export function isValidDomain(domain: string): boolean {
   // Check total length (255 characters for hostnames/domains)
   if (domain.length > 255) return false;
   
-  // Domain name regex - allows alphanumerics, hyphens, underscores, and trailing dot
-  // Note: Underscores are technically not RFC-compliant for hostnames but are commonly used
-  // (e.g., _dmarc, _domainkey) and are allowed here for flexibility
-  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*\.?$/;
+  // Domain name regex - allows alphanumerics, backslash, hyphens, underscores, and trailing dot
+  // Note: Underscores and backslashes are technically not RFC-compliant for hostnames but are allowed here for flexibility
+  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?)*\.?$/;
   
   if (!domainRegex.test(domain)) return false;
   
@@ -56,7 +55,7 @@ export function isValidDomain(domain: string): boolean {
 
 /**
  * Validates record name
- * Allows: alphanumerics, hyphens, underscores, dots
+ * Allows: alphanumerics, backslash, hyphens, underscores, dots
  * Maximum length: 253 characters
  * Maximum label length: 63 characters
  */
@@ -74,7 +73,8 @@ export function isValidRecordName(name: string): boolean {
   if (name.length > 253) return false;
   
   // Check for valid characters and format
-  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*$/;
+  // Allows: alphanumerics, backslash, hyphens, underscores, dots
+  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?)*$/;
   
   if (!nameRegex.test(name)) return false;
   
