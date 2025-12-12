@@ -151,14 +151,8 @@ export function ManageDNSRecordModal({
 
   // Get appropriate placeholder for Name field based on record type and zone type
   const getNamePlaceholder = () => {
-    if (formData.type === 'PTR' && zoneName) {
-      const reverseType = getReverseZoneType(zoneName);
-      if (reverseType === 'ipv4') {
-        return 'Integer 0-255 (e.g., 5 for 192.0.2.5)';
-      }
-      if (reverseType === 'ipv6') {
-        return 'Hex nibble 0-f (e.g., a)';
-      }
+    if (formData.type === 'PTR') {
+      return 'PTR record name (e.g. 1 or 10.0)';
     }
     if (formData.type === 'CNAME') {
       return 'Subdomain (e.g., www, blog, api)';
