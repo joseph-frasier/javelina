@@ -16,3 +16,5 @@ DROP TABLE IF EXISTS public.entitlements CASCADE;
 -- Note: plans and subscriptions tables are preserved
 -- Organizations can still have subscriptions, but entitlements will be managed by Launch Darkly
 
+
+

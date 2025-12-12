@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
@@ -8,12 +8,17 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
+import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
+import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
+import { UpgradeLimitBanner } from '@/components/ui/UpgradeLimitBanner';
 
 interface AddZoneModalProps {
   isOpen: boolean;
   onClose: () => void;
   organizationId: string;
   organizationName: string;
+  /** Plan code from the organization's subscription (e.g., 'starter_lifetime', 'pro') */
+  planCode?: string;
   onSuccess?: (zoneId: string) => void;
 }
 
@@ -22,6 +27,7 @@ export function AddZoneModal({
   onClose, 
   organizationId,
   organizationName,
+  planCode,
   onSuccess 
 }: AddZoneModalProps) {
   const router = useRouter();
@@ -34,6 +40,21 @@ export function AddZoneModal({
   const [errors, setErrors] = useState<{ name?: string; admin_email?: string; negative_caching_ttl?: string; general?: string }>({});
 
   const { addToast } = useToastStore();
+  
+  // Plan limits and usage tracking
+  const { limits, tier, wouldExceedLimit } = usePlanLimits(planCode);
+  const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsageCounts(organizationId);
+  
+  // Refetch usage counts when modal opens to get fresh data
+  useEffect(() => {
+    if (isOpen) {
+      refetchUsage();
+    }
+  }, [isOpen, refetchUsage]);
+  
+  // Check if at zone limit
+  const currentZoneCount = usage?.zones ?? 0;
+  const isAtZoneLimit = wouldExceedLimit('zones', currentZoneCount);
 
   const validateForm = (): boolean => {
     const newErrors: { name?: string; admin_email?: string; negative_caching_ttl?: string } = {};
@@ -139,6 +160,18 @@ export function AddZoneModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Zone" size="medium">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Plan limit warning/block */}
+        {!isLoadingUsage && (
+          <UpgradeLimitBanner
+            resourceType="zones"
+            currentCount={currentZoneCount}
+            maxCount={limits.zones}
+            planTier={tier.charAt(0).toUpperCase() + tier.slice(1)}
+            isAtLimit={isAtZoneLimit}
+            organizationId={organizationId}
+          />
+        )}
+        
         {errors.general && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="text-sm text-red-800">{errors.general}</p>
@@ -258,7 +291,7 @@ export function AddZoneModal({
           <Button
             type="submit"
             variant="primary"
-            disabled={isSubmitting || !name.trim()}
+            disabled={isSubmitting || !name.trim() || isAtZoneLimit}
           >
             {isSubmitting ? (
               <>

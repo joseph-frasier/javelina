@@ -32,7 +32,6 @@ export interface Plan {
   annual?: PlanPrice;
   features: PlanFeature[];
   limits: {
-    environments: number;
     zones: number;
     dnsRecords: number;
     teamMembers: number;
@@ -100,7 +99,6 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
       description: dbPlan.metadata?.description || '',
       popular: baseCode === 'pro_lifetime' || baseCode === 'pro', // Mark Pro plans as popular
       limits: {
-        environments: hardcodedLimits.environments,
         zones: hardcodedLimits.zones,
         dnsRecords: hardcodedLimits.records,
         teamMembers: hardcodedLimits.users,
@@ -164,7 +162,6 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
 const HARDCODED_PLAN_LIMITS: Record<string, {
   organizations: number;
   users: number;
-  environments: number;
   zones: number;
   records: number;
   queries: string;
@@ -173,7 +170,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'starter_lifetime': {
     organizations: 1,
     users: 1,
-    environments: 2,
     zones: 2,
     records: 200,
     queries: '5m',
@@ -181,7 +177,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'pro_lifetime': {
     organizations: 1,
     users: 5,
-    environments: 20,
     zones: 20,
     records: 2000,
     queries: '50m',
@@ -189,7 +184,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'premium_lifetime': {
     organizations: 1,
     users: 20,
-    environments: 50,
     zones: 50,
     records: 5000,
     queries: '500m',
@@ -197,7 +191,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'enterprise_lifetime': {
     organizations: -1, // Custom
     users: -1, // Custom
-    environments: -1, // Custom
     zones: -1, // Custom
     records: -1, // Custom
     queries: 'Custom',
@@ -207,7 +200,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'starter': {
     organizations: 1,
     users: 1,
-    environments: 2,
     zones: 2,
     records: 200,
     queries: '5m',
@@ -215,7 +207,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'pro': {
     organizations: 1,
     users: 5,
-    environments: 20,
     zones: 20,
     records: 2000,
     queries: '50m',
@@ -223,7 +214,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'business': {
     organizations: 1,
     users: 20,
-    environments: 50,
     zones: 50,
     records: 5000,
     queries: '500m',
@@ -231,7 +221,6 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
   'enterprise': {
     organizations: -1, // Custom
     users: -1, // Custom
-    environments: -1, // Custom
     zones: -1, // Custom
     records: -1, // Custom
     queries: 'Custom',
@@ -271,19 +260,6 @@ function buildFeaturesList(planId: string, entitlements: Map<string, string>): P
   } else {
     features.push({
       name: `${limits.users} ${limits.users === 1 ? 'single user' : 'user accounts'}`,
-      included: true,
-    });
-  }
-  
-  // Add environment limit
-  if (limits.environments === -1) {
-    features.push({
-      name: 'Environments: Custom',
-      included: true,
-    });
-  } else {
-    features.push({
-      name: `${limits.environments} Environment${limits.environments === 1 ? '' : 's'}`,
       included: true,
     });
   }
@@ -347,13 +323,11 @@ const FALLBACK_PLANS: Plan[] = [
     features: [
       { name: '1 Organization', included: true },
       { name: '1 single user', included: true },
-      { name: '2 Environments', included: true },
       { name: '2 Zones/Domains', included: true },
       { name: '200 records total', included: true },
       { name: '5m Queries', included: true },
     ],
     limits: {
-      environments: 2,
       zones: 2,
       dnsRecords: 200,
       teamMembers: 1,
@@ -383,13 +357,11 @@ const FALLBACK_PLANS: Plan[] = [
     features: [
       { name: '1 Organization', included: true },
       { name: '5 user accounts', included: true },
-      { name: '20 Environments', included: true },
       { name: '20 Zones/domains', included: true },
       { name: '2000 records total', included: true },
       { name: '50m queries', included: true },
     ],
     limits: {
-      environments: 20,
       zones: 20,
       dnsRecords: 2000,
       teamMembers: 5,
@@ -419,13 +391,11 @@ const FALLBACK_PLANS: Plan[] = [
     features: [
       { name: '1 Organization', included: true },
       { name: '20 user accounts', included: true },
-      { name: '50 Environments', included: true },
       { name: '50 Zones/domains', included: true },
       { name: '5000 records total', included: true },
       { name: '500m queries', included: true },
     ],
     limits: {
-      environments: 50,
       zones: 50,
       dnsRecords: 5000,
       teamMembers: 20,
@@ -451,11 +421,9 @@ const FALLBACK_PLANS: Plan[] = [
       { name: 'Organizations: Custom', included: true },
       { name: 'Pricing: Custom', included: true },
       { name: 'User Accounts: Custom', included: true },
-      { name: 'Environments: Custom', included: true },
       { name: 'Zones/Domains: Custom', included: true },
     ],
     limits: {
-      environments: -1,
       zones: -1,
       dnsRecords: -1,
       teamMembers: -1,

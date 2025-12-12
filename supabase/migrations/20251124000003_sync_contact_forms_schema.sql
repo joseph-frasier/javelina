@@ -11,3 +11,5 @@ COMMENT ON TABLE public."marketing-website-contact-form" IS 'Public contact form
 
 COMMENT ON COLUMN public."marketing-website-contact-form".inquiry_type IS 'Type of inquiry: general, founders-pricing, enterprise, support, partnership';
 
+
+

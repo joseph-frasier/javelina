@@ -8,22 +8,25 @@ import Button from '@/components/ui/Button';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
-import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
 import { subscriptionsApi } from '@/lib/api-client';
 import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
 import { ZonesList } from '@/components/organization/ZonesList';
 import { useAuthStore } from '@/lib/auth-store';
-// Tagging System Mockup Imports
+// Tagging System Imports
 import { TagsManagerCard } from '@/components/tags/TagsManagerCard';
 import { FavoriteTagsCard } from '@/components/tags/FavoriteTagsCard';
 import { CreateTagModal } from '@/components/modals/CreateTagModal';
 import { AssignTagsModal } from '@/components/modals/AssignTagsModal';
 import { 
-  INITIAL_MOCK_TAGS, 
-  type Tag, 
-  type ZoneTagAssignment,
-  generateTagId 
-} from '@/lib/mock-tags-data';
+  useTags, 
+  useCreateTag, 
+  useUpdateTag, 
+  useDeleteTag, 
+  useUpdateZoneTags,
+  useReorderTags,
+  useToggleTagFavorite 
+} from '@/lib/hooks/useTags';
+import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
 
 interface Zone {
   id: string;
@@ -62,33 +65,29 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const { selectAndExpand } = useHierarchyStore();
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
+  const [planCode, setPlanCode] = useState<string | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const [isLifetimePlan, setIsLifetimePlan] = useState(false);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
-  const canDeleteOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
 
   // ============================================
-  // TAGGING SYSTEM MOCKUP STATE
+  // TAGGING SYSTEM
   // ============================================
-  const [mockTags, setMockTags] = useState<Tag[]>(INITIAL_MOCK_TAGS);
-  const [zoneTagAssignments, setZoneTagAssignments] = useState<ZoneTagAssignment[]>(() => {
-    // Initialize with some mock assignments based on existing zones
-    const initialAssignments: ZoneTagAssignment[] = [];
-    org.zones.forEach((zone, index) => {
-      // Assign some tags to zones for demo purposes
-      const tagIds: string[] = [];
-      if (index % 3 === 0) tagIds.push('tag-1'); // Production
-      if (index % 2 === 0) tagIds.push('tag-2'); // Staging
-      if (index % 4 === 0) tagIds.push('tag-4'); // US-East
-      if (tagIds.length > 0) {
-        initialAssignments.push({ zoneId: zone.id, tagIds });
-      }
-    });
-    return initialAssignments;
-  });
+  // Fetch tags and assignments from API
+  const { data: tagsData, isLoading: isLoadingTags } = useTags(org.id);
+  const tags = tagsData?.tags || [];
+  const zoneTagAssignments = tagsData?.assignments || [];
+  
+  // Tag mutations
+  const createTagMutation = useCreateTag(org.id);
+  const updateTagMutation = useUpdateTag(org.id);
+  const deleteTagMutation = useDeleteTag(org.id);
+  const updateZoneTagsMutation = useUpdateZoneTags(org.id);
+  const reorderTagsMutation = useReorderTags(org.id);
+  const toggleFavoriteMutation = useToggleTagFavorite(org.id);
+  
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
   
   // Modal states
@@ -108,21 +107,20 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   }, []);
 
   // Tag handlers
-  const handleCreateTag = (newTag: Tag) => {
-    setMockTags(prev => [...prev, newTag]);
+  const handleCreateTag = (newTag: { name: string; color: string }) => {
+    createTagMutation.mutate(newTag);
   };
 
   const handleToggleFavorite = (tagId: string) => {
-    setMockTags(prev => 
-      prev.map(tag => 
-        tag.id === tagId ? { ...tag, isFavorite: !tag.isFavorite } : tag
-      )
-    );
+    const tag = tags.find(t => t.id === tagId);
+    if (tag) {
+      toggleFavoriteMutation.mutate({ tagId, isFavorite: tag.is_favorite });
+    }
   };
 
   // Reorder tags handler - updates tag order after drag and drop
   const handleReorderTags = (reorderedTags: Tag[]) => {
-    setMockTags(reorderedTags);
+    reorderTagsMutation.mutate(reorderedTags);
   };
 
   // Edit tag handler - opens modal in edit mode
@@ -133,23 +131,19 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   // Save edited tag
   const handleSaveEditedTag = (updatedTag: Tag) => {
-    setMockTags(prev => 
-      prev.map(tag => tag.id === updatedTag.id ? updatedTag : tag)
-    );
+    updateTagMutation.mutate({
+      id: updatedTag.id,
+      data: {
+        name: updatedTag.name,
+        color: updatedTag.color,
+      }
+    });
     setTagToEdit(null);
   };
 
   // Delete tag and clean up assignments
   const handleDeleteTag = (tagId: string) => {
-    // Remove tag from mockTags
-    setMockTags(prev => prev.filter(tag => tag.id !== tagId));
-    // Remove tag from all zone assignments
-    setZoneTagAssignments(prev => 
-      prev.map(assignment => ({
-        ...assignment,
-        tagIds: assignment.tagIds.filter(id => id !== tagId)
-      })).filter(assignment => assignment.tagIds.length > 0) // Remove empty assignments
-    );
+    deleteTagMutation.mutate(tagId);
     // Clear from active filters if present
     setActiveTagIds(prev => prev.filter(id => id !== tagId));
     setTagToEdit(null);
@@ -157,7 +151,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   // Get zone count for a tag (for delete confirmation)
   const getZoneCountForTag = (tagId: string): number => {
-    return zoneTagAssignments.filter(a => a.tagIds.includes(tagId)).length;
+    return zoneTagAssignments.filter(a => a.tag_ids.includes(tagId)).length;
   };
 
   // Toggle tag in/out of active filter (multi-select)
@@ -185,39 +179,28 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   };
 
   const handleSaveTagAssignments = (zoneId: string, tagIds: string[]) => {
-    setZoneTagAssignments(prev => {
-      // If no tags selected, remove the assignment entirely to avoid state bloat
-      if (tagIds.length === 0) {
-        return prev.filter(a => a.zoneId !== zoneId);
-      }
-      
-      const existing = prev.find(a => a.zoneId === zoneId);
-      if (existing) {
-        return prev.map(a => a.zoneId === zoneId ? { ...a, tagIds } : a);
-      } else {
-        return [...prev, { zoneId, tagIds }];
-      }
-    });
+    updateZoneTagsMutation.mutate({ zoneId, tagIds });
   };
 
   const getAssignedTagIds = (zoneId: string): string[] => {
-    const assignment = zoneTagAssignments.find(a => a.zoneId === zoneId);
-    return assignment?.tagIds || [];
+    const assignment = zoneTagAssignments.find(a => a.zone_id === zoneId);
+    return assignment?.tag_ids || [];
   };
 
   // Memoize assigned tag IDs for the selected zone to prevent useEffect re-triggers in modal
   const selectedZoneAssignedTagIds = useMemo(() => {
     if (!selectedZoneForTags) return [];
-    const assignment = zoneTagAssignments.find(a => a.zoneId === selectedZoneForTags.id);
-    return assignment?.tagIds || [];
+    const assignment = zoneTagAssignments.find(a => a.zone_id === selectedZoneForTags.id);
+    return assignment?.tag_ids || [];
   }, [selectedZoneForTags, zoneTagAssignments]);
   // ============================================
 
-  // Check if this is the newest plan and get plan name
+  // Check if this is the newest plan and get plan name/code
   useEffect(() => {
     const checkPlan = async () => {
       setIsLoadingPlan(true);
       try {
+        // Fetch all orgs to check if this is the newest
         const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
         
         if (orgsWithSubscriptions && orgsWithSubscriptions.length > 0) {
@@ -227,11 +210,19 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           const isNewest = mostRecentOrg.org_id === org.id;
           setIsNewestPlan(isNewest);
           
-          // Get plan name for current org
+          // Get plan name from the list (plan_code might not be in this response)
           const currentOrgData = orgsWithSubscriptions.find((o: any) => o.org_id === org.id);
           if (currentOrgData?.plan_name) {
             setPlanName(currentOrgData.plan_name);
           }
+        }
+        
+        // Fetch current subscription to get the plan_code (this API returns it)
+        const currentSub = await subscriptionsApi.getCurrent(org.id);
+        if (currentSub?.subscription?.plan_code) {
+          setPlanCode(currentSub.subscription.plan_code);
+        } else if (currentSub?.plan?.code) {
+          setPlanCode(currentSub.plan.code);
         }
       } catch (error) {
         console.error('Error checking plan:', error);
@@ -307,14 +298,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Edit
-              </Button>
-            )}
-            {canDeleteOrg && (
-              <Button variant="secondary" size="sm" onClick={() => setIsDeleteModalOpen(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Delete
               </Button>
             )}
           </div>
@@ -395,7 +378,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
             {/* Favorite Tags Card (Alternative visualization for mockup) */}
             <FavoriteTagsCard
-              tags={mockTags}
+              tags={tags}
               activeTagIds={activeTagIds}
               onTagClick={handleTagClick}
               onClearFilters={handleClearTagFilters}
@@ -413,13 +396,16 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           <div className="lg:col-span-2 space-y-4">
             {/* Tags Manager Card */}
             <TagsManagerCard
-              tags={mockTags}
+              tags={tags}
               assignments={zoneTagAssignments}
               activeTagIds={activeTagIds}
               onTagClick={handleTagClick}
               onClearFilters={handleClearTagFilters}
               onToggleFavorite={handleToggleFavorite}
-              onCreateTag={() => setIsCreateTagModalOpen(true)}
+              onCreateTag={() => {
+                setTagToEdit(null);
+                setIsCreateTagModalOpen(true);
+              }}
               onEditTag={handleEditTag}
               onReorderTags={handleReorderTags}
             />
@@ -428,7 +414,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             <ZonesList
               organizationId={org.id}
               zones={org.zones}
-              tags={mockTags}
+              tags={tags}
               assignments={zoneTagAssignments}
               activeTagIds={activeTagIds}
               onTagClick={handleTagClick}
@@ -439,7 +425,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         </div>
       </div>
 
-      {/* Create/Edit Tag Modal (Mockup) */}
+      {/* Create/Edit Tag Modal */}
       <CreateTagModal
         isOpen={isCreateTagModalOpen}
         onClose={() => {
@@ -448,15 +434,15 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           setTimeout(() => setTagToEdit(null), 250);
         }}
         onCreateTag={handleCreateTag}
-        existingTags={mockTags}
+        existingTags={tags}
         tagToEdit={tagToEdit}
         onEditTag={handleSaveEditedTag}
         onDeleteTag={handleDeleteTag}
-        zoneCount={tagToEdit ? getZoneCountForTag(tagToEdit.id) : 0}
+        zoneCount={tagToEdit ? (tagToEdit.zone_count || 0) : 0}
         recordCount={0} // Record tags handled in ZoneDetailClient
       />
 
-      {/* Assign Tags Modal (Mockup) */}
+      {/* Assign Tags Modal */}
       {selectedZoneForTags && (
         <AssignTagsModal
           isOpen={isAssignTagsModalOpen}
@@ -471,7 +457,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           }}
           zoneName={selectedZoneForTags.name}
           zoneId={selectedZoneForTags.id}
-          allTags={mockTags}
+          allTags={tags}
           assignedTagIds={selectedZoneAssignedTagIds}
           onSave={handleSaveTagAssignments}
           onToggleFavorite={handleToggleFavorite}
@@ -484,19 +470,13 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         onClose={() => setIsAddZoneModalOpen(false)}
         organizationId={org.id}
         organizationName={org.name}
+        planCode={planCode || undefined}
       />
 
       {/* Edit Organization Modal */}
       <EditOrganizationModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        organization={org}
-      />
-
-      {/* Delete Organization Modal */}
-      <DeleteOrganizationModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
         organization={org}
       />
     </>

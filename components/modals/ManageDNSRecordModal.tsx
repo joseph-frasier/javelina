@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
-import { validateDNSRecord, getFQDN } from '@/lib/utils/dns-validation';
+import { validateDNSRecord, getFQDN, getReverseZoneType } from '@/lib/utils/dns-validation';
 
 interface ManageDNSRecordModalProps {
   isOpen: boolean;
@@ -20,16 +20,18 @@ interface ManageDNSRecordModalProps {
   existingRecords: DNSRecord[];
 }
 
-// SOA is intentionally excluded - it should only be edited, not manually created
-const recordTypeOptions = [
-  { value: 'A', label: 'A - IPv4 Address' },
-  { value: 'AAAA', label: 'AAAA - IPv6 Address' },
-  { value: 'CNAME', label: 'CNAME - Canonical Name' },
-  { value: 'MX', label: 'MX - Mail Exchange' },
-  { value: 'NS', label: 'NS - Name Server' },
-  { value: 'TXT', label: 'TXT - Text Record' },
-  { value: 'SRV', label: 'SRV - Service Record' },
-  { value: 'CAA', label: 'CAA - Certificate Authority Authorization' },
+// All possible record types (SOA is intentionally excluded - it should only be edited, not manually created)
+const allRecordTypeOptions = [
+  { value: 'A', label: 'A - IPv4 Address', disabled: false },
+  { value: 'AAAA', label: 'AAAA - IPv6 Address', disabled: false },
+  { value: 'CNAME', label: 'CNAME - Canonical Name', disabled: false },
+  { value: 'MX', label: 'MX - Mail Exchange', disabled: false },
+  { value: 'NS', label: 'NS - Name Server', disabled: false },
+  { value: 'TXT', label: 'TXT - Text Record', disabled: false },
+  { value: 'SRV', label: 'SRV - Service Record', disabled: false },
+  { value: 'CAA', label: 'CAA - Certificate Authority Authorization', disabled: false },
+  { value: 'PTR', label: 'PTR - Pointer Record (Reverse DNS)', disabled: false },
+  { value: 'RFC3597', label: 'Generic (RFC 3597)', disabled: true },
 ];
 
 export function ManageDNSRecordModal({
@@ -41,6 +43,8 @@ export function ManageDNSRecordModal({
   zoneName,
   existingRecords,
 }: ManageDNSRecordModalProps) {
+  // All record types are now available for all zone types
+  const recordTypeOptions = allRecordTypeOptions;
   const [formData, setFormData] = useState<DNSRecordFormData>({
     name: '',
     type: 'A',
@@ -70,7 +74,7 @@ export function ManageDNSRecordModal({
         const isPreset = TTL_PRESETS.some(p => p.value === record.ttl);
         setCustomTTL(!isPreset);
       } else {
-        // Reset for add mode
+        // Reset for add mode - default to A record
         setFormData({
           name: '',
           type: 'A',
@@ -92,12 +96,13 @@ export function ManageDNSRecordModal({
     const validation = validateDNSRecord(
       formData,
       existingRecords,
-      record?.id
+      record?.id,
+      zoneName
     );
     
     setErrors(validation.errors);
     setWarnings(validation.warnings);
-  }, [formData, existingRecords, record?.id, isOpen]);
+  }, [formData, existingRecords, record?.id, isOpen, zoneName]);
 
   const handleTypeChange = (type: DNSRecordType) => {
     const typeInfo = RECORD_TYPE_INFO[type];
@@ -144,6 +149,20 @@ export function ManageDNSRecordModal({
     }
   };
 
+  // Get appropriate placeholder for Name field based on record type and zone type
+  const getNamePlaceholder = () => {
+    if (formData.type === 'PTR') {
+      return 'PTR record name (e.g. 1 or 10.0)';
+    }
+    if (formData.type === 'CNAME') {
+      return 'Subdomain (e.g., www, blog, api)';
+    }
+    if (formData.type === 'NS') {
+      return 'Subdomain (e.g., dev, staging, prod)';
+    }
+    return '@ (root) or subdomain (e.g., www, blog, mail)';
+  };
+
   const typeInfo = RECORD_TYPE_INFO[formData.type];
   const fqdn = getFQDN(formData.name, zoneName);
 
@@ -187,7 +206,14 @@ export function ManageDNSRecordModal({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {recordTypeOptions.map((option) => {
                 const isSelected = formData.type === option.value;
-                const info = RECORD_TYPE_INFO[option.value as DNSRecordType];
+                const info = RECORD_TYPE_INFO[option.value as DNSRecordType] || {
+                  description: 'Generic/Unknown record type',
+                  label: option.value,
+                  requiresPriority: false,
+                  defaultTTL: 3600,
+                  placeholder: '',
+                  hint: ''
+                };
                 
                 // SVG Icons for each record type
                 const getIcon = () => {
@@ -247,27 +273,43 @@ export function ManageDNSRecordModal({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                       );
+                    case 'PTR':
+                      return (
+                        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      );
+                    case 'RFC3597':
+                      return (
+                        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                      );
                     default:
                       return null;
                   }
                 };
                 
-                return (
+                const isDisabled = option.disabled || false;
+                
+                const button = (
                   <button
-                    key={option.value}
                     type="button"
-                    onClick={() => handleTypeChange(option.value as DNSRecordType)}
+                    onClick={() => !isDisabled && handleTypeChange(option.value as DNSRecordType)}
+                    disabled={isDisabled}
                     className={clsx(
-                      'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all text-center',
-                      isSelected
-                        ? 'border-orange bg-orange/10 dark:bg-orange/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-orange/50 dark:hover:border-orange/50 bg-white dark:bg-gray-800'
+                      'w-full flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all text-center relative',
+                      isDisabled && 'cursor-not-allowed opacity-50 bg-gray-50 dark:bg-gray-800/50',
+                      !isDisabled && isSelected && 'border-orange bg-orange/10 dark:bg-orange/20',
+                      !isDisabled && !isSelected && 'border-gray-200 dark:border-gray-700 hover:border-orange/50 dark:hover:border-orange/50 bg-white dark:bg-gray-800'
                     )}
                   >
                     {getIcon()}
                     <div className={clsx(
                       'text-xs font-semibold mb-0.5',
-                      isSelected ? 'text-orange' : 'text-gray-900 dark:text-gray-100'
+                      isDisabled && 'text-gray-400 dark:text-gray-600',
+                      !isDisabled && isSelected && 'text-orange',
+                      !isDisabled && !isSelected && 'text-gray-900 dark:text-gray-100'
                     )}>
                       {option.value}
                     </div>
@@ -275,6 +317,26 @@ export function ManageDNSRecordModal({
                       {info.description}
                     </div>
                   </button>
+                );
+                
+                // Wrap disabled buttons in a div with custom tooltip
+                if (isDisabled) {
+                  return (
+                    <div key={option.value} className="relative group">
+                      {button}
+                      {/* Custom tooltip */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap pointer-events-none z-50">
+                        Under Development
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={option.value}>
+                    {button}
+                  </div>
                 );
               })}
             </div>
@@ -288,7 +350,7 @@ export function ManageDNSRecordModal({
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               error={errors.name}
-              placeholder="@ (root) or subdomain (e.g., www, blog, mail)"
+              placeholder={getNamePlaceholder()}
               helperText={`FQDN: ${fqdn}`}
             />
           </div>
@@ -311,11 +373,14 @@ export function ManageDNSRecordModal({
                   label="TTL (seconds)"
                   type="number"
                   value={formData.ttl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ttl: parseInt(e.target.value, 10) || 60 }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ttl: parseInt(e.target.value, 10) || 10 }))}
                   error={errors.ttl}
-                  min={60}
+                  min={10}
                   max={604800}
                 />
+                <p className="mt-1 text-xs text-gray-slate">
+                  Min: 10 seconds, Max: 604800 seconds (7 days). Recommended: 15 minutes to 1 day.
+                </p>
                 <button
                   type="button"
                   onClick={() => {
@@ -342,6 +407,7 @@ export function ManageDNSRecordModal({
                 formData.type === 'TXT' ? 'Text Value' :
                 formData.type === 'SRV' ? 'Target' :
                 formData.type === 'CAA' ? 'CAA Value' :
+                formData.type === 'PTR' ? 'Target Domain' :
                 'Value'
               }
               type="text"
@@ -350,6 +416,15 @@ export function ManageDNSRecordModal({
               error={errors.value}
               placeholder={typeInfo.placeholder}
               helperText={typeInfo.hint}
+              suffixHint={
+                // Show zone name suffix hint for hostname-based record types
+                // Exclude: A, AAAA, TXT, CAA, SOA (these don't use hostnames)
+                ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(formData.type) &&
+                formData.value &&
+                !formData.value.endsWith('.')
+                  ? `.${zoneName}.`
+                  : undefined
+              }
             />
           </div>
 

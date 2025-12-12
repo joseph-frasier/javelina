@@ -254,3 +254,5 @@ Use Supabase branch rebase to sync with production migrations.
 - However, some schema elements (like zones.error) exist in dev despite missing migrations
 - This suggests manual schema changes or partial migration application
 
+
+

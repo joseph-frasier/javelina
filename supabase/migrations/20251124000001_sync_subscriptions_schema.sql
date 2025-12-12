@@ -23,3 +23,5 @@ CHECK (status = ANY (ARRAY[
 -- Update comment
 COMMENT ON COLUMN public.subscriptions.status IS 'Mirrors Stripe subscription status plus lifetime for permanent access';
 
+
+

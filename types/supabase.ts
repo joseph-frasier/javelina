@@ -207,7 +207,6 @@ export interface Database {
           description: string | null
           verification_status: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at: string | null
-          nameservers: string[] | null
           soa_serial: number
           admin_email: string
           negative_caching_ttl: number
@@ -225,7 +224,6 @@ export interface Database {
           description?: string | null
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
-          nameservers?: string[] | null
           soa_serial?: number
           admin_email?: string
           negative_caching_ttl?: number
@@ -243,7 +241,6 @@ export interface Database {
           description?: string | null
           verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
           last_verified_at?: string | null
-          nameservers?: string[] | null
           soa_serial?: number
           admin_email?: string
           negative_caching_ttl?: number
@@ -310,7 +307,7 @@ export interface Database {
           id: string
           zone_id: string
           name: string
-          type: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA'
+          type: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA' | 'PTR'
           value: string
           ttl: number
           comment: string | null
@@ -322,7 +319,7 @@ export interface Database {
           id?: string
           zone_id: string
           name: string
-          type: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA'
+          type: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA' | 'PTR'
           value: string
           ttl: number
           comment?: string | null
@@ -334,7 +331,7 @@ export interface Database {
           id?: string
           zone_id?: string
           name?: string
-          type?: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA'
+          type?: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'TXT' | 'SOA' | 'SRV' | 'CAA' | 'PTR'
           value?: string
           ttl?: number
           comment?: string | null

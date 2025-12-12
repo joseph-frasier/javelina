@@ -6,12 +6,20 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
 import { useToastStore } from '@/lib/toast-store';
+import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
+import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
+import { UpgradeLimitBanner } from '@/components/ui/UpgradeLimitBanner';
+import { apiClient } from '@/lib/api-client';
 
 interface InviteUsersModalProps {
   isOpen: boolean;
   onClose: () => void;
   organizationId: string;
   organizationName: string;
+  /** Plan code from the organization's subscription */
+  planCode?: string;
+  /** Callback when invite is successfully sent */
+  onSuccess?: () => void;
 }
 
 type RBACRole = 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
@@ -21,6 +29,8 @@ export function InviteUsersModal({
   onClose,
   organizationId,
   organizationName,
+  planCode,
+  onSuccess,
 }: InviteUsersModalProps) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<RBACRole>('Viewer');
@@ -29,6 +39,14 @@ export function InviteUsersModal({
   const [isLoading, setIsLoading] = useState(false);
 
   const addToast = useToastStore((state) => state.addToast);
+  
+  // Plan limits and usage tracking
+  const { limits, tier, wouldExceedLimit } = usePlanLimits(planCode);
+  const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsageCounts(organizationId);
+  
+  // Check if at member limit
+  const currentMemberCount = usage?.members ?? 0;
+  const isAtMemberLimit = wouldExceedLimit('users', currentMemberCount);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,6 +56,12 @@ export function InviteUsersModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    // Block if at limit
+    if (isAtMemberLimit) {
+      setErrors({ general: 'Team member limit reached. Please upgrade your plan.' });
+      return;
+    }
 
     if (!email) {
       setErrors({ email: 'Email is required' });
@@ -52,27 +76,40 @@ export function InviteUsersModal({
     setIsLoading(true);
 
     try {
-      console.log('Mock invite sent:', {
-        organizationId,
-        organizationName,
+      // Call the real API to invite the user
+      await apiClient.post(`/organizations/${organizationId}/members/invite`, {
         email,
         role,
-        message,
+        message: message || undefined,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       addToast('success', `Invite sent to ${email}!`);
+      
+      // Refetch usage counts to update the member count
+      await refetchUsage();
 
+      // Reset form
       setEmail('');
       setRole('Viewer');
       setMessage('');
 
+      // Call success callback
+      if (onSuccess) {
+        onSuccess();
+      }
+
       onClose();
     } catch (error: any) {
       console.error('Error sending invite:', error);
-      setErrors({ general: error.message || 'Failed to send invite' });
-      addToast('error', 'Failed to send invite');
+      const errorMessage = error?.message || error?.error || 'Failed to send invite';
+      
+      // Check if it's a limit error from the backend
+      if (error?.code === 'LIMIT_EXCEEDED') {
+        setErrors({ general: 'Team member limit reached. Please upgrade your plan.' });
+      } else {
+        setErrors({ general: errorMessage });
+      }
+      addToast('error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -93,9 +130,22 @@ export function InviteUsersModal({
       title="Invite Team Member"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Plan limit warning/block */}
+        {!isLoadingUsage && (
+          <UpgradeLimitBanner
+            resourceType="members"
+            currentCount={currentMemberCount}
+            maxCount={limits.users}
+            planTier={tier.charAt(0).toUpperCase() + tier.slice(1)}
+            isAtLimit={isAtMemberLimit}
+            organizationId={organizationId}
+          />
+        )}
+        
         <p className="text-sm text-gray-slate dark:text-gray-light mb-4">
           Invite someone to join {organizationName}
         </p>
+        
         <div>
           <label
             htmlFor="email"
@@ -110,7 +160,7 @@ export function InviteUsersModal({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="teammate@example.com"
             error={errors.email}
-            disabled={isLoading}
+            disabled={isLoading || isAtMemberLimit}
           />
         </div>
 
@@ -144,8 +194,8 @@ export function InviteUsersModal({
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Add a personal message to your invitation..."
             rows={3}
-            disabled={isLoading}
-            className="w-full px-4 py-2 border border-gray-light dark:border-gray-slate rounded-lg bg-white dark:bg-gray-slate text-gray-slate dark:text-white focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent resize-none"
+            disabled={isLoading || isAtMemberLimit}
+            className="w-full px-4 py-2 border border-gray-light dark:border-gray-slate rounded-lg bg-white dark:bg-gray-slate text-gray-slate dark:text-white focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -164,7 +214,12 @@ export function InviteUsersModal({
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" loading={isLoading}>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            loading={isLoading}
+            disabled={isAtMemberLimit}
+          >
             Send Invite
           </Button>
         </div>
