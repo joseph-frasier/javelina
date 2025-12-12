@@ -267,21 +267,23 @@ export function validateNSRecordPlacement(
 
 /**
  * Validates PTR record name based on reverse zone type
+ * For reverse zones, applies strict validation. For forward zones, allows normal record names.
  */
 export function validatePTRRecordName(
   name: string,
   zoneName: string
 ): { valid: boolean; error?: string } {
-  // PTR records cannot be at zone root
-  if (name === '@' || name === '') {
-    return { valid: false, error: 'PTR records cannot be created at zone root. Specify a valid name.' };
-  }
-  
   const reverseType = getReverseZoneType(zoneName);
   
+  // If this is a forward zone (not a reverse zone), skip special PTR validation
+  // and use standard record name validation
   if (!reverseType) {
-    // Should never happen since we already validate PTR is only in reverse zones
-    return { valid: false, error: 'PTR records are only allowed in reverse zones' };
+    return { valid: true };
+  }
+  
+  // For reverse zones, PTR records cannot be at zone root
+  if (name === '@' || name === '') {
+    return { valid: false, error: 'PTR records cannot be created at zone root. Specify a valid name.' };
   }
   
   if (reverseType === 'ipv4') {
@@ -419,13 +421,8 @@ export function validateDNSRecord(
         errors.value = ptrValidation.error || 'Invalid PTR record';
       }
       
-      // Validate that PTR records are only used in reverse zones
-      if (zoneName && !isReverseZone(zoneName)) {
-        errors.type = 'PTR records are only allowed in reverse zones (zones ending in .in-addr.arpa or .ip6.arpa)';
-      }
-      
-      // Validate PTR record name based on reverse zone type
-      if (zoneName && isReverseZone(zoneName)) {
+      // Validate PTR record name (applies strict validation for reverse zones only)
+      if (zoneName) {
         const nameValidation = validatePTRRecordName(formData.name, zoneName);
         if (!nameValidation.valid) {
           errors.name = nameValidation.error || 'Invalid PTR record name';

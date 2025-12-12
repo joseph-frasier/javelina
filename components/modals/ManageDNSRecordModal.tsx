@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
-import { validateDNSRecord, getFQDN, isReverseZone, getReverseZoneType } from '@/lib/utils/dns-validation';
+import { validateDNSRecord, getFQDN, getReverseZoneType } from '@/lib/utils/dns-validation';
 
 interface ManageDNSRecordModalProps {
   isOpen: boolean;
@@ -34,12 +34,6 @@ const allRecordTypeOptions = [
   { value: 'RFC3597', label: 'Generic (RFC 3597)', disabled: true },
 ];
 
-// Record types allowed in forward zones
-const forwardRecordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA', 'NS'];
-
-// Record types allowed in reverse zones
-const reverseRecordTypes = ['PTR', 'NS'];
-
 export function ManageDNSRecordModal({
   isOpen,
   onClose,
@@ -49,12 +43,8 @@ export function ManageDNSRecordModal({
   zoneName,
   existingRecords,
 }: ManageDNSRecordModalProps) {
-  // Determine zone type and filter available record types
-  const isReverse = isReverseZone(zoneName);
-  const allowedTypes = isReverse ? reverseRecordTypes : forwardRecordTypes;
-  const recordTypeOptions = allRecordTypeOptions.filter(option => 
-    allowedTypes.includes(option.value) || option.disabled
-  );
+  // All record types are now available for all zone types
+  const recordTypeOptions = allRecordTypeOptions;
   const [formData, setFormData] = useState<DNSRecordFormData>({
     name: '',
     type: 'A',
@@ -84,11 +74,10 @@ export function ManageDNSRecordModal({
         const isPreset = TTL_PRESETS.some(p => p.value === record.ttl);
         setCustomTTL(!isPreset);
       } else {
-        // Reset for add mode - default to first allowed type for the zone
-        const defaultType = (isReverse ? 'PTR' : 'A') as DNSRecordType;
+        // Reset for add mode - default to A record
         setFormData({
           name: '',
-          type: defaultType,
+          type: 'A',
           value: '',
           ttl: 3600,
           comment: '',
@@ -98,7 +87,7 @@ export function ManageDNSRecordModal({
       setErrors({});
       setWarnings([]);
     }
-  }, [isOpen, mode, record, isReverse]);
+  }, [isOpen, mode, record]);
 
   // Real-time validation
   useEffect(() => {

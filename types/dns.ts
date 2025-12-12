@@ -150,7 +150,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     requiresPriority: false,
     defaultTTL: 3600,
     placeholder: 'server.example.com',
-    hint: 'Enter the target hostname (e.g., server.example.com). PTR records are only available in reverse zones.',
+    hint: 'Enter the target hostname (e.g., server.example.com). Typically used in reverse DNS zones.',
   },
 };
 
