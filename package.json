@@ -28,7 +28,7 @@
     "gsap": "^3.13.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
-    "next": "^15.5.7",
+    "next": "^15.5.8",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-easy-crop": "^5.5.3",
