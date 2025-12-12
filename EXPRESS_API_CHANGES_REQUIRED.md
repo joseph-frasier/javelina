@@ -56,7 +56,57 @@ if (recordData.type === 'CNAME') {
 }
 ```
 
-##### C. Add PTR Record Type Support
+##### C. Add CNAME Conflict Validation (CRITICAL)
+**IMPORTANT:** CNAME records cannot coexist with any other records at the same name. This validation must be enforced on both creation and update:
+
+```javascript
+// Helper function to check for CNAME conflicts
+async function checkCNAMEConflicts(zoneId, recordName, recordType, recordId = null) {
+  // Fetch all records with the same name in this zone (excluding current record if editing)
+  const query = supabase
+    .from('zone_records')
+    .select('id, name, type')
+    .eq('zone_id', zoneId)
+    .eq('name', recordName);
+  
+  if (recordId) {
+    query.neq('id', recordId); // Exclude current record when editing
+  }
+  
+  const { data: conflictingRecords, error } = await query;
+  
+  if (error) throw error;
+  
+  if (recordType === 'CNAME') {
+    // Creating/updating to CNAME: check if ANY other record exists
+    if (conflictingRecords && conflictingRecords.length > 0) {
+      return {
+        hasConflict: true,
+        error: `Cannot create CNAME: ${conflictingRecords.length} other record(s) already exist at this name. CNAME cannot coexist with other records.`
+      };
+    }
+  } else {
+    // Creating/updating to non-CNAME: check if a CNAME exists
+    const cnameExists = conflictingRecords && conflictingRecords.some(r => r.type === 'CNAME');
+    if (cnameExists) {
+      return {
+        hasConflict: true,
+        error: `Cannot create ${recordType} record: a CNAME record already exists at this name. CNAME cannot coexist with other records.`
+      };
+    }
+  }
+  
+  return { hasConflict: false };
+}
+
+// Use in create/update endpoints:
+const conflictCheck = await checkCNAMEConflicts(zoneId, recordData.name, recordData.type, recordId);
+if (conflictCheck.hasConflict) {
+  return res.status(400).json({ error: conflictCheck.error });
+}
+```
+
+##### D. Add PTR Record Type Support
 Update the record type validation to include 'PTR':
 
 ```javascript
@@ -69,7 +119,7 @@ if (!validRecordTypes.includes(recordData.type)) {
 }
 ```
 
-##### D. Update TTL Validation
+##### E. Update TTL Validation
 Change minimum TTL from 60 seconds to 10 seconds:
 
 ```javascript
@@ -297,6 +347,12 @@ const { data: record, error } = await supabase
 // Accept comment in request body
 const { name, type, value, ttl, comment, zone_id } = req.body;
 
+// Check for CNAME conflicts BEFORE inserting
+const conflictCheck = await checkCNAMEConflicts(zone_id, name, type);
+if (conflictCheck.hasConflict) {
+  return res.status(400).json({ error: conflictCheck.error });
+}
+
 // Include comment when inserting
 const { data: record, error } = await supabase
   .from('zone_records')
@@ -319,6 +375,19 @@ return res.json({ data: record });
 ```javascript
 // Accept comment in request body
 const { name, type, value, ttl, comment } = req.body;
+
+// Get the zone_id from the existing record
+const { data: existingRecord } = await supabase
+  .from('zone_records')
+  .select('zone_id')
+  .eq('id', recordId)
+  .single();
+
+// Check for CNAME conflicts BEFORE updating (pass recordId to exclude current record)
+const conflictCheck = await checkCNAMEConflicts(existingRecord.zone_id, name, type, recordId);
+if (conflictCheck.hasConflict) {
+  return res.status(400).json({ error: conflictCheck.error });
+}
 
 // Include comment when updating
 const { data: record, error } = await supabase
@@ -387,6 +456,15 @@ After implementing these changes, test the following scenarios:
 - [ ] GET single record should include comment field → Should succeed
 - [ ] GET zone records should include comment field for all records → Should succeed
 - [ ] Comment field persists when editing other record fields → Should succeed
+
+### CNAME Conflict Validation
+- [ ] Create CNAME when A record exists at same name → Should fail with conflict error
+- [ ] Create A record when CNAME exists at same name → Should fail with conflict error
+- [ ] Create CNAME at name with no other records → Should succeed
+- [ ] Create multiple A records at same name → Should succeed (non-CNAME records can coexist)
+- [ ] Update record name to conflict with CNAME → Should fail with conflict error
+- [ ] Update record type to CNAME when other records exist at name → Should fail with conflict error
+- [ ] Delete CNAME then create A record at same name → Should succeed
 
 ## Migration Notes
 

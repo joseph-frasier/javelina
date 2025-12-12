@@ -333,6 +333,26 @@ export function validateDNSRecord(
     errors.ttl = ttlValidation.error || 'Invalid TTL';
   }
   
+  // Check for CNAME conflicts (applies to all record types)
+  // CNAME records cannot coexist with any other records at the same name
+  if (formData.type === 'CNAME') {
+    // When creating a CNAME, check if ANY other record exists with this name
+    const existingRecordsAtName = existingRecords.filter(
+      r => r.name === formData.name && r.id !== recordId
+    );
+    if (existingRecordsAtName.length > 0) {
+      errors.name = `Cannot create CNAME: ${existingRecordsAtName.length} other record(s) already exist at this name. CNAME cannot coexist with other records.`;
+    }
+  } else {
+    // When creating any other record type, check if a CNAME exists with this name
+    const cnameAtName = existingRecords.find(
+      r => r.name === formData.name && r.type === 'CNAME' && r.id !== recordId
+    );
+    if (cnameAtName) {
+      errors.name = `Cannot create ${formData.type} record: a CNAME record already exists at this name. CNAME cannot coexist with other records.`;
+    }
+  }
+  
   // Type-specific validation
   switch (formData.type) {
     case 'A':
@@ -357,13 +377,7 @@ export function validateDNSRecord(
         errors.name = 'The domain root (@) cannot be a CNAME. Please use a subdomain instead.';
       }
       
-      // Check for CNAME conflicts
-      const cnameConflicts = existingRecords.filter(
-        r => r.name === formData.name && r.id !== recordId
-      );
-      if (cnameConflicts.length > 0) {
-        errors.value = 'CNAME records cannot coexist with other records at the same name';
-      }
+      // Note: CNAME conflict checking is now done globally above, not here
       break;
       
     case 'MX':
