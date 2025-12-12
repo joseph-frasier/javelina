@@ -422,6 +422,15 @@ export function ManageDNSRecordModal({
               error={errors.value}
               placeholder={typeInfo.placeholder}
               helperText={typeInfo.hint}
+              suffixHint={
+                // Show zone name suffix hint for hostname-based record types
+                // Exclude: A, AAAA, TXT, CAA, SOA (these don't use hostnames)
+                ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(formData.type) &&
+                formData.value &&
+                !formData.value.endsWith('.')
+                  ? `.${zoneName}.`
+                  : undefined
+              }
             />
           </div>
 

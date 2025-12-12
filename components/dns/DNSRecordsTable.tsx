@@ -418,6 +418,10 @@ export function DNSRecordsTable({
                 ? zoneName 
                 : `${record.name}.${zoneName}`;
               
+              // Determine if we should show zone name suffix for this record type
+              const showZoneSuffix = ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(record.type) &&
+                                     !record.value.endsWith('.');
+              
               return (
                 <tr
                   key={record.id}
@@ -450,9 +454,14 @@ export function DNSRecordsTable({
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <Tooltip content={record.value}>
+                    <Tooltip content={showZoneSuffix ? `${record.value}.${zoneName}.` : record.value}>
                       <span className="text-sm text-gray-slate dark:text-gray-300 font-mono truncate block max-w-md">
                         {record.value}
+                        {showZoneSuffix && (
+                          <span className="text-gray-400 dark:text-gray-600">
+                            .{zoneName}.
+                          </span>
+                        )}
                       </span>
                     </Tooltip>
                   </td>
@@ -473,6 +482,10 @@ export function DNSRecordsTable({
           const fqdn = record.name === '@' || record.name === '' 
             ? zoneName 
             : `${record.name}.${zoneName}`;
+          
+          // Determine if we should show zone name suffix for this record type
+          const showZoneSuffix = ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(record.type) &&
+                                 !record.value.endsWith('.');
           
           return (
             <div
@@ -513,6 +526,11 @@ export function DNSRecordsTable({
                   <span className="text-gray-500 dark:text-gray-400">Value:</span>
                   <div className="text-gray-900 dark:text-gray-100 font-mono break-all mt-1">
                     {record.value}
+                    {showZoneSuffix && (
+                      <span className="text-gray-400 dark:text-gray-600">
+                        .{zoneName}.
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">

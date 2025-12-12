@@ -43,6 +43,10 @@ export function DNSRecordDetailModal({
   const fqdn = getFQDN(displayRecord.name, zoneName);
   const createdDate = formatDateWithRelative(displayRecord.created_at);
   const updatedDate = formatDateWithRelative(displayRecord.updated_at);
+  
+  // Determine if we should show zone name suffix for this record type
+  const showZoneSuffix = ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(displayRecord.type) &&
+                         !displayRecord.value.endsWith('.');
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -115,6 +119,11 @@ export function DNSRecordDetailModal({
               <div className="flex-1 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-3">
                 <code className="text-sm text-gray-900 dark:text-gray-100 break-all">
                   {displayRecord.value}
+                  {showZoneSuffix && (
+                    <span className="text-gray-400 dark:text-gray-600">
+                      .{zoneName}.
+                    </span>
+                  )}
                 </code>
               </div>
               <CopyButton text={displayRecord.value} label="value" />

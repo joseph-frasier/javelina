@@ -415,6 +415,85 @@ return res.json({ data: record });
 - The frontend already supports creating and editing comments
 - Without backend support, comments are lost or not displayed
 
+### 7. Domain/Hostname Validation Updates (Required)
+
+The domain/hostname validation must be updated to allow underscores and trailing dots in all hostname/domain value fields.
+
+#### Changes Needed
+
+##### Update `isValidDomain()` Helper Function
+
+Replace the current domain validation regex to allow underscores:
+
+```javascript
+/**
+ * Validates domain name format
+ * Allows: alphanumerics, hyphens, underscores, dots, and optional trailing dot
+ */
+function isValidDomain(domain) {
+  // Allow @ for apex
+  if (domain === '@') return true;
+  
+  // Allow wildcard
+  if (domain.startsWith('*.')) {
+    domain = domain.slice(2);
+  }
+  
+  // Domain name regex - allows alphanumerics, hyphens, underscores, and trailing dot
+  // Note: Underscores are technically not RFC-compliant for hostnames but are commonly used
+  // (e.g., _dmarc, _domainkey) and are allowed here for flexibility
+  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*\.?$/;
+  
+  if (!domainRegex.test(domain)) return false;
+  
+  // Check total length
+  if (domain.length > 253) return false;
+  
+  // Check each label length
+  // Filter out empty labels caused by trailing dots (e.g., "example.com." splits to ["example", "com", ""])
+  const labels = domain.split('.').filter(label => label.length > 0);
+  return labels.length > 0 && labels.every(label => label.length <= 63);
+}
+```
+
+##### Key Changes from Previous Validation
+
+1. **Underscores Allowed**: Added `_` to the character class `[a-zA-Z0-9_-]`
+2. **Trailing Dot Allowed**: The regex already ends with `\.?$` which allows an optional trailing dot
+
+##### Apply to These Record Types
+
+This validation applies to hostname/domain values in:
+- **CNAME**: Target domain (value field)
+- **MX**: Mail server hostname (after priority in value field)
+- **NS**: Nameserver domain (value field)
+- **SRV**: Target hostname (last part of value field)
+- **PTR**: Target domain (value field)
+
+##### Example Valid Values
+
+```
+mail.example.com       // Standard domain
+mail.example.com.      // With trailing dot (FQDN)
+_dmarc.example.com     // With underscore (common for TXT/DKIM)
+mail_server.example.com // Underscore in subdomain
+```
+
+##### Example Invalid Values
+
+```
+-invalid.com           // Cannot start with hyphen
+invalid-.com           // Cannot end label with hyphen
+..example.com          // Empty label
+example..com           // Empty label
+```
+
+#### Why This Is Important
+
+- **Trailing dots**: DNS fully qualified domain names (FQDNs) end with a dot. Users entering FQDNs should not get validation errors.
+- **Underscores**: While not strictly RFC-compliant for hostnames, underscores are commonly used in DNS records like `_dmarc`, `_domainkey`, and `_acme-challenge`. Many DNS providers allow them.
+- **Consistency**: The frontend now accepts these characters, so the backend must also accept them to prevent form submission errors.
+
 ## Testing Checklist
 
 After implementing these changes, test the following scenarios:
@@ -465,6 +544,16 @@ After implementing these changes, test the following scenarios:
 - [ ] Update record name to conflict with CNAME → Should fail with conflict error
 - [ ] Update record type to CNAME when other records exist at name → Should fail with conflict error
 - [ ] Delete CNAME then create A record at same name → Should succeed
+
+### Hostname/Domain Validation
+- [ ] Create CNAME with underscore in target (e.g., `_dmarc.example.com`) → Should succeed
+- [ ] Create CNAME with trailing dot (e.g., `mail.example.com.`) → Should succeed
+- [ ] Create MX with underscore in hostname (e.g., `10 mail_server.example.com`) → Should succeed
+- [ ] Create NS with trailing dot (e.g., `ns1.example.com.`) → Should succeed
+- [ ] Create SRV with underscore in target → Should succeed
+- [ ] Create PTR with trailing dot in target → Should succeed
+- [ ] Reject hostname starting with hyphen (e.g., `-invalid.com`) → Should fail
+- [ ] Reject hostname with empty label (e.g., `example..com`) → Should fail
 
 ## Migration Notes
 

@@ -25,6 +25,7 @@ export function isValidIPv6(ip: string): boolean {
 
 /**
  * Validates domain name format
+ * Allows: alphanumerics, hyphens, underscores, dots, and optional trailing dot
  */
 export function isValidDomain(domain: string): boolean {
   // Allow @ for apex
@@ -35,8 +36,10 @@ export function isValidDomain(domain: string): boolean {
     domain = domain.slice(2);
   }
   
-  // Domain name regex - RFC 1035
-  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.?$/;
+  // Domain name regex - allows alphanumerics, hyphens, underscores, and trailing dot
+  // Note: Underscores are technically not RFC-compliant for hostnames but are commonly used
+  // (e.g., _dmarc, _domainkey) and are allowed here for flexibility
+  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*\.?$/;
   
   if (!domainRegex.test(domain)) return false;
   
@@ -44,8 +47,9 @@ export function isValidDomain(domain: string): boolean {
   if (domain.length > 253) return false;
   
   // Check each label length
-  const labels = domain.split('.');
-  return labels.every(label => label.length > 0 && label.length <= 63);
+  // Filter out empty labels caused by trailing dots (e.g., "example.com." splits to ["example", "com", ""])
+  const labels = domain.split('.').filter(label => label.length > 0);
+  return labels.length > 0 && labels.every(label => label.length <= 63);
 }
 
 /**
