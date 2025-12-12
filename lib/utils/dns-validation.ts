@@ -33,11 +33,6 @@ export function isValidDomain(domain: string): boolean {
   // Allow @ for apex
   if (domain === '@') return true;
   
-  // Allow wildcard
-  if (domain.startsWith('*.')) {
-    domain = domain.slice(2);
-  }
-  
   // Check total length (255 characters for hostnames/domains)
   if (domain.length > 255) return false;
   
@@ -65,9 +60,6 @@ export function isValidRecordName(name: string): boolean {
   
   // Empty is valid (represents zone apex)
   if (name === '') return true;
-  
-  // Wildcard is valid
-  if (name === '*' || name.startsWith('*.')) return true;
   
   // Check total length
   if (name.length > 253) return false;

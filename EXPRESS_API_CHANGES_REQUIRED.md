@@ -448,11 +448,6 @@ function isValidDomain(domain) {
   // Allow @ for apex
   if (domain === '@') return true;
   
-  // Allow wildcard
-  if (domain.startsWith('*.')) {
-    domain = domain.slice(2);
-  }
-  
   // Check total length (255 characters for hostnames/domains)
   if (domain.length > 255) return false;
   
@@ -532,9 +527,6 @@ function isValidRecordName(name) {
   // Empty is valid (represents zone apex)
   if (name === '') return true;
   
-  // Wildcard is valid
-  if (name === '*' || name.startsWith('*.')) return true;
-  
   // Check total length
   if (name.length > 253) {
     return false;
@@ -581,8 +573,6 @@ if (!isValidRecordName(recordData.name)) {
 **Special Cases**:
 - `@` - Zone apex (allowed)
 - Empty string `''` - Zone apex (allowed)
-- `*` - Wildcard (allowed)
-- `*.subdomain` - Wildcard subdomain (allowed)
 
 **Length Limits**:
 - **Total name length**: Maximum 253 characters
@@ -600,7 +590,6 @@ www                    // Simple subdomain
 _dmarc                 // Underscore prefix (common for service records)
 sub-domain             // With hyphen
 sub_domain             // With underscore
-*.wildcard             // Wildcard
 deep.nested.subdomain  // Multiple labels
 ```
 
@@ -691,9 +680,9 @@ After implementing these changes, test the following scenarios:
 - [ ] Create record with underscore in name (e.g., `_dmarc`) → Should succeed
 - [ ] Create record with hyphen in name (e.g., `sub-domain`) → Should succeed
 - [ ] Create record with multiple labels (e.g., `deep.nested.subdomain`) → Should succeed
-- [ ] Create wildcard record (e.g., `*` or `*.subdomain`) → Should succeed
 - [ ] Create record with name `@` (apex) → Should succeed
 - [ ] Create record with empty name (apex) → Should succeed
+- [ ] Reject wildcard record (e.g., `*` or `*.subdomain`) → Should fail
 - [ ] Reject name starting with hyphen (e.g., `-invalid`) → Should fail
 - [ ] Reject name ending with hyphen (e.g., `invalid-`) → Should fail
 - [ ] Reject name with empty label (e.g., `sub..domain`) → Should fail
