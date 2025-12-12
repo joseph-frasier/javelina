@@ -120,10 +120,10 @@ if (!validRecordTypes.includes(recordData.type)) {
 ```
 
 ##### E. Update TTL Validation
-Change minimum TTL from 60 seconds to 10 seconds:
+Update TTL validation to enforce minimum of 10 seconds and maximum of 7 days (604800 seconds):
 
 ```javascript
-// Old validation
+// Old validation (if exists)
 if (recordData.ttl < 60) {
   return res.status(400).json({
     error: 'TTL must be at least 60 seconds'
@@ -131,9 +131,21 @@ if (recordData.ttl < 60) {
 }
 
 // New validation
+if (!Number.isInteger(recordData.ttl)) {
+  return res.status(400).json({
+    error: 'TTL must be an integer'
+  });
+}
+
 if (recordData.ttl < 10) {
   return res.status(400).json({
     error: 'TTL must be at least 10 seconds'
+  });
+}
+
+if (recordData.ttl > 604800) {
+  return res.status(400).json({
+    error: 'TTL must not exceed 604800 seconds (7 days)'
   });
 }
 ```
@@ -521,6 +533,9 @@ After implementing these changes, test the following scenarios:
 - [ ] Create record with TTL = 10 seconds → Should succeed
 - [ ] Create record with TTL = 9 seconds → Should fail with appropriate error
 - [ ] Create record with TTL = 60 seconds → Should succeed (still valid)
+- [ ] Create record with TTL = 604800 seconds (7 days) → Should succeed
+- [ ] Create record with TTL = 604801 seconds (over 7 days) → Should fail with appropriate error
+- [ ] Create record with non-integer TTL → Should fail with appropriate error
 
 ### Nameservers Field
 - [ ] Attempt to create zone with nameservers field → Should be ignored (not stored)

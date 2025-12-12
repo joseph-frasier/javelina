@@ -385,7 +385,7 @@ export function ManageDNSRecordModal({
                   max={604800}
                 />
                 <p className="mt-1 text-xs text-gray-slate">
-                  Minimum: 10 seconds. Recommended range: 15 minutes to 1 day.
+                  Min: 10 seconds, Max: 604800 seconds (7 days). Recommended: 15 minutes to 1 day.
                 </p>
                 <button
                   type="button"
