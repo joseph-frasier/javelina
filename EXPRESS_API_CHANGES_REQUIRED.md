@@ -506,6 +506,118 @@ example..com           // Empty label
 - **Underscores**: While not strictly RFC-compliant for hostnames, underscores are commonly used in DNS records like `_dmarc`, `_domainkey`, and `_acme-challenge`. Many DNS providers allow them.
 - **Consistency**: The frontend now accepts these characters, so the backend must also accept them to prevent form submission errors.
 
+### 8. DNS Record Name Validation Updates (Required)
+
+The DNS record name validation must enforce consistent limits and character rules.
+
+#### Changes Needed
+
+##### Update Record Name Validation Function
+
+Create or update the record name validation function:
+
+```javascript
+/**
+ * Validates DNS record name
+ * Allows: alphanumerics, hyphens, underscores, dots
+ * Maximum length: 253 characters
+ * Maximum label length: 63 characters
+ */
+function isValidRecordName(name) {
+  // @ is valid for apex
+  if (name === '@') return true;
+  
+  // Empty is valid (represents zone apex)
+  if (name === '') return true;
+  
+  // Wildcard is valid
+  if (name === '*' || name.startsWith('*.')) return true;
+  
+  // Check total length
+  if (name.length > 253) {
+    return false;
+  }
+  
+  // Check for valid characters and format
+  // Allows: alphanumerics, hyphens, underscores, dots
+  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*$/;
+  
+  if (!nameRegex.test(name)) {
+    return false;
+  }
+  
+  // Check each label length (max 63 characters per label)
+  const labels = name.split('.');
+  return labels.every(label => label.length > 0 && label.length <= 63);
+}
+```
+
+##### Apply Validation to DNS Record Endpoints
+
+**Location**: DNS record create/update endpoints
+- `POST /api/dns-records`
+- `PUT /api/dns-records/:id`
+
+```javascript
+// Validate record name
+if (!isValidRecordName(recordData.name)) {
+  return res.status(400).json({
+    error: 'Invalid record name format. Allowed: alphanumerics, hyphens, underscores, dots. Max 253 chars total, 63 chars per label.'
+  });
+}
+```
+
+##### Validation Rules Summary
+
+**Characters Allowed**: 
+- Alphanumerics: `a-z`, `A-Z`, `0-9`
+- Hyphens: `-`
+- Underscores: `_`
+- Dots: `.` (for separating labels)
+
+**Special Cases**:
+- `@` - Zone apex (allowed)
+- Empty string `''` - Zone apex (allowed)
+- `*` - Wildcard (allowed)
+- `*.subdomain` - Wildcard subdomain (allowed)
+
+**Length Limits**:
+- **Total name length**: Maximum 253 characters
+- **Per-label length**: Maximum 63 characters per label (part between dots)
+
+**Label Rules**:
+- Must start with alphanumeric character
+- Must end with alphanumeric character
+- Middle characters can be alphanumerics, hyphens, or underscores
+
+##### Example Valid Names
+
+```
+www                    // Simple subdomain
+_dmarc                 // Underscore prefix (common for service records)
+sub-domain             // With hyphen
+sub_domain             // With underscore
+*.wildcard             // Wildcard
+deep.nested.subdomain  // Multiple labels
+```
+
+##### Example Invalid Names
+
+```
+-invalid               // Cannot start with hyphen
+invalid-               // Cannot end with hyphen
+sub..domain            // Empty label
+toolongname...         // Name exceeds 253 characters
+verylonglabel...       // Any label exceeds 63 characters
+```
+
+#### Why This Is Important
+
+- **Consistency**: Frontend and backend must enforce the same rules
+- **Underscores**: Common in service records like `_dmarc`, `_domainkey`, `_acme-challenge`
+- **Length limits**: DNS protocol limits (RFC 1035)
+- **Label limits**: Each DNS label has a 63-byte limit
+
 ## Testing Checklist
 
 After implementing these changes, test the following scenarios:
@@ -569,6 +681,21 @@ After implementing these changes, test the following scenarios:
 - [ ] Create PTR with trailing dot in target → Should succeed
 - [ ] Reject hostname starting with hyphen (e.g., `-invalid.com`) → Should fail
 - [ ] Reject hostname with empty label (e.g., `example..com`) → Should fail
+- [ ] Reject hostname exceeding 253 characters → Should fail
+- [ ] Reject hostname with label exceeding 63 characters → Should fail
+
+### Record Name Validation
+- [ ] Create record with underscore in name (e.g., `_dmarc`) → Should succeed
+- [ ] Create record with hyphen in name (e.g., `sub-domain`) → Should succeed
+- [ ] Create record with multiple labels (e.g., `deep.nested.subdomain`) → Should succeed
+- [ ] Create wildcard record (e.g., `*` or `*.subdomain`) → Should succeed
+- [ ] Create record with name `@` (apex) → Should succeed
+- [ ] Create record with empty name (apex) → Should succeed
+- [ ] Reject name starting with hyphen (e.g., `-invalid`) → Should fail
+- [ ] Reject name ending with hyphen (e.g., `invalid-`) → Should fail
+- [ ] Reject name with empty label (e.g., `sub..domain`) → Should fail
+- [ ] Reject name exceeding 253 characters → Should fail
+- [ ] Reject name with any label exceeding 63 characters → Should fail
 
 ## Migration Notes
 

@@ -54,6 +54,9 @@ export function isValidDomain(domain: string): boolean {
 
 /**
  * Validates record name
+ * Allows: alphanumerics, hyphens, underscores, dots
+ * Maximum length: 253 characters
+ * Maximum label length: 63 characters
  */
 export function isValidRecordName(name: string): boolean {
   // @ is valid for apex
@@ -65,9 +68,17 @@ export function isValidRecordName(name: string): boolean {
   // Wildcard is valid
   if (name === '*' || name.startsWith('*.')) return true;
   
+  // Check total length
+  if (name.length > 253) return false;
+  
   // Check for valid characters and format
-  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-_]{0,61}[a-zA-Z0-9])?)*$/;
-  return nameRegex.test(name) && name.length <= 253;
+  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?)*$/;
+  
+  if (!nameRegex.test(name)) return false;
+  
+  // Check each label length (max 63 characters per label)
+  const labels = name.split('.');
+  return labels.every(label => label.length > 0 && label.length <= 63);
 }
 
 /**
