@@ -8,7 +8,6 @@ import Button from '@/components/ui/Button';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
-import { DeleteOrganizationModal } from '@/components/modals/DeleteOrganizationModal';
 import { subscriptionsApi } from '@/lib/api-client';
 import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
 import { ZonesList } from '@/components/organization/ZonesList';
@@ -66,14 +65,12 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const { selectAndExpand } = useHierarchyStore();
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
   const [planCode, setPlanCode] = useState<string | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const [isLifetimePlan, setIsLifetimePlan] = useState(false);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
-  const canDeleteOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
 
   // ============================================
   // TAGGING SYSTEM
@@ -303,14 +300,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                 Edit
               </Button>
             )}
-            {canDeleteOrg && (
-              <Button variant="secondary" size="sm" onClick={() => setIsDeleteModalOpen(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Delete
-              </Button>
-            )}
           </div>
         </div>
 
@@ -488,13 +477,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
       <EditOrganizationModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        organization={org}
-      />
-
-      {/* Delete Organization Modal */}
-      <DeleteOrganizationModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
         organization={org}
       />
     </>
