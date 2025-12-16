@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ZonesContainer } from './ZonesContainer';
+import { ZonesContainer } from '@/components/organization/ZonesContainer';
 import * as useZonesHook from '@/lib/hooks/useZones';
 
 // Mock the useZones hook

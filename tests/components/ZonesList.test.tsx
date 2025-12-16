@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ZonesList } from './ZonesList';
+import { ZonesList } from '@/components/organization/ZonesList';
 
 // Mock Next.js Link component
 vi.mock('next/link', () => ({

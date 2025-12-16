@@ -15,7 +15,7 @@ vi.mock('@supabase/ssr', () => ({
 }));
 
 // Import middleware AFTER mocking
-const { middleware } = await import('./middleware');
+const { middleware } = await import('../../middleware');
 
 describe('middleware - auth gating', () => {
   beforeEach(() => {
