@@ -129,8 +129,52 @@ COMMENT ON TABLE public.plan_entitlements IS 'Maps entitlements to plans with th
 COMMENT ON TABLE public.org_entitlement_overrides IS 'Custom entitlement values for specific organizations';
 COMMENT ON TABLE public.subscription_items IS 'Line items for subscriptions (seats, add-ons)';
 COMMENT ON TABLE public.organization_members IS 'Organization membership and roles';
-COMMENT ON TABLE public.irongrove_contact_submissions IS 'Contact form submissions from the Irongrove website';
-COMMENT ON TABLE public."marketing-website-contact-form" IS 'Public contact form submissions with anti-spam protection. Direct anon writes disabled - use API route.';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name   = 'irongrove_contact_submissions'
+  ) THEN
+    COMMENT ON TABLE public.irongrove_contact_submissions
+      IS 'Contact form submissions from the Irongrove website';
+  ELSE
+    RAISE NOTICE 'Table public.irongrove_contact_submissions does not exist; skipping comment in production_baseline_snapshot.';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name   = 'marketing-website-contact-form'
+  ) THEN
+    -- Add table comment
+    COMMENT ON TABLE public."marketing-website-contact-form"
+      IS 'Public contact form submissions with anti-spam protection. Direct anon writes disabled - use API route.';
+
+    -- Add column comment if the column exists
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name   = 'marketing-website-contact-form'
+        AND column_name  = 'inquiry_type'
+    ) THEN
+      COMMENT ON COLUMN public."marketing-website-contact-form".inquiry_type
+        IS 'Type of inquiry: general, founders-pricing, enterprise, support, partnership';
+    ELSE
+      RAISE NOTICE 'Column inquiry_type on public."marketing-website-contact-form" does not exist; skipping column comment in production_baseline_snapshot.';
+    END IF;
+  ELSE
+    RAISE NOTICE 'Table public."marketing-website-contact-form" does not exist; skipping comments in production_baseline_snapshot.';
+  END IF;
+END $$;
+
+
 
 -- ----------------------------------------------------------------------------
 -- COLUMN COMMENTS (Key Fields)
@@ -164,7 +208,36 @@ COMMENT ON COLUMN public.environments.zones_count IS 'Cached count of zones in t
 COMMENT ON COLUMN public.profiles.superadmin IS 'SuperAdmin flag: users with true have global access to all organizations';
 
 -- Marketing form
-COMMENT ON COLUMN public."marketing-website-contact-form".inquiry_type IS 'Type of inquiry: general, founders-pricing, enterprise, support, partnership';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name   = 'marketing-website-contact-form'
+  ) THEN
+    -- Add table comment
+    COMMENT ON TABLE public."marketing-website-contact-form"
+      IS 'Public contact form submissions with anti-spam protection. Direct anon writes disabled - use API route.';
+
+    -- Add column comment if the column exists
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name   = 'marketing-website-contact-form'
+        AND column_name  = 'inquiry_type'
+    ) THEN
+      COMMENT ON COLUMN public."marketing-website-contact-form".inquiry_type
+        IS 'Type of inquiry: general, founders-pricing, enterprise, support, partnership';
+    ELSE
+      RAISE NOTICE 'Column inquiry_type on public."marketing-website-contact-form" does not exist; skipping column comment in production_baseline_snapshot.';
+    END IF;
+  ELSE
+    RAISE NOTICE 'Table public."marketing-website-contact-form" does not exist; skipping comments in production_baseline_snapshot.';
+  END IF;
+END $$;
+
 
 -- ----------------------------------------------------------------------------
 -- RLS CONFIGURATION DOCUMENTATION
