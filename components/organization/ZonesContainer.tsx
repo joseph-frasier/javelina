@@ -1,6 +1,7 @@
 'use client';
 
 import { useZones } from '@/lib/hooks/useZones';
+import type { Zone } from '@/types/supabase';
 
 interface ZonesContainerProps {
   organizationId: string;
@@ -41,7 +42,7 @@ export function ZonesContainer({ organizationId }: ZonesContainerProps) {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Zones</h2>
       <ul data-testid="zones-list">
-        {zones.map((zone) => (
+        {zones.map((zone: Zone) => (
           <li key={zone.id} className="py-2 border-b">
             <div className="font-semibold">{zone.name}</div>
             <div className="text-sm text-gray-600">{zone.records_count} records</div>
