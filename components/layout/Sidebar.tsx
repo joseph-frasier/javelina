@@ -103,7 +103,7 @@ export function Sidebar({
                 title={org.name}
                 onClick={() => {
                   // #region agent log
-                  fetch('http://127.0.0.1:7242/ingest/32135cbf-ee74-464b-941b-1e48a621a121',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Sidebar.tsx:100',message:'Organization link clicked',data:{orgId:org.id,orgName:org.name,href:`/organization/${org.id}`,localStorageBefore:typeof window !== 'undefined' ? window.localStorage.getItem('hierarchy-storage') : null},timestamp:Date.now(),sessionId:'debug-session',runId:'org-switch',hypothesisId:'A'})}).catch(()=>{});
+                  console.log('[DEBUG] Organization link clicked:', {orgId: org.id, orgName: org.name, href: `/organization/${org.id}`, localStorageBefore: typeof window !== 'undefined' ? window.localStorage.getItem('hierarchy-storage') : null});
                   // #endregion
                 }}
               >
