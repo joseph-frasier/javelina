@@ -60,9 +60,23 @@ interface OrganizationClientProps {
 }
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/32135cbf-ee74-464b-941b-1e48a621a121',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OrganizationClient.tsx:62',message:'OrganizationClient mounted',data:{orgId:org.id,orgName:org.name,localStorageHierarchy:typeof window !== 'undefined' ? window.localStorage.getItem('hierarchy-storage') : null},timestamp:Date.now(),sessionId:'debug-session',runId:'org-switch',hypothesisId:'E'})}).catch(()=>{});
+    return () => {
+      fetch('http://127.0.0.1:7242/ingest/32135cbf-ee74-464b-941b-1e48a621a121',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OrganizationClient.tsx:62',message:'OrganizationClient unmounting',data:{orgId:org.id},timestamp:Date.now(),sessionId:'debug-session',runId:'org-switch',hypothesisId:'E'})}).catch(()=>{});
+    };
+  }, [org.id]);
+  // #endregion
   const router = useRouter();
   const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
+  
+  // Sync hierarchy store with current organization
+  useEffect(() => {
+    selectAndExpand(org.id);
+  }, [org.id, selectAndExpand]);
+  
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);

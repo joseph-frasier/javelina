@@ -101,6 +101,11 @@ export function Sidebar({
                 href={`/organization/${org.id}`}
                 className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
                 title={org.name}
+                onClick={() => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/32135cbf-ee74-464b-941b-1e48a621a121',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Sidebar.tsx:100',message:'Organization link clicked',data:{orgId:org.id,orgName:org.name,href:`/organization/${org.id}`,localStorageBefore:typeof window !== 'undefined' ? window.localStorage.getItem('hierarchy-storage') : null},timestamp:Date.now(),sessionId:'debug-session',runId:'org-switch',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                }}
               >
                 <svg
                   className="w-4 h-4 text-orange"
