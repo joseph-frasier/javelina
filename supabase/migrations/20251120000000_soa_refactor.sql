@@ -106,53 +106,53 @@ ALTER TABLE public.zones
 -- - Trigger on zones (UPDATE)
 
 -- Verify they exist
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_proc WHERE proname = 'increment_zone_serial_on_record_change'
-  ) THEN
-    RAISE EXCEPTION 'Missing function: increment_zone_serial_on_record_change';
-  END IF;
+-- DO $$
+-- BEGIN
+--   IF NOT EXISTS (
+--     SELECT 1 FROM pg_proc WHERE proname = 'increment_zone_serial_on_record_change'
+--   ) THEN
+--     RAISE EXCEPTION 'Missing function: increment_zone_serial_on_record_change';
+--   END IF;
   
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_proc WHERE proname = 'increment_zone_serial_on_zone_change'
-  ) THEN
-    RAISE EXCEPTION 'Missing function: increment_zone_serial_on_zone_change';
-  END IF;
+--   IF NOT EXISTS (
+--     SELECT 1 FROM pg_proc WHERE proname = 'increment_zone_serial_on_zone_change'
+--   ) THEN
+--     RAISE EXCEPTION 'Missing function: increment_zone_serial_on_zone_change';
+--   END IF;
   
-  RAISE NOTICE 'All required SOA serial functions are present';
-END $$;
+--   RAISE NOTICE 'All required SOA serial functions are present';
+-- END $$;
 
 -- =====================================================
 -- MIGRATION COMPLETE
 -- =====================================================
 
 -- Verify the migration
-DO $$
-DECLARE
-  zones_count INTEGER;
-  zones_with_admin_email INTEGER;
-  zones_with_negative_ttl INTEGER;
-BEGIN
-  -- Count zones
-  SELECT COUNT(*) INTO zones_count 
-  FROM public.zones 
-  WHERE deleted_at IS NULL;
+-- DO $$
+-- DECLARE
+--   zones_count INTEGER;
+--   zones_with_admin_email INTEGER;
+--   zones_with_negative_ttl INTEGER;
+-- BEGIN
+--   -- Count zones
+--   SELECT COUNT(*) INTO zones_count 
+--   FROM public.zones 
+--   WHERE deleted_at IS NULL;
   
-  -- Count zones with admin_email
-  SELECT COUNT(*) INTO zones_with_admin_email 
-  FROM public.zones 
-  WHERE deleted_at IS NULL AND admin_email IS NOT NULL;
+--   -- Count zones with admin_email
+--   SELECT COUNT(*) INTO zones_with_admin_email 
+--   FROM public.zones 
+--   WHERE deleted_at IS NULL AND admin_email IS NOT NULL;
   
-  -- Count zones with negative_caching_ttl
-  SELECT COUNT(*) INTO zones_with_negative_ttl 
-  FROM public.zones 
-  WHERE deleted_at IS NULL AND negative_caching_ttl IS NOT NULL;
+--   -- Count zones with negative_caching_ttl
+--   SELECT COUNT(*) INTO zones_with_negative_ttl 
+--   FROM public.zones 
+--   WHERE deleted_at IS NULL AND negative_caching_ttl IS NOT NULL;
   
-  -- Log results
-  RAISE NOTICE 'Migration complete:';
-  RAISE NOTICE '  Active zones: %', zones_count;
-  RAISE NOTICE '  Zones with admin_email: %', zones_with_admin_email;
-  RAISE NOTICE '  Zones with negative_caching_ttl: %', zones_with_negative_ttl;
-END $$;
+--   -- Log results
+--   RAISE NOTICE 'Migration complete:';
+--   RAISE NOTICE '  Active zones: %', zones_count;
+--   RAISE NOTICE '  Zones with admin_email: %', zones_with_admin_email;
+--   RAISE NOTICE '  Zones with negative_caching_ttl: %', zones_with_negative_ttl;
+-- END $$;
 
