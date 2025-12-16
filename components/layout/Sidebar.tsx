@@ -101,11 +101,6 @@ export function Sidebar({
                 href={`/organization/${org.id}`}
                 className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
                 title={org.name}
-                onClick={() => {
-                  // #region agent log
-                  console.log('[DEBUG] Organization link clicked:', {orgId: org.id, orgName: org.name, href: `/organization/${org.id}`, localStorageBefore: typeof window !== 'undefined' ? window.localStorage.getItem('hierarchy-storage') : null});
-                  // #endregion
-                }}
               >
                 <svg
                   className="w-4 h-4 text-orange"

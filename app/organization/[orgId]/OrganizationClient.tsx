@@ -60,14 +60,6 @@ interface OrganizationClientProps {
 }
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
-  // #region agent log
-  useEffect(() => {
-    console.log('[DEBUG] OrganizationClient mounted:', {orgId: org.id, orgName: org.name, localStorageHierarchy: typeof window !== 'undefined' ? window.localStorage.getItem('hierarchy-storage') : null});
-    return () => {
-      console.log('[DEBUG] OrganizationClient unmounting:', {orgId: org.id});
-    };
-  }, [org.id]);
-  // #endregion
   const router = useRouter();
   const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
