@@ -81,16 +81,10 @@ export const useHierarchyStore = create<HierarchyState>()(
     }),
     {
       name: 'hierarchy-storage',
-      partialize: (state) => {
-        const serialized = {
-          currentOrgId: state.currentOrgId,
-          expandedOrgs: Array.from(state.expandedOrgs),
-        };
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/32135cbf-ee74-464b-941b-1e48a621a121',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'hierarchy-store.ts:84',message:'persist partialize (before save)',data:{serialized,localStorageBefore:typeof window !== 'undefined' ? window.localStorage.getItem('hierarchy-storage') : null},timestamp:Date.now(),sessionId:'debug-session',runId:'org-switch',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-        return serialized;
-      },
+      partialize: (state) => ({
+        currentOrgId: state.currentOrgId,
+        expandedOrgs: Array.from(state.expandedOrgs),
+      }),
       // Custom merge function to handle Set serialization/deserialization
       merge: (persistedState, currentState) => {
         const persisted = persistedState as any;
