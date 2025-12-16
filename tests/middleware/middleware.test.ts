@@ -52,4 +52,37 @@ describe('middleware - auth gating', () => {
     expect(location).toContain('/login');
     expect(location).toContain('redirect=%2Forganization%2Forg-123'); // URL-encoded original path
   });
+
+  it('allows authenticated user through to protected route without redirect', async () => {
+    // Mock getUser to return a valid user (authenticated)
+    mockGetUser.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-123',
+          email: 'test@example.com',
+          aud: 'authenticated',
+          role: 'authenticated',
+        },
+      },
+      error: null,
+    });
+
+    // Create a NextRequest for a protected route
+    const protectedUrl = 'http://localhost:3000/organization/org-123';
+    const request = new NextRequest(protectedUrl, {
+      method: 'GET',
+    });
+
+    // Call the middleware
+    const response = await middleware(request);
+
+    // Assert: Should NOT redirect (allow through)
+    expect(response).toBeInstanceOf(NextResponse);
+    expect(response.status).not.toBe(307);
+    expect(response.status).not.toBe(308);
+    
+    // Assert: No redirect location header
+    const location = response.headers.get('location');
+    expect(location).toBeNull();
+  });
 });
