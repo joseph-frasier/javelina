@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { InviteUsersModal } from '@/components/modals/InviteUsersModal';
 import { ManageTeamMembersModal } from '@/components/modals/ManageTeamMembersModal';
-import { organizationsApi } from '@/lib/api-client';
+import { organizationsApi, subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 
 interface Member {
@@ -26,6 +26,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [planCode, setPlanCode] = useState<string | null>(null);
   const addToast = useToastStore((state) => state.addToast);
 
   const fetchMembers = async () => {
@@ -48,8 +49,20 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
     }
   };
 
+  const fetchSubscription = async () => {
+    try {
+      const subscription = await subscriptionsApi.getCurrent(organizationId);
+      setPlanCode(subscription?.plan_code || null);
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      // Don't show error toast for subscription fetch - members still load
+      setPlanCode(null);
+    }
+  };
+
   useEffect(() => {
     fetchMembers();
+    fetchSubscription();
   }, [organizationId]);
 
   const getRoleColor = (role: string) => {
@@ -238,6 +251,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
         onClose={() => setIsInviteModalOpen(false)}
         organizationId={organizationId}
         organizationName={organizationName}
+        planCode={planCode || undefined}
         onSuccess={fetchMembers}
       />
 
