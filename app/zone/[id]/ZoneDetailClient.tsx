@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/Card';
 import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import Button from '@/components/ui/Button';
@@ -13,7 +14,14 @@ interface OrganizationDetail {
   id: string;
   name: string;
 }
-import { RecordDistributionChart } from '@/components/dns/RecordDistributionChart';
+// Dynamically import chart component to reduce initial bundle (removes 7MB recharts)
+const RecordDistributionChart = dynamic(
+  () => import('@/components/dns/RecordDistributionChart').then(mod => ({ default: mod.RecordDistributionChart })),
+  { 
+    loading: () => <div className="h-64 flex items-center justify-center text-gray-500">Loading chart...</div>,
+    ssr: false 
+  }
+);
 import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
 import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';

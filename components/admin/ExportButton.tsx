@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
-import { exportData, ExportFormat } from '@/lib/admin-export';
+import type { ExportFormat } from '@/lib/admin-export';
 import { useToastStore } from '@/lib/toast-store';
 
 interface ExportButtonProps {
@@ -57,6 +57,10 @@ export function ExportButton({
     setIsExporting(true);
 
     try {
+      // Dynamically import export libraries only when user clicks export
+      // This removes 51MB (jspdf + exceljs) from initial bundle
+      const { exportData } = await import('@/lib/admin-export');
+      
       await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for UX
       
       // Pass BIND-specific options if format is BIND

@@ -5,21 +5,8 @@ import { StatCard, Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { createClient } from '@/lib/supabase/client';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+// Recharts is imported but not currently used (shows placeholder messages)
+// When analytics are implemented, consider dynamic imports to reduce bundle size
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
