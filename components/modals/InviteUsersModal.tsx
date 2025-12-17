@@ -9,7 +9,7 @@ import { useToastStore } from '@/lib/toast-store';
 import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
 import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
 import { UpgradeLimitBanner } from '@/components/ui/UpgradeLimitBanner';
-import { apiClient } from '@/lib/api-client';
+import { organizationsApi } from '@/lib/api-client';
 
 interface InviteUsersModalProps {
   isOpen: boolean;
@@ -18,11 +18,11 @@ interface InviteUsersModalProps {
   organizationName: string;
   /** Plan code from the organization's subscription */
   planCode?: string;
-  /** Callback when invite is successfully sent */
+  /** Callback when member is successfully added */
   onSuccess?: () => void;
 }
 
-type RBACRole = 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
+type MemberAssignableRole = 'Admin' | 'Editor' | 'BillingContact' | 'Viewer';
 
 export function InviteUsersModal({
   isOpen,
@@ -33,8 +33,7 @@ export function InviteUsersModal({
   onSuccess,
 }: InviteUsersModalProps) {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<RBACRole>('Viewer');
-  const [message, setMessage] = useState('');
+  const [role, setRole] = useState<MemberAssignableRole>('Viewer');
   const [errors, setErrors] = useState<{ email?: string; general?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -76,14 +75,13 @@ export function InviteUsersModal({
     setIsLoading(true);
 
     try {
-      // Call the real API to invite the user
-      await apiClient.post(`/organizations/${organizationId}/members/invite`, {
+      // Call the real API to add the member
+      await organizationsApi.addMember(organizationId, {
         email,
         role,
-        message: message || undefined,
       });
 
-      addToast('success', `Invite sent to ${email}!`);
+      addToast('success', `${email} has been added to ${organizationName}!`);
       
       // Refetch usage counts to update the member count
       await refetchUsage();
@@ -91,7 +89,6 @@ export function InviteUsersModal({
       // Reset form
       setEmail('');
       setRole('Viewer');
-      setMessage('');
 
       // Call success callback
       if (onSuccess) {
@@ -100,16 +97,20 @@ export function InviteUsersModal({
 
       onClose();
     } catch (error: any) {
-      console.error('Error sending invite:', error);
-      const errorMessage = error?.message || error?.error || 'Failed to send invite';
+      console.error('Error adding member:', error);
       
-      // Check if it's a limit error from the backend
-      if (error?.code === 'LIMIT_EXCEEDED') {
+      // Handle specific error cases
+      if (error?.statusCode === 404 || error?.details?.code === 'USER_NOT_FOUND') {
+        setErrors({ email: "That user doesn't have a Javelina account yet." });
+        addToast('error', "That user doesn't have a Javelina account yet.");
+      } else if (error?.code === 'LIMIT_EXCEEDED' || error?.details?.code === 'MEMBER_LIMIT_REACHED') {
         setErrors({ general: 'Team member limit reached. Please upgrade your plan.' });
+        addToast('error', 'Team member limit reached. Please upgrade your plan.');
       } else {
+        const errorMessage = error?.message || error?.error || 'Failed to add member';
         setErrors({ general: errorMessage });
+        addToast('error', errorMessage);
       }
-      addToast('error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +119,6 @@ export function InviteUsersModal({
   const handleClose = () => {
     setEmail('');
     setRole('Viewer');
-    setMessage('');
     setErrors({});
     onClose();
   };
@@ -127,7 +127,7 @@ export function InviteUsersModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Invite Team Member"
+      title="Add Team Member"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Plan limit warning/block */}
@@ -143,7 +143,7 @@ export function InviteUsersModal({
         )}
         
         <p className="text-sm text-gray-slate dark:text-gray-light mb-4">
-          Invite someone to join {organizationName}
+          Add an existing Javelina user to {organizationName}
         </p>
         
         <div>
@@ -168,36 +168,17 @@ export function InviteUsersModal({
           <Dropdown
             label="Role *"
             value={role}
-            onChange={(value) => setRole(value as RBACRole)}
+            onChange={(value) => setRole(value as MemberAssignableRole)}
             options={[
               { value: 'Viewer', label: 'Viewer - Can view only' },
               { value: 'Editor', label: 'Editor - Can manage DNS' },
               { value: 'BillingContact', label: 'Billing Contact - Can manage billing' },
               { value: 'Admin', label: 'Admin - Can manage resources' },
-              { value: 'SuperAdmin', label: 'SuperAdmin - Full access' },
             ]}
           />
           <p className="mt-1 text-xs text-gray-slate dark:text-gray-light">
             Select the permission level for this team member
           </p>
-        </div>
-
-        <div>
-          <label
-            htmlFor="message"
-            className="block text-sm font-medium text-gray-slate dark:text-white mb-1"
-          >
-            Message (Optional)
-          </label>
-          <textarea
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Add a personal message to your invitation..."
-            rows={3}
-            disabled={isLoading || isAtMemberLimit}
-            className="w-full px-4 py-2 border border-gray-light dark:border-gray-slate rounded-lg bg-white dark:bg-gray-slate text-gray-slate dark:text-white focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-          />
         </div>
 
         {errors.general && (
@@ -221,7 +202,7 @@ export function InviteUsersModal({
             loading={isLoading}
             disabled={isAtMemberLimit}
           >
-            Send Invite
+            Add Member
           </Button>
         </div>
       </form>

@@ -415,9 +415,10 @@ router.post('/', authenticateUser, checkRecordLimit, async (req, res) => {
 ```javascript
 const { checkMemberLimit } = require('../middleware/enforcePlanLimits');
 
-// Invite member - add limit check middleware
-router.post('/:id/members/invite', authenticateUser, checkMemberLimit, async (req, res) => {
-  // Your existing invite logic
+// Add member - add limit check middleware
+router.post('/:id/members', authenticateUser, checkMemberLimit, async (req, res) => {
+  // Your member addition logic
+  // See TEAM_MEMBERS_API_REQUIREMENTS.md for complete implementation details
 });
 ```
 

@@ -4,6 +4,8 @@
 
 This document outlines all required backend changes to support the updated Role-Based Access Control (RBAC) system with five organization-level roles: `SuperAdmin`, `Admin`, `BillingContact`, `Editor`, and `Viewer`.
 
+**For team member management endpoints specifically**, see `TEAM_MEMBERS_API_REQUIREMENTS.md` which provides detailed API contracts, error codes, and implementation examples.
+
 ## Database Changes
 
 ### Migration: Add BillingContact Role
@@ -176,20 +178,26 @@ module.exports = {
 
 #### A. Organizations Routes (`routes/organizations.js`)
 
-**Invite Member Endpoint:**
+**Add Member Endpoint:**
 ```javascript
 const { requireOrgRole } = require('../middleware/rbac');
+const { checkMemberLimit } = require('../middleware/enforcePlanLimits');
 
-// POST /api/organizations/:orgId/members/invite
-router.post('/:orgId/members/invite', 
+// POST /api/organizations/:orgId/members
+router.post('/:orgId/members', 
   authenticateUser, 
-  requireOrgRole(['SuperAdmin', 'Admin']), // Only SuperAdmin and Admin can invite
+  requireOrgRole(['SuperAdmin', 'Admin']), // Only SuperAdmin and Admin can add members
+  checkMemberLimit, // Enforce plan limits
   async (req, res) => {
-    // Existing invite logic
-    // Make sure to validate that req.body.role is one of:
-    // ['SuperAdmin', 'Admin', 'BillingContact', 'Editor', 'Viewer']
+    // Add member logic - see TEAM_MEMBERS_API_REQUIREMENTS.md
+    // Validate that req.body.role is one of:
+    // ['Admin', 'BillingContact', 'Editor', 'Viewer']
+    // NOTE: SuperAdmin is NOT allowed for customer-facing member addition
   }
 );
+```
+
+**Note:** The previous `/members/invite` endpoint is deprecated for customer use. See `TEAM_MEMBERS_API_REQUIREMENTS.md` for the new direct-add flow.
 ```
 
 **Remove Member Endpoint:**
@@ -745,17 +753,23 @@ describe('Tag Endpoints', () => {
 });
 
 describe('Team Management Endpoints', () => {
-  describe('POST /api/organizations/:orgId/members/invite', () => {
-    it('should allow Admin to invite members', async () => {
+  // See TEAM_MEMBERS_API_REQUIREMENTS.md for complete endpoint specifications
+  
+  describe('POST /api/organizations/:orgId/members', () => {
+    it('should allow Admin to add members', async () => {
       // Test with Admin user
     });
     
-    it('should deny BillingContact from inviting members', async () => {
+    it('should deny BillingContact from adding members', async () => {
       // Test with BillingContact user, expect 403
     });
     
-    it('should deny Editor from inviting members', async () => {
+    it('should deny Editor from adding members', async () => {
       // Test with Editor user, expect 403
+    });
+    
+    it('should return 404 for non-existent user email', async () => {
+      // Test with email not in system, expect USER_NOT_FOUND
     });
   });
 });

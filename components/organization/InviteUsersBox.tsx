@@ -5,8 +5,10 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { InviteUsersModal } from '@/components/modals/InviteUsersModal';
 import { ManageTeamMembersModal } from '@/components/modals/ManageTeamMembersModal';
+import { organizationsApi } from '@/lib/api-client';
+import { useToastStore } from '@/lib/toast-store';
 
-interface User {
+interface Member {
   id: string;
   name: string;
   email: string;
@@ -22,49 +24,32 @@ interface InviteUsersBoxProps {
 export function InviteUsersBox({ organizationId, organizationName }: InviteUsersBoxProps) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const addToast = useToastStore((state) => state.addToast);
+
+  const fetchMembers = async () => {
+    setIsLoading(true);
+    try {
+      const data = await organizationsApi.getMembers(organizationId);
+      
+      // Filter out SuperAdmin members (Javelina employee accounts)
+      const filteredMembers = (data || []).filter(
+        (member: Member) => member.role !== 'SuperAdmin'
+      );
+      
+      setMembers(filteredMembers);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      addToast('error', 'Failed to load team members');
+      setMembers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // TODO: Fetch actual users from API when backend is ready
-    // For now, using mock data
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        // Mock API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        
-        // Mock users data
-        const mockUsers: User[] = [
-          {
-            id: '1',
-            name: 'Current User',
-            email: 'user@example.com',
-            role: 'SuperAdmin',
-          },
-          {
-            id: '2',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            role: 'Admin',
-          },
-          {
-            id: '3',
-            name: 'Jane Smith',
-            email: 'jane.smith@example.com',
-            role: 'Editor',
-          },
-        ];
-        
-        setUsers(mockUsers);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsers();
+    fetchMembers();
   }, [organizationId]);
 
   const getRoleColor = (role: string) => {
@@ -95,33 +80,6 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
 
   return (
     <>
-      {/* Notice Banner */}
-      <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-        <div className="flex items-start space-x-2">
-          <svg
-            className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-          <div>
-            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
-              Feature Not Yet Available
-            </p>
-            <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-1">
-              Team member management is currently under development. This feature will be available soon.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <Card
         title="Team Members"
         description="Manage users and permissions"
@@ -172,7 +130,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                 />
               </svg>
               <span className="text-sm font-medium text-gray-slate dark:text-white">
-                {isLoading ? 'Loading...' : `${users.length} ${users.length === 1 ? 'member' : 'members'}`}
+                {isLoading ? 'Loading...' : `${members.length} ${members.length === 1 ? 'member' : 'members'}`}
               </span>
             </div>
             <Button
@@ -193,47 +151,47 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Invite
+              Add Member
             </Button>
           </div>
 
-          {/* Users List */}
+          {/* Members List */}
           {isLoading ? (
             <div className="text-center py-4">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
             </div>
-          ) : users.length > 0 ? (
+          ) : members.length > 0 ? (
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {users.map((user) => (
+              {members.map((member) => (
                 <div
-                  key={user.id}
+                  key={member.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate hover:shadow-sm transition-shadow"
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {/* Avatar */}
                     <div className="flex-shrink-0">
-                      {user.avatar ? (
+                      {member.avatar ? (
                         <img
-                          src={user.avatar}
-                          alt={user.name}
+                          src={member.avatar}
+                          alt={member.name}
                           className="w-10 h-10 rounded-full"
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center">
                           <span className="text-sm font-bold text-orange">
-                            {getInitials(user.name)}
+                            {getInitials(member.name)}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* User Info */}
+                    {/* Member Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-slate dark:text-white truncate">
-                        {user.name}
+                        {member.name}
                       </p>
                       <p className="text-xs text-gray-slate dark:text-gray-light truncate">
-                        {user.email}
+                        {member.email}
                       </p>
                     </div>
 
@@ -241,10 +199,10 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                     <div className="flex-shrink-0">
                       <span
                         className={`text-xs px-2 py-1 rounded-full border font-medium ${getRoleColor(
-                          user.role
+                          member.role
                         )}`}
                       >
-                        {user.role}
+                        {member.role}
                       </span>
                     </div>
                   </div>
@@ -274,20 +232,24 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
         </div>
       </Card>
 
-      {/* Invite Users Modal */}
+      {/* Add Team Member Modal */}
       <InviteUsersModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         organizationId={organizationId}
         organizationName={organizationName}
+        onSuccess={fetchMembers}
       />
 
       {/* Manage Team Members Modal */}
       <ManageTeamMembersModal
         isOpen={isManageModalOpen}
         onClose={() => setIsManageModalOpen(false)}
-        users={users}
+        users={members}
         organizationName={organizationName}
+        organizationId={organizationId}
+        onMemberUpdated={fetchMembers}
+        onMemberRemoved={fetchMembers}
       />
     </>
   );

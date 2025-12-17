@@ -222,12 +222,22 @@ See `BACKEND_RBAC_IMPLEMENTATION.md` for full backend implementation guide, incl
 - Role validation logic
 - Integration test requirements
 
+**NEW:** See `TEAM_MEMBERS_API_REQUIREMENTS.md` for complete API specification, including:
+
+- Detailed endpoint contracts for GET, POST, PUT, DELETE member operations
+- Request/response formats and examples
+- Error codes and handling (USER_NOT_FOUND, MEMBER_LIMIT_REACHED, etc.)
+- Business rules enforcement
+- Testing checklists
+- Frontend integration details
+
 ### 🔄 To Be Implemented in Express Backend Repo
 
-1. Create RBAC middleware
-2. Apply to team management routes
-3. Write integration tests
-4. Deploy to staging for testing
+1. Create RBAC middleware (see `BACKEND_RBAC_IMPLEMENTATION.md`)
+2. Implement member endpoints (see `TEAM_MEMBERS_API_REQUIREMENTS.md`)
+3. Apply to team management routes
+4. Write integration tests
+5. Deploy to staging for testing
 
 ## Testing Checklist
 
@@ -259,8 +269,9 @@ See `BACKEND_RBAC_IMPLEMENTATION.md` for full backend implementation guide, incl
 
 ## Related Documentation
 
+- `TEAM_MEMBERS_API_REQUIREMENTS.md` - **API specification for member management endpoints**
 - `BACKEND_RBAC_IMPLEMENTATION.md` - Complete backend implementation guide
-- `RBAC.md` (to be created) - Master RBAC reference document
+- `RBAC.md` - Master RBAC reference document
 - `lib/permissions.ts` - Frontend permission helper functions
 - `supabase/migrations/20251217000000_add_billing_contact_role.sql` - Database migration
 

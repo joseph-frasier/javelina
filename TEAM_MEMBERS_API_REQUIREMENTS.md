@@ -1,0 +1,563 @@
+# Team Members API Backend Requirements
+
+This document specifies the Express API endpoints required to support team member management for organizations in the Javelina DNS management application.
+
+## Overview
+
+Team member management allows organization Admins and SuperAdmins to add existing Javelina users to their organization, assign roles, change member roles, and remove members. The system enforces role-based access control and plan limits on the number of team members.
+
+## Database Schema Reference
+
+**Tables:**
+- `profiles` - Stores user profile information including email
+- `organization_members` - Junction table linking users to organizations with their assigned role
+- `organizations` - Organization data
+- `subscriptions` - Organization subscription information for plan limits
+
+**Relevant columns in `organization_members`:**
+- `id` (uuid, primary key)
+- `organization_id` (uuid, foreign key to organizations)
+- `user_id` (uuid, foreign key to auth.users/profiles)
+- `role` (text) - One of: 'SuperAdmin', 'Admin', 'BillingContact', 'Editor', 'Viewer'
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
+
+## API Endpoints
+
+### 1. GET /api/organizations/:orgId/members
+
+List all members of an organization.
+
+**Path Parameters:**
+- `orgId` (required) - Organization UUID
+
+**Authorization:** 
+- Requires valid JWT token
+- User must be a member of the organization (any role)
+- Use middleware: `authenticateUser`, `requireOrgMember()`
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "user_id": "uuid",
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "role": "Admin",
+      "avatar_url": "https://...",
+      "created_at": "2025-12-17T00:00:00Z",
+      "updated_at": "2025-12-17T00:00:00Z"
+    }
+  ]
+}
+```
+
+**Implementation Notes:**
+```sql
+-- Get members with user profile information
+SELECT 
+  om.id,
+  om.user_id,
+  om.role,
+  om.created_at,
+  om.updated_at,
+  p.name,
+  p.email,
+  p.avatar_url
+FROM organization_members om
+JOIN profiles p ON p.id = om.user_id
+WHERE om.organization_id = $org_id
+ORDER BY om.created_at;
+```
+
+**Frontend Filtering:**
+- The frontend will filter out `SuperAdmin` roles from the UI display
+- Backend should return all members including SuperAdmins for consistency
+
+**Error Responses:**
+- `401` - Not authenticated
+- `403` - User not member of organization
+- `404` - Organization not found
+
+---
+
+### 2. POST /api/organizations/:orgId/members
+
+Add an existing Javelina user to an organization.
+
+**Path Parameters:**
+- `orgId` (required) - Organization UUID
+
+**Authorization:**
+- Requires valid JWT token
+- User must be SuperAdmin or Admin of the organization
+- Use middleware: `authenticateUser`, `requireOrgRole(['SuperAdmin', 'Admin'])`, `checkMemberLimit`
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "role": "Admin"
+}
+```
+
+**Validation:**
+- `email` - Required, valid email format
+- `role` - Required, must be one of: 'Admin', 'Editor', 'BillingContact', 'Viewer'
+  - **IMPORTANT:** `SuperAdmin` is NOT an allowed value for this endpoint
+  - SuperAdmin assignment is only via internal admin tooling
+
+**Business Logic:**
+1. Look up the user by email in the `profiles` table
+2. If user not found, return 404 with `USER_NOT_FOUND` code
+3. Check if user is already a member of the organization
+4. If already a member, return 409 with `ALREADY_MEMBER` code
+5. Enforce plan member limits using `checkMemberLimit` middleware
+6. Insert into `organization_members` table
+7. Return the created member object
+
+**Response (201 Created):**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "user_id": "uuid",
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "role": "Editor",
+    "avatar_url": null,
+    "created_at": "2025-12-17T00:00:00Z",
+    "updated_at": "2025-12-17T00:00:00Z"
+  }
+}
+```
+
+**Implementation Notes:**
+```sql
+-- Look up user by email
+SELECT id, name, email, avatar_url
+FROM profiles
+WHERE email = $email;
+
+-- Check if already a member
+SELECT 1 FROM organization_members
+WHERE organization_id = $org_id AND user_id = $user_id;
+
+-- Insert new member
+INSERT INTO organization_members (
+  organization_id,
+  user_id,
+  role
+)
+VALUES ($org_id, $user_id, $role)
+RETURNING *;
+
+-- Join with profiles to return complete member object
+SELECT 
+  om.*,
+  p.name,
+  p.email,
+  p.avatar_url
+FROM organization_members om
+JOIN profiles p ON p.id = om.user_id
+WHERE om.id = $new_member_id;
+```
+
+**Error Responses:**
+- `400` - Invalid request body or validation failed
+- `401` - Not authenticated
+- `403` - User not Admin/SuperAdmin of organization
+- `404` - User with email not found
+  ```json
+  {
+    "error": "User not found",
+    "code": "USER_NOT_FOUND"
+  }
+  ```
+- `409` - User already a member or member limit reached
+  ```json
+  {
+    "error": "User is already a member of this organization",
+    "code": "ALREADY_MEMBER"
+  }
+  ```
+  ```json
+  {
+    "error": "Team member limit reached. Please upgrade your plan.",
+    "code": "MEMBER_LIMIT_REACHED"
+  }
+  ```
+
+---
+
+### 3. PUT /api/organizations/:orgId/members/:memberId/role
+
+Update a member's role in an organization.
+
+**Path Parameters:**
+- `orgId` (required) - Organization UUID
+- `memberId` (required) - organization_members.id UUID
+
+**Authorization:**
+- Requires valid JWT token
+- User must be SuperAdmin or Admin of the organization
+- Use middleware: `authenticateUser`, `requireOrgRole(['SuperAdmin', 'Admin'])`
+
+**Request Body:**
+```json
+{
+  "role": "Editor"
+}
+```
+
+**Validation:**
+- `role` - Required, must be one of: 'Admin', 'Editor', 'BillingContact', 'Viewer'
+  - **IMPORTANT:** `SuperAdmin` is NOT an allowed value for this endpoint
+  - SuperAdmin assignment is only via internal admin tooling
+
+**Business Rules (from TEAM_MANAGEMENT_RULES.md):**
+1. **Cannot change own role** - Prevents accidental lockout
+   - Check if `req.user.id` matches the `user_id` of the member being changed
+   - Return 403 with `CANNOT_CHANGE_OWN_ROLE` if true
+2. **Cannot promote above own level** - Admins cannot create SuperAdmins
+   - Get the requesting user's role in the organization
+   - If requester is Admin and trying to assign SuperAdmin, reject
+3. **Cannot demote another SuperAdmin if you're an Admin**
+   - If target member is SuperAdmin and requester is Admin, reject
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "user_id": "uuid",
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "role": "Editor",
+    "avatar_url": null,
+    "created_at": "2025-12-17T00:00:00Z",
+    "updated_at": "2025-12-17T00:00:00Z"
+  }
+}
+```
+
+**Implementation Notes:**
+```sql
+-- Get member info and check requester's role
+SELECT 
+  om_target.user_id as target_user_id,
+  om_target.role as target_current_role,
+  om_requester.role as requester_role
+FROM organization_members om_target
+CROSS JOIN organization_members om_requester
+WHERE om_target.id = $member_id
+  AND om_target.organization_id = $org_id
+  AND om_requester.organization_id = $org_id
+  AND om_requester.user_id = $requester_user_id;
+
+-- Validate business rules in application code, then update
+UPDATE organization_members
+SET role = $new_role, updated_at = NOW()
+WHERE id = $member_id
+RETURNING *;
+
+-- Join with profiles to return complete member object
+SELECT 
+  om.*,
+  p.name,
+  p.email,
+  p.avatar_url
+FROM organization_members om
+JOIN profiles p ON p.id = om.user_id
+WHERE om.id = $member_id;
+```
+
+**Error Responses:**
+- `400` - Invalid role value
+- `401` - Not authenticated
+- `403` - User not Admin/SuperAdmin, or business rule violation
+  ```json
+  {
+    "error": "You cannot change your own role",
+    "code": "CANNOT_CHANGE_OWN_ROLE"
+  }
+  ```
+  ```json
+  {
+    "error": "You cannot promote a member to a role higher than your own",
+    "code": "FORBIDDEN_ROLE_CHANGE"
+  }
+  ```
+- `404` - Member not found
+
+---
+
+### 4. DELETE /api/organizations/:orgId/members/:memberId
+
+Remove a member from an organization.
+
+**Path Parameters:**
+- `orgId` (required) - Organization UUID
+- `memberId` (required) - organization_members.id UUID
+
+**Authorization:**
+- Requires valid JWT token
+- User must be SuperAdmin or Admin of the organization
+- Use middleware: `authenticateUser`, `requireOrgRole(['SuperAdmin', 'Admin'])`
+
+**Business Rules (from TEAM_MANAGEMENT_RULES.md):**
+1. **Cannot remove yourself** - Prevents accidental lockout
+   - Check if `req.user.id` matches the `user_id` of the member being removed
+   - Return 403 with `CANNOT_REMOVE_SELF` if true
+2. **Warn if removing last Admin/SuperAdmin** (optional enhancement)
+   - Count remaining Admins/SuperAdmins in the organization
+   - If removing the last one, consider blocking or requiring confirmation
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Member removed successfully"
+}
+```
+
+**Implementation Notes:**
+```sql
+-- Get member info to validate business rules
+SELECT 
+  om_target.user_id as target_user_id,
+  om_target.role as target_role
+FROM organization_members om_target
+WHERE om_target.id = $member_id
+  AND om_target.organization_id = $org_id;
+
+-- Check if removing self
+-- (Compare target_user_id with requester's user_id in application code)
+
+-- Optional: Count remaining admins
+SELECT COUNT(*) as admin_count
+FROM organization_members
+WHERE organization_id = $org_id
+  AND role IN ('SuperAdmin', 'Admin')
+  AND id != $member_id;
+
+-- Delete the member
+DELETE FROM organization_members
+WHERE id = $member_id
+  AND organization_id = $org_id;
+```
+
+**Error Responses:**
+- `401` - Not authenticated
+- `403` - User not Admin/SuperAdmin, or business rule violation
+  ```json
+  {
+    "error": "You cannot remove yourself from the organization",
+    "code": "CANNOT_REMOVE_SELF"
+  }
+  ```
+  ```json
+  {
+    "error": "Cannot remove the last admin from the organization",
+    "code": "CANNOT_REMOVE_LAST_ADMIN"
+  }
+  ```
+- `404` - Member not found
+
+---
+
+## Error Response Format
+
+All error responses follow this format:
+
+```json
+{
+  "error": "Human-readable error message",
+  "code": "MACHINE_READABLE_CODE",
+  "details": {
+    "field": "Additional context if applicable"
+  }
+}
+```
+
+### Standard Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `USER_NOT_FOUND` | 404 | Email does not correspond to an existing Javelina user |
+| `ALREADY_MEMBER` | 409 | User is already a member of the organization |
+| `MEMBER_LIMIT_REACHED` | 409 | Organization has reached its plan's member limit |
+| `CANNOT_CHANGE_OWN_ROLE` | 403 | User attempted to change their own role |
+| `FORBIDDEN_ROLE_CHANGE` | 403 | User attempted to promote someone above their own level |
+| `CANNOT_REMOVE_SELF` | 403 | User attempted to remove themselves |
+| `CANNOT_REMOVE_LAST_ADMIN` | 403 | Attempting to remove the last admin/superadmin |
+| `INVALID_ROLE` | 400 | Role value is not one of the allowed values |
+
+---
+
+## Authentication & Authorization
+
+All endpoints require a JWT token from Supabase auth in the Authorization header:
+
+```
+Authorization: Bearer <jwt_token>
+```
+
+The token should be validated using Supabase's JWT verification, and the user ID extracted from `auth.uid()` for RLS policy enforcement and authorization checks.
+
+### RBAC Middleware
+
+Use the RBAC middleware documented in `BACKEND_RBAC_IMPLEMENTATION.md`:
+
+```javascript
+const { requireOrgRole, requireOrgMember } = require('../middleware/rbac');
+
+// Example: Only Admins and SuperAdmins can add members
+router.post('/:orgId/members', 
+  authenticateUser,
+  requireOrgRole(['SuperAdmin', 'Admin']),
+  checkMemberLimit,
+  async (req, res) => {
+    // Handler implementation
+  }
+);
+```
+
+---
+
+## Plan Limits Enforcement
+
+Member limits are enforced at the plan level. Use the `checkMemberLimit` middleware documented in `PLAN_LIMITS_BACKEND_IMPLEMENTATION.md`:
+
+```javascript
+const { checkMemberLimit } = require('../middleware/enforcePlanLimits');
+
+// Automatically checks and blocks if at limit
+router.post('/:orgId/members', 
+  authenticateUser,
+  requireOrgRole(['SuperAdmin', 'Admin']),
+  checkMemberLimit,
+  async (req, res) => {
+    // Handler implementation
+  }
+);
+```
+
+**Default plan limits:**
+- Starter: 1 member
+- Pro: 5 members
+- Business: 20 members
+- Enterprise: Unlimited (-1)
+
+---
+
+## Rate Limiting
+
+Consider implementing rate limiting on member management endpoints:
+- Add member: 10 requests per minute per user
+- Update role: 20 requests per minute per user
+- Remove member: 20 requests per minute per user
+
+---
+
+## Testing Checklist
+
+### Unit Tests
+- [ ] Validate role values (reject SuperAdmin for customer-facing endpoints)
+- [ ] Email validation
+- [ ] Business rule enforcement (cannot change own role, cannot remove self, etc.)
+
+### Integration Tests
+- [ ] GET /members returns all members for org member
+- [ ] GET /members returns 403 for non-members
+- [ ] POST /members adds existing user successfully
+- [ ] POST /members returns 404 for non-existent email (USER_NOT_FOUND)
+- [ ] POST /members returns 409 for duplicate member (ALREADY_MEMBER)
+- [ ] POST /members returns 409 when at member limit (MEMBER_LIMIT_REACHED)
+- [ ] POST /members rejects SuperAdmin role (400 INVALID_ROLE)
+- [ ] POST /members returns 403 for Editor/Viewer/BillingContact
+- [ ] PUT /members/:id/role updates role successfully for Admin
+- [ ] PUT /members/:id/role returns 403 when trying to change own role
+- [ ] PUT /members/:id/role returns 403 when Admin tries to create SuperAdmin
+- [ ] PUT /members/:id/role rejects SuperAdmin as target role (400 INVALID_ROLE)
+- [ ] DELETE /members/:id removes member successfully
+- [ ] DELETE /members/:id returns 403 when trying to remove self
+- [ ] DELETE /members/:id returns 403 for non-Admin users
+- [ ] All endpoints return proper error format with codes
+
+### Authorization Tests
+- [ ] SuperAdmin can perform all member operations
+- [ ] Admin can perform all member operations (except promote to SuperAdmin)
+- [ ] BillingContact cannot add/edit/remove members
+- [ ] Editor cannot add/edit/remove members
+- [ ] Viewer cannot add/edit/remove members
+- [ ] Non-members cannot access member endpoints
+
+---
+
+## Frontend Integration
+
+The frontend uses the following `api-client.ts` methods:
+
+```typescript
+// Get members
+organizationsApi.getMembers(orgId: string)
+
+// Add member
+organizationsApi.addMember(orgId: string, data: { 
+  email: string; 
+  role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer' 
+})
+
+// Update member role
+organizationsApi.updateMemberRole(orgId: string, memberId: string, 
+  role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer')
+
+// Remove member
+organizationsApi.removeMember(orgId: string, memberId: string)
+```
+
+The frontend filters out `SuperAdmin` members from the UI display, but the backend should still return them in the GET response for consistency.
+
+---
+
+## Migration from Invite Flow
+
+**Previous endpoints (deprecated for customer use):**
+- `POST /api/organizations/:orgId/members/invite` - Used for email-based invitations
+
+**New approach:**
+- `POST /api/organizations/:orgId/members` - Directly adds existing users by email
+
+**Key differences:**
+1. No invitation email is sent (email service not implemented)
+2. User must already have a Javelina account
+3. Member is immediately added to the organization
+4. No pending invitation state
+
+**Backward compatibility:**
+- The `/invite` endpoint may still exist for admin tooling
+- Customer-facing UI exclusively uses the new `/members` endpoint
+- Update documentation in `BACKEND_RBAC_IMPLEMENTATION.md` to reference new flow
+
+---
+
+## Related Documentation
+
+- `BACKEND_RBAC_IMPLEMENTATION.md` - Complete backend RBAC implementation guide
+- `TEAM_MANAGEMENT_RULES.md` - Business rules for team management permissions
+- `PLAN_LIMITS_BACKEND_IMPLEMENTATION.md` - Plan limits enforcement
+- `RBAC.md` - Master RBAC reference document
+- `TAGS_API_REQUIREMENTS.md` - Example API requirements document format
+
+---
+
+## Contact
+
+For questions about team member API implementation:
+- **Owner:** Seth Chesky
+- **Date Created:** December 17, 2024
+- **Status:** Ready for Implementation
+
