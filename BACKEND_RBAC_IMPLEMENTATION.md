@@ -56,7 +56,7 @@ SuperAdmin (5) - Full access to everything, bypass RLS globally
 | View zones | ✅ | ✅ | ✅ (read-only) | ✅ | ✅ |
 | Create zones | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Edit zones | ✅ | ✅ | ❌ | ✅ | ❌ |
-| Delete zones | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Delete zones | ✅ | ✅ | ❌ | ✅ | ❌ |
 | **DNS Records** |
 | View records | ✅ | ✅ | ✅ (read-only) | ✅ | ✅ |
 | Create records | ✅ | ✅ | ❌ | ✅ | ❌ |
@@ -64,8 +64,8 @@ SuperAdmin (5) - Full access to everything, bypass RLS globally
 | Delete records | ✅ | ✅ | ❌ | ✅ | ❌ |
 | **Tags** |
 | View tags | ✅ | ✅ | ✅ (read-only) | ✅ | ✅ |
-| Create/Edit tags | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Delete tags | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Create/Edit tags | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Delete tags | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Assign tags to zones | ✅ | ✅ | ❌ | ✅ | ❌ |
 
 ---
@@ -689,6 +689,56 @@ describe('DNS Zone Endpoints', () => {
     });
     
     it('should deny Viewer from creating zone', async () => {
+      // Test with Viewer user, expect 403
+    });
+  });
+  
+  describe('DELETE /api/zones/:id', () => {
+    it('should allow Editor to delete zone', async () => {
+      // Test with Editor user
+    });
+    
+    it('should deny BillingContact from deleting zone', async () => {
+      // Test with BillingContact user, expect 403
+    });
+    
+    it('should deny Viewer from deleting zone', async () => {
+      // Test with Viewer user, expect 403
+    });
+  });
+});
+
+describe('Tag Endpoints', () => {
+  describe('POST /api/tags', () => {
+    it('should allow Editor to create tag', async () => {
+      // Test with Editor user
+    });
+    
+    it('should deny BillingContact from creating tag', async () => {
+      // Test with BillingContact user, expect 403
+    });
+    
+    it('should deny Viewer from creating tag', async () => {
+      // Test with Viewer user, expect 403
+    });
+  });
+  
+  describe('PUT /api/tags/:id', () => {
+    it('should allow Editor to update tag', async () => {
+      // Test with Editor user
+    });
+    
+    it('should deny Viewer from updating tag', async () => {
+      // Test with Viewer user, expect 403
+    });
+  });
+  
+  describe('DELETE /api/tags/:id', () => {
+    it('should allow Editor to delete tag', async () => {
+      // Test with Editor user
+    });
+    
+    it('should deny Viewer from deleting tag', async () => {
       // Test with Viewer user, expect 403
     });
   });
