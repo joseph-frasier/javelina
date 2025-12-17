@@ -4,7 +4,15 @@ import { useAuthStore } from '@/lib/auth-store';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { AvatarUpload } from '@/components/ui/AvatarUpload';
+import dynamic from 'next/dynamic';
+// Dynamically import AvatarUpload to reduce initial bundle (removes react-easy-crop ~600KB)
+const AvatarUpload = dynamic(
+  () => import('@/components/ui/AvatarUpload').then(mod => ({ default: mod.AvatarUpload })),
+  { 
+    loading: () => <div className="w-24 h-24 rounded-full bg-gray-200 animate-pulse" />,
+    ssr: false 
+  }
+);
 import { EditProfileModal } from '@/components/modals/EditProfileModal';
 import { ManageAccountModal } from '@/components/modals/ManageAccountModal';
 import { useState, useEffect } from 'react';
