@@ -63,6 +63,12 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
+  
+  // Sync hierarchy store with current organization
+  useEffect(() => {
+    selectAndExpand(org.id);
+  }, [org.id, selectAndExpand]);
+  
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isNewestPlan, setIsNewestPlan] = useState(false);
