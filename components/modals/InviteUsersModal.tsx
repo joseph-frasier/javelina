@@ -22,7 +22,7 @@ interface InviteUsersModalProps {
   onSuccess?: () => void;
 }
 
-type RBACRole = 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+type RBACRole = 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
 
 export function InviteUsersModal({
   isOpen,
@@ -171,7 +171,8 @@ export function InviteUsersModal({
             onChange={(value) => setRole(value as RBACRole)}
             options={[
               { value: 'Viewer', label: 'Viewer - Can view only' },
-              { value: 'Editor', label: 'Editor - Can view and edit' },
+              { value: 'Editor', label: 'Editor - Can manage DNS' },
+              { value: 'BillingContact', label: 'Billing Contact - Can manage billing' },
               { value: 'Admin', label: 'Admin - Can manage resources' },
               { value: 'SuperAdmin', label: 'SuperAdmin - Full access' },
             ]}

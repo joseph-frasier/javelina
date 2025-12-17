@@ -36,7 +36,7 @@ export interface ProfileData {
 export interface OrganizationMembership {
   id: string
   name: string
-  role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
+  role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer'
 }
 
 export interface ProfileWithOrganizations extends ProfileData {

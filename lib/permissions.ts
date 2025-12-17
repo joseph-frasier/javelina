@@ -43,7 +43,7 @@ export function canEditRecords(orgRole: RBACRole, envRole?: RBACRole): boolean {
 // Check if user can view organization details
 export function canViewOrganization(orgRole: RBACRole): boolean {
   // All roles can view (read-only access)
-  return ['SuperAdmin', 'Admin', 'Editor', 'Viewer'].includes(orgRole);
+  return ['SuperAdmin', 'Admin', 'BillingContact', 'Editor', 'Viewer'].includes(orgRole);
 }
 
 // Check if user can manage organization settings
@@ -61,10 +61,35 @@ export function canManageRoles(orgRole: RBACRole): boolean {
   return ['SuperAdmin', 'Admin'].includes(orgRole);
 }
 
-// Check if user is read-only
+// Check if user can view billing information
+export function canViewBilling(orgRole: RBACRole): boolean {
+  return ['SuperAdmin', 'Admin', 'BillingContact'].includes(orgRole);
+}
+
+// Check if user can manage billing (view & update subscriptions, payment methods, etc.)
+export function canManageBilling(orgRole: RBACRole): boolean {
+  return ['SuperAdmin', 'Admin', 'BillingContact'].includes(orgRole);
+}
+
+// Check if user can change subscription plans
+export function canChangePlan(orgRole: RBACRole): boolean {
+  return ['SuperAdmin', 'Admin', 'BillingContact'].includes(orgRole);
+}
+
+// Check if user can update payment methods
+export function canUpdatePaymentMethods(orgRole: RBACRole): boolean {
+  return ['SuperAdmin', 'Admin', 'BillingContact'].includes(orgRole);
+}
+
+// Check if user can view and download invoices
+export function canViewInvoices(orgRole: RBACRole): boolean {
+  return ['SuperAdmin', 'Admin', 'BillingContact'].includes(orgRole);
+}
+
+// Check if user is read-only (for DNS/zones)
 export function isReadOnly(orgRole: RBACRole, envRole?: RBACRole): boolean {
   const effectiveRole = envRole || orgRole;
-  return effectiveRole === 'Viewer';
+  return effectiveRole === 'Viewer' || effectiveRole === 'BillingContact';
 }
 
 // Get effective role (environment role overrides org role if present)
@@ -75,8 +100,9 @@ export function getEffectiveRole(orgRole: RBACRole, envRole?: RBACRole): RBACRol
 // Check if environment role is more restrictive than org role
 export function isRoleDowngrade(orgRole: RBACRole, envRole: RBACRole): boolean {
   const roleHierarchy: Record<RBACRole, number> = {
-    'SuperAdmin': 4,
-    'Admin': 3,
+    'SuperAdmin': 5,
+    'Admin': 4,
+    'BillingContact': 3,
     'Editor': 2,
     'Viewer': 1
   };
@@ -89,6 +115,7 @@ export function getRoleDisplayText(role: RBACRole): string {
   const roleMap: Record<RBACRole, string> = {
     'SuperAdmin': 'SuperUser',
     'Admin': 'SuperUser',
+    'BillingContact': 'Billing Contact',
     'Editor': 'Editor',
     'Viewer': 'Viewer'
   };
@@ -101,6 +128,7 @@ export function getRoleBadgeColor(role: RBACRole): string {
   const colorMap: Record<RBACRole, string> = {
     'SuperAdmin': 'bg-orange-100 text-orange-800 border-orange-200',
     'Admin': 'bg-orange-100 text-orange-800 border-orange-200',
+    'BillingContact': 'bg-blue-100 text-blue-800 border-blue-200',
     'Editor': 'bg-orange-100 text-orange-800 border-orange-200',
     'Viewer': 'bg-gray-100 text-gray-800 border-gray-200'
   };

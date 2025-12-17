@@ -9,7 +9,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+  role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
   avatar?: string;
 }
 
@@ -43,6 +43,8 @@ export function ManageTeamMembersModal({
         return 'bg-orange/10 text-orange border-orange/20';
       case 'Admin':
         return 'bg-blue-electric/10 text-blue-electric border-blue-electric/20';
+      case 'BillingContact':
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'Editor':
         return 'bg-green-500/10 text-green-500 border-green-500/20';
       case 'Viewer':
@@ -85,7 +87,8 @@ export function ManageTeamMembersModal({
 
   const roleOptions = [
     { value: 'Viewer', label: 'Viewer - Can view only' },
-    { value: 'Editor', label: 'Editor - Can view and edit' },
+    { value: 'Editor', label: 'Editor - Can manage DNS' },
+    { value: 'BillingContact', label: 'Billing Contact - Can manage billing' },
     { value: 'Admin', label: 'Admin - Can manage resources' },
     { value: 'SuperAdmin', label: 'SuperAdmin - Full access' },
   ];

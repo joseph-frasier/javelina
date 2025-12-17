@@ -81,7 +81,7 @@ export async function softDeleteOrganization(orgId: string) {
 
 export async function addMemberToOrganization(orgId: string, userId: string, role: string) {
   try {
-    if (!['SuperAdmin', 'Admin', 'Editor', 'Viewer'].includes(role)) {
+    if (!['SuperAdmin', 'Admin', 'BillingContact', 'Editor', 'Viewer'].includes(role)) {
       return { error: 'Invalid role' };
     }
 
@@ -157,7 +157,7 @@ export async function removeMemberFromOrganization(orgId: string, userId: string
 
 export async function changeMemberRole(orgId: string, userId: string, newRole: string) {
   try {
-    if (!['SuperAdmin', 'Admin', 'Editor', 'Viewer'].includes(newRole)) {
+    if (!['SuperAdmin', 'Admin', 'BillingContact', 'Editor', 'Viewer'].includes(newRole)) {
       return { error: 'Invalid role' };
     }
 

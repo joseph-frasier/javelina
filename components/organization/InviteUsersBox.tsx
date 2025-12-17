@@ -10,7 +10,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+  role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
   avatar?: string;
 }
 
@@ -73,6 +73,8 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
         return 'bg-orange/10 text-orange border-orange/20';
       case 'Admin':
         return 'bg-blue-electric/10 text-blue-electric border-blue-electric/20';
+      case 'BillingContact':
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'Editor':
         return 'bg-green-500/10 text-green-500 border-green-500/20';
       case 'Viewer':

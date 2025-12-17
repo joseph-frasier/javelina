@@ -6,7 +6,7 @@ import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export type UserRole = 'user' | 'superuser';
-export type RBACRole = 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+export type RBACRole = 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
 
 export interface Organization {
   id: string;
