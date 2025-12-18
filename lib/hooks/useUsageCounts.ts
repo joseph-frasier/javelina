@@ -8,6 +8,9 @@ export interface UsageCounts {
   zones: number;
   records: number;
   members: number;
+  maxZones?: number;
+  maxRecords?: number;
+  maxMembers?: number;
 }
 
 /**
@@ -60,13 +63,16 @@ export function useUsageCounts(organizationId: string | null | undefined): UseUs
       const response = await apiClient.get(`/organizations/${organizationId}/usage`);
       
       // API returns { zones: { current, max }, records: { current, max }, members: { current, max } }
-      // We extract just the current counts
+      // Extract both current counts and max limits
       const data = response as UsageData;
       
       setUsage({
         zones: data.zones?.current ?? 0,
         records: data.records?.current ?? 0,
         members: data.members?.current ?? 0,
+        maxZones: data.zones?.max,
+        maxRecords: data.records?.max,
+        maxMembers: data.members?.max,
       });
     } catch (err) {
       console.error('Failed to fetch usage counts:', err);

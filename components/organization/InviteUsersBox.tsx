@@ -51,11 +51,20 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
 
   const fetchSubscription = async () => {
     try {
-      const subscription = await subscriptionsApi.getCurrent(organizationId);
-      setPlanCode(subscription?.plan_code || null);
+      const response = await subscriptionsApi.getCurrent(organizationId);
+      
+      // Backend returns { subscription: {...}, plan: {...} }
+      // Try multiple possible locations for plan code
+      const planCodeValue = (response as any)?.plan?.code || 
+                           (response as any)?.subscription?.plan_code || 
+                           (response as any)?.plan_code || 
+                           null;
+      
+      setPlanCode(planCodeValue);
     } catch (error) {
-      console.error('Error fetching subscription:', error);
-      // Don't show error toast for subscription fetch - members still load
+      // Subscription API may fail for non-admin/billing roles (403 Forbidden)
+      // That's OK - the usage API provides max limits that work for all roles
+      console.log('Could not fetch subscription (may lack billing permissions):', error);
       setPlanCode(null);
     }
   };

@@ -39,13 +39,24 @@ export function InviteUsersModal({
 
   const addToast = useToastStore((state) => state.addToast);
   
-  // Plan limits and usage tracking
-  const { limits, tier, wouldExceedLimit } = usePlanLimits(planCode);
+  // Usage tracking - prefer usage API's max values over planCode-based limits
+  // This ensures it works for all roles (Editor, Viewer, etc.) without requiring billing access
   const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsageCounts(organizationId);
   
-  // Check if at member limit
+  // Fallback to planCode-based limits if usage API doesn't return max values
+  const { limits: fallbackLimits, tier } = usePlanLimits(planCode);
+  
+  // Use max from usage API if available, otherwise fall back to planCode-based limits
   const currentMemberCount = usage?.members ?? 0;
-  const isAtMemberLimit = wouldExceedLimit('users', currentMemberCount);
+  const maxMembers = usage?.maxMembers ?? fallbackLimits.users;
+  const isAtMemberLimit = currentMemberCount >= maxMembers;
+
+  // Debug logging
+  console.log('InviteUsersModal - planCode:', planCode);
+  console.log('InviteUsersModal - tier:', tier);
+  console.log('InviteUsersModal - currentMemberCount:', currentMemberCount);
+  console.log('InviteUsersModal - maxMembers:', maxMembers);
+  console.log('InviteUsersModal - isAtMemberLimit:', isAtMemberLimit);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -135,7 +146,7 @@ export function InviteUsersModal({
           <UpgradeLimitBanner
             resourceType="members"
             currentCount={currentMemberCount}
-            maxCount={limits.users}
+            maxCount={maxMembers}
             planTier={tier.charAt(0).toUpperCase() + tier.slice(1)}
             isAtLimit={isAtMemberLimit}
             organizationId={organizationId}
