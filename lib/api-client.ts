@@ -312,15 +312,15 @@ export const organizationsApi = {
   /**
    * Update a member's role in an organization
    */
-  updateMemberRole: (id: string, memberId: string, role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer') => {
-    return apiClient.put(`/organizations/${id}/members/${memberId}/role`, { role });
+  updateMemberRole: (id: string, userId: string, role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer') => {
+    return apiClient.put(`/organizations/${id}/members/${userId}/role`, { role });
   },
 
   /**
    * Remove a member from an organization
    */
-  removeMember: (id: string, memberId: string) => {
-    return apiClient.delete(`/organizations/${id}/members/${memberId}`);
+  removeMember: (id: string, userId: string) => {
+    return apiClient.delete(`/organizations/${id}/members/${userId}`);
   },
 };
 

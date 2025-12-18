@@ -15,12 +15,18 @@ Team member management allows organization Admins and SuperAdmins to add existin
 - `subscriptions` - Organization subscription information for plan limits
 
 **Relevant columns in `organization_members`:**
-- `id` (uuid, primary key)
-- `organization_id` (uuid, foreign key to organizations)
-- `user_id` (uuid, foreign key to auth.users/profiles)
+- `organization_id` (uuid, part of composite primary key, foreign key to organizations)
+- `user_id` (uuid, part of composite primary key, foreign key to auth.users/profiles)
 - `role` (text) - One of: 'SuperAdmin', 'Admin', 'BillingContact', 'Editor', 'Viewer'
 - `created_at` (timestamp)
-- `updated_at` (timestamp)
+- `invited_by` (uuid, nullable)
+- `invited_at` (timestamp, nullable)
+- `joined_at` (timestamp, nullable)
+- `last_accessed_at` (timestamp, nullable)
+- `permissions` (jsonb, nullable)
+- `status` (text, default 'active') - One of: 'active', 'invited', 'suspended'
+
+**Note:** This table uses a **composite primary key** of `(organization_id, user_id)` - there is no separate `id` column.
 
 ## API Endpoints
 
@@ -41,14 +47,15 @@ List all members of an organization.
 {
   "data": [
     {
-      "id": "uuid",
       "user_id": "uuid",
+      "organization_id": "uuid",
       "name": "John Doe",
       "email": "john.doe@example.com",
       "role": "Admin",
       "avatar_url": "https://...",
+      "status": "active",
       "created_at": "2025-12-17T00:00:00Z",
-      "updated_at": "2025-12-17T00:00:00Z"
+      "last_accessed_at": "2025-12-17T00:00:00Z"
     }
   ]
 }
@@ -58,11 +65,12 @@ List all members of an organization.
 ```sql
 -- Get members with user profile information
 SELECT 
-  om.id,
   om.user_id,
+  om.organization_id,
   om.role,
+  om.status,
   om.created_at,
-  om.updated_at,
+  om.last_accessed_at,
   p.name,
   p.email,
   p.avatar_url
@@ -122,14 +130,15 @@ Add an existing Javelina user to an organization.
 ```json
 {
   "data": {
-    "id": "uuid",
     "user_id": "uuid",
+    "organization_id": "uuid",
     "name": "Jane Smith",
     "email": "jane.smith@example.com",
     "role": "Editor",
     "avatar_url": null,
+    "status": "active",
     "created_at": "2025-12-17T00:00:00Z",
-    "updated_at": "2025-12-17T00:00:00Z"
+    "last_accessed_at": null
   }
 }
 ```
@@ -149,20 +158,27 @@ WHERE organization_id = $org_id AND user_id = $user_id;
 INSERT INTO organization_members (
   organization_id,
   user_id,
-  role
+  role,
+  status
 )
-VALUES ($org_id, $user_id, $role)
+VALUES ($org_id, $user_id, $role, 'active')
 RETURNING *;
 
 -- Join with profiles to return complete member object
 SELECT 
-  om.*,
+  om.user_id,
+  om.organization_id,
+  om.role,
+  om.status,
+  om.created_at,
+  om.last_accessed_at,
   p.name,
   p.email,
   p.avatar_url
 FROM organization_members om
 JOIN profiles p ON p.id = om.user_id
-WHERE om.id = $new_member_id;
+WHERE om.organization_id = $org_id 
+  AND om.user_id = $user_id;
 ```
 
 **Error Responses:**
@@ -192,13 +208,13 @@ WHERE om.id = $new_member_id;
 
 ---
 
-### 3. PUT /api/organizations/:orgId/members/:memberId/role
+### 3. PUT /api/organizations/:orgId/members/:userId/role
 
 Update a member's role in an organization.
 
 **Path Parameters:**
 - `orgId` (required) - Organization UUID
-- `memberId` (required) - organization_members.id UUID
+- `userId` (required) - User UUID (organization_members.user_id)
 
 **Authorization:**
 - Requires valid JWT token
@@ -231,14 +247,15 @@ Update a member's role in an organization.
 ```json
 {
   "data": {
-    "id": "uuid",
     "user_id": "uuid",
+    "organization_id": "uuid",
     "name": "Jane Smith",
     "email": "jane.smith@example.com",
     "role": "Editor",
     "avatar_url": null,
+    "status": "active",
     "created_at": "2025-12-17T00:00:00Z",
-    "updated_at": "2025-12-17T00:00:00Z"
+    "last_accessed_at": "2025-12-17T00:00:00Z"
   }
 }
 ```
@@ -252,26 +269,33 @@ SELECT
   om_requester.role as requester_role
 FROM organization_members om_target
 CROSS JOIN organization_members om_requester
-WHERE om_target.id = $member_id
+WHERE om_target.user_id = $user_id
   AND om_target.organization_id = $org_id
   AND om_requester.organization_id = $org_id
   AND om_requester.user_id = $requester_user_id;
 
 -- Validate business rules in application code, then update
 UPDATE organization_members
-SET role = $new_role, updated_at = NOW()
-WHERE id = $member_id
+SET role = $new_role
+WHERE organization_id = $org_id
+  AND user_id = $user_id
 RETURNING *;
 
 -- Join with profiles to return complete member object
 SELECT 
-  om.*,
+  om.user_id,
+  om.organization_id,
+  om.role,
+  om.status,
+  om.created_at,
+  om.last_accessed_at,
   p.name,
   p.email,
   p.avatar_url
 FROM organization_members om
 JOIN profiles p ON p.id = om.user_id
-WHERE om.id = $member_id;
+WHERE om.organization_id = $org_id
+  AND om.user_id = $user_id;
 ```
 
 **Error Responses:**
@@ -294,13 +318,13 @@ WHERE om.id = $member_id;
 
 ---
 
-### 4. DELETE /api/organizations/:orgId/members/:memberId
+### 4. DELETE /api/organizations/:orgId/members/:userId
 
 Remove a member from an organization.
 
 **Path Parameters:**
 - `orgId` (required) - Organization UUID
-- `memberId` (required) - organization_members.id UUID
+- `userId` (required) - User UUID (organization_members.user_id)
 
 **Authorization:**
 - Requires valid JWT token
@@ -330,7 +354,7 @@ SELECT
   om_target.user_id as target_user_id,
   om_target.role as target_role
 FROM organization_members om_target
-WHERE om_target.id = $member_id
+WHERE om_target.user_id = $user_id
   AND om_target.organization_id = $org_id;
 
 -- Check if removing self
@@ -341,12 +365,12 @@ SELECT COUNT(*) as admin_count
 FROM organization_members
 WHERE organization_id = $org_id
   AND role IN ('SuperAdmin', 'Admin')
-  AND id != $member_id;
+  AND user_id != $user_id;
 
 -- Delete the member
 DELETE FROM organization_members
-WHERE id = $member_id
-  AND organization_id = $org_id;
+WHERE organization_id = $org_id
+  AND user_id = $user_id;
 ```
 
 **Error Responses:**
@@ -512,12 +536,14 @@ organizationsApi.addMember(orgId: string, data: {
 })
 
 // Update member role
-organizationsApi.updateMemberRole(orgId: string, memberId: string, 
+organizationsApi.updateMemberRole(orgId: string, userId: string, 
   role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer')
 
 // Remove member
-organizationsApi.removeMember(orgId: string, memberId: string)
+organizationsApi.removeMember(orgId: string, userId: string)
 ```
+
+**Important:** The `userId` parameter is the `user_id` from `organization_members` table (not a separate `id` column - the table uses a composite primary key).
 
 The frontend filters out `SuperAdmin` members from the UI display, but the backend should still return them in the GET response for consistency.
 

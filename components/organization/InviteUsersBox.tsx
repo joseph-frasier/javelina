@@ -9,7 +9,7 @@ import { organizationsApi, subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 
 interface Member {
-  id: string;
+  user_id: string;
   name: string;
   email: string;
   role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
@@ -177,7 +177,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {members.map((member) => (
                 <div
-                  key={member.id}
+                  key={member.user_id}
                   className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate hover:shadow-sm transition-shadow"
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">

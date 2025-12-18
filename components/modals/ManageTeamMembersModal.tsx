@@ -8,7 +8,7 @@ import { organizationsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 
 interface User {
-  id: string;
+  user_id: string;
   name: string;
   email: string;
   role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
@@ -172,7 +172,7 @@ export function ManageTeamMembersModal({
         <div className="space-y-3">
           {users.map((user) => (
             <div
-              key={user.id}
+              key={user.user_id}
               className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate"
             >
               <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -205,7 +205,7 @@ export function ManageTeamMembersModal({
 
                 {/* Role Management */}
                 <div className="flex items-center space-x-2 flex-shrink-0">
-                  {editingUserId === user.id ? (
+                  {editingUserId === user.user_id ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-48 relative z-[100]">
                         <Dropdown
@@ -247,7 +247,7 @@ export function ManageTeamMembersModal({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleEditRole(user.id, user.role)}
+                        onClick={() => handleEditRole(user.user_id, user.role)}
                         className="!bg-orange hover:!bg-orange-dark !text-white"
                         disabled={isLoading}
                       >
@@ -268,7 +268,7 @@ export function ManageTeamMembersModal({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleRemoveUser(user.id, user.name)}
+                        onClick={() => handleRemoveUser(user.user_id, user.name)}
                         className="!bg-red-600 hover:!bg-red-700 !text-white"
                         disabled={isLoading}
                       >
