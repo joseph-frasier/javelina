@@ -62,22 +62,78 @@ List all members of an organization.
 ```
 
 **Implementation Notes:**
-```sql
--- Get members with user profile information
-SELECT 
-  om.user_id,
-  om.organization_id,
-  om.role,
-  om.status,
-  om.created_at,
-  om.last_accessed_at,
-  p.name,
-  p.email,
-  p.avatar_url
-FROM organization_members om
-JOIN profiles p ON p.id = om.user_id
-WHERE om.organization_id = $org_id
-ORDER BY om.created_at;
+
+**IMPORTANT - Foreign Key Structure:**
+- `organization_members.user_id` → `auth.users.id`
+- `profiles.id` → `auth.users.id`
+- There is **NO DIRECT** foreign key from `organization_members` to `profiles`
+- Both tables reference `auth.users`, but Supabase query builder can't do transitive joins
+
+**Option 1: Using Raw SQL (RECOMMENDED)**
+```javascript
+// Use raw SQL with explicit JOIN since there's no direct FK relationship
+const { data, error } = await supabase.rpc('get_organization_members', {
+  p_org_id: orgId
+});
+
+// Or use raw SQL query:
+const query = `
+  SELECT 
+    om.user_id,
+    om.organization_id,
+    om.role,
+    om.status,
+    om.created_at,
+    om.last_accessed_at,
+    p.name,
+    p.email,
+    p.avatar_url
+  FROM organization_members om
+  JOIN profiles p ON p.id = om.user_id
+  WHERE om.organization_id = $1
+  ORDER BY om.created_at
+`;
+
+const { data, error } = await supabase.rpc('exec_sql', { query, params: [orgId] });
+```
+
+**Option 2: Two-Step Query Approach**
+```javascript
+// Step 1: Get organization members
+const { data: members, error: membersError } = await supabase
+  .from('organization_members')
+  .select('user_id, organization_id, role, status, created_at, last_accessed_at')
+  .eq('organization_id', orgId);
+
+if (membersError) throw membersError;
+
+// Step 2: Get user profiles
+const userIds = members.map(m => m.user_id);
+const { data: profiles, error: profilesError } = await supabase
+  .from('profiles')
+  .select('id, name, email, avatar_url')
+  .in('id', userIds);
+
+if (profilesError) throw profilesError;
+
+// Step 3: Merge the data
+const profileMap = new Map(profiles.map(p => [p.id, p]));
+const result = members.map(member => {
+  const profile = profileMap.get(member.user_id);
+  return {
+    user_id: member.user_id,
+    organization_id: member.organization_id,
+    role: member.role,
+    status: member.status,
+    created_at: member.created_at,
+    last_accessed_at: member.last_accessed_at,
+    name: profile?.name || 'Unknown',
+    email: profile?.email || '',
+    avatar_url: profile?.avatar_url || null,
+  };
+});
+
+return res.json({ data: result });
 ```
 
 **Frontend Filtering:**
@@ -144,6 +200,73 @@ Add an existing Javelina user to an organization.
 ```
 
 **Implementation Notes:**
+
+**Using Supabase Client:**
+```javascript
+// Step 1: Look up user by email
+const { data: profile, error: profileError } = await supabase
+  .from('profiles')
+  .select('id, name, email, avatar_url')
+  .eq('email', email)
+  .single();
+
+if (profileError || !profile) {
+  return res.status(404).json({ 
+    error: 'User not found', 
+    code: 'USER_NOT_FOUND' 
+  });
+}
+
+const userId = profile.id;
+
+// Step 2: Check if already a member
+const { data: existingMember } = await supabase
+  .from('organization_members')
+  .select('user_id')
+  .eq('organization_id', orgId)
+  .eq('user_id', userId)
+  .single();
+
+if (existingMember) {
+  return res.status(409).json({ 
+    error: 'User is already a member of this organization',
+    code: 'ALREADY_MEMBER' 
+  });
+}
+
+// Step 3: Insert new member
+const { data: newMember, error: insertError } = await supabase
+  .from('organization_members')
+  .insert({
+    organization_id: orgId,
+    user_id: userId,
+    role: role,
+    status: 'active'
+  })
+  .select()
+  .single();
+
+if (insertError) {
+  throw insertError;
+}
+
+// Step 4: Return member with profile data
+return res.status(201).json({
+  data: {
+    user_id: userId,
+    organization_id: orgId,
+    role: role,
+    status: 'active',
+    created_at: newMember.created_at,
+    last_accessed_at: null,
+    name: profile.name,
+    email: profile.email,
+    avatar_url: profile.avatar_url,
+  }
+});
+```
+
+**Using Raw SQL:**
 ```sql
 -- Look up user by email
 SELECT id, name, email, avatar_url
@@ -261,6 +384,81 @@ Update a member's role in an organization.
 ```
 
 **Implementation Notes:**
+
+**Using Supabase Client:**
+```javascript
+// Step 1: Get target member and requester's role
+const { data: targetMember } = await supabase
+  .from('organization_members')
+  .select('user_id, role')
+  .eq('organization_id', orgId)
+  .eq('user_id', userId)
+  .single();
+
+const { data: requester } = await supabase
+  .from('organization_members')
+  .select('role')
+  .eq('organization_id', orgId)
+  .eq('user_id', req.user.id)
+  .single();
+
+if (!targetMember) {
+  return res.status(404).json({ error: 'Member not found' });
+}
+
+// Step 2: Validate business rules
+if (userId === req.user.id) {
+  return res.status(403).json({
+    error: 'You cannot change your own role',
+    code: 'CANNOT_CHANGE_OWN_ROLE'
+  });
+}
+
+// Step 3: Update the role
+const { error: updateError } = await supabase
+  .from('organization_members')
+  .update({ role: newRole })
+  .eq('organization_id', orgId)
+  .eq('user_id', userId);
+
+if (updateError) throw updateError;
+
+// Step 4: Fetch updated member with profile data
+const { data: updated, error: fetchError } = await supabase
+  .from('organization_members')
+  .select(`
+    user_id,
+    organization_id,
+    role,
+    status,
+    created_at,
+    last_accessed_at,
+    profiles!organization_members_user_id_fkey (
+      name,
+      email,
+      avatar_url
+    )
+  `)
+  .eq('organization_id', orgId)
+  .eq('user_id', userId)
+  .single();
+
+return res.json({
+  data: {
+    user_id: updated.user_id,
+    organization_id: updated.organization_id,
+    role: updated.role,
+    status: updated.status,
+    created_at: updated.created_at,
+    last_accessed_at: updated.last_accessed_at,
+    name: updated.profiles.name,
+    email: updated.profiles.email,
+    avatar_url: updated.profiles.avatar_url,
+  }
+});
+```
+
+**Using Raw SQL:**
 ```sql
 -- Get member info and check requester's role
 SELECT 
@@ -348,6 +546,48 @@ Remove a member from an organization.
 ```
 
 **Implementation Notes:**
+
+**Using Supabase Client:**
+```javascript
+// Step 1: Validate business rules - check if removing self
+if (userId === req.user.id) {
+  return res.status(403).json({
+    error: 'You cannot remove yourself from the organization',
+    code: 'CANNOT_REMOVE_SELF'
+  });
+}
+
+// Step 2: Optional - Count remaining admins
+const { count } = await supabase
+  .from('organization_members')
+  .select('*', { count: 'exact', head: true })
+  .eq('organization_id', orgId)
+  .in('role', ['SuperAdmin', 'Admin'])
+  .neq('user_id', userId);
+
+if (count === 0) {
+  return res.status(403).json({
+    error: 'Cannot remove the last admin from the organization',
+    code: 'CANNOT_REMOVE_LAST_ADMIN'
+  });
+}
+
+// Step 3: Delete the member
+const { error: deleteError } = await supabase
+  .from('organization_members')
+  .delete()
+  .eq('organization_id', orgId)
+  .eq('user_id', userId);
+
+if (deleteError) throw deleteError;
+
+return res.json({
+  success: true,
+  message: 'Member removed successfully'
+});
+```
+
+**Using Raw SQL:**
 ```sql
 -- Get member info to validate business rules
 SELECT 
@@ -580,10 +820,41 @@ The frontend filters out `SuperAdmin` members from the UI display, but the backe
 
 ---
 
+## Common Implementation Issues & Troubleshooting
+
+### Error: "Could not find a relationship between 'organization_members' and 'user_id'"
+
+**Cause:** Trying to use `.select('*, user_id(*)')` with Supabase client
+
+**Solution:** Use the foreign key constraint name:
+```javascript
+.select('*, profiles!organization_members_user_id_fkey(*)')
+```
+
+Or use raw SQL with a JOIN on profiles table.
+
+### Error: "column organization_members.id does not exist"
+
+**Cause:** Trying to reference an `id` column that doesn't exist
+
+**Solution:** The table uses a composite primary key `(organization_id, user_id)`. Use these two columns to identify records:
+```sql
+WHERE organization_id = $org_id AND user_id = $user_id
+```
+
+### Error: "column organization_members.updated_at does not exist"
+
+**Cause:** Trying to set an `updated_at` column
+
+**Solution:** This table doesn't have an `updated_at` column. Remove it from INSERT/UPDATE statements.
+
+---
+
 ## Contact
 
 For questions about team member API implementation:
 - **Owner:** Seth Chesky
 - **Date Created:** December 17, 2024
+- **Last Updated:** December 18, 2024
 - **Status:** Ready for Implementation
 
