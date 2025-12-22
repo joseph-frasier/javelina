@@ -117,19 +117,19 @@ export interface Database {
         Row: {
           organization_id: string
           user_id: string
-          role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
+          role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer'
           created_at: string
         }
         Insert: {
           organization_id: string
           user_id: string
-          role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
+          role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer'
           created_at?: string
         }
         Update: {
           organization_id?: string
           user_id?: string
-          role?: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer'
+          role?: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer'
           created_at?: string
         }
         Relationships: [

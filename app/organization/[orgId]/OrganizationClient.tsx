@@ -47,7 +47,7 @@ interface OrganizationData {
   id: string;
   name: string;
   description: string | null;
-  role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+  role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
   zonesCount: number;
   zones: Zone[];
   recentActivity: ActivityLog[];

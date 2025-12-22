@@ -51,4 +51,37 @@ describe('Zone Permissions - Role-Based UI', () => {
     expect(screen.getByText('Edit Zone')).toBeInTheDocument();
     expect(screen.getByText('Export Zone')).toBeInTheDocument();
   });
+
+  it('hides Delete Zone button for BillingContact role (read-only for DNS)', () => {
+    // Render component with BillingContact role
+    render(<ZoneActionsTestComponent userRole="BillingContact" />);
+
+    // Verify BillingContact cannot see Delete Zone button
+    expect(screen.queryByTestId('delete-zone-button')).not.toBeInTheDocument();
+    
+    // Verify BillingContact can still see non-destructive actions
+    expect(screen.getByText('Edit Zone')).toBeInTheDocument();
+    expect(screen.getByText('Export Zone')).toBeInTheDocument();
+  });
+
+  it('shows Delete Zone button for SuperAdmin role', () => {
+    // Render component with SuperAdmin role
+    render(<ZoneActionsTestComponent userRole="SuperAdmin" />);
+
+    // Verify SuperAdmin CAN see Delete Zone button
+    expect(screen.getByTestId('delete-zone-button')).toBeInTheDocument();
+    expect(screen.getByText('Delete Zone')).toBeInTheDocument();
+  });
+
+  it('hides Delete Zone button for Editor role (can edit but not delete)', () => {
+    // Render component with Editor role
+    render(<ZoneActionsTestComponent userRole="Editor" />);
+
+    // Verify Editor cannot see Delete Zone button (only Admin/SuperAdmin can delete)
+    expect(screen.queryByTestId('delete-zone-button')).not.toBeInTheDocument();
+    
+    // Verify Editor can still see other actions
+    expect(screen.getByText('Edit Zone')).toBeInTheDocument();
+    expect(screen.getByText('Export Zone')).toBeInTheDocument();
+  });
 });

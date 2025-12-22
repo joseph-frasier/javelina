@@ -86,6 +86,8 @@ export default function ProfilePage() {
         return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
       case 'Admin':
         return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
+      case 'BillingContact':
+        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700';
       case 'Editor':
         return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
       case 'Viewer':
@@ -99,6 +101,8 @@ export default function ProfilePage() {
     switch (role) {
       case 'SuperAdmin':
         return 'SuperUser';
+      case 'BillingContact':
+        return 'Billing Contact';
       default:
         return role;
     }

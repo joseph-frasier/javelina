@@ -58,7 +58,7 @@ export default function OrganizationBillingPage() {
         .eq('user_id', user.id)
         .single();
 
-      if (memberError || !membership || !['Admin', 'SuperAdmin'].includes(membership.role)) {
+      if (memberError || !membership || !['Admin', 'SuperAdmin', 'BillingContact'].includes(membership.role)) {
         addToast('error', 'You do not have permission to manage billing for this organization');
         router.push('/settings/billing');
         return;

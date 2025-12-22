@@ -301,6 +301,27 @@ export const organizationsApi = {
   getMembers: (id: string) => {
     return apiClient.get(`/organizations/${id}/members`);
   },
+
+  /**
+   * Add a member to an organization
+   */
+  addMember: (id: string, data: { email: string; role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer' }) => {
+    return apiClient.post(`/organizations/${id}/members`, data);
+  },
+
+  /**
+   * Update a member's role in an organization
+   */
+  updateMemberRole: (id: string, userId: string, role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer') => {
+    return apiClient.put(`/organizations/${id}/members/${userId}/role`, { role });
+  },
+
+  /**
+   * Remove a member from an organization
+   */
+  removeMember: (id: string, userId: string) => {
+    return apiClient.delete(`/organizations/${id}/members/${userId}`);
+  },
 };
 
 // Zones API

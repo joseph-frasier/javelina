@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
+import { organizationsApi } from '@/lib/api-client';
+import { useToastStore } from '@/lib/toast-store';
 
 interface User {
-  id: string;
+  user_id: string;
   name: string;
   email: string;
-  role: 'SuperAdmin' | 'Admin' | 'Editor' | 'Viewer';
+  role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
   avatar?: string;
 }
 
@@ -18,6 +20,9 @@ interface ManageTeamMembersModalProps {
   onClose: () => void;
   users: User[];
   organizationName: string;
+  organizationId: string;
+  onMemberUpdated?: () => void;
+  onMemberRemoved?: () => void;
 }
 
 export function ManageTeamMembersModal({
@@ -25,9 +30,14 @@ export function ManageTeamMembersModal({
   onClose,
   users,
   organizationName,
+  organizationId,
+  onMemberUpdated,
+  onMemberRemoved,
 }: ManageTeamMembersModalProps) {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const addToast = useToastStore((state) => state.addToast);
 
   // Reset editing state when modal closes
   useEffect(() => {
@@ -43,6 +53,8 @@ export function ManageTeamMembersModal({
         return 'bg-orange/10 text-orange border-orange/20';
       case 'Admin':
         return 'bg-blue-electric/10 text-blue-electric border-blue-electric/20';
+      case 'BillingContact':
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'Editor':
         return 'bg-green-500/10 text-green-500 border-green-500/20';
       case 'Viewer':
@@ -66,28 +78,64 @@ export function ManageTeamMembersModal({
     setEditingRole(currentRole);
   };
 
-  const handleSaveRole = () => {
-    // TODO: Save role change via API
-    console.log(`Updating user ${editingUserId} to role ${editingRole}`);
-    setEditingUserId(null);
-    setEditingRole('');
+  const handleSaveRole = async () => {
+    if (!editingUserId || !editingRole) return;
+    
+    setIsLoading(true);
+    try {
+      await organizationsApi.updateMemberRole(
+        organizationId,
+        editingUserId,
+        editingRole as 'Admin' | 'Editor' | 'BillingContact' | 'Viewer'
+      );
+      
+      addToast('success', 'Member role updated successfully');
+      setEditingUserId(null);
+      setEditingRole('');
+      
+      // Trigger callback to refresh member list
+      if (onMemberUpdated) {
+        onMemberUpdated();
+      }
+    } catch (error: any) {
+      console.error('Error updating member role:', error);
+      const errorMessage = error?.message || error?.error || 'Failed to update member role';
+      addToast('error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRemoveUser = (userId: string, userName: string) => {
+  const handleRemoveUser = async (userId: string, userName: string) => {
     const confirmed = window.confirm(
       `Are you sure you want to remove ${userName} from ${organizationName}?`
     );
-    if (confirmed) {
-      // TODO: Remove user via API
-      console.log(`Removing user ${userId}`);
+    if (!confirmed) return;
+    
+    setIsLoading(true);
+    try {
+      await organizationsApi.removeMember(organizationId, userId);
+      
+      addToast('success', `${userName} has been removed from ${organizationName}`);
+      
+      // Trigger callback to refresh member list
+      if (onMemberRemoved) {
+        onMemberRemoved();
+      }
+    } catch (error: any) {
+      console.error('Error removing member:', error);
+      const errorMessage = error?.message || error?.error || 'Failed to remove member';
+      addToast('error', errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const roleOptions = [
     { value: 'Viewer', label: 'Viewer - Can view only' },
-    { value: 'Editor', label: 'Editor - Can view and edit' },
+    { value: 'Editor', label: 'Editor - Can manage DNS' },
+    { value: 'BillingContact', label: 'Billing Contact - Can manage billing' },
     { value: 'Admin', label: 'Admin - Can manage resources' },
-    { value: 'SuperAdmin', label: 'SuperAdmin - Full access' },
   ];
 
   return (
@@ -124,7 +172,7 @@ export function ManageTeamMembersModal({
         <div className="space-y-3">
           {users.map((user) => (
             <div
-              key={user.id}
+              key={user.user_id}
               className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate"
             >
               <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -157,7 +205,7 @@ export function ManageTeamMembersModal({
 
                 {/* Role Management */}
                 <div className="flex items-center space-x-2 flex-shrink-0">
-                  {editingUserId === user.id ? (
+                  {editingUserId === user.user_id ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-48 relative z-[100]">
                         <Dropdown
@@ -170,6 +218,8 @@ export function ManageTeamMembersModal({
                         variant="primary"
                         size="sm"
                         onClick={handleSaveRole}
+                        loading={isLoading}
+                        disabled={isLoading}
                       >
                         Save
                       </Button>
@@ -180,6 +230,7 @@ export function ManageTeamMembersModal({
                           setEditingUserId(null);
                           setEditingRole('');
                         }}
+                        disabled={isLoading}
                       >
                         ✕
                       </Button>
@@ -196,8 +247,9 @@ export function ManageTeamMembersModal({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleEditRole(user.id, user.role)}
+                        onClick={() => handleEditRole(user.user_id, user.role)}
                         className="!bg-orange hover:!bg-orange-dark !text-white"
+                        disabled={isLoading}
                       >
                         <svg
                           className="w-4 h-4"
@@ -216,8 +268,9 @@ export function ManageTeamMembersModal({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleRemoveUser(user.id, user.name)}
+                        onClick={() => handleRemoveUser(user.user_id, user.name)}
                         className="!bg-red-600 hover:!bg-red-700 !text-white"
+                        disabled={isLoading}
                       >
                         <svg
                           className="w-4 h-4"

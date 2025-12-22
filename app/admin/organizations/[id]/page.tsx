@@ -265,6 +265,7 @@ export default function AdminOrganizationDetailPage() {
                       >
                         <option value="Viewer">Viewer</option>
                         <option value="Editor">Editor</option>
+                        <option value="BillingContact">Billing Contact</option>
                         <option value="Admin">Admin</option>
                         <option value="SuperAdmin">Super Admin</option>
                       </select>
@@ -302,6 +303,7 @@ export default function AdminOrganizationDetailPage() {
                             >
                               <option value="Viewer">Viewer</option>
                               <option value="Editor">Editor</option>
+                              <option value="BillingContact">Billing Contact</option>
                               <option value="Admin">Admin</option>
                               <option value="SuperAdmin">Super Admin</option>
                             </select>
