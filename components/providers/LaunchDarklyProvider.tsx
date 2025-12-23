@@ -60,6 +60,13 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
     anonymous: true
   };
 
+  // Debug: Log the actual context being sent
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('🎯 LD Context being sent:', JSON.stringify(ldContext, null, 2));
+    }
+  }, [ldContext]);
+
   return (
     <LDProvider
       clientSideID={clientSideID}
@@ -67,8 +74,9 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
       options={{
         // Don't send analytics events in development
         sendEvents: process.env.NODE_ENV === 'production',
-        // Bootstrap with empty flags to prevent flashing
-        bootstrap: 'localStorage',
+        // Disable localStorage bootstrap temporarily for debugging
+        // This ensures we fetch fresh flags from LD servers
+        // bootstrap: 'localStorage',
       }}
     >
       {children}

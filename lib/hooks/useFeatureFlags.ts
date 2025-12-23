@@ -69,21 +69,30 @@ export function useFeatureFlags(): FeatureFlags {
 
   useEffect(() => {
     if (!ldClient) {
-      // No LD client available, use defaults
+      console.warn('⚠️ No LaunchDarkly client available');
       setIsReady(true);
       return;
     }
 
+    console.log('⏳ Waiting for LaunchDarkly initialization...');
+    
     // Check if already ready
     if (ldClient.waitForInitialization) {
       ldClient.waitForInitialization().then(() => {
+        console.log('✅ LaunchDarkly client initialized successfully');
+        
+        // Get all flags after initialization
+        const allFlags = ldClient.allFlags();
+        console.log('📦 All flags from allFlags():', allFlags);
+        console.log('📦 All flags stringified:', JSON.stringify(allFlags, null, 2));
+        
         setIsReady(true);
-      }).catch(() => {
-        // Failed to initialize, use defaults
+      }).catch((err) => {
+        console.error('❌ LaunchDarkly initialization failed:', err);
         setIsReady(true);
       });
     } else {
-      // Client doesn't have waitForInitialization, assume ready
+      console.log('⚠️ Client missing waitForInitialization, assuming ready');
       setIsReady(true);
     }
   }, [ldClient]);
