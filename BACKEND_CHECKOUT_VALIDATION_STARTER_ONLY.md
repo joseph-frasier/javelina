@@ -74,7 +74,7 @@ createSubscription(
    ```json
    {
      "error": "PLAN_NOT_AVAILABLE_FOR_PURCHASE",
-     "message": "The selected plan is not currently available for purchase. Please select a different plan.",
+     "message": "This plan is not currently available. Please choose from our available plans.",
      "code": 422
    }
    ```
@@ -118,7 +118,7 @@ upgradeToLifetime(
    ```json
    {
      "error": "UPGRADE_NOT_AVAILABLE",
-     "message": "Upgrades to this plan are not currently available. Please contact support for assistance.",
+     "message": "This upgrade is not currently available. Please choose from our available plans.",
      "code": 422
    }
    ```
@@ -167,7 +167,7 @@ updateSubscription(
    ```json
    {
      "error": "PLAN_CHANGE_NOT_AVAILABLE",
-     "message": "The selected plan is not currently available. Please contact support for plan changes.",
+     "message": "This plan change is not currently available. Please choose from our available plans.",
      "code": 422
    }
    ```
@@ -423,7 +423,7 @@ ALLOWED_PLAN_CODES=starter,starter_lifetime,pro,pro_lifetime
 
 **Scenario**: User tries to directly call API with Pro plan code
 
-**Response**: Backend returns 422 error. Frontend should show: "This plan is not currently available. Please select from our available plans."
+**Response**: Backend returns 422 error. Frontend displays: "This plan is not currently available. Please choose from our available plans."
 
 ### Monitoring & Alerts
 
