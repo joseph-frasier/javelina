@@ -109,7 +109,11 @@ export function useFeatureFlags(): FeatureFlags {
     }
   }, [isReady, ldFlags]);
 
-  // Return flags (will be defaults until LD is ready)
+  // Return defaults until LD is ready, then return actual flags
+  if (!isReady) {
+    return DEFAULT_FLAGS;
+  }
+  
   return getFeatureFlags(ldFlags);
 }
 
