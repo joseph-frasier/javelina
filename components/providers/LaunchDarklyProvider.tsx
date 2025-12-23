@@ -51,6 +51,15 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
     }
   }, [clientSideID]);
 
+  // Debug logging - MUST be before conditional return (React Hook rules)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && clientSideID && LDComponents) {
+      console.log('🏁 LaunchDarkly Provider Initialized');
+      console.log('🔑 Client ID:', clientSideID);
+      console.log('👤 User Context:', user?.id || 'anonymous');
+    }
+  }, [clientSideID, LDComponents, user]);
+
   // If no client ID is configured or SDK not loaded, render children without LD
   if (!clientSideID || !LDComponents) {
     if (!clientSideID) {
@@ -83,14 +92,6 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
     key: 'anonymous',
     anonymous: true
   };
-
-  // Debug logging
-  useEffect(() => {
-    if (typeof window !== 'undefined' && clientSideID && LDComponents) {
-      console.log('🏁 LaunchDarkly Provider Context:', ldContext);
-      console.log('🔑 LaunchDarkly Client ID:', clientSideID);
-    }
-  }, [clientSideID, LDComponents, ldContext]);
 
   return (
     <LDProvider
