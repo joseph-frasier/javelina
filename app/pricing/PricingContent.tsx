@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { PRICING_FAQS } from '@/lib/constants/faq';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
 export default function PricingContent() {
   const router = useRouter();
@@ -24,6 +25,9 @@ export default function PricingContent() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const addToast = useToastStore((state) => state.addToast);
   const user = useAuthStore((state) => state.user);
+  
+  // Feature flags for starter-only launch
+  const { hideProPlans, hideBusinessPlans } = useFeatureFlags();
   
   // Refs for GSAP animation
   const contentRef = useRef<HTMLDivElement>(null);
@@ -183,10 +187,16 @@ export default function PricingContent() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS_CONFIG.filter(plan => 
-              plan.code.includes('_lifetime') && 
-              plan.id !== 'enterprise_lifetime'
-            ).map((plan) => {
+            {PLANS_CONFIG.filter(plan => {
+              // Filter out enterprise lifetime
+              if (plan.id === 'enterprise_lifetime') return false;
+              // Only include lifetime plans
+              if (!plan.code.includes('_lifetime')) return false;
+              // Apply feature flags
+              if (hideProPlans && plan.code === 'pro_lifetime') return false;
+              if (hideBusinessPlans && plan.code === 'premium_lifetime') return false;
+              return true;
+            }).map((plan) => {
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
@@ -274,10 +284,16 @@ export default function PricingContent() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS_CONFIG.filter(plan => 
-              !plan.code.includes('_lifetime') && 
-              plan.id !== 'enterprise'
-            ).map((plan) => {
+            {PLANS_CONFIG.filter(plan => {
+              // Filter out enterprise
+              if (plan.id === 'enterprise') return false;
+              // Only include monthly subscription plans (not lifetime)
+              if (plan.code.includes('_lifetime')) return false;
+              // Apply feature flags
+              if (hideProPlans && plan.code === 'pro') return false;
+              if (hideBusinessPlans && plan.code === 'business') return false;
+              return true;
+            }).map((plan) => {
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
