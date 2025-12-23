@@ -68,11 +68,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   // Feature flags for starter-only launch
   const { hideTeamInvites } = useFeatureFlags();
   
-  // Debug: Log flag value
-  useEffect(() => {
-    console.log('🚩 OrganizationClient - hideTeamInvites:', hideTeamInvites);
-  }, [hideTeamInvites]);
-  
   // Sync hierarchy store with current organization
   useEffect(() => {
     selectAndExpand(org.id);

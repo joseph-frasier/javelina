@@ -29,11 +29,6 @@ export default function PricingContent() {
   // Feature flags for starter-only launch
   const { hideProPlans, hideBusinessPlans } = useFeatureFlags();
   
-  // Debug: Log flag values when they change
-  useEffect(() => {
-    console.log('🚩 PricingContent - Flag Values:', { hideProPlans, hideBusinessPlans });
-  }, [hideProPlans, hideBusinessPlans]);
-  
   // Refs for GSAP animation
   const contentRef = useRef<HTMLDivElement>(null);
   const [isInitialMount, setIsInitialMount] = useState(true);
@@ -198,15 +193,8 @@ export default function PricingContent() {
               // Only include lifetime plans
               if (!plan.code.includes('_lifetime')) return false;
               // Apply feature flags
-              if (hideProPlans && plan.code === 'pro_lifetime') {
-                console.log(`🚫 Filtering out ${plan.code} (hideProPlans: ${hideProPlans})`);
-                return false;
-              }
-              if (hideBusinessPlans && plan.code === 'premium_lifetime') {
-                console.log(`🚫 Filtering out ${plan.code} (hideBusinessPlans: ${hideBusinessPlans})`);
-                return false;
-              }
-              console.log(`✅ Showing ${plan.code}`);
+              if (hideProPlans && plan.code === 'pro_lifetime') return false;
+              if (hideBusinessPlans && plan.code === 'premium_lifetime') return false;
               return true;
             }).map((plan) => {
               const planForCard = {
@@ -302,15 +290,8 @@ export default function PricingContent() {
               // Only include monthly subscription plans (not lifetime)
               if (plan.code.includes('_lifetime')) return false;
               // Apply feature flags
-              if (hideProPlans && plan.code === 'pro') {
-                console.log(`🚫 Filtering out ${plan.code} (hideProPlans: ${hideProPlans})`);
-                return false;
-              }
-              if (hideBusinessPlans && plan.code === 'business') {
-                console.log(`🚫 Filtering out ${plan.code} (hideBusinessPlans: ${hideBusinessPlans})`);
-                return false;
-              }
-              console.log(`✅ Showing ${plan.code}`);
+              if (hideProPlans && plan.code === 'pro') return false;
+              if (hideBusinessPlans && plan.code === 'business') return false;
               return true;
             }).map((plan) => {
               const planForCard = {

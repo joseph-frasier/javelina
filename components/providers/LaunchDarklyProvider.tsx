@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { LDProvider } from 'launchdarkly-react-client-sdk';
 import type { LDContext } from 'launchdarkly-js-client-sdk';
 import { useAuthStore } from '@/lib/auth-store';
@@ -22,15 +22,6 @@ interface LaunchDarklyProviderProps {
 export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
   const clientSideID = process.env.NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID;
   const user = useAuthStore((state) => state.user);
-
-  // Debug logging
-  useEffect(() => {
-    if (typeof window !== 'undefined' && clientSideID) {
-      console.log('🏁 LaunchDarkly Provider Initialized');
-      console.log('🔑 Client ID:', clientSideID);
-      console.log('👤 User Context:', user?.id || 'anonymous');
-    }
-  }, [clientSideID, user]);
 
   // If no client ID is configured, render children without LD
   if (!clientSideID) {
@@ -60,21 +51,12 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
     anonymous: true
   };
 
-  // Debug: Log context inline (can't use useEffect after conditional return)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log('🎯 LD Context:', ldContext.kind === 'user' && !ldContext.anonymous ? ldContext.key : 'anonymous');
-  }
-
   return (
     <LDProvider
       clientSideID={clientSideID}
       context={ldContext}
       options={{
-        // Don't send analytics events in development
         sendEvents: process.env.NODE_ENV === 'production',
-        // Disable localStorage bootstrap temporarily for debugging
-        // This ensures we fetch fresh flags from LD servers
-        // bootstrap: 'localStorage',
       }}
     >
       {children}
