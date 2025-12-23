@@ -84,6 +84,14 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
     anonymous: true
   };
 
+  // Debug logging
+  useEffect(() => {
+    if (typeof window !== 'undefined' && clientSideID && LDComponents) {
+      console.log('🏁 LaunchDarkly Provider Context:', ldContext);
+      console.log('🔑 LaunchDarkly Client ID:', clientSideID);
+    }
+  }, [clientSideID, LDComponents, ldContext]);
+
   return (
     <LDProvider
       clientSideID={clientSideID}

@@ -93,9 +93,19 @@ export function useFeatureFlags(): FeatureFlags {
     if (isReady && typeof window !== 'undefined') {
       console.log('🚀 LaunchDarkly Ready');
       console.log('📦 Raw LD Flags:', ldFlags);
+      console.log('📦 Raw LD Flags (stringified):', JSON.stringify(ldFlags, null, 2));
       console.log('🔑 Flag Keys:', LD_FLAG_KEYS);
+      
+      // Check each individual flag
+      console.log('🔍 Individual Flag Values:');
+      console.log('  - pricing-hide-pro-plans:', ldFlags['pricing-hide-pro-plans']);
+      console.log('  - pricing-hide-business-plans:', ldFlags['pricing-hide-business-plans']);
+      console.log('  - billing-hide-limit-upgrade-button:', ldFlags['billing-hide-limit-upgrade-button']);
+      console.log('  - orgs-hide-team-invites:', ldFlags['orgs-hide-team-invites']);
+      
       const parsed = getFeatureFlags(ldFlags);
       console.log('✅ Parsed Feature Flags:', parsed);
+      console.log('✅ Parsed (stringified):', JSON.stringify(parsed, null, 2));
     }
   }, [isReady, ldFlags]);
 
