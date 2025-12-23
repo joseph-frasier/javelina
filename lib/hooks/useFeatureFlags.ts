@@ -1,5 +1,7 @@
 'use client';
 
+import { useFlags } from 'launchdarkly-react-client-sdk';
+
 /**
  * Feature flags for the starter-only launch
  */
@@ -39,9 +41,9 @@ export const LD_FLAG_KEYS = {
  * Hook to safely access LaunchDarkly feature flags
  * 
  * Returns typed feature flags with safe defaults when:
- * - LaunchDarkly SDK is not installed
  * - LaunchDarkly client ID is not configured
  * - Component is not inside LaunchDarklyProvider
+ * - Flags are not yet loaded
  * 
  * Usage:
  * ```tsx
@@ -57,26 +59,11 @@ export const LD_FLAG_KEYS = {
  * ```
  */
 export function useFeatureFlags(): FeatureFlags {
-  let ldFlags: Record<string, any> = {};
+  // Call useFlags from LaunchDarkly
+  // This is safe because our app is wrapped in LaunchDarklyProvider
+  const ldFlags = useFlags();
 
-  // Try to get flags from LaunchDarkly if available
-  // This must be at the top level of the component
-  try {
-    // Dynamically import useFlags from LaunchDarkly
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { useFlags } = require('launchdarkly-react-client-sdk');
-    ldFlags = useFlags();
-  } catch {
-    // LaunchDarkly not available or not inside LDProvider
-    // Return defaults
-  }
-
-  return {
-    hideProPlans: ldFlags[LD_FLAG_KEYS.HIDE_PRO_PLANS] ?? DEFAULT_FLAGS.hideProPlans,
-    hideBusinessPlans: ldFlags[LD_FLAG_KEYS.HIDE_BUSINESS_PLANS] ?? DEFAULT_FLAGS.hideBusinessPlans,
-    hideUpgradeLimitCta: ldFlags[LD_FLAG_KEYS.HIDE_UPGRADE_LIMIT_CTA] ?? DEFAULT_FLAGS.hideUpgradeLimitCta,
-    hideTeamInvites: ldFlags[LD_FLAG_KEYS.HIDE_TEAM_INVITES] ?? DEFAULT_FLAGS.hideTeamInvites,
-  };
+  return getFeatureFlags(ldFlags);
 }
 
 /**
