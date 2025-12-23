@@ -8,7 +8,7 @@ We use **4 boolean feature flags** to hide higher-tier plans and certain feature
 
 1. **`pricing-hide-pro-plans`** – Hide Pro subscription & Pro Lifetime
 2. **`pricing-hide-business-plans`** – Hide Business subscription & Business Lifetime  
-3. **`billing-hide-upgrade-limit-cta`** – Hide upgrade CTA in zone/record limit banners
+3. **`billing-hide-limit-upgrade-button`** – Hide upgrade CTA in zone/record limit banners
 4. **`orgs-hide-team-invites`** – Hide team member invite/management UI
 
 All flags default to `false` (show everything) to preserve existing behavior when LaunchDarkly is unavailable or flags are not configured.
@@ -145,7 +145,7 @@ All flags default to `false` (show everything) to preserve existing behavior whe
 | Field | Value |
 |-------|-------|
 | **Flag name** | `Billing: Hide limit upgrade button` |
-| **Key** | `billing-hide-upgrade-limit-cta` |
+| **Key** | `billing-hide-limit-upgrade-button` |
 | **Description** | When true, hide the Upgrade/Upgrade Plan button in zone/record limit banners, but keep the warning text and progress bar visible. |
 | **Type** | Boolean |
 | **Variations** | `true` (Hide button), `false` (Show button) |
@@ -165,7 +165,7 @@ All flags default to `false` (show everything) to preserve existing behavior whe
 
 ```json
 {
-  "key": "billing-hide-upgrade-limit-cta",
+  "key": "billing-hide-limit-upgrade-button",
   "name": "Billing: Hide limit upgrade button",
   "description": "When true, hide the Upgrade/Upgrade Plan button in zone/record limit banners while keeping the warning visible.",
   "variationType": "boolean",
@@ -282,7 +282,7 @@ import { LD_FLAG_KEYS } from '@/lib/hooks/useFeatureFlags';
 
 // LD_FLAG_KEYS.HIDE_PRO_PLANS = 'pricing-hide-pro-plans'
 // LD_FLAG_KEYS.HIDE_BUSINESS_PLANS = 'pricing-hide-business-plans'
-// LD_FLAG_KEYS.HIDE_UPGRADE_LIMIT_CTA = 'billing-hide-upgrade-limit-cta'
+// LD_FLAG_KEYS.HIDE_UPGRADE_LIMIT_CTA = 'billing-hide-limit-upgrade-button'
 // LD_FLAG_KEYS.HIDE_TEAM_INVITES = 'orgs-hide-team-invites'
 ```
 
@@ -322,7 +322,7 @@ Get the client-side ID from:
 - `pricing-hide-pro-plans` = **ON**
 - `pricing-hide-business-plans` = **ON**
 - `orgs-hide-team-invites` = **ON**
-- `billing-hide-upgrade-limit-cta` = **ON**
+- `billing-hide-limit-upgrade-button` = **ON**
 
 **Result**:
 - ✅ Only **Starter subscription** and **Starter Lifetime** visible
