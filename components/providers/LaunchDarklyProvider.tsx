@@ -60,12 +60,10 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
     anonymous: true
   };
 
-  // Debug: Log the actual context being sent
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('🎯 LD Context being sent:', JSON.stringify(ldContext, null, 2));
-    }
-  }, [ldContext]);
+  // Debug: Log context inline (can't use useEffect after conditional return)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('🎯 LD Context:', ldContext.kind === 'user' && !ldContext.anonymous ? ldContext.key : 'anonymous');
+  }
 
   return (
     <LDProvider
