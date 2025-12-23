@@ -63,7 +63,7 @@ This document defines who can perform team management actions (inviting, removin
 3. System creates invitation record with status='invited'
 4. System sends invitation email (if email service is configured)
 5. Invitee receives link to accept invitation
-6. Upon acceptance, invitation status changes to 'active'
+6. Upon acceptance, invitation status changes to 'active'...
 
 **Backend Enforcement:**
 ```javascript
