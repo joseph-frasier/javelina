@@ -66,6 +66,7 @@ export function useFeatureFlags(): FeatureFlags {
   const ldClient = useLDClient();
   const ldFlags = useFlags();
   const [isReady, setIsReady] = useState(false);
+  const [flags, setFlags] = useState<FeatureFlags>(DEFAULT_FLAGS);
 
   useEffect(() => {
     if (!ldClient) {
@@ -97,12 +98,20 @@ export function useFeatureFlags(): FeatureFlags {
     }
   }, [ldClient]);
 
+  // Update flags state whenever ldFlags or isReady changes
+  useEffect(() => {
+    if (isReady) {
+      const newFlags = getFeatureFlags(ldFlags);
+      console.log('🔄 Updating flags state:', newFlags);
+      setFlags(newFlags);
+    }
+  }, [isReady, ldFlags]);
+
   // Debug logging (temporary)
   useEffect(() => {
     if (isReady && typeof window !== 'undefined') {
       console.log('🚀 LaunchDarkly Ready');
       console.log('📦 Raw LD Flags:', ldFlags);
-      console.log('📦 Raw LD Flags (stringified):', JSON.stringify(ldFlags, null, 2));
       console.log('🔑 Flag Keys:', LD_FLAG_KEYS);
       
       // Check each individual flag
@@ -114,16 +123,10 @@ export function useFeatureFlags(): FeatureFlags {
       
       const parsed = getFeatureFlags(ldFlags);
       console.log('✅ Parsed Feature Flags:', parsed);
-      console.log('✅ Parsed (stringified):', JSON.stringify(parsed, null, 2));
     }
   }, [isReady, ldFlags]);
 
-  // Return defaults until LD is ready, then return actual flags
-  if (!isReady) {
-    return DEFAULT_FLAGS;
-  }
-  
-  return getFeatureFlags(ldFlags);
+  return flags;
 }
 
 /**
