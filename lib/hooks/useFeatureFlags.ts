@@ -1,6 +1,7 @@
 'use client';
 
-import { useFlags } from 'launchdarkly-react-client-sdk';
+import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
+import { useEffect, useState } from 'react';
 
 /**
  * Feature flags for the starter-only launch
@@ -29,11 +30,12 @@ const DEFAULT_FLAGS: FeatureFlags = {
 
 /**
  * LaunchDarkly flag keys
+ * IMPORTANT: These must exactly match the "Key" field in LaunchDarkly dashboard
  */
 export const LD_FLAG_KEYS = {
   HIDE_PRO_PLANS: 'pricing-hide-pro-plans',
   HIDE_BUSINESS_PLANS: 'pricing-hide-business-plans',
-  HIDE_UPGRADE_LIMIT_CTA: 'billing-hide-upgrade-limit-cta',
+  HIDE_UPGRADE_LIMIT_CTA: 'billing-hide-limit-upgrade-button', // Matches actual LD key
   HIDE_TEAM_INVITES: 'orgs-hide-team-invites',
 } as const;
 
@@ -44,6 +46,8 @@ export const LD_FLAG_KEYS = {
  * - LaunchDarkly client ID is not configured
  * - Component is not inside LaunchDarklyProvider
  * - Flags are not yet loaded
+ * 
+ * Waits for LaunchDarkly client to be ready before returning flag values.
  * 
  * Usage:
  * ```tsx
@@ -59,10 +63,43 @@ export const LD_FLAG_KEYS = {
  * ```
  */
 export function useFeatureFlags(): FeatureFlags {
-  // Call useFlags from LaunchDarkly
-  // This is safe because our app is wrapped in LaunchDarklyProvider
+  const ldClient = useLDClient();
   const ldFlags = useFlags();
+  const [isReady, setIsReady] = useState(false);
 
+  useEffect(() => {
+    if (!ldClient) {
+      // No LD client available, use defaults
+      setIsReady(true);
+      return;
+    }
+
+    // Check if already ready
+    if (ldClient.waitForInitialization) {
+      ldClient.waitForInitialization().then(() => {
+        setIsReady(true);
+      }).catch(() => {
+        // Failed to initialize, use defaults
+        setIsReady(true);
+      });
+    } else {
+      // Client doesn't have waitForInitialization, assume ready
+      setIsReady(true);
+    }
+  }, [ldClient]);
+
+  // Debug logging (temporary)
+  useEffect(() => {
+    if (isReady && typeof window !== 'undefined') {
+      console.log('🚀 LaunchDarkly Ready');
+      console.log('📦 Raw LD Flags:', ldFlags);
+      console.log('🔑 Flag Keys:', LD_FLAG_KEYS);
+      const parsed = getFeatureFlags(ldFlags);
+      console.log('✅ Parsed Feature Flags:', parsed);
+    }
+  }, [isReady, ldFlags]);
+
+  // Return flags (will be defaults until LD is ready)
   return getFeatureFlags(ldFlags);
 }
 
