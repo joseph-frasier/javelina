@@ -38,7 +38,7 @@ export const GENERAL_FAQS: FAQItem[] = [
   },
   {
     question: 'Do you offer customer support?',
-    answer: 'Yes! We offer email support for all plans. Contact us at support@irongrove.com and we\'ll be happy to help with any questions or issues.',
+    answer: 'Yes! We offer email support for all plans. Contact us at javelina@irongrove.com and we\'ll be happy to help with any questions or issues.',
   },
 ];
 
