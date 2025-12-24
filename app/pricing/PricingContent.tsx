@@ -221,11 +221,11 @@ export default function PricingContent() {
         </section>
 
         {/* Enterprise Lifetime Plan - Full Width */}
-        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
+        {/* {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
           <div key={plan.id} className="mb-12 bg-white rounded-xl p-6 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
               {/* Left: Plan Info */}
-              <div className="flex-1">
+              {/* <div className="flex-1">
                 <div className="mb-4">
                   <h3 className="text-2xl font-bold text-orange-dark mb-2">
                     {plan.name}
@@ -256,10 +256,10 @@ export default function PricingContent() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               {/* Right: Button */}
-              <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
+              {/* <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
                 <Button
                   variant="outline"
                   size="lg"
@@ -271,7 +271,7 @@ export default function PricingContent() {
               </div>
             </div>
           </div>
-        ))}
+        ))} */}
 
         {/* Monthly Subscription Plans Section */}
         <section className="mb-12" aria-labelledby="monthly-plans-heading">
@@ -318,11 +318,11 @@ export default function PricingContent() {
         </section>
 
         {/* Enterprise Subscription Plan - Full Width Bottom Section */}
-        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (
+        {/* {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (
           <div key={plan.id} className="mb-8 bg-white rounded-xl p-6 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-start md:items-between gap-6">
               {/* Left: Plan Info */}
-              <div className="flex-1">
+              {/* <div className="flex-1">
                 <div className="mb-4">
                   <h3 className="text-2xl font-bold text-orange-dark mb-2">
                     {plan.name}
@@ -353,10 +353,10 @@ export default function PricingContent() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               {/* Right: Button */}
-              <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
+              {/* <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
                 <Button
                   variant="outline"
                   size="lg"
@@ -368,7 +368,7 @@ export default function PricingContent() {
               </div>
             </div>
           </div>
-        ))}
+        ))} */}
 
         {/* FAQ Section */}
         <section className="mt-8 max-w-3xl mx-auto" aria-labelledby="faq-heading">
