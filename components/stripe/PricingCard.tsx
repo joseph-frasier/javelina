@@ -10,6 +10,8 @@ interface PricingCardProps {
   onSelect: (planId: string) => void;
   disabled?: boolean;
   hidePrice?: boolean;
+  comingSoon?: boolean;
+  ctaLabel?: string;
 }
 
 export function PricingCard({
@@ -18,15 +20,19 @@ export function PricingCard({
   onSelect,
   disabled = false,
   hidePrice = false,
+  comingSoon = false,
+  ctaLabel,
 }: PricingCardProps) {
   return (
     <div
       className={clsx(
-        'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all hover:shadow-xl flex flex-col',
+        'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all flex flex-col',
         highlighted
           ? 'border-orange'
           : 'border-gray-light hover:border-orange/50',
-        disabled && 'opacity-60 pointer-events-none'
+        !comingSoon && 'hover:shadow-xl',
+        (disabled || comingSoon) && 'opacity-60',
+        comingSoon && 'cursor-not-allowed'
       )}
     >
       {highlighted && (
@@ -89,10 +95,14 @@ export function PricingCard({
         variant="outline"
         size="md"
         className="w-full mt-6"
-        onClick={() => onSelect(plan.id)}
-        disabled={disabled}
+        onClick={() => !comingSoon && onSelect(plan.id)}
+        disabled={disabled || comingSoon}
+        aria-disabled={comingSoon}
       >
-        {plan.price === 0 ? 'Get Started Free' : 'Select Plan'}
+        {comingSoon 
+          ? (ctaLabel || 'Coming soon')
+          : (ctaLabel || (plan.price === 0 ? 'Get Started Free' : 'Select Plan'))
+        }
       </Button>
     </div>
   );

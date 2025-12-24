@@ -29,6 +29,7 @@ const AVAILABLE_PLANS: Plan[] = [
     name: 'Starter',
     price: 238.80,
     billing_interval: null,
+    isPopular: true,
     features: [
       '1 Environment',
       '3 DNS Zones',
@@ -42,7 +43,7 @@ const AVAILABLE_PLANS: Plan[] = [
     name: 'Pro',
     price: 1198.80,
     billing_interval: null,
-    isPopular: true,
+    isPopular: false,
     features: [
       '3 Environments',
       '10 DNS Zones',
@@ -100,12 +101,8 @@ export function PlanComparisonModal({
   // Feature flags for starter-only launch
   const { hideProPlans, hideBusinessPlans } = useFeatureFlags();
   
-  // Filter available plans based on feature flags
-  const visiblePlans = AVAILABLE_PLANS.filter(plan => {
-    if (hideProPlans && plan.code === 'pro_lifetime') return false;
-    if (hideBusinessPlans && plan.code === 'premium_lifetime') return false;
-    return true;
-  });
+  // Always show all plans (no filtering), but mark some as "coming soon"
+  const visiblePlans = AVAILABLE_PLANS;
 
   const handleSelectPlan = (plan: Plan) => {
     if (plan.code === currentPlanCode) {
@@ -137,6 +134,9 @@ export function PlanComparisonModal({
           {visiblePlans.filter(plan => plan.code !== 'enterprise_lifetime').map((plan) => {
             const isCurrent = plan.code === currentPlanCode;
             const isUpgrade = plan.price > (visiblePlans.find(p => p.code === currentPlanCode)?.price || 0);
+            const isComingSoon = 
+              (hideProPlans && plan.code === 'pro_lifetime') || 
+              (hideBusinessPlans && plan.code === 'premium_lifetime');
 
             return (
               <div
@@ -147,7 +147,7 @@ export function PlanComparisonModal({
                     : plan.isPopular
                     ? 'border-orange/50 bg-white'
                     : 'border-gray-light bg-white hover:border-orange/30'
-                }`}
+                } ${isComingSoon ? 'opacity-60' : ''}`}
               >
                 {/* Popular Badge */}
                 {plan.isPopular && !isCurrent && (
@@ -209,6 +209,14 @@ export function PlanComparisonModal({
                     className="w-full mt-auto px-4 py-2 text-base rounded-md font-medium border-2 border-orange text-orange-dark cursor-not-allowed opacity-60"
                   >
                     Current Plan
+                  </button>
+                ) : isComingSoon ? (
+                  <button
+                    disabled
+                    className="w-full mt-auto px-4 py-2 text-base rounded-md font-medium border-2 border-gray-300 text-gray-500 cursor-not-allowed"
+                    aria-disabled="true"
+                  >
+                    Coming soon
                   </button>
                 ) : (
                   <Button

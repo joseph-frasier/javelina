@@ -97,7 +97,7 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
       code: dbPlan.code,
       name: dbPlan.name,
       description: dbPlan.metadata?.description || '',
-      popular: baseCode === 'pro_lifetime' || baseCode === 'pro', // Mark Pro plans as popular
+      popular: baseCode === 'starter_lifetime' || baseCode === 'starter', // Mark Starter plans as popular
       limits: {
         zones: hardcodedLimits.zones,
         dnsRecords: hardcodedLimits.records,
@@ -314,7 +314,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'starter_lifetime',
     name: 'Starter Lifetime',
     description: 'Perfect for small projects and testing',
-    popular: false,
+    popular: true,
     monthly: {
       amount: 9.95,
       priceId: 'price_starter_monthly',
@@ -348,7 +348,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'pro_lifetime',
     name: 'Pro Lifetime',
     description: 'For growing teams and production workloads',
-    popular: true,
+    popular: false,
     monthly: {
       amount: 49.95,
       priceId: 'price_pro_monthly',
