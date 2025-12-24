@@ -6,6 +6,7 @@ import { useToastStore } from '@/lib/toast-store';
 import { stripeApi } from '@/lib/api-client';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -37,6 +38,9 @@ export function ChangePlanModal({
   const [calculatingPrice, setCalculatingPrice] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const addToast = useToastStore((state) => state.addToast);
+  
+  // Feature flags for starter-only launch
+  const { hideProPlans, hideBusinessPlans } = useFeatureFlags();
   
   const modalRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -113,9 +117,16 @@ export function ChangePlanModal({
       const allPlans = await fetchPlans();
       
       // Show all plans except enterprise (contact sales)
-      const availablePlans = allPlans.filter(
-        plan => plan.code !== 'enterprise' && plan.code !== 'enterprise_lifetime'
-      );
+      const availablePlans = allPlans.filter(plan => {
+        // Filter out enterprise plans (contact sales only)
+        if (plan.code === 'enterprise' || plan.code === 'enterprise_lifetime') return false;
+        
+        // Apply feature flags to hide Pro and Business plans
+        if (hideProPlans && (plan.code === 'pro' || plan.code === 'pro_lifetime')) return false;
+        if (hideBusinessPlans && (plan.code === 'business' || plan.code === 'premium_lifetime')) return false;
+        
+        return true;
+      });
       
       setPlans(availablePlans);
     } catch (error) {
@@ -124,7 +135,7 @@ export function ChangePlanModal({
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [addToast, hideProPlans, hideBusinessPlans]);
 
   useEffect(() => {
     if (isOpen) {

@@ -1,20 +1,12 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
+import { LDProvider } from 'launchdarkly-react-client-sdk';
+import type { LDContext } from 'launchdarkly-js-client-sdk';
 import { useAuthStore } from '@/lib/auth-store';
 
 interface LaunchDarklyProviderProps {
   children: ReactNode;
-}
-
-// Type for LD context
-interface LDContext {
-  kind: string;
-  key: string;
-  email?: string;
-  name?: string;
-  anonymous?: boolean;
-  custom?: Record<string, unknown>;
 }
 
 /**
@@ -30,39 +22,14 @@ interface LDContext {
 export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
   const clientSideID = process.env.NEXT_PUBLIC_LAUNCHDARKLY_CLIENT_ID;
   const user = useAuthStore((state) => state.user);
-  const [LDComponents, setLDComponents] = useState<{
-    LDProvider: React.ComponentType<any>;
-    useLDClient: () => any;
-  } | null>(null);
 
-  // Dynamically import LaunchDarkly SDK to handle case where it's not installed
-  useEffect(() => {
-    if (clientSideID) {
-      import('launchdarkly-react-client-sdk')
-        .then((module) => {
-          setLDComponents({
-            LDProvider: module.LDProvider,
-            useLDClient: module.useLDClient,
-          });
-        })
-        .catch((err) => {
-          console.warn('LaunchDarkly SDK not installed. Run: npm install launchdarkly-react-client-sdk');
-        });
-    }
-  }, [clientSideID]);
-
-  // If no client ID is configured or SDK not loaded, render children without LD
-  if (!clientSideID || !LDComponents) {
-    if (!clientSideID) {
-      // Only warn once in development
-      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-        console.warn('LaunchDarkly client ID not configured. Feature flags will use defaults.');
-      }
+  // If no client ID is configured, render children without LD
+  if (!clientSideID) {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.warn('LaunchDarkly client ID not configured. Feature flags will use defaults.');
     }
     return <>{children}</>;
   }
-
-  const { LDProvider } = LDComponents;
 
   // Create the context for LaunchDarkly
   // We use the user ID as the key, with additional attributes for targeting
@@ -89,10 +56,7 @@ export function LaunchDarklyProvider({ children }: LaunchDarklyProviderProps) {
       clientSideID={clientSideID}
       context={ldContext}
       options={{
-        // Don't send analytics events in development
         sendEvents: process.env.NODE_ENV === 'production',
-        // Bootstrap with empty flags to prevent flashing
-        bootstrap: 'localStorage',
       }}
     >
       {children}

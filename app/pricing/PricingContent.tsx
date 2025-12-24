@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { PRICING_FAQS } from '@/lib/constants/faq';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
 export default function PricingContent() {
   const router = useRouter();
@@ -24,6 +25,9 @@ export default function PricingContent() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const addToast = useToastStore((state) => state.addToast);
   const user = useAuthStore((state) => state.user);
+  
+  // Feature flags for starter-only launch
+  const { hideProPlans, hideBusinessPlans } = useFeatureFlags();
   
   // Refs for GSAP animation
   const contentRef = useRef<HTMLDivElement>(null);
@@ -183,10 +187,16 @@ export default function PricingContent() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS_CONFIG.filter(plan => 
-              plan.code.includes('_lifetime') && 
-              plan.id !== 'enterprise_lifetime'
-            ).map((plan) => {
+            {PLANS_CONFIG.filter(plan => {
+              // Filter out enterprise lifetime
+              if (plan.id === 'enterprise_lifetime') return false;
+              // Only include lifetime plans
+              if (!plan.code.includes('_lifetime')) return false;
+              // Apply feature flags
+              if (hideProPlans && plan.code === 'pro_lifetime') return false;
+              if (hideBusinessPlans && plan.code === 'premium_lifetime') return false;
+              return true;
+            }).map((plan) => {
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
@@ -211,11 +221,11 @@ export default function PricingContent() {
         </section>
 
         {/* Enterprise Lifetime Plan - Full Width */}
-        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
+        {/* {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
           <div key={plan.id} className="mb-12 bg-white rounded-xl p-6 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
               {/* Left: Plan Info */}
-              <div className="flex-1">
+              {/* <div className="flex-1">
                 <div className="mb-4">
                   <h3 className="text-2xl font-bold text-orange-dark mb-2">
                     {plan.name}
@@ -246,10 +256,10 @@ export default function PricingContent() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               {/* Right: Button */}
-              <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
+              {/* <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
                 <Button
                   variant="outline"
                   size="lg"
@@ -261,7 +271,7 @@ export default function PricingContent() {
               </div>
             </div>
           </div>
-        ))}
+        ))} */}
 
         {/* Monthly Subscription Plans Section */}
         <section className="mb-12" aria-labelledby="monthly-plans-heading">
@@ -274,10 +284,16 @@ export default function PricingContent() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS_CONFIG.filter(plan => 
-              !plan.code.includes('_lifetime') && 
-              plan.id !== 'enterprise'
-            ).map((plan) => {
+            {PLANS_CONFIG.filter(plan => {
+              // Filter out enterprise
+              if (plan.id === 'enterprise') return false;
+              // Only include monthly subscription plans (not lifetime)
+              if (plan.code.includes('_lifetime')) return false;
+              // Apply feature flags
+              if (hideProPlans && plan.code === 'pro') return false;
+              if (hideBusinessPlans && plan.code === 'business') return false;
+              return true;
+            }).map((plan) => {
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
@@ -302,11 +318,11 @@ export default function PricingContent() {
         </section>
 
         {/* Enterprise Subscription Plan - Full Width Bottom Section */}
-        {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (
+        {/* {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (
           <div key={plan.id} className="mb-8 bg-white rounded-xl p-6 border-2 border-gray-light shadow-lg">
             <div className="flex flex-col md:flex-row md:items-start md:items-between gap-6">
               {/* Left: Plan Info */}
-              <div className="flex-1">
+              {/* <div className="flex-1">
                 <div className="mb-4">
                   <h3 className="text-2xl font-bold text-orange-dark mb-2">
                     {plan.name}
@@ -337,10 +353,10 @@ export default function PricingContent() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               {/* Right: Button */}
-              <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
+              {/* <div className="flex-shrink-0 md:w-56 flex flex-col items-center md:items-end justify-center">
                 <Button
                   variant="outline"
                   size="lg"
@@ -352,7 +368,7 @@ export default function PricingContent() {
               </div>
             </div>
           </div>
-        ))}
+        ))} */}
 
         {/* FAQ Section */}
         <section className="mt-8 max-w-3xl mx-auto" aria-labelledby="faq-heading">

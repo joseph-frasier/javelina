@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
 interface Plan {
   code: string;
@@ -95,6 +96,16 @@ export function PlanComparisonModal({
   onSelectPlan,
 }: PlanComparisonModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  
+  // Feature flags for starter-only launch
+  const { hideProPlans, hideBusinessPlans } = useFeatureFlags();
+  
+  // Filter available plans based on feature flags
+  const visiblePlans = AVAILABLE_PLANS.filter(plan => {
+    if (hideProPlans && plan.code === 'pro_lifetime') return false;
+    if (hideBusinessPlans && plan.code === 'premium_lifetime') return false;
+    return true;
+  });
 
   const handleSelectPlan = (plan: Plan) => {
     if (plan.code === currentPlanCode) {
@@ -123,9 +134,9 @@ export function PlanComparisonModal({
 
         {/* Top 3 Plans */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {AVAILABLE_PLANS.filter(plan => plan.code !== 'enterprise_lifetime').map((plan) => {
+          {visiblePlans.filter(plan => plan.code !== 'enterprise_lifetime').map((plan) => {
             const isCurrent = plan.code === currentPlanCode;
-            const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
+            const isUpgrade = plan.price > (visiblePlans.find(p => p.code === currentPlanCode)?.price || 0);
 
             return (
               <div
@@ -220,11 +231,11 @@ export function PlanComparisonModal({
 
         {/* Enterprise Plan - Separate at Bottom */}
         {(() => {
-          const plan = AVAILABLE_PLANS.find(p => p.code === 'enterprise_lifetime');
+          const plan = visiblePlans.find(p => p.code === 'enterprise_lifetime');
           if (!plan) return null;
           
           const isCurrent = plan.code === currentPlanCode;
-          const isUpgrade = plan.price > (AVAILABLE_PLANS.find(p => p.code === currentPlanCode)?.price || 0);
+          const isUpgrade = plan.price > (visiblePlans.find(p => p.code === currentPlanCode)?.price || 0);
 
           return (
             <div className="border-2 border-gray-light dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">

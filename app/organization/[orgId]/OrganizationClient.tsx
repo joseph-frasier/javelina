@@ -27,6 +27,7 @@ import {
   useToggleTagFavorite 
 } from '@/lib/hooks/useTags';
 import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
 interface Zone {
   id: string;
@@ -63,6 +64,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
+  
+  // Feature flags for starter-only launch
+  const { hideTeamInvites } = useFeatureFlags();
   
   // Sync hierarchy store with current organization
   useEffect(() => {
@@ -391,11 +395,13 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               onToggleFavorite={handleToggleFavorite}
             />
 
-            {/* Team Members */}
-            <InviteUsersBox
-              organizationId={org.id}
-              organizationName={org.name}
-            />
+            {/* Team Members - Hidden when hideTeamInvites flag is true */}
+            {!hideTeamInvites && (
+              <InviteUsersBox
+                organizationId={org.id}
+                organizationName={org.name}
+              />
+            )}
           </div>
 
           {/* Right Column - Tags & Zones */}

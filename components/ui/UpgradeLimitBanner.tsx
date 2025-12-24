@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
 interface UpgradeLimitBannerProps {
   /** Resource type being limited */
@@ -63,6 +64,13 @@ export function UpgradeLimitBanner({
 }: UpgradeLimitBannerProps) {
   const router = useRouter();
   const labels = RESOURCE_LABELS[resourceType] || { singular: resourceType, plural: resourceType };
+  
+  // Feature flags for starter-only launch
+  const { hideUpgradeLimitCta } = useFeatureFlags();
+  
+  // Determine if we should hide the upgrade CTA for this resource type
+  // Only hide for zones and records when the flag is true; keep CTA for members
+  const shouldHideUpgradeCta = hideUpgradeLimitCta && (resourceType === 'zones' || resourceType === 'records');
   
   // Navigate to billing page with modal open, or pricing page if no org
   const handleUpgradeClick = () => {
@@ -130,12 +138,14 @@ export function UpgradeLimitBanner({
           )}
         </svg>
         <span className="flex-1">{message}</span>
-        <button 
-          onClick={handleUpgradeClick}
-          className="font-medium underline hover:no-underline"
-        >
-          Upgrade
-        </button>
+        {!shouldHideUpgradeCta && (
+          <button 
+            onClick={handleUpgradeClick}
+            className="font-medium underline hover:no-underline"
+          >
+            Upgrade
+          </button>
+        )}
       </div>
     );
   }
@@ -188,11 +198,13 @@ export function UpgradeLimitBanner({
             </div>
           </div>
           
-          <div className="mt-4">
-            <Button variant="primary" size="sm" onClick={handleUpgradeClick}>
-              Upgrade Plan
-            </Button>
-          </div>
+          {!shouldHideUpgradeCta && (
+            <div className="mt-4">
+              <Button variant="primary" size="sm" onClick={handleUpgradeClick}>
+                Upgrade Plan
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
