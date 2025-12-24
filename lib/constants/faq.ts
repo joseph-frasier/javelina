@@ -10,16 +10,12 @@ export interface FAQItem {
 
 export const PRICING_FAQS: FAQItem[] = [
   {
-    question: 'Can I change my plan later?',
-    answer: 'Yes! You can upgrade or downgrade your plan at any time. Changes will be prorated and reflected in your next billing cycle.',
-  },
-  {
     question: 'What payment methods do you accept?',
     answer: 'We accept all major credit cards (Visa, Mastercard, American Express) and support automatic billing for your convenience.',
   },
   {
     question: 'Can I migrate my existing DNS records?',
-    answer: 'Yes! You can easily import your existing DNS records from other providers. We support bulk imports via CSV and BIND zone file formats, making the migration process quick and seamless.',
+    answer: 'Yes. If you\'d like help migrating your existing DNS records, get in touch with the Irongrove team at javelina@irongrove.com. We\'ll review your setup and see how we can assist with importing your records.',
   },
 ];
 
