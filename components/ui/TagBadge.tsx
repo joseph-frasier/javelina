@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 interface TagBadgeProps {
   name: string;
   color: string;
@@ -26,19 +28,18 @@ export function TagBadge({
     md: 'text-sm px-3 py-1',
   };
 
-  // Calculate if we need dark or light text based on background color
-  const getContrastColor = (hexColor: string): string => {
+  // Memoize contrast color calculation - only recalculate when color changes
+  const textColor = useMemo(() => {
+    // Calculate if we need dark or light text based on background color
     // Remove # if present
-    const hex = hexColor.replace('#', '');
+    const hex = color.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
     // Calculate luminance
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance > 0.5 ? '#000000' : '#FFFFFF';
-  };
-
-  const textColor = getContrastColor(color);
+  }, [color]);
 
   return (
     <span

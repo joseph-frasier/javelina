@@ -25,7 +25,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
   const supportRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
-  const supportEmail = 'support@irongrove.com';
+  const supportEmail = 'javelina@irongrove.com';
 
   const handleCopyEmail = async () => {
     try {

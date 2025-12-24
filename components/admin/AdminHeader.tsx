@@ -24,7 +24,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   const notificationRef = useRef<HTMLDivElement>(null);
   const supportRef = useRef<HTMLDivElement>(null);
 
-  const supportEmail = 'support@irongrove.com';
+  const supportEmail = 'javelina@irongrove.com';
 
   const handleCopyEmail = async () => {
     try {

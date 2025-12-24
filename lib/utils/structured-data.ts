@@ -104,7 +104,7 @@ export function generateOrganizationSchema() {
     description: 'DNS Management Platform',
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'support@irongrove.com',
+      email: 'javelina@irongrove.com',
       contactType: 'Customer Support',
     },
     sameAs: [

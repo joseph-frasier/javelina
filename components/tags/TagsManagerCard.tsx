@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useId } from 'react';
+import { useState, useRef, useCallback, useId, useMemo, memo } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { TagBadge } from '@/components/ui/TagBadge';
@@ -37,8 +37,8 @@ interface TagsManagerCardProps {
   onReorderTags?: (reorderedTags: Tag[]) => void;
 }
 
-// Sortable Tag Item Component
-function SortableTagItem({
+// Sortable Tag Item Component - Memoized to prevent unnecessary re-renders during drag
+const SortableTagItem = memo(function SortableTagItem({
   tag,
   zoneCount,
   isActive,
@@ -62,12 +62,13 @@ function SortableTagItem({
     isDragging,
   } = useSortable({ id: tag.id });
 
-  const style = {
+  // Memoize style object to prevent re-renders
+  const style = useMemo(() => ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : 'auto',
-  };
+  }), [transform, transition, isDragging]);
 
   return (
     <div
@@ -164,7 +165,17 @@ function SortableTagItem({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison: only re-render if these specific props change
+  return (
+    prevProps.tag.id === nextProps.tag.id &&
+    prevProps.tag.name === nextProps.tag.name &&
+    prevProps.tag.color === nextProps.tag.color &&
+    prevProps.tag.is_favorite === nextProps.tag.is_favorite &&
+    prevProps.zoneCount === nextProps.zoneCount &&
+    prevProps.isActive === nextProps.isActive
+  );
+});
 
 export function TagsManagerCard({
   tags,
@@ -179,13 +190,17 @@ export function TagsManagerCard({
 }: TagsManagerCardProps) {
   const hasActiveFilters = activeTagIds.length > 0;
   const [isScrollbarVisible, setIsScrollbarVisible] = useState(false);
+  const [isDraggingActive, setIsDraggingActive] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Stable ID for DndContext to prevent hydration mismatch
   const dndContextId = useId();
 
   // Show scrollbar on scroll, hide after 1.5 seconds of inactivity
+  // Don't update scrollbar state while actively dragging to prevent stuttering
   const handleScroll = useCallback(() => {
+    if (isDraggingActive) return; // Prevent state changes during drag
+    
     setIsScrollbarVisible(true);
     
     if (scrollTimeoutRef.current) {
@@ -195,7 +210,7 @@ export function TagsManagerCard({
     scrollTimeoutRef.current = setTimeout(() => {
       setIsScrollbarVisible(false);
     }, 1500);
-  }, []);
+  }, [isDraggingActive]);
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -209,8 +224,15 @@ export function TagsManagerCard({
     })
   );
 
-  // Handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
+  // Handle drag start - disable scrollbar updates during drag
+  const handleDragStart = useCallback(() => {
+    setIsDraggingActive(true);
+  }, []);
+
+  // Handle drag end - re-enable scrollbar updates and perform reorder
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    setIsDraggingActive(false);
+    
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -222,7 +244,7 @@ export function TagsManagerCard({
         onReorderTags(reorderedTags);
       }
     }
-  };
+  }, [tags, onReorderTags]);
 
   return (
     <Card
@@ -287,6 +309,7 @@ export function TagsManagerCard({
             id={dndContextId}
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
             <SortableContext
@@ -298,8 +321,11 @@ export function TagsManagerCard({
                   isScrollbarVisible ? 'scrollbar-visible' : ''
                 }`}
                 onScroll={handleScroll}
-                onMouseEnter={() => setIsScrollbarVisible(true)}
+                onMouseEnter={() => {
+                  if (!isDraggingActive) setIsScrollbarVisible(true);
+                }}
                 onMouseLeave={() => {
+                  if (isDraggingActive) return; // Don't hide scrollbar during drag
                   if (scrollTimeoutRef.current) {
                     clearTimeout(scrollTimeoutRef.current);
                   }
