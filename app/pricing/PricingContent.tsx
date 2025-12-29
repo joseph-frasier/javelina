@@ -190,13 +190,15 @@ export default function PricingContent() {
             {PLANS_CONFIG.filter(plan => {
               // Filter out enterprise lifetime
               if (plan.id === 'enterprise_lifetime') return false;
-              // Only include lifetime plans
+              // Only include lifetime plans (always show all 3: starter, pro, premium)
               if (!plan.code.includes('_lifetime')) return false;
-              // Apply feature flags
-              if (hideProPlans && plan.code === 'pro_lifetime') return false;
-              if (hideBusinessPlans && plan.code === 'premium_lifetime') return false;
               return true;
             }).map((plan) => {
+              // Determine if this plan should be shown as "coming soon"
+              const isComingSoon = 
+                (hideProPlans && plan.code === 'pro_lifetime') || 
+                (hideBusinessPlans && plan.code === 'premium_lifetime');
+              
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
@@ -214,6 +216,7 @@ export default function PricingContent() {
                   highlighted={plan.popular}
                   onSelect={handleSelectPlan}
                   hidePrice={false}
+                  comingSoon={isComingSoon}
                 />
               );
             })}
@@ -287,13 +290,15 @@ export default function PricingContent() {
             {PLANS_CONFIG.filter(plan => {
               // Filter out enterprise
               if (plan.id === 'enterprise') return false;
-              // Only include monthly subscription plans (not lifetime)
+              // Only include monthly subscription plans (not lifetime) - always show all 3: starter, pro, business
               if (plan.code.includes('_lifetime')) return false;
-              // Apply feature flags
-              if (hideProPlans && plan.code === 'pro') return false;
-              if (hideBusinessPlans && plan.code === 'business') return false;
               return true;
             }).map((plan) => {
+              // Determine if this plan should be shown as "coming soon"
+              const isComingSoon = 
+                (hideProPlans && plan.code === 'pro') || 
+                (hideBusinessPlans && plan.code === 'business');
+              
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
@@ -311,6 +316,7 @@ export default function PricingContent() {
                   highlighted={plan.popular}
                   onSelect={handleSelectPlan}
                   hidePrice={false}
+                  comingSoon={isComingSoon}
                 />
               );
             })}

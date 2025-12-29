@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -121,23 +121,23 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     createTagMutation.mutate(newTag);
   };
 
-  const handleToggleFavorite = (tagId: string) => {
+  const handleToggleFavorite = useCallback((tagId: string) => {
     const tag = tags.find(t => t.id === tagId);
     if (tag) {
       toggleFavoriteMutation.mutate({ tagId, isFavorite: tag.is_favorite });
     }
-  };
+  }, [tags, toggleFavoriteMutation]);
 
   // Reorder tags handler - updates tag order after drag and drop
-  const handleReorderTags = (reorderedTags: Tag[]) => {
+  const handleReorderTags = useCallback((reorderedTags: Tag[]) => {
     reorderTagsMutation.mutate(reorderedTags);
-  };
+  }, [reorderTagsMutation]);
 
   // Edit tag handler - opens modal in edit mode
-  const handleEditTag = (tag: Tag) => {
+  const handleEditTag = useCallback((tag: Tag) => {
     setTagToEdit(tag);
     setIsCreateTagModalOpen(true);
-  };
+  }, []);
 
   // Save edited tag
   const handleSaveEditedTag = (updatedTag: Tag) => {
@@ -165,18 +165,18 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   };
 
   // Toggle tag in/out of active filter (multi-select)
-  const handleTagClick = (tagId: string) => {
-    setActiveTagIds(prev => 
-      prev.includes(tagId) 
+  const handleTagClick = useCallback((tagId: string) => {
+    setActiveTagIds(prev =>
+      prev.includes(tagId)
         ? prev.filter(id => id !== tagId)  // Remove if already selected
         : [...prev, tagId]                  // Add if not selected
     );
-  };
+  }, []);
 
   // Clear all tag filters
-  const handleClearTagFilters = () => {
+  const handleClearTagFilters = useCallback(() => {
     setActiveTagIds([]);
-  };
+  }, []);
 
   const handleOpenAssignTags = (zoneId: string, zoneName: string) => {
     // Clear any pending timeout from a previous modal close to prevent race condition
