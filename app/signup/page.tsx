@@ -213,8 +213,8 @@ export default function SignupPage() {
 
                 {/* Global Error Banner - Email Already Exists */}
                 {globalError && (
-                  <div className="bg-red-50 dark:bg-red-950 border-2 border-red-500 rounded-md p-4">
-                    <p className="text-sm text-red-800 dark:text-red-200 font-semibold">
+                  <div className="bg-red-900/20 border-2 border-red-500 rounded-md p-4">
+                    <p className="text-sm text-red-100 font-semibold">
                       {globalError}
                     </p>
                   </div>
@@ -692,8 +692,8 @@ export default function SignupPage() {
 
                   {/* Global Error Banner - Email Already Exists */}
                   {globalError && (
-                    <div className="bg-red-50 dark:bg-red-950 border-2 border-red-500 rounded-md p-4">
-                      <p className="text-sm text-red-800 dark:text-red-200 font-semibold">
+                    <div className="bg-red-900/20 border-2 border-red-500 rounded-md p-4">
+                      <p className="text-sm text-red-100 font-semibold">
                         {globalError}
                       </p>
                     </div>
