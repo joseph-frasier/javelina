@@ -1,4 +1,5 @@
 import type { DNSRecordType, DNSRecordFormData, DNSValidationResult, DNSRecord } from '@/types/dns';
+import * as ipaddr from 'ipaddr.js';
 
 /**
  * Validates IPv4 address format
@@ -15,12 +16,34 @@ export function isValidIPv4(ip: string): boolean {
 }
 
 /**
- * Validates IPv6 address format
+ * Validates IPv6 address format using ipaddr.js parser
+ * 
+ * Test vectors (must match backend behavior):
+ * Valid:
+ *   - 2001:0db8:85a3:0000:0000:8a2e:0370:7334 (full form)
+ *   - 2001:db8::1 (compressed)
+ *   - ::1 (loopback)
+ *   - :: (all zeros)
+ *   - 2001:db8::192.0.2.1 (IPv4-embedded)
+ *   - ::ffff:192.0.2.1 (IPv4-mapped)
+ *   - 2001:DB8::1 (uppercase hex)
+ * 
+ * Invalid:
+ *   - 192.0.2.1 (IPv4 only)
+ *   - 2001:db8:::1 (multiple ::)
+ *   - 2001:db8::zzzz (invalid hextet)
+ *   - 2001:db8::1::1 (multiple :: groups)
+ *   - 2001:db8:1:2:3:4:5:6:7 (>8 groups)
+ *   - example.com (hostname)
  */
 export function isValidIPv6(ip: string): boolean {
-  // Simplified IPv6 validation - handles most common formats
-  const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|::)$/;
-  return ipv6Regex.test(ip);
+  try {
+    const trimmed = ip.trim();
+    const addr = ipaddr.parse(trimmed);
+    return addr.kind() === 'ipv6';
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -374,7 +397,7 @@ export function validateDNSRecord(
       
     case 'AAAA':
       if (!isValidIPv6(formData.value)) {
-        errors.value = 'Invalid IPv6 address format';
+        errors.value = 'Enter a valid IPv6 address';
       }
       break;
       

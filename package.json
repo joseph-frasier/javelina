@@ -29,6 +29,7 @@
     "clsx": "^2.1.1",
     "exceljs": "^4.4.0",
     "gsap": "^3.13.0",
+    "ipaddr.js": "^2.3.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
     "launchdarkly-react-client-sdk": "^3.9.0",
