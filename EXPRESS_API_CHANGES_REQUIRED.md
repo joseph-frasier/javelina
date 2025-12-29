@@ -945,6 +945,267 @@ After implementing these changes, test the following scenarios:
 - [ ] Reject name exceeding 253 characters → Should fail
 - [ ] Reject name with any label exceeding 63 characters → Should fail
 
+### 11. Audit Logs API Endpoints (December 2025)
+
+The application was making direct Supabase PostgREST calls for audit logs, which were failing with 400 errors due to missing foreign key relationships. All audit log queries must now go through the Express API.
+
+#### A. Zone Audit Logs Endpoint
+
+**Create new endpoint:**
+```
+GET /api/zones/:id/audit-logs
+```
+
+**Purpose**: Fetch audit logs for a specific zone with user profile information enriched server-side.
+
+**Implementation:**
+
+```javascript
+const express = require('express');
+const router = express.Router();
+
+/**
+ * Get audit logs for a zone
+ * Performs server-side join with profiles table
+ */
+router.get('/zones/:id/audit-logs', authenticateToken, async (req, res) => {
+  try {
+    const { id: zoneId } = req.params;
+    
+    // Verify user has access to this zone
+    const { data: zone, error: zoneError } = await supabase
+      .from('zones')
+      .select('id, organization_id')
+      .eq('id', zoneId)
+      .single();
+    
+    if (zoneError || !zone) {
+      return res.status(404).json({ error: 'Zone not found' });
+    }
+    
+    // Check user has access to the organization
+    const hasAccess = await checkOrganizationAccess(req.user.id, zone.organization_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Fetch audit logs
+    const { data: auditLogs, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('table_name', 'zones')
+      .eq('record_id', zoneId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    
+    // Fetch user profiles for audit logs (do join manually)
+    const userIds = [...new Set(auditLogs.map(log => log.user_id).filter(Boolean))];
+    
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, name, email')
+      .in('id', userIds);
+    
+    // Create a map for quick lookup
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    
+    // Combine data
+    const enrichedLogs = auditLogs.map(log => ({
+      id: log.id,
+      table_name: log.table_name,
+      record_id: log.record_id,
+      action: log.action,
+      old_data: log.old_data,
+      new_data: log.new_data,
+      user_id: log.user_id,
+      user_name: profileMap.get(log.user_id)?.name || 'Unknown User',
+      user_email: profileMap.get(log.user_id)?.email || 'unknown@example.com',
+      created_at: log.created_at,
+      ip_address: log.metadata?.ip_address,
+      user_agent: log.metadata?.user_agent,
+    }));
+    
+    return res.json({ data: enrichedLogs });
+  } catch (error) {
+    console.error('Error fetching zone audit logs:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+**Response format:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "table_name": "zones",
+      "record_id": "zone-uuid",
+      "action": "UPDATE",
+      "old_data": {...},
+      "new_data": {...},
+      "user_id": "user-uuid",
+      "user_name": "John Doe",
+      "user_email": "john@example.com",
+      "created_at": "2024-01-01T00:00:00Z",
+      "ip_address": "192.0.2.1",
+      "user_agent": "Mozilla/5.0..."
+    }
+  ]
+}
+```
+
+#### B. Organization Audit Logs Endpoint
+
+**Create new endpoint:**
+```
+GET /api/organizations/:id/audit-logs?limit=10
+```
+
+**Purpose**: Fetch audit logs for a specific organization with user profile information.
+
+**Implementation:**
+
+```javascript
+/**
+ * Get audit logs for an organization
+ * Performs server-side join with profiles table
+ */
+router.get('/organizations/:id/audit-logs', authenticateToken, async (req, res) => {
+  try {
+    const { id: organizationId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Check user has access to the organization
+    const hasAccess = await checkOrganizationAccess(req.user.id, organizationId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Fetch audit logs
+    const { data: auditLogs, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('table_name', 'organizations')
+      .eq('record_id', organizationId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    
+    // Fetch user profiles (same manual join as zone audit logs)
+    const userIds = [...new Set(auditLogs.map(log => log.user_id).filter(Boolean))];
+    
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, name, email')
+      .in('id', userIds);
+    
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    
+    // Combine data
+    const enrichedLogs = auditLogs.map(log => ({
+      ...log,
+      profiles: profileMap.get(log.user_id) || { name: 'Unknown User', email: 'unknown@example.com' }
+    }));
+    
+    return res.json({ data: enrichedLogs });
+  } catch (error) {
+    console.error('Error fetching organization audit logs:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+#### C. Organization Activity Logs Endpoint
+
+**Create new endpoint:**
+```
+GET /api/organizations/:id/activity?limit=10
+```
+
+**Purpose**: Get comprehensive activity logs for an organization (calls RPC function if available).
+
+**Implementation:**
+
+```javascript
+/**
+ * Get activity logs for an organization
+ * Calls the get_organization_activity RPC function
+ */
+router.get('/organizations/:id/activity', authenticateToken, async (req, res) => {
+  try {
+    const { id: organizationId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Check user has access to the organization
+    const hasAccess = await checkOrganizationAccess(req.user.id, organizationId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Call RPC function
+    const { data, error } = await supabase.rpc('get_organization_activity', {
+      org_id: organizationId,
+      log_limit: limit
+    });
+    
+    if (error) {
+      // If RPC doesn't exist, fall back to organization audit logs
+      console.warn('get_organization_activity RPC not found, falling back to audit logs');
+      // Re-route to audit logs endpoint internally or return empty
+      return res.json({ data: [] });
+    }
+    
+    return res.json({ data: data || [] });
+  } catch (error) {
+    console.error('Error fetching organization activity logs:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+#### D. Update Existing Zones Endpoint
+
+**Ensure `GET /api/zones/:id` returns all required fields:**
+
+The zones endpoint must return the following fields for the frontend to work properly:
+- `verification_status`
+- `last_verified_at`
+- `metadata`
+- `records_count`
+
+```javascript
+// Ensure these fields are selected in the query:
+const { data: zone, error } = await supabase
+  .from('zones')
+  .select('*, verification_status, last_verified_at, metadata, records_count')
+  .eq('id', zoneId)
+  .is('deleted_at', null)
+  .single();
+```
+
+#### Why This Is Important
+
+1. **Security**: Direct Supabase calls expose database structure to client
+2. **Foreign Key Issue**: The `audit_logs.user_id` → `profiles.id` foreign key doesn't exist, causing PostgREST joins to fail
+3. **Consistency**: All data access should go through Express API for centralized auth/validation
+4. **Performance**: Server-side joins are more efficient than client-side joins
+5. **Reliability**: Eliminates 400 errors from failed direct Supabase queries
+
+#### Frontend Changes Completed
+
+✅ The following frontend files have been updated to use Express API:
+- `lib/api/dns.ts` - Zone summary and audit logs now use Express API
+- `lib/api/audit.ts` - Organization audit/activity logs now use Express API
+- `lib/api-client.ts` - Added `auditLogs()` and `activityLogs()` methods
+
 ## Migration Notes
 
 1. **Existing Root NS Records**: Any existing root NS records in the database should remain but become read-only for users. The DNS service backend should manage these.

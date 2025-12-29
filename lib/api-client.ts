@@ -322,6 +322,20 @@ export const organizationsApi = {
   removeMember: (id: string, userId: string) => {
     return apiClient.delete(`/organizations/${id}/members/${userId}`);
   },
+
+  /**
+   * Get audit logs for an organization
+   */
+  auditLogs: (id: string, limit: number = 10) => {
+    return apiClient.get(`/organizations/${id}/audit-logs?limit=${limit}`);
+  },
+
+  /**
+   * Get activity logs for an organization
+   */
+  activityLogs: (id: string, limit: number = 10) => {
+    return apiClient.get(`/organizations/${id}/activity?limit=${limit}`);
+  },
 };
 
 // Zones API
@@ -366,6 +380,13 @@ export const zonesApi = {
    */
   delete: (id: string) => {
     return apiClient.delete(`/zones/${id}`);
+  },
+
+  /**
+   * Get audit logs for a zone
+   */
+  auditLogs: (id: string) => {
+    return apiClient.get(`/zones/${id}/audit-logs`);
   },
 };
 

@@ -1,3 +1,4 @@
+import { zonesApi, apiClient } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 import {
   calculateRecordTypeCounts,
@@ -23,15 +24,8 @@ export interface ZoneSummary {
  * Uses real DNS records from zone_records table
  */
 export async function getZoneSummary(zoneId: string, zoneName: string, recordsCount: number = 50): Promise<ZoneSummary> {
-  const supabase = createClient();
-
-  // Fetch zone data from Supabase
-  const { data: zone } = await supabase
-    .from('zones')
-    .select('verification_status, last_verified_at, metadata, records_count')
-    .eq('id', zoneId)
-    .is('deleted_at', null)
-    .single();
+  // Fetch zone data from Express API
+  const zone = await zonesApi.get(zoneId);
 
   // Health status and last deployed are now zone-level (simplified after removing environments)
   const healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown' = 'unknown';
@@ -57,44 +51,17 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
 
 /**
  * Get audit logs for a zone
+ * Routes through Express API for proper authorization
  */
 export async function getZoneAuditLogs(zoneId: string, zoneName: string): Promise<AuditLog[]> {
-  const supabase = createClient();
-
-  // Fetch real audit logs from Supabase
-  const { data: auditLogs } = await supabase
-    .from('audit_logs')
-    .select(`
-      *,
-      profiles:user_id (
-        name,
-        email
-      )
-    `)
-    .eq('table_name', 'zones')
-    .eq('record_id', zoneId)
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  if (!auditLogs || auditLogs.length === 0) {
+  try {
+    // Fetch audit logs through Express API
+    const result = await apiClient.get(`/zones/${zoneId}/audit-logs`);
+    return (result.data || result || []) as AuditLog[];
+  } catch (error) {
+    console.error('Error fetching zone audit logs:', error);
     return [];
   }
-
-  // Transform real audit logs
-  return auditLogs.map(log => ({
-    id: log.id,
-    table_name: log.table_name,
-    record_id: log.record_id,
-    action: log.action as 'INSERT' | 'UPDATE' | 'DELETE',
-    old_data: log.old_data,
-    new_data: log.new_data,
-    user_id: log.user_id,
-    user_name: (log.profiles as any)?.name || 'Unknown User',
-    user_email: (log.profiles as any)?.email || 'unknown@example.com',
-    created_at: log.created_at,
-    ip_address: log.metadata?.ip_address,
-    user_agent: log.metadata?.user_agent,
-  }));
 }
 
 /**
@@ -108,15 +75,8 @@ export { verifyZoneNameservers } from '@/lib/actions/zones';
  * Export zone configuration as JSON
  */
 export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<void> {
-  const supabase = createClient();
-
-  // Fetch zone data
-  const { data: zone } = await supabase
-    .from('zones')
-    .select('*')
-    .eq('id', zoneId)
-    .is('deleted_at', null)
-    .single();
+  // Fetch zone data from Express API
+  const zone = await zonesApi.get(zoneId);
 
   // Fetch DNS records through Express API for consistency
   const dnsRecords = await getZoneDNSRecords(zoneId, zoneName);
