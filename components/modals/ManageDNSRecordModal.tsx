@@ -358,15 +358,20 @@ export function ManageDNSRecordModal({
           {/* TTL */}
           <div>
             {!customTTL ? (
-              <Dropdown
-                label="TTL (Time to Live)"
-                options={[
-                  ...TTL_PRESETS.map(p => ({ value: p.value.toString(), label: `${p.value}s (${p.label})` })),
-                  { value: 'custom', label: 'Custom...' },
-                ]}
-                value={formData.ttl.toString()}
-                onChange={handleTTLChange}
-              />
+              <div>
+                <Dropdown
+                  label="TTL (Time to Live)"
+                  options={[
+                    ...TTL_PRESETS.map(p => ({ value: p.value.toString(), label: `${p.value}s (${p.label})` })),
+                    { value: 'custom', label: 'Custom...' },
+                  ]}
+                  value={formData.ttl.toString()}
+                  onChange={handleTTLChange}
+                />
+                {errors.ttl && (
+                  <p className="mt-1.5 text-sm font-regular text-red-500">{errors.ttl}</p>
+                )}
+              </div>
             ) : (
               <div>
                 <Input
