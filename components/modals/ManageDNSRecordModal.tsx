@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { clsx } from 'clsx';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
-import { validateDNSRecord, getFQDN, getReverseZoneType } from '@/lib/utils/dns-validation';
+import { validateDNSRecord, getFQDN, getReverseZoneType, isValidIPv6 } from '@/lib/utils/dns-validation';
 
 interface ManageDNSRecordModalProps {
   isOpen: boolean;
@@ -57,6 +57,8 @@ export function ManageDNSRecordModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const [customTTL, setCustomTTL] = useState(false);
+  const [realtimeErrors, setRealtimeErrors] = useState<Record<string, string>>({});
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize form data when modal opens or record changes
   useEffect(() => {
@@ -103,6 +105,63 @@ export function ManageDNSRecordModal({
     setErrors(validation.errors);
     setWarnings(validation.warnings);
   }, [formData, existingRecords, record?.id, isOpen, zoneName]);
+
+  // Debounced real-time validation for AAAA records
+  const debouncedValidateIPv6 = useCallback((value: string) => {
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Set new timer for debounced validation
+    debounceTimerRef.current = setTimeout(() => {
+      if (formData.type === 'AAAA' && value.trim()) {
+        if (!isValidIPv6(value)) {
+          setRealtimeErrors(prev => ({ ...prev, value: 'Enter a valid IPv6 address' }));
+        } else {
+          setRealtimeErrors(prev => {
+            const { value: _, ...rest } = prev;
+            return rest;
+          });
+        }
+      } else {
+        setRealtimeErrors(prev => {
+          const { value: _, ...rest } = prev;
+          return rest;
+        });
+      }
+    }, 300);
+  }, [formData.type]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Handle value change with debounced validation
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setFormData(prev => ({ ...prev, value: newValue }));
+    debouncedValidateIPv6(newValue);
+  };
+
+  // Handle value blur for immediate validation
+  const handleValueBlur = () => {
+    if (formData.type === 'AAAA' && formData.value.trim()) {
+      if (!isValidIPv6(formData.value)) {
+        setRealtimeErrors(prev => ({ ...prev, value: 'Enter a valid IPv6 address' }));
+      } else {
+        setRealtimeErrors(prev => {
+          const { value: _, ...rest } = prev;
+          return rest;
+        });
+      }
+    }
+  };
 
   const handleTypeChange = (type: DNSRecordType) => {
     const typeInfo = RECORD_TYPE_INFO[type];
@@ -417,8 +476,9 @@ export function ManageDNSRecordModal({
               }
               type="text"
               value={formData.value}
-              onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
-              error={errors.value}
+              onChange={handleValueChange}
+              onBlur={handleValueBlur}
+              error={realtimeErrors.value || errors.value}
               placeholder={typeInfo.placeholder}
               helperText={typeInfo.hint}
               suffixHint={

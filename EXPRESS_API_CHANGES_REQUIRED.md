@@ -737,6 +737,96 @@ if (recordData.type === 'NS') {
 - NS record: `subdomain NS ns1.example.com` → Requires `ns1 A 192.0.2.1` to exist first
 - NS record: `subdomain NS ns1.otherdomain.com` → No glue record required (external nameserver)
 
+### 10. AAAA (IPv6) Record Validation (December 2025)
+
+The AAAA record validation must be updated to use robust IPv6 parsing instead of regex-based validation.
+
+#### A. Validation Source of Truth
+
+**Backend (Express) is authoritative**: All writes must pass backend validation.
+
+**Frontend (Next.js)**: Mirrors backend rules for immediate UX feedback, but never replaces backend enforcement.
+
+#### B. Implementation Using net.isIP()
+
+Add IPv6 validation helper function using Node's built-in `net.isIP()`:
+
+```javascript
+/**
+ * Validates IPv6 address format using Node's built-in net.isIP
+ * 
+ * Test vectors (shared with frontend):
+ * Valid:
+ *   - 2001:0db8:85a3:0000:0000:8a2e:0370:7334 (full form)
+ *   - 2001:db8::1 (compressed)
+ *   - ::1 (loopback)
+ *   - :: (all zeros)
+ *   - 2001:db8::192.0.2.1 (IPv4-embedded)
+ *   - ::ffff:192.0.2.1 (IPv4-mapped)
+ *   - 2001:DB8::1 (uppercase hex)
+ * 
+ * Invalid:
+ *   - 192.0.2.1 (IPv4 only)
+ *   - 2001:db8:::1 (multiple ::)
+ *   - 2001:db8::zzzz (invalid hextet)
+ *   - 2001:db8::1::1 (multiple :: groups)
+ *   - 2001:db8:1:2:3:4:5:6:7 (>8 groups)
+ *   - example.com (hostname)
+ */
+function isValidIPv6(ip) {
+  const net = require('net');
+  const trimmed = ip.trim();
+  return net.isIP(trimmed) === 6;
+}
+```
+
+#### C. Apply to DNS Record Endpoints
+
+**Location**: DNS record create/update endpoints
+- `POST /api/dns-records`
+- `PUT /api/dns-records/:id`
+
+Add validation in the type-specific validation section:
+
+```javascript
+if (recordData.type === 'AAAA') {
+  if (!isValidIPv6(recordData.value)) {
+    return res.status(400).json({
+      error: 'Enter a valid IPv6 address'
+    });
+  }
+}
+```
+
+#### D. Input Handling
+
+- **Trim whitespace**: Always trim before validation
+- **Accept uppercase hex**: Both `2001:db8::1` and `2001:DB8::1` are valid
+
+#### E. Acceptance Rules
+
+**Accept**:
+- Full IPv6: `2001:0db8:85a3:0000:0000:8a2e:0370:7334`
+- Compressed with `::`: `2001:db8::1`, `::1`, `::`
+- Suppressed leading zeros: `2001:db8:0:0:0:0:0:1`
+- IPv4-embedded: `2001:db8::192.0.2.1`, `::ffff:192.0.2.1`
+- Uppercase hex: `2001:DB8::1`
+
+**Reject**:
+- IPv4-only: `192.0.2.1`
+- Hostnames: `example.com`, `mail.example.com.`
+- Invalid hextets: `2001:db8::zzzz`
+- Multiple `::`: `2001:db8::1::1`
+- More than 8 groups: `2001:db8:1:2:3:4:5:6:7`
+- Leading/trailing junk: `2001:db8::1x`, `x2001:db8::1`
+
+#### Why This Is Important
+
+- **Regex limitations**: IPv6 regex patterns are notoriously complex and error-prone
+- **Consistency**: Using `net.isIP()` ensures the same behavior as Node.js itself
+- **Comprehensive**: Handles all IPv6 formats including compressed, IPv4-embedded, and edge cases
+- **Frontend alignment**: Frontend uses `ipaddr.js` parser which has identical acceptance rules
+
 ## Testing Checklist
 
 After implementing these changes, test the following scenarios:
@@ -750,6 +840,20 @@ After implementing these changes, test the following scenarios:
 - [ ] Create record with multiple labels: `deep.nested.subdomain` → Should succeed
 - [ ] Reject name exceeding 253 characters → Should fail
 - [ ] Reject name with any label exceeding 63 characters → Should fail
+
+### AAAA Record Validation (New)
+- [ ] Create AAAA with full IPv6: `2001:0db8:85a3:0000:0000:8a2e:0370:7334` → Should succeed
+- [ ] Create AAAA with compressed: `2001:db8::1` → Should succeed
+- [ ] Create AAAA with loopback: `::1` → Should succeed
+- [ ] Create AAAA with all zeros: `::` → Should succeed
+- [ ] Create AAAA with IPv4-embedded: `2001:db8::192.0.2.1` → Should succeed
+- [ ] Create AAAA with IPv4-mapped: `::ffff:192.0.2.1` → Should succeed
+- [ ] Create AAAA with uppercase: `2001:DB8::1` → Should succeed
+- [ ] Reject AAAA with IPv4 only: `192.0.2.1` → Should fail
+- [ ] Reject AAAA with multiple `::`: `2001:db8:::1` → Should fail
+- [ ] Reject AAAA with invalid hextet: `2001:db8::zzzz` → Should fail
+- [ ] Reject AAAA with hostname: `example.com` → Should fail
+- [ ] Reject AAAA with >8 groups: `2001:db8:1:2:3:4:5:6:7` → Should fail
 
 ### TTL Consistency Validation (New)
 - [ ] Create first A record: `www A 192.0.2.1 TTL=3600` → Should succeed
