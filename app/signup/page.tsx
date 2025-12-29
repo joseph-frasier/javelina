@@ -28,6 +28,7 @@ export default function SignupPage() {
     terms?: string;
   }>({});
   const [successMessage, setSuccessMessage] = useState('');
+  const [globalError, setGlobalError] = useState('');
   const [isFlipped, setIsFlipped] = useState(false);
   const [mounted, setMounted] = useState(false);
   
@@ -124,6 +125,9 @@ export default function SignupPage() {
       return;
     }
 
+    // Clear any previous global errors
+    setGlobalError('');
+
     const result = await signUp(email, password, name);
 
     if (result.success) {
@@ -131,9 +135,15 @@ export default function SignupPage() {
         'Account created! Please check your email to verify your account, then return here to sign in.'
       );
     } else {
-      setErrors({
-        email: result.error,
-      });
+      // Check if this is an "email already exists" case
+      if (result.outcome === 'existing_email') {
+        setGlobalError('A user with this email address already exists. Please sign in instead.');
+      } else {
+        // For other errors, show them as field-level errors on email
+        setErrors({
+          email: result.error,
+        });
+      }
     }
   };
 
@@ -201,6 +211,15 @@ export default function SignupPage() {
                   </p>
                 </div>
 
+                {/* Global Error Banner - Email Already Exists */}
+                {globalError && (
+                  <div className="bg-red-900/20 border-2 border-red-500 rounded-md p-4">
+                    <p className="text-sm text-red-100 font-semibold">
+                      {globalError}
+                    </p>
+                  </div>
+                )}
+
                 <Input
                   id="name"
                   type="text"
@@ -225,6 +244,7 @@ export default function SignupPage() {
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (errors.email) setErrors({ ...errors, email: undefined });
+                    if (globalError) setGlobalError('');
                   }}
                   error={errors.email}
                   autoComplete="email"
@@ -670,6 +690,15 @@ export default function SignupPage() {
                     </p>
                   </div>
 
+                  {/* Global Error Banner - Email Already Exists */}
+                  {globalError && (
+                    <div className="bg-red-900/20 border-2 border-red-500 rounded-md p-4">
+                      <p className="text-sm text-red-100 font-semibold">
+                        {globalError}
+                      </p>
+                    </div>
+                  )}
+
                   <Input
                     id="name-mobile"
                     type="text"
@@ -694,6 +723,7 @@ export default function SignupPage() {
                     onChange={(e) => {
                       setEmail(e.target.value);
                       if (errors.email) setErrors({ ...errors, email: undefined });
+                      if (globalError) setGlobalError('');
                     }}
                     error={errors.email}
                     autoComplete="email"

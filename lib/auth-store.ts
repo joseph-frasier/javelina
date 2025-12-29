@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getAuthCallbackURL } from '@/lib/utils/get-url'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { classifySignupResult, type SignupOutcome } from '@/lib/utils/signup-classifier'
 
 export type UserRole = 'user' | 'superuser';
 export type RBACRole = 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
@@ -46,7 +47,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   loginWithOAuth: (provider: 'google' | 'github') => Promise<void>
   logout: () => Promise<void>
-  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
   fetchProfile: () => Promise<void>
@@ -299,21 +300,45 @@ export const useAuthStore = create<AuthState>()(
             },
           })
 
-          if (error) {
-            set({ isLoading: false })
-            return { success: false, error: error.message }
-          }
+          // Classify the signup result to distinguish new user, existing email, or error
+          const outcome = classifySignupResult(data.user, error)
 
-          if (data.user) {
-            // Profile should be auto-created by database trigger
-            await get().fetchProfile()
-          }
+          switch (outcome) {
+            case 'new_user':
+              // Real successful signup - fetch profile
+              if (data.user) {
+                // Profile should be auto-created by database trigger
+                await get().fetchProfile()
+              }
+              set({ isLoading: false })
+              return { success: true, outcome: 'new_user' }
 
-          set({ isLoading: false })
-          return { success: true }
+            case 'existing_email':
+              // Email already exists - Supabase returned obfuscated user or explicit error
+              set({ isLoading: false })
+              return { 
+                success: false, 
+                error: 'A user with this email address already exists.',
+                outcome: 'existing_email'
+              }
+
+            case 'error':
+            default:
+              // Actual error (network, validation, etc.)
+              set({ isLoading: false })
+              return { 
+                success: false, 
+                error: error?.message || 'An error occurred during signup. Please try again.',
+                outcome: 'error'
+              }
+          }
         } catch (error: any) {
           set({ isLoading: false })
-          return { success: false, error: error.message || 'An error occurred' }
+          return { 
+            success: false, 
+            error: error.message || 'An error occurred',
+            outcome: 'error'
+          }
         }
       },
 
