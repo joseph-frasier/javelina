@@ -53,6 +53,7 @@ export function isValidDomain(domain: string): boolean {
  * Allows: alphanumerics, backslash, hyphens, underscores, dots
  * Maximum length: 253 characters
  * Maximum label length: 63 characters
+ * Labels can start and end with hyphens or underscores (e.g., _dmarc, -test-, subdomain_)
  */
 export function isValidRecordName(name: string): boolean {
   // @ is valid for apex
@@ -66,7 +67,8 @@ export function isValidRecordName(name: string): boolean {
   
   // Check for valid characters and format
   // Allows: alphanumerics, backslash, hyphens, underscores, dots
-  const nameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9])?)*$/;
+  // Labels can now start and end with hyphens or underscores
+  const nameRegex = /^[a-zA-Z0-9_\-]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9_\-])?(\.[a-zA-Z0-9_\-]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9_\-])?)*$/;
   
   if (!nameRegex.test(name)) return false;
   
@@ -407,6 +409,24 @@ export function validateDNSRecord(
         if (!placementValidation.valid) {
           errors.name = placementValidation.error || 'Invalid NS record placement';
         }
+        
+        // Check if NS target is subdomain of current zone (requires glue records)
+        const nsTarget = formData.value.endsWith('.') 
+          ? formData.value.slice(0, -1) 
+          : formData.value;
+        
+        // Check if NS target ends with current zone name (is subdomain)
+        if (nsTarget.endsWith(`.${zoneName}`) || nsTarget === zoneName) {
+          // Check for at least one A or AAAA record for this hostname
+          const glueRecords = existingRecords.filter(
+            r => (r.type === 'A' || r.type === 'AAAA') && 
+                 (getFQDN(r.name, zoneName) === nsTarget)
+          );
+          
+          if (glueRecords.length === 0) {
+            errors.value = `Nameserver "${nsTarget}" is within this zone and requires at least one A or AAAA glue record. Create the glue record first.`;
+          }
+        }
       }
       break;
       
@@ -463,6 +483,24 @@ export function validateDNSRecord(
   );
   if (duplicate) {
     errors.value = 'This exact record already exists';
+  }
+  
+  // Check for TTL consistency across records with same name+type
+  // All records with the same name and type must have identical TTL values
+  const recordsWithSameNameType = existingRecords.filter(
+    r => r.name === formData.name && 
+         r.type === formData.type && 
+         r.id !== recordId
+  );
+  
+  if (recordsWithSameNameType.length > 0) {
+    const existingTTLs = recordsWithSameNameType.map(r => r.ttl);
+    const allTTLs = [...existingTTLs, formData.ttl];
+    const uniqueTTLs = new Set(allTTLs);
+    
+    if (uniqueTTLs.size > 1) {
+      errors.ttl = `All records with name "${formData.name}" and type ${formData.type} must have the same TTL. Existing records use: ${existingTTLs.join(', ')} seconds`;
+    }
   }
   
   return {

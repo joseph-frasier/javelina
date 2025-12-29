@@ -14,17 +14,35 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const measureRef = useRef<HTMLSpanElement>(null);
     const [suffixOffset, setSuffixOffset] = useState(0);
 
+    // Calculate how much of suffix user has already typed
+    const getSuffixToShow = () => {
+      if (!suffixHint || !value) return suffixHint;
+      const valueStr = String(value);
+      let matchedChars = 0;
+      
+      // Check how many chars at end of value match start of suffix
+      for (let i = 0; i < suffixHint.length; i++) {
+        if (valueStr.endsWith(suffixHint.substring(0, i + 1))) {
+          matchedChars = i + 1;
+        }
+      }
+      
+      return suffixHint.substring(matchedChars);
+    };
+
     // Calculate the width of the input value to position the suffix hint
     useEffect(() => {
       if (measureRef.current && suffixHint && value) {
-        const width = measureRef.current.offsetWidth;
+        // Get the actual text width without padding
+        const width = measureRef.current.scrollWidth;
         setSuffixOffset(width);
       }
     }, [value, suffixHint]);
 
     // Determine if we should show the suffix hint
     const valueStr = String(value || '');
-    const showSuffixHint = suffixHint && valueStr.length > 0 && !valueStr.endsWith('.');
+    const suffixToShow = getSuffixToShow();
+    const showSuffixHint = suffixHint && valueStr.length > 0 && !valueStr.endsWith('.') && suffixToShow && suffixToShow.length > 0;
 
     return (
       <div className="w-full">
@@ -59,8 +77,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {suffixHint && (
             <span
               ref={measureRef}
-              className="absolute opacity-0 pointer-events-none whitespace-pre px-4 py-2.5 font-regular"
-              style={{ fontSize: 'inherit', fontFamily: 'inherit' }}
+              className="absolute opacity-0 pointer-events-none whitespace-pre font-regular"
+              style={{ fontSize: 'inherit', fontFamily: 'inherit', left: '16px' }}
               aria-hidden="true"
             >
               {valueStr}
@@ -73,7 +91,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               style={{ left: `${suffixOffset + 16}px` }}
               aria-hidden="true"
             >
-              {suffixHint}
+              {suffixToShow}
             </span>
           )}
         </div>
