@@ -610,11 +610,163 @@ verylonglabel...       // Any label exceeds 63 characters
 - **Length limits**: DNS protocol limits (RFC 1035)
 - **Label limits**: Each DNS label has a 63-byte limit
 
+### 9. Zone Record Validation Improvements (December 2025)
+
+The following validation improvements were implemented in the frontend and must be mirrored in the backend.
+
+#### A. Record Name Validation - Allow Hyphens/Underscores at Start/End
+
+**Location**: DNS record create/update endpoints
+- `POST /api/dns-records`
+- `PUT /api/dns-records/:id`
+
+**Change**:
+Update the `isValidRecordName()` function to allow hyphens and underscores at the start and end of labels:
+
+```javascript
+function isValidRecordName(name) {
+  // @ is valid for apex
+  if (name === '@') return true;
+  
+  // Empty is valid (represents zone apex)
+  if (name === '') return true;
+  
+  // Check total length
+  if (name.length > 253) return false;
+  
+  // NEW REGEX: Allows hyphens and underscores at start/end of labels
+  // This enables common DNS patterns like _dmarc, _domainkey, etc.
+  const nameRegex = /^[a-zA-Z0-9_\-]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9_\-])?(\.[a-zA-Z0-9_\-]([a-zA-Z0-9_\-\\]{0,61}[a-zA-Z0-9_\-])?)*$/;
+  
+  if (!nameRegex.test(name)) return false;
+  
+  // Check each label length (max 63 characters per label)
+  const labels = name.split('.');
+  return labels.every(label => label.length > 0 && label.length <= 63);
+}
+```
+
+**Examples of newly allowed names**:
+- `_dmarc` (underscore prefix for DMARC records)
+- `_domainkey` (for DomainKeys)
+- `_acme-challenge` (for ACME challenges)
+- `-test-` (hyphens at both ends)
+- `subdomain_` (underscore suffix)
+
+#### B. Duplicate Record TTL Consistency Validation
+
+**Location**: DNS record create/update endpoints
+
+**Requirement**: When multiple records exist with the same `name` and `type` but different `value` fields, all records MUST have identical TTL values.
+
+**Implementation**:
+Before saving a record, query for existing records with same `zone_id`, `name`, and `type`:
+
+```javascript
+// Fetch existing records with same name and type
+const existingRecords = await db.query(
+  'SELECT ttl FROM zone_records WHERE zone_id = $1 AND name = $2 AND type = $3 AND id != $4',
+  [zoneId, recordData.name, recordData.type, recordId || '00000000-0000-0000-0000-000000000000']
+);
+
+if (existingRecords.rows.length > 0) {
+  const existingTTLs = existingRecords.rows.map(r => r.ttl);
+  const uniqueTTLs = new Set([...existingTTLs, recordData.ttl]);
+  
+  if (uniqueTTLs.size > 1) {
+    return res.status(400).json({
+      error: `All records with name "${recordData.name}" and type ${recordData.type} must have the same TTL. Existing records use: ${existingTTLs.join(', ')} seconds`
+    });
+  }
+}
+```
+
+**Why this is important**: DNS resolvers expect all records in an RRset (Resource Record set) to have the same TTL. Mixed TTLs can cause caching inconsistencies and unpredictable behavior.
+
+**Example scenario**:
+- Zone: `example.com`
+- Existing record: `www A 192.0.2.1 TTL=3600`
+- Existing record: `www A 192.0.2.2 TTL=3600`
+- New record attempt: `www A 192.0.2.3 TTL=7200` → Should fail
+- New record attempt: `www A 192.0.2.3 TTL=3600` → Should succeed
+
+#### C. NS Glue Record Validation
+
+**Location**: DNS record create/update endpoints (NS record handling)
+
+**Requirement**: When an NS record points to a nameserver that is a subdomain of the current zone, at least one A or AAAA glue record must exist for that nameserver.
+
+**Implementation**:
+```javascript
+if (recordData.type === 'NS') {
+  // Existing validations...
+  
+  // NEW: Check for glue records if NS target is subdomain of zone
+  const nsTarget = recordData.value.endsWith('.') 
+    ? recordData.value.slice(0, -1) 
+    : recordData.value;
+  
+  // Fetch zone name
+  const zone = await db.query('SELECT name FROM zones WHERE id = $1', [zoneId]);
+  const zoneName = zone.rows[0].name;
+  
+  // Check if NS target is subdomain of current zone
+  if (nsTarget.endsWith(`.${zoneName}`) || nsTarget === zoneName) {
+    // Query for A or AAAA glue records
+    const glueRecords = await db.query(
+      `SELECT id FROM zone_records 
+       WHERE zone_id = $1 
+       AND (type = 'A' OR type = 'AAAA')
+       AND (CASE WHEN name = '@' OR name = '' THEN $2 ELSE name || '.' || $2 END) = $3`,
+      [zoneId, zoneName, nsTarget]
+    );
+    
+    if (glueRecords.rows.length === 0) {
+      return res.status(400).json({
+        error: `Nameserver "${nsTarget}" is within this zone and requires at least one A or AAAA glue record. Create the glue record first.`
+      });
+    }
+  }
+}
+```
+
+**Why this is important**: When a nameserver is within the same zone it's authoritative for, DNS resolvers need the IP address (glue record) to avoid circular dependencies. Without glue records, the zone becomes unresolvable.
+
+**Example scenarios**:
+- Zone: `example.com`
+- NS record: `subdomain NS ns1.example.com` → Requires `ns1 A 192.0.2.1` to exist first
+- NS record: `subdomain NS ns1.otherdomain.com` → No glue record required (external nameserver)
+
 ## Testing Checklist
 
 After implementing these changes, test the following scenarios:
 
-### NS Record Validation
+### Record Name Validation (Updated)
+- [ ] Create record with name starting with underscore: `_dmarc` → Should succeed
+- [ ] Create record with name starting with hyphen: `-test` → Should succeed
+- [ ] Create record with name ending with underscore: `subdomain_` → Should succeed
+- [ ] Create record with name ending with hyphen: `subdomain-` → Should succeed
+- [ ] Create record with name `_acme-challenge` → Should succeed
+- [ ] Create record with multiple labels: `deep.nested.subdomain` → Should succeed
+- [ ] Reject name exceeding 253 characters → Should fail
+- [ ] Reject name with any label exceeding 63 characters → Should fail
+
+### TTL Consistency Validation (New)
+- [ ] Create first A record: `www A 192.0.2.1 TTL=3600` → Should succeed
+- [ ] Create second A record with same TTL: `www A 192.0.2.2 TTL=3600` → Should succeed
+- [ ] Create third A record with different TTL: `www A 192.0.2.3 TTL=7200` → Should fail with TTL mismatch error
+- [ ] Update existing record to mismatched TTL → Should fail
+- [ ] Update existing record to matching TTL → Should succeed
+- [ ] Create records with same name but different type (e.g., www A and www AAAA) → Should succeed (TTL check only applies within same type)
+
+### NS Glue Record Validation (New)
+- [ ] Create NS record pointing to subdomain without glue records → Should fail with glue record error
+- [ ] Create glue record: `ns1 A 192.0.2.1` → Should succeed
+- [ ] Create NS record pointing to subdomain with glue records → Should succeed
+- [ ] Create NS record pointing to external domain → Should succeed (no glue check)
+- [ ] Delete glue record when NS record still references it → Should fail (referential integrity)
+
+### NS Record Validation (Existing)
 - [ ] Attempt to create NS record with name '@' → Should fail with appropriate error
 - [ ] Attempt to create NS record with name '' (empty) → Should fail with appropriate error
 - [ ] Attempt to create NS record with name matching zone name → Should fail with appropriate error

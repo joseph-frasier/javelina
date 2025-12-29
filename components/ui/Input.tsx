@@ -14,6 +14,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const measureRef = useRef<HTMLSpanElement>(null);
     const [suffixOffset, setSuffixOffset] = useState(0);
 
+    // Calculate how much of suffix user has already typed
+    const getSuffixToShow = () => {
+      if (!suffixHint || !value) return suffixHint;
+      const valueStr = String(value);
+      let matchedChars = 0;
+      
+      // Check how many chars at end of value match start of suffix
+      for (let i = 0; i < suffixHint.length; i++) {
+        if (valueStr.endsWith(suffixHint.substring(0, i + 1))) {
+          matchedChars = i + 1;
+        }
+      }
+      
+      return suffixHint.substring(matchedChars);
+    };
+
     // Calculate the width of the input value to position the suffix hint
     useEffect(() => {
       if (measureRef.current && suffixHint && value) {
@@ -24,7 +40,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
     // Determine if we should show the suffix hint
     const valueStr = String(value || '');
-    const showSuffixHint = suffixHint && valueStr.length > 0 && !valueStr.endsWith('.');
+    const suffixToShow = getSuffixToShow();
+    const showSuffixHint = suffixHint && valueStr.length > 0 && !valueStr.endsWith('.') && suffixToShow && suffixToShow.length > 0;
 
     return (
       <div className="w-full">
@@ -70,10 +87,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {showSuffixHint && (
             <span
               className="absolute top-0 bottom-0 flex items-center pointer-events-none text-gray-400 dark:text-gray-600 font-regular"
-              style={{ left: `${suffixOffset + 16}px` }}
+              style={{ left: `${suffixOffset + 17}px` }}
               aria-hidden="true"
             >
-              {suffixHint}
+              {suffixToShow}
             </span>
           )}
         </div>
