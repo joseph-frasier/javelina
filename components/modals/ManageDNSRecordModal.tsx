@@ -460,7 +460,7 @@ export function ManageDNSRecordModal({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || !validateDNSRecord(formData, existingRecords, record?.id).valid}
+            disabled={isSubmitting || !validateDNSRecord(formData, existingRecords, record?.id, zoneName).valid}
             loading={isSubmitting}
           >
             {mode === 'add' ? 'Create Record' : 'Save Changes'}
