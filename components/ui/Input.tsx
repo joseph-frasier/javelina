@@ -33,7 +33,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     // Calculate the width of the input value to position the suffix hint
     useEffect(() => {
       if (measureRef.current && suffixHint && value) {
-        const width = measureRef.current.offsetWidth;
+        // Get the actual text width without padding
+        const width = measureRef.current.scrollWidth;
         setSuffixOffset(width);
       }
     }, [value, suffixHint]);
@@ -76,8 +77,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {suffixHint && (
             <span
               ref={measureRef}
-              className="absolute opacity-0 pointer-events-none whitespace-pre px-4 py-2.5 font-regular"
-              style={{ fontSize: 'inherit', fontFamily: 'inherit' }}
+              className="absolute opacity-0 pointer-events-none whitespace-pre font-regular"
+              style={{ fontSize: 'inherit', fontFamily: 'inherit', left: '16px' }}
               aria-hidden="true"
             >
               {valueStr}
@@ -87,7 +88,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {showSuffixHint && (
             <span
               className="absolute top-0 bottom-0 flex items-center pointer-events-none text-gray-400 dark:text-gray-600 font-regular"
-              style={{ left: `${suffixOffset + 17}px` }}
+              style={{ left: `${suffixOffset + 16}px` }}
               aria-hidden="true"
             >
               {suffixToShow}
