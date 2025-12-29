@@ -11,13 +11,14 @@ export interface AuditLog {
   new_data: any
   user_id: string | null
   created_at: string
+  profiles?: { name?: string; email?: string }
 }
 
 /**
  * Get recent audit logs for an organization
  * Routes through Express API for proper authorization
  */
-export async function getOrganizationAuditLogs(organizationId: string, limit: number = 10) {
+export async function getOrganizationAuditLogs(organizationId: string, limit: number = 10): Promise<AuditLog[]> {
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -51,7 +52,7 @@ export async function getOrganizationAuditLogs(organizationId: string, limit: nu
  * Get recent audit logs for environments and zones in an organization
  * Routes through Express API for proper authorization
  */
-export async function getOrganizationActivityLogs(organizationId: string, limit: number = 10) {
+export async function getOrganizationActivityLogs(organizationId: string, limit: number = 10): Promise<AuditLog[]> {
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
