@@ -403,16 +403,6 @@ export default function ResetPasswordPage() {
                     'Reset Password'
                   )}
                 </Button>
-
-                {/* Back to Login */}
-                <div className="text-center">
-                  <Link
-                    href="/login"
-                    className="text-sm text-gray-slate hover:text-orange transition-colors"
-                  >
-                    ← Back to Sign In
-                  </Link>
-                </div>
               </form>
             </>
           )}
