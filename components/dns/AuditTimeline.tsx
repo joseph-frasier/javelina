@@ -135,9 +135,36 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                     <p className="text-sm text-gray-slate">
                       <span className="font-medium text-orange-dark">{log.user_name}</span>
                       {' '}
-                      {log.action === 'INSERT' && 'created a record'}
-                      {log.action === 'UPDATE' && 'updated a record'}
-                      {log.action === 'DELETE' && 'deleted a record'}
+                      {/* Display different text based on table_name */}
+                      {log.table_name === 'zones' && (
+                        <>
+                          {log.action === 'INSERT' && 'created the zone'}
+                          {log.action === 'UPDATE' && 'updated the zone'}
+                          {log.action === 'DELETE' && 'deleted the zone'}
+                        </>
+                      )}
+                      {log.table_name === 'zone_records' && (
+                        <>
+                          {log.action === 'INSERT' && 'created a record'}
+                          {log.action === 'UPDATE' && 'updated a record'}
+                          {log.action === 'DELETE' && 'deleted a record'}
+                        </>
+                      )}
+                      {log.table_name === 'organizations' && (
+                        <>
+                          {log.action === 'INSERT' && 'created the organization'}
+                          {log.action === 'UPDATE' && 'updated the organization'}
+                          {log.action === 'DELETE' && 'deleted the organization'}
+                        </>
+                      )}
+                      {/* Fallback for other table types */}
+                      {!['zones', 'zone_records', 'organizations'].includes(log.table_name) && (
+                        <>
+                          {log.action === 'INSERT' && `created ${log.table_name}`}
+                          {log.action === 'UPDATE' && `updated ${log.table_name}`}
+                          {log.action === 'DELETE' && `deleted ${log.table_name}`}
+                        </>
+                      )}
                     </p>
                     <p className="text-xs text-gray-slate mt-1">
                       {log.user_email}

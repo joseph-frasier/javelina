@@ -958,6 +958,8 @@ GET /api/zones/:id/audit-logs
 
 **Purpose**: Fetch audit logs for a specific zone with user profile information enriched server-side.
 
+**IMPORTANT**: This endpoint should return audit logs for **BOTH** the zone itself (zones table) **AND** its DNS records (zone_records table). This gives users a complete history of all changes within that zone. The frontend `AuditTimeline` component checks the `table_name` field to display appropriate labels ("updated zone" vs "updated a record").
+
 **Implementation:**
 
 ```javascript
@@ -966,6 +968,7 @@ const router = express.Router();
 
 /**
  * Get audit logs for a zone
+ * Returns logs for BOTH the zone AND its records
  * Performs server-side join with profiles table
  */
 router.get('/zones/:id/audit-logs', authenticateToken, async (req, res) => {
@@ -989,12 +992,22 @@ router.get('/zones/:id/audit-logs', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
     
-    // Fetch audit logs
+    // Get all record IDs for this zone
+    const { data: records } = await supabase
+      .from('zone_records')
+      .select('id')
+      .eq('zone_id', zoneId);
+    
+    const recordIds = records?.map(r => r.id) || [];
+    
+    // Fetch audit logs for BOTH zone and its records
+    // Build the query to get logs where:
+    // 1. table_name='zones' AND record_id=zoneId (zone changes)
+    // 2. table_name='zone_records' AND record_id IN recordIds (record changes)
     const { data: auditLogs, error } = await supabase
       .from('audit_logs')
       .select('*')
-      .eq('table_name', 'zones')
-      .eq('record_id', zoneId)
+      .or(`and(table_name.eq.zones,record_id.eq.${zoneId}),and(table_name.eq.zone_records,record_id.in.(${recordIds.join(',')}))`)
       .order('created_at', { ascending: false })
       .limit(50);
     
@@ -1046,8 +1059,22 @@ router.get('/zones/:id/audit-logs', authenticateToken, async (req, res) => {
       "table_name": "zones",
       "record_id": "zone-uuid",
       "action": "UPDATE",
-      "old_data": {...},
-      "new_data": {...},
+      "old_data": {"name": "old.com", "description": "Old description"},
+      "new_data": {"name": "new.com", "description": "New description"},
+      "user_id": "user-uuid",
+      "user_name": "John Doe",
+      "user_email": "john@example.com",
+      "created_at": "2024-01-01T00:00:00Z",
+      "ip_address": "192.0.2.1",
+      "user_agent": "Mozilla/5.0..."
+    },
+    {
+      "id": "uuid",
+      "table_name": "zone_records",
+      "record_id": "record-uuid",
+      "action": "INSERT",
+      "old_data": null,
+      "new_data": {"name": "www", "type": "A", "value": "192.0.2.100"},
       "user_id": "user-uuid",
       "user_name": "John Doe",
       "user_email": "john@example.com",
@@ -1057,6 +1084,9 @@ router.get('/zones/:id/audit-logs', authenticateToken, async (req, res) => {
     }
   ]
 }
+```
+
+**Note**: The `table_name` field will be either `"zones"` (for zone changes) or `"zone_records"` (for DNS record changes). The frontend uses this field to display appropriate labels in the audit timeline.
 ```
 
 #### B. Organization Audit Logs Endpoint
@@ -1173,23 +1203,111 @@ router.get('/organizations/:id/activity', authenticateToken, async (req, res) =>
 
 #### D. Update Existing Zones Endpoint
 
-**Ensure `GET /api/zones/:id` returns all required fields:**
+**CRITICAL BUG FIX: `GET /api/zones/:id` Query Issue**
 
-The zones endpoint must return the following fields for the frontend to work properly:
+The current endpoint has a bug where the `organization_members!inner` join causes the query to fail and return 404 even when the zone exists.
+
+**Current (BROKEN) Implementation:**
+```typescript
+const { data: zone, error } = await supabaseAdmin
+  .from("zones")
+  .select(`
+    id,
+    organization_id,
+    name,
+    description,
+    verification_status,
+    last_verified_at,
+    metadata,
+    soa_serial,
+    live,
+    admin_email,
+    negative_caching_ttl,
+    error,
+    created_at,
+    updated_at,
+    created_by,
+    deleted_at,
+    organizations(
+      id,
+      name,
+      organization_members!inner(user_id, role)  // ← BUG: !inner causes query to fail
+    )
+  `)
+  .eq("id", id)
+  .single();
+```
+
+**Problem:** The `!inner` join requires a matching `organization_members` record. If the join fails (even temporarily), the entire query returns no results, causing a 404 "Zone not found" error before the membership check can run.
+
+**Fixed Implementation:**
+```typescript
+export const getZone = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+
+  if (!validateUUID(id)) {
+    throw new ValidationError("Invalid zone ID");
+  }
+
+  // First, fetch the zone without the problematic inner join
+  const { data: zone, error } = await supabaseAdmin
+    .from("zones")
+    .select(`
+      id,
+      organization_id,
+      name,
+      description,
+      verification_status,
+      last_verified_at,
+      metadata,
+      records_count,
+      soa_serial,
+      live,
+      admin_email,
+      negative_caching_ttl,
+      error,
+      created_at,
+      updated_at,
+      created_by,
+      deleted_at,
+      organizations(
+        id,
+        name
+      )
+    `)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .single();
+
+  if (error || !zone) {
+    throw new NotFoundError("Zone not found");
+  }
+
+  // Check membership separately (more reliable)
+  const { data: membership } = await supabaseAdmin
+    .from("organization_members")
+    .select("user_id, role")
+    .eq("organization_id", zone.organization_id)
+    .eq("user_id", userId)
+    .single();
+
+  if (!membership) {
+    throw new ForbiddenError("You do not have access to this zone");
+  }
+
+  sendSuccess(res, zone);
+};
+```
+
+**Required Fields:** The endpoint must return these fields for the frontend:
 - `verification_status`
 - `last_verified_at`
 - `metadata`
-- `records_count`
-
-```javascript
-// Ensure these fields are selected in the query:
-const { data: zone, error } = await supabase
-  .from('zones')
-  .select('*, verification_status, last_verified_at, metadata, records_count')
-  .eq('id', zoneId)
-  .is('deleted_at', null)
-  .single();
-```
+- `records_count` (if available, otherwise calculate from zone_records)
 
 #### Why This Is Important
 
@@ -1205,6 +1323,264 @@ const { data: zone, error } = await supabase
 - `lib/api/dns.ts` - Zone summary and audit logs now use Express API
 - `lib/api/audit.ts` - Organization audit/activity logs now use Express API
 - `lib/api-client.ts` - Added `auditLogs()` and `activityLogs()` methods
+
+---
+
+### 12. Audit Logging - Capturing User Information (January 2025)
+
+#### Problem
+
+Database triggers use `auth.uid()` to capture the user who made a change. However, when operations go through the Express API, the backend uses a **service role key** to execute database operations. In this context, `auth.uid()` returns NULL, resulting in audit logs showing "Unknown User" instead of the actual authenticated user.
+
+#### Root Cause
+
+```javascript
+// Express backend uses service role key
+const { data, error } = await supabase
+  .from('zones')
+  .update({ name: 'example.com' })
+  .eq('id', zoneId);
+
+// Database trigger fires
+// auth.uid() returns NULL because there's no user session at the database level
+// user_id column in audit_logs becomes NULL
+```
+
+The JWT token is validated at the Express API layer (`req.user.id`), but the database doesn't know about this user context.
+
+#### Solution
+
+The Express backend must set a session variable before any INSERT/UPDATE/DELETE operation so the database trigger can read it.
+
+#### Implementation
+
+##### A. Call set_user_context() Before All Mutations
+
+**Before any database mutation, call the `set_user_context()` function:**
+
+```javascript
+// Example: Update zone endpoint
+router.put('/zones/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id: zoneId } = req.params;
+    const { name, description } = req.body;
+    
+    // STEP 1: Set user context for audit logging
+    await supabase.rpc('set_user_context', { user_id: req.user.id });
+    
+    // STEP 2: Perform the database operation
+    const { data, error } = await supabase
+      .from('zones')
+      .update({ name, description })
+      .eq('id', zoneId)
+      .select()
+      .single();
+    
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    // The audit log trigger automatically captured the user_id from the session variable
+    return res.json({ data });
+  } catch (error) {
+    console.error('Error updating zone:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+##### B. Affected Endpoints
+
+**ALL endpoints that create, update, or delete the following resources must set user context:**
+
+**Organizations:**
+- `POST /api/organizations` - Create organization
+- `PUT /api/organizations/:id` - Update organization  
+- `DELETE /api/organizations/:id` - Delete organization
+
+**Zones:**
+- `POST /api/zones` - Create zone
+- `PUT /api/zones/:id` - Update zone
+- `DELETE /api/zones/:id` - Delete zone
+
+**Zone Records (DNS Records):**
+- `POST /api/dns-records` - Create DNS record
+- `PUT /api/dns-records/:id` - Update DNS record
+- `DELETE /api/dns-records/:id` - Delete DNS record
+
+##### C. Implementation Approach - PostgreSQL Functions (REQUIRED)
+
+**CRITICAL:** The backend MUST use the PostgreSQL functions defined in migration `20251230000002_audit_logging_functions.sql` for all mutations. These functions wrap the mutations and ensure `user_id` is captured correctly in audit logs.
+
+**Why This Approach:**
+- ✅ Guarantees user_id capture (single transaction/connection)
+- ✅ Works reliably with service role keys
+- ✅ No connection pooling issues
+- ✅ Industry standard pattern for audit logging
+
+**DO NOT** use direct `INSERT`/`UPDATE`/`DELETE` statements or Supabase's query builder for these tables when using the service role key.
+
+##### D. Database Function Details
+
+The migration `20251230000002_audit_logging_functions.sql` provides these functions:
+
+**Zones:**
+- `create_zone_with_audit(p_user_id, p_name, p_organization_id, p_description, p_admin_email, p_negative_caching_ttl)` → returns zones
+- `update_zone_with_audit(p_user_id, p_zone_id, p_name, p_description, p_admin_email, p_negative_caching_ttl, p_live)` → returns zones
+- `delete_zone_with_audit(p_user_id, p_zone_id)` → returns zones (soft delete)
+
+**Zone Records:**
+- `create_zone_record_with_audit(p_user_id, p_zone_id, p_name, p_type, p_value, p_ttl, p_comment)` → returns zone_records
+- `update_zone_record_with_audit(p_user_id, p_record_id, p_name, p_type, p_value, p_ttl, p_comment)` → returns zone_records
+- `delete_zone_record_with_audit(p_user_id, p_record_id)` → returns zone_records
+
+**Organizations:**
+- `create_organization_with_audit(p_user_id, p_name, p_description, p_slug, p_owner_id)` → returns organizations
+- `update_organization_with_audit(p_user_id, p_org_id, p_name, p_description, p_slug, p_logo_url, p_settings, p_is_active)` → returns organizations
+- `delete_organization_with_audit(p_user_id, p_org_id)` → returns organizations (soft delete)
+
+Each function internally:
+1. Sets `app.current_user_id` session variable
+2. Performs the mutation
+3. Returns the affected record
+
+The `handle_audit_log()` trigger reads from this session variable:
+
+```sql
+user_id = coalesce(
+  nullif(current_setting('app.current_user_id', true), '')::uuid,  -- Session variable
+  auth.uid()  -- Fallback for direct operations
+)
+```
+
+##### E. Backend Implementation Examples
+
+**Example 1: Create Zone**
+
+```javascript
+// INCORRECT - DO NOT USE
+const { data, error } = await supabaseAdmin
+  .from('zones')
+  .insert({ name: 'example.com', organization_id: orgId })
+  .select()
+  .single();
+
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('create_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_name: 'example.com',
+    p_organization_id: orgId,
+    p_description: 'My zone',
+    p_admin_email: 'admin@example.com',
+    p_negative_caching_ttl: 3600
+  });
+```
+
+**Example 2: Update Zone**
+
+```javascript
+// INCORRECT - DO NOT USE
+const { data, error } = await supabaseAdmin
+  .from('zones')
+  .update({ name: 'updated.com' })
+  .eq('id', zoneId)
+  .select()
+  .single();
+
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('update_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_zone_id: zoneId,
+    p_name: 'updated.com',
+    // Other fields are optional - only pass what you want to update
+  });
+```
+
+**Example 3: Create DNS Record**
+
+```javascript
+// INCORRECT - DO NOT USE
+const { data, error } = await supabaseAdmin
+  .from('zone_records')
+  .insert({
+    zone_id: zoneId,
+    name: 'www',
+    type: 'A',
+    value: '192.0.2.1',
+    ttl: 3600
+  })
+  .select()
+  .single();
+
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('create_zone_record_with_audit', {
+    p_user_id: req.user.id,
+    p_zone_id: zoneId,
+    p_name: 'www',
+    p_type: 'A',
+    p_value: '192.0.2.1',
+    p_ttl: 3600,
+    p_comment: 'Web server'
+  });
+```
+
+**Example 4: Update DNS Record**
+
+```javascript
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('update_zone_record_with_audit', {
+    p_user_id: req.user.id,
+    p_record_id: recordId,
+    p_value: '192.0.2.2',
+    // Only pass fields you want to update
+  });
+```
+
+**Example 5: Delete Zone (Soft Delete)**
+
+```javascript
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('delete_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_zone_id: zoneId
+  });
+```
+
+**Example 6: Delete DNS Record (Hard Delete)**
+
+```javascript
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('delete_zone_record_with_audit', {
+    p_user_id: req.user.id,
+    p_record_id: recordId
+  });
+```
+
+##### F. Error Handling
+
+```javascript
+const { data, error } = await supabaseAdmin
+  .rpc('create_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_name: name,
+    p_organization_id: orgId
+  });
+
+if (error) {
+  console.error('Failed to create zone:', error);
+  throw new Error(`Failed to create zone: ${error.message}`);
+}
+
+return data; // Returns the created zone
+```
+
+---
 
 ## Migration Notes
 
