@@ -12,6 +12,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
   useEffect(() => {
+    // Clean up old persisted auth storage from previous persist middleware
+    // This prevents "Cannot create property 'user' on string" errors
+    try {
+      localStorage.removeItem('auth-storage');
+    } catch (error) {
+      console.error('Error cleaning up old auth storage:', error);
+    }
+
     // Initialize auth state from Supabase session
     initializeAuth();
 
@@ -23,10 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === 'SIGNED_IN' && session) {
         initializeAuth();
       } else if (event === 'SIGNED_OUT') {
-        // Clear auth state
+        // Clear ALL auth state fields
         useAuthStore.setState({
           user: null,
           isAuthenticated: false,
+          profileReady: false,
+          profileError: null,
         });
       }
     });
