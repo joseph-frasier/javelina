@@ -114,6 +114,16 @@ const mockPasswords: Record<string, string> = {
   'marcus.rodriguez@company.com': 'admin2024'
 };
 
+// Clean up old persisted auth storage on load
+// This removes data from the old persist middleware that was causing errors
+if (typeof window !== 'undefined') {
+  try {
+    localStorage.removeItem('auth-storage');
+  } catch (error) {
+    console.error('Error cleaning up old auth storage:', error);
+  }
+}
+
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   isAuthenticated: false,
