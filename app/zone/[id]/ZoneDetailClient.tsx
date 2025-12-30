@@ -628,6 +628,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
         <DiffViewer
           oldData={selectedLog.old_data}
           newData={selectedLog.new_data}
+          tableName={selectedLog.table_name}
           onClose={() => setSelectedLog(null)}
         />
       )}
