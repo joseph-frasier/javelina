@@ -5,6 +5,21 @@ import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { classifySignupResult, type SignupOutcome } from '@/lib/utils/signup-classifier'
 
+// CRITICAL: Clean up old persisted auth storage IMMEDIATELY on module load
+// This must happen before any Zustand store is created to prevent
+// "Cannot create property 'user' on string" errors from old persist data
+if (typeof window !== 'undefined') {
+  try {
+    const oldData = localStorage.getItem('auth-storage');
+    if (oldData) {
+      console.log('[Auth Store] Removing old auth-storage data');
+      localStorage.removeItem('auth-storage');
+    }
+  } catch (error) {
+    // Silently fail if localStorage is not available
+  }
+}
+
 export type UserRole = 'user' | 'superuser';
 export type RBACRole = 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
 
