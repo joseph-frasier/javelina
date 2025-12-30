@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { createClient } from '@/lib/supabase/client'
 import { getAuthCallbackURL } from '@/lib/utils/get-url'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
@@ -115,14 +114,12 @@ const mockPasswords: Record<string, string> = {
   'marcus.rodriguez@company.com': 'admin2024'
 };
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      profileReady: false,
-      profileError: null,
+export const useAuthStore = create<AuthState>()((set, get) => ({
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  profileReady: false,
+  profileError: null,
 
       // Initialize auth - check for existing session
       initializeAuth: async () => {
@@ -450,6 +447,8 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: null,
             isAuthenticated: false,
+            profileReady: false,
+            profileError: null,
           })
           return
         }
@@ -462,18 +461,11 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: null,
             isAuthenticated: false,
+            profileReady: false,
+            profileError: null,
           })
         } catch (error) {
           console.error('Error logging out:', error)
         }
       },
-    }),
-    {
-      name: 'auth-storage',
-      // Don't persist isAuthenticated - derive it from Supabase session on load
-      partialize: (state) => ({
-        // Don't persist anything - let Supabase cookies handle it
-      }),
-    }
-  )
-)
+}))
