@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AuditLog, formatRelativeTime } from '@/lib/mock-dns-data';
+import { getChangeSummary } from '@/lib/utils/audit-formatting';
 import Dropdown from '@/components/ui/Dropdown';
 
 interface AuditTimelineProps {
@@ -181,18 +182,10 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                   </button>
                 </div>
 
-                {/* Quick preview of changes */}
-                {log.action === 'UPDATE' && log.old_data && log.new_data && (
-                  <div className="mt-2 text-xs font-mono text-gray-slate p-2 rounded">
-                    {Object.keys(log.new_data).filter(key => 
-                      JSON.stringify(log.old_data[key]) !== JSON.stringify(log.new_data[key])
-                    ).map(key => (
-                      <div key={key} className="truncate">
-                        <span className="text-red-600">- {key}: {JSON.stringify(log.old_data[key])}</span>
-                        <br />
-                        <span className="text-green-600">+ {key}: {JSON.stringify(log.new_data[key])}</span>
-                      </div>
-                    )).slice(0, 2)}
+                {/* Quick preview of changes - Now using formatted summary (Option 2) */}
+                {(log.action === 'UPDATE' || log.action === 'INSERT' || log.action === 'DELETE') && (
+                  <div className="mt-2 text-xs text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded px-2 py-1.5">
+                    {getChangeSummary(log.old_data, log.new_data, log.table_name, 2)}
                   </div>
                 )}
               </div>
