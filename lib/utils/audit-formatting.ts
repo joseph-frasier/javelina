@@ -2,8 +2,6 @@
  * Utility functions for formatting audit log data in a user-friendly way
  */
 
-import { formatDistanceToNow, format } from 'date-fns';
-
 /**
  * Format a timestamp to user's local timezone with relative time
  */
@@ -11,8 +9,15 @@ export function formatTimestamp(timestamp: string | null): string {
   if (!timestamp) return 'Never';
   
   const date = new Date(timestamp);
-  const formatted = format(date, 'MMM d, yyyy \'at\' h:mm a');
-  const relative = formatDistanceToNow(date, { addSuffix: true });
+  const formatted = date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  const relative = formatRelativeTime(date);
   
   return `${formatted} (${relative})`;
 }
@@ -24,7 +29,36 @@ export function formatTimestampShort(timestamp: string | null): string {
   if (!timestamp) return 'Never';
   
   const date = new Date(timestamp);
-  return format(date, 'MMM d, h:mm a');
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
+/**
+ * Format relative time (e.g., "2 minutes ago")
+ */
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return 'just now';
+  if (diffMin < 60) return `${diffMin} ${diffMin === 1 ? 'minute' : 'minutes'} ago`;
+  if (diffHour < 24) return `${diffHour} ${diffHour === 1 ? 'hour' : 'hours'} ago`;
+  if (diffDay < 30) return `${diffDay} ${diffDay === 1 ? 'day' : 'days'} ago`;
+  
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth} ${diffMonth === 1 ? 'month' : 'months'} ago`;
+  
+  const diffYear = Math.floor(diffDay / 365);
+  return `${diffYear} ${diffYear === 1 ? 'year' : 'years'} ago`;
 }
 
 /**
