@@ -112,9 +112,27 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
     try {
       const records = await getDNSRecords(zoneId);
       setDnsRecords(records);
+      setFilteredDnsRecords(records);
     } catch (error) {
       console.error('Error refreshing DNS records:', error);
       addToast('error', 'Failed to refresh DNS records');
+    }
+  };
+
+  // Refresh all zone data (records, audit logs, and summary)
+  const refreshAllData = async () => {
+    try {
+      const [summary, logs, records] = await Promise.all([
+        getZoneSummary(zoneId, zone.name, zone.records_count || 50),
+        getZoneAuditLogs(zoneId, zone.name),
+        getDNSRecords(zoneId),
+      ]);
+      setZoneSummary(summary);
+      setAuditLogs(logs);
+      setDnsRecords(records);
+      setFilteredDnsRecords(records);
+    } catch (error) {
+      console.error('Error refreshing zone data:', error);
     }
   };
 
@@ -127,7 +145,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
     try {
       await createDNSRecord(zoneId, formData);
       addToast('success', 'DNS record created successfully');
-      await refreshDNSRecords();
+      await refreshAllData();
       router.refresh();
     } catch (error: any) {
       addToast('error', error.message || 'Failed to create DNS record');
@@ -140,7 +158,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
     try {
       await updateDNSRecord(recordToEdit.id, formData);
       addToast('success', 'DNS record updated successfully');
-      await refreshDNSRecords();
+      await refreshAllData();
       router.refresh();
     } catch (error: any) {
       addToast('error', error.message || 'Failed to update DNS record');
@@ -159,7 +177,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
     try {
       await deleteDNSRecord(recordToDelete.id);
       addToast('success', 'DNS record deleted successfully');
-      await refreshDNSRecords();
+      await refreshAllData();
       setShowDeleteRecordConfirm(false);
       setRecordToDelete(null);
       router.refresh();
@@ -201,7 +219,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
         result.errors.forEach(error => addToast('error', error));
       }
       setSelectedRecords([]);
-      await refreshDNSRecords();
+      await refreshAllData();
       router.refresh();
     } catch (error: any) {
       addToast('error', error.message || 'Failed to delete records');
@@ -243,6 +261,9 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       addToast('success', `Zone "${editFormData.name}" updated successfully!`);
       setShowEditModal(false);
       setIsEditSaving(false);
+      
+      // Refresh audit logs to show the zone update
+      await refreshAllData();
       
       // Invalidate React Query cache to update sidebar
       if (zone.organization_id) {
