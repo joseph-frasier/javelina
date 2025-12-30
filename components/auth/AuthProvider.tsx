@@ -23,10 +23,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === 'SIGNED_IN' && session) {
         initializeAuth();
       } else if (event === 'SIGNED_OUT') {
-        // Clear auth state
+        // Clear ALL auth state fields
         useAuthStore.setState({
           user: null,
           isAuthenticated: false,
+          profileReady: false,
+          profileError: null,
         });
       }
     });

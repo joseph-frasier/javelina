@@ -1,10 +1,24 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { createClient } from '@/lib/supabase/client'
 import { getAuthCallbackURL } from '@/lib/utils/get-url'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { classifySignupResult, type SignupOutcome } from '@/lib/utils/signup-classifier'
+
+// CRITICAL: Clean up old persisted auth storage IMMEDIATELY on module load
+// This must happen before any Zustand store is created to prevent
+// "Cannot create property 'user' on string" errors from old persist data
+if (typeof window !== 'undefined') {
+  try {
+    const oldData = localStorage.getItem('auth-storage');
+    if (oldData) {
+      console.log('[Auth Store] Removing old auth-storage data');
+      localStorage.removeItem('auth-storage');
+    }
+  } catch (error) {
+    // Silently fail if localStorage is not available
+  }
+}
 
 export type UserRole = 'user' | 'superuser';
 export type RBACRole = 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
@@ -44,6 +58,8 @@ interface AuthState {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
+  profileReady: boolean
+  profileError: string | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   loginWithOAuth: (provider: 'google' | 'github') => Promise<void>
   logout: () => Promise<void>
@@ -113,16 +129,16 @@ const mockPasswords: Record<string, string> = {
   'marcus.rodriguez@company.com': 'admin2024'
 };
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
+export const useAuthStore = create<AuthState>()((set, get) => ({
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  profileReady: false,
+  profileError: null,
 
       // Initialize auth - check for existing session
       initializeAuth: async () => {
-        set({ isLoading: true })
+        set({ isLoading: true, profileReady: false, profileError: null })
         
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
@@ -148,11 +164,11 @@ export const useAuthStore = create<AuthState>()(
           if (supabaseUser) {
             await get().fetchProfile()
           } else {
-            set({ user: null, isAuthenticated: false })
+            set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
           }
         } catch (error) {
           console.error('Error initializing auth:', error)
-          set({ user: null, isAuthenticated: false })
+          set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
         } finally {
           set({ isLoading: false })
         }
@@ -169,7 +185,7 @@ export const useAuthStore = create<AuthState>()(
           } = await supabase.auth.getSession()
 
           if (!session?.user) {
-            set({ user: null, isAuthenticated: false })
+            set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
             return
           }
 
@@ -180,15 +196,12 @@ export const useAuthStore = create<AuthState>()(
 
           if (result.error || !result.data) {
             console.error('Error fetching profile:', result.error)
-            // If profile doesn't exist yet, create a basic one from auth data
+            // Do not create fallback user - set error state instead
             set({
-              user: {
-                id: supabaseUser.id,
-                name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
-                email: supabaseUser.email || '',
-                role: 'user',
-              },
-              isAuthenticated: true,
+              user: null,
+              isAuthenticated: true, // Still have a valid Supabase session
+              profileReady: false,
+              profileError: 'We could not load your profile. Please sign out and try again.',
             })
             return
           }
@@ -210,9 +223,17 @@ export const useAuthStore = create<AuthState>()(
               organizations,
             },
             isAuthenticated: true,
+            profileReady: true,
+            profileError: null,
           })
         } catch (error) {
           console.error('Error fetching profile:', error)
+          set({
+            user: null,
+            isAuthenticated: true,
+            profileReady: false,
+            profileError: 'An error occurred while loading your profile. Please sign out and try again.',
+          })
         }
       },
 
@@ -260,6 +281,17 @@ export const useAuthStore = create<AuthState>()(
 
           if (data.user) {
             await get().fetchProfile()
+            
+            // Check if profile loaded successfully
+            const { profileReady, user, profileError } = get()
+            
+            if (!profileReady || !user) {
+              set({ isLoading: false })
+              return { 
+                success: false, 
+                error: profileError || 'We could not load your profile. Please try again.' 
+              }
+            }
           }
 
           set({ isLoading: false })
@@ -430,6 +462,8 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: null,
             isAuthenticated: false,
+            profileReady: false,
+            profileError: null,
           })
           return
         }
@@ -442,18 +476,11 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: null,
             isAuthenticated: false,
+            profileReady: false,
+            profileError: null,
           })
         } catch (error) {
           console.error('Error logging out:', error)
         }
       },
-    }),
-    {
-      name: 'auth-storage',
-      // Don't persist isAuthenticated - derive it from Supabase session on load
-      partialize: (state) => ({
-        // Don't persist anything - let Supabase cookies handle it
-      }),
-    }
-  )
-)
+}))

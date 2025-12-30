@@ -7,6 +7,7 @@ import { Sidebar } from './Sidebar';
 import { PageTransition } from './PageTransition';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { useImpersonationStore } from '@/lib/admin-impersonation';
+import { useAuthStore } from '@/lib/auth-store';
 import { AIChatWidget } from '@/components/chat/AIChatWidget';
 
 interface ConditionalLayoutProps {
@@ -16,12 +17,21 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   const { isImpersonating } = useImpersonationStore();
+  const { isAuthenticated, profileReady, isLoading, user } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
+
+  // Track when auth has initialized at least once
+  useEffect(() => {
+    if (!isLoading && (isAuthenticated || !isAuthenticated)) {
+      setHasInitialized(true);
+    }
+  }, [isLoading, isAuthenticated]);
   
   // Hide sidebar and header on authentication pages, pricing/checkout/stripe pages, and admin routes
   const isAuthPage = pathname === '/login' || 
@@ -35,8 +45,38 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
 
   const isAdminRoute = pathname.startsWith('/admin');
 
+  // For pages without Header/Sidebar (auth, pricing, admin), render immediately
   if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute) {
     return <>{children}</>;
+  }
+
+  // For authenticated routes with Header/Sidebar, show loading until:
+  // 1. Auth has initialized AND
+  // 2. Either not authenticated (will redirect) OR profile is ready
+  if (!hasInitialized || isLoading || (isAuthenticated && !profileReady)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+          <span className="text-orange-dark">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated after initialization, show loading screen
+  // This prevents protected page components from mounting during logout
+  // and firing API calls without authentication
+  // ProtectedRoute will handle the redirect to /login
+  if (!isAuthenticated && hasInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+          <span className="text-orange-dark">Redirecting...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
