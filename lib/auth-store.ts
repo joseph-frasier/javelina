@@ -44,6 +44,8 @@ interface AuthState {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
+  profileReady: boolean
+  profileError: string | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   loginWithOAuth: (provider: 'google' | 'github') => Promise<void>
   logout: () => Promise<void>
@@ -119,10 +121,12 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      profileReady: false,
+      profileError: null,
 
       // Initialize auth - check for existing session
       initializeAuth: async () => {
-        set({ isLoading: true })
+        set({ isLoading: true, profileReady: false, profileError: null })
         
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
@@ -148,11 +152,11 @@ export const useAuthStore = create<AuthState>()(
           if (supabaseUser) {
             await get().fetchProfile()
           } else {
-            set({ user: null, isAuthenticated: false })
+            set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
           }
         } catch (error) {
           console.error('Error initializing auth:', error)
-          set({ user: null, isAuthenticated: false })
+          set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
         } finally {
           set({ isLoading: false })
         }
@@ -169,7 +173,7 @@ export const useAuthStore = create<AuthState>()(
           } = await supabase.auth.getSession()
 
           if (!session?.user) {
-            set({ user: null, isAuthenticated: false })
+            set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
             return
           }
 
@@ -180,15 +184,12 @@ export const useAuthStore = create<AuthState>()(
 
           if (result.error || !result.data) {
             console.error('Error fetching profile:', result.error)
-            // If profile doesn't exist yet, create a basic one from auth data
+            // Do not create fallback user - set error state instead
             set({
-              user: {
-                id: supabaseUser.id,
-                name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
-                email: supabaseUser.email || '',
-                role: 'user',
-              },
-              isAuthenticated: true,
+              user: null,
+              isAuthenticated: true, // Still have a valid Supabase session
+              profileReady: false,
+              profileError: 'We could not load your profile. Please sign out and try again.',
             })
             return
           }
@@ -210,9 +211,17 @@ export const useAuthStore = create<AuthState>()(
               organizations,
             },
             isAuthenticated: true,
+            profileReady: true,
+            profileError: null,
           })
         } catch (error) {
           console.error('Error fetching profile:', error)
+          set({
+            user: null,
+            isAuthenticated: true,
+            profileReady: false,
+            profileError: 'An error occurred while loading your profile. Please sign out and try again.',
+          })
         }
       },
 
@@ -260,6 +269,17 @@ export const useAuthStore = create<AuthState>()(
 
           if (data.user) {
             await get().fetchProfile()
+            
+            // Check if profile loaded successfully
+            const { profileReady, user, profileError } = get()
+            
+            if (!profileReady || !user) {
+              set({ isLoading: false })
+              return { 
+                success: false, 
+                error: profileError || 'We could not load your profile. Please try again.' 
+              }
+            }
           }
 
           set({ isLoading: false })
