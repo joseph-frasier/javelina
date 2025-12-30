@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AuditLog, formatRelativeTime } from '@/lib/mock-dns-data';
-import { getChangeSummary } from '@/lib/utils/audit-formatting';
+import { getChangeSummary, isSystemOnlyChange } from '@/lib/utils/audit-formatting';
 import Dropdown from '@/components/ui/Dropdown';
 
 interface AuditTimelineProps {
@@ -17,10 +17,15 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
   // Get unique users
   const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user_email)));
 
-  // Filter logs
+  // Filter logs - exclude system-only changes (e.g., SOA auto-increment)
   const filteredLogs = auditLogs.filter(log => {
+    // Filter by user selection
     if (filterAction !== 'all' && log.action !== filterAction) return false;
     if (filterUser !== 'all' && log.user_email !== filterUser) return false;
+    
+    // Filter out system-only changes (e.g., SOA serial auto-increment)
+    if (isSystemOnlyChange(log.old_data, log.new_data, log.table_name)) return false;
+    
     return true;
   });
 

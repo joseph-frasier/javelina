@@ -123,7 +123,21 @@ const EXCLUDED_FIELDS = new Set([
   'id',
   'created_at',
   'created_by',
-  'zone_id', // Show this only for zone_records
+  'updated_at',
+  'soa_serial', // Auto-increments on zone changes
+  'zone_id', // Show only for zone_records context
+]);
+
+/**
+ * Fields to exclude from inline summary (more aggressive filtering)
+ * These are system fields that aren't meaningful to users
+ */
+const EXCLUDED_FROM_SUMMARY = new Set([
+  ...Array.from(EXCLUDED_FIELDS),
+  'created_by',
+  'user_id',
+  'organization_id',
+  'record_id',
 ]);
 
 /**
@@ -251,6 +265,40 @@ function formatValue(field: string, value: any): string {
 }
 
 /**
+ * Check if an audit log entry is just a system-generated change (e.g., SOA auto-increment)
+ * These should be filtered out from the user-facing audit timeline
+ */
+export function isSystemOnlyChange(
+  oldData: Record<string, any> | null,
+  newData: Record<string, any> | null,
+  tableName: string
+): boolean {
+  // If it's a delete or insert, always show it
+  if (!oldData || !newData) return false;
+  
+  // For zones, check if only system fields changed
+  if (tableName === 'zones') {
+    const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
+    const systemFields = new Set(['soa_serial', 'updated_at']);
+    
+    // Check if any non-system field changed
+    for (const key of allKeys) {
+      if (systemFields.has(key)) continue;
+      
+      // If a non-system field changed, this is a real user change
+      if (oldData[key] !== newData[key]) {
+        return false;
+      }
+    }
+    
+    // Only system fields changed - this is auto-generated
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Get a summary of changes for inline display (Option 2)
  */
 export function getChangeSummary(
@@ -261,7 +309,24 @@ export function getChangeSummary(
 ): string {
   const changes = getChangedFields(oldData, newData, tableName);
   
-  if (changes.length === 0) return 'No changes detected';
+  // Filter out system/metadata fields for the summary
+  const meaningfulChanges = changes.filter(c => !EXCLUDED_FROM_SUMMARY.has(c.field));
+  
+  if (meaningfulChanges.length === 0) {
+    // No meaningful user changes, provide context-aware message
+    if (!newData && oldData) {
+      const name = oldData.name || oldData.type || 'record';
+      return `Deleted ${name}`;
+    }
+    if (!oldData && newData) {
+      const name = newData.name || newData.type || 'record';
+      return `Created ${name}`;
+    }
+    // Only system fields changed (e.g., SOA serial auto-increment)
+    if (tableName === 'zones') return 'Zone metadata updated';
+    if (tableName === 'zone_records') return 'Record metadata updated';
+    return 'System fields updated';
+  }
   
   // For DELETE
   if (!newData && oldData) {
@@ -269,19 +334,24 @@ export function getChangeSummary(
     return `Deleted ${name}`;
   }
   
-  // For INSERT
+  // For INSERT - show the created item's name/type
   if (!oldData && newData) {
-    const name = newData.name || 'record';
+    if (tableName === 'zone_records') {
+      const type = newData.type || '';
+      const name = newData.name || '@';
+      return `Created ${type} record for ${name}`;
+    }
+    const name = newData.name || 'item';
     return `Created ${name}`;
   }
   
-  // For UPDATE - show first few changed fields
-  const summary = changes
+  // For UPDATE - show first few meaningful changed fields
+  const summary = meaningfulChanges
     .slice(0, maxFields)
     .map(c => `${c.fieldName}: ${c.oldFormatted} → ${c.newFormatted}`)
     .join(', ');
   
-  const remaining = changes.length - maxFields;
+  const remaining = meaningfulChanges.length - maxFields;
   if (remaining > 0) {
     return `${summary}, +${remaining} more`;
   }
