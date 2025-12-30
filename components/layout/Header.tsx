@@ -15,7 +15,7 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps = {}) {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, profileReady } = useAuthStore();
   const { general, setTheme } = useSettingsStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -37,13 +37,13 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
     }
   };
 
-  // Get user details from Supabase auth user
-  // Type assertions needed since we're extending the User type with custom properties
-  const userName = (user as any)?.profile?.name || (user as any)?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+  // Get user details - safe fallbacks for logout transition
+  // ConditionalLayout gates initial render, but logout causes brief null state
+  const userName = user?.name || user?.email?.split('@')[0] || 'Unknown';
   const userEmail = user?.email || '';
-  const userRole = (user as any)?.profile?.role || 'user';
+  const userRole = user?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
-  const userAvatarUrl = (user as any)?.profile?.avatar_url || (user as any)?.avatar_url;
+  const userAvatarUrl = user?.avatar_url;
 
   const handleLogout = () => {
     logout();
