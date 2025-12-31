@@ -8,7 +8,9 @@ import { SettingsLayout } from '@/components/layout/SettingsLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { SubscriptionManager } from '@/components/billing/SubscriptionManager';
 import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
+import { EditBillingInfoModal } from '@/components/modals/EditBillingInfoModal';
 import { createClient } from '@/lib/supabase/client';
+import type { Organization } from '@/types/supabase';
 
 export default function OrganizationBillingPage() {
   const router = useRouter();
@@ -21,8 +23,10 @@ export default function OrganizationBillingPage() {
   const addToast = useToastStore((state) => state.addToast);
   
   const [organizationName, setOrganizationName] = useState<string>('');
+  const [organizationData, setOrganizationData] = useState<Organization | null>(null);
   const [currentPlanCode, setCurrentPlanCode] = useState<string>('free');
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showEditBillingModal, setShowEditBillingModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -66,15 +70,16 @@ export default function OrganizationBillingPage() {
 
       setHasAccess(true);
 
-      // Get organization name
+      // Get organization details including billing information
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('name')
+        .select('*')
         .eq('id', orgId)
         .single();
 
       if (org) {
         setOrganizationName(org.name);
+        setOrganizationData(org);
       }
 
       // Fetch current plan
@@ -169,6 +174,24 @@ export default function OrganizationBillingPage() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const handleEditBillingSuccess = async () => {
+    // Refresh organization data after billing info is updated
+    await verifyAccessAndFetchData();
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Check if billing information is missing
+  const isBillingInfoMissing = organizationData && (
+    !organizationData.billing_email ||
+    !organizationData.billing_phone ||
+    !organizationData.billing_address ||
+    !organizationData.billing_city ||
+    !organizationData.billing_state ||
+    !organizationData.billing_zip ||
+    !organizationData.admin_contact_email ||
+    !organizationData.admin_contact_phone
+  );
+
   if (loading || !hasAccess) {
     return (
       <ProtectedRoute>
@@ -230,6 +253,105 @@ export default function OrganizationBillingPage() {
               refreshTrigger={refreshTrigger}
             />
           )}
+
+          {/* Billing Contact Information Section */}
+          <div className="mt-6 bg-white rounded-xl border border-gray-light shadow-sm p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-orange-dark">Billing Contact Information</h3>
+                <p className="text-sm text-gray-slate mt-1">
+                  Contact details for billing and administrative purposes
+                </p>
+              </div>
+              <button
+                onClick={() => setShowEditBillingModal(true)}
+                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+              >
+                Edit Billing Info
+              </button>
+            </div>
+
+            {isBillingInfoMissing && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <svg
+                    className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800">
+                      Billing information incomplete
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      Please complete your billing contact information to ensure uninterrupted service.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Billing Contact */}
+              <div>
+                <h4 className="text-sm font-semibold text-orange-dark mb-3">Billing Contact</h4>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-slate">Email</p>
+                    <p className="text-sm text-orange-dark font-medium">
+                      {organizationData?.billing_email || 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-slate">Phone</p>
+                    <p className="text-sm text-orange-dark font-medium">
+                      {organizationData?.billing_phone || 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-slate">Address</p>
+                    <p className="text-sm text-orange-dark font-medium">
+                      {organizationData?.billing_address ? (
+                        <>
+                          {organizationData.billing_address}<br />
+                          {organizationData.billing_city}, {organizationData.billing_state} {organizationData.billing_zip}
+                        </>
+                      ) : (
+                        'Not set'
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Contact */}
+              <div>
+                <h4 className="text-sm font-semibold text-orange-dark mb-3">Administrative Contact</h4>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-slate">Email</p>
+                    <p className="text-sm text-orange-dark font-medium">
+                      {organizationData?.admin_contact_email || 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-slate">Phone</p>
+                    <p className="text-sm text-orange-dark font-medium">
+                      {organizationData?.admin_contact_phone || 'Not set'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Change Plan Modal */}
@@ -240,6 +362,27 @@ export default function OrganizationBillingPage() {
             currentPlanCode={currentPlanCode}
             orgId={orgId}
             onSuccess={handleChangePlanSuccess}
+          />
+        )}
+
+        {/* Edit Billing Info Modal */}
+        {orgId && organizationData && (
+          <EditBillingInfoModal
+            isOpen={showEditBillingModal}
+            onClose={() => setShowEditBillingModal(false)}
+            organizationId={orgId}
+            organizationName={organizationName}
+            currentData={{
+              billing_phone: organizationData.billing_phone,
+              billing_email: organizationData.billing_email,
+              billing_address: organizationData.billing_address,
+              billing_city: organizationData.billing_city,
+              billing_state: organizationData.billing_state,
+              billing_zip: organizationData.billing_zip,
+              admin_contact_email: organizationData.admin_contact_email,
+              admin_contact_phone: organizationData.admin_contact_phone,
+            }}
+            onSuccess={handleEditBillingSuccess}
           />
         )}
       </SettingsLayout>

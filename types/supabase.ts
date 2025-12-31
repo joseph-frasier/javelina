@@ -86,6 +86,14 @@ export interface Database {
           subscription_status: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
           trial_ends_at: string | null
           current_period_end: string | null
+          billing_phone: string | null
+          billing_email: string | null
+          billing_address: string | null
+          billing_city: string | null
+          billing_state: string | null
+          billing_zip: string | null
+          admin_contact_email: string | null
+          admin_contact_phone: string | null
           created_at: string
           updated_at: string
         }
@@ -97,6 +105,14 @@ export interface Database {
           subscription_status?: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
           trial_ends_at?: string | null
           current_period_end?: string | null
+          billing_phone?: string | null
+          billing_email?: string | null
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_state?: string | null
+          billing_zip?: string | null
+          admin_contact_email?: string | null
+          admin_contact_phone?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -108,6 +124,14 @@ export interface Database {
           subscription_status?: 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid'
           trial_ends_at?: string | null
           current_period_end?: string | null
+          billing_phone?: string | null
+          billing_email?: string | null
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_state?: string | null
+          billing_zip?: string | null
+          admin_contact_email?: string | null
+          admin_contact_phone?: string | null
           created_at?: string
           updated_at?: string
         }
