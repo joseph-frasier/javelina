@@ -277,14 +277,36 @@ export const organizationsApi = {
   /**
    * Create a new organization
    */
-  create: (data: { name: string; description?: string }) => {
+  create: (data: { 
+    name: string; 
+    description?: string;
+    billing_phone?: string;
+    billing_email?: string;
+    billing_address?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_zip?: string;
+    admin_contact_email?: string;
+    admin_contact_phone?: string;
+  }) => {
     return apiClient.post('/organizations', data);
   },
 
   /**
    * Update an organization
    */
-  update: (id: string, data: { name: string; description?: string }) => {
+  update: (id: string, data: { 
+    name?: string; 
+    description?: string;
+    billing_phone?: string;
+    billing_email?: string;
+    billing_address?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_zip?: string;
+    admin_contact_email?: string;
+    admin_contact_phone?: string;
+  }) => {
     return apiClient.put(`/organizations/${id}`, data);
   },
 
