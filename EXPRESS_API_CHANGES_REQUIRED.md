@@ -737,6 +737,96 @@ if (recordData.type === 'NS') {
 - NS record: `subdomain NS ns1.example.com` → Requires `ns1 A 192.0.2.1` to exist first
 - NS record: `subdomain NS ns1.otherdomain.com` → No glue record required (external nameserver)
 
+### 10. AAAA (IPv6) Record Validation (December 2025)
+
+The AAAA record validation must be updated to use robust IPv6 parsing instead of regex-based validation.
+
+#### A. Validation Source of Truth
+
+**Backend (Express) is authoritative**: All writes must pass backend validation.
+
+**Frontend (Next.js)**: Mirrors backend rules for immediate UX feedback, but never replaces backend enforcement.
+
+#### B. Implementation Using net.isIP()
+
+Add IPv6 validation helper function using Node's built-in `net.isIP()`:
+
+```javascript
+/**
+ * Validates IPv6 address format using Node's built-in net.isIP
+ * 
+ * Test vectors (shared with frontend):
+ * Valid:
+ *   - 2001:0db8:85a3:0000:0000:8a2e:0370:7334 (full form)
+ *   - 2001:db8::1 (compressed)
+ *   - ::1 (loopback)
+ *   - :: (all zeros)
+ *   - 2001:db8::192.0.2.1 (IPv4-embedded)
+ *   - ::ffff:192.0.2.1 (IPv4-mapped)
+ *   - 2001:DB8::1 (uppercase hex)
+ * 
+ * Invalid:
+ *   - 192.0.2.1 (IPv4 only)
+ *   - 2001:db8:::1 (multiple ::)
+ *   - 2001:db8::zzzz (invalid hextet)
+ *   - 2001:db8::1::1 (multiple :: groups)
+ *   - 2001:db8:1:2:3:4:5:6:7 (>8 groups)
+ *   - example.com (hostname)
+ */
+function isValidIPv6(ip) {
+  const net = require('net');
+  const trimmed = ip.trim();
+  return net.isIP(trimmed) === 6;
+}
+```
+
+#### C. Apply to DNS Record Endpoints
+
+**Location**: DNS record create/update endpoints
+- `POST /api/dns-records`
+- `PUT /api/dns-records/:id`
+
+Add validation in the type-specific validation section:
+
+```javascript
+if (recordData.type === 'AAAA') {
+  if (!isValidIPv6(recordData.value)) {
+    return res.status(400).json({
+      error: 'Enter a valid IPv6 address'
+    });
+  }
+}
+```
+
+#### D. Input Handling
+
+- **Trim whitespace**: Always trim before validation
+- **Accept uppercase hex**: Both `2001:db8::1` and `2001:DB8::1` are valid
+
+#### E. Acceptance Rules
+
+**Accept**:
+- Full IPv6: `2001:0db8:85a3:0000:0000:8a2e:0370:7334`
+- Compressed with `::`: `2001:db8::1`, `::1`, `::`
+- Suppressed leading zeros: `2001:db8:0:0:0:0:0:1`
+- IPv4-embedded: `2001:db8::192.0.2.1`, `::ffff:192.0.2.1`
+- Uppercase hex: `2001:DB8::1`
+
+**Reject**:
+- IPv4-only: `192.0.2.1`
+- Hostnames: `example.com`, `mail.example.com.`
+- Invalid hextets: `2001:db8::zzzz`
+- Multiple `::`: `2001:db8::1::1`
+- More than 8 groups: `2001:db8:1:2:3:4:5:6:7`
+- Leading/trailing junk: `2001:db8::1x`, `x2001:db8::1`
+
+#### Why This Is Important
+
+- **Regex limitations**: IPv6 regex patterns are notoriously complex and error-prone
+- **Consistency**: Using `net.isIP()` ensures the same behavior as Node.js itself
+- **Comprehensive**: Handles all IPv6 formats including compressed, IPv4-embedded, and edge cases
+- **Frontend alignment**: Frontend uses `ipaddr.js` parser which has identical acceptance rules
+
 ## Testing Checklist
 
 After implementing these changes, test the following scenarios:
@@ -750,6 +840,20 @@ After implementing these changes, test the following scenarios:
 - [ ] Create record with multiple labels: `deep.nested.subdomain` → Should succeed
 - [ ] Reject name exceeding 253 characters → Should fail
 - [ ] Reject name with any label exceeding 63 characters → Should fail
+
+### AAAA Record Validation (New)
+- [ ] Create AAAA with full IPv6: `2001:0db8:85a3:0000:0000:8a2e:0370:7334` → Should succeed
+- [ ] Create AAAA with compressed: `2001:db8::1` → Should succeed
+- [ ] Create AAAA with loopback: `::1` → Should succeed
+- [ ] Create AAAA with all zeros: `::` → Should succeed
+- [ ] Create AAAA with IPv4-embedded: `2001:db8::192.0.2.1` → Should succeed
+- [ ] Create AAAA with IPv4-mapped: `::ffff:192.0.2.1` → Should succeed
+- [ ] Create AAAA with uppercase: `2001:DB8::1` → Should succeed
+- [ ] Reject AAAA with IPv4 only: `192.0.2.1` → Should fail
+- [ ] Reject AAAA with multiple `::`: `2001:db8:::1` → Should fail
+- [ ] Reject AAAA with invalid hextet: `2001:db8::zzzz` → Should fail
+- [ ] Reject AAAA with hostname: `example.com` → Should fail
+- [ ] Reject AAAA with >8 groups: `2001:db8:1:2:3:4:5:6:7` → Should fail
 
 ### TTL Consistency Validation (New)
 - [ ] Create first A record: `www A 192.0.2.1 TTL=3600` → Should succeed
@@ -840,6 +944,643 @@ After implementing these changes, test the following scenarios:
 - [ ] Reject name with empty label (e.g., `sub..domain`) → Should fail
 - [ ] Reject name exceeding 253 characters → Should fail
 - [ ] Reject name with any label exceeding 63 characters → Should fail
+
+### 11. Audit Logs API Endpoints (December 2025)
+
+The application was making direct Supabase PostgREST calls for audit logs, which were failing with 400 errors due to missing foreign key relationships. All audit log queries must now go through the Express API.
+
+#### A. Zone Audit Logs Endpoint
+
+**Create new endpoint:**
+```
+GET /api/zones/:id/audit-logs
+```
+
+**Purpose**: Fetch audit logs for a specific zone with user profile information enriched server-side.
+
+**IMPORTANT**: This endpoint should return audit logs for **BOTH** the zone itself (zones table) **AND** its DNS records (zone_records table). This gives users a complete history of all changes within that zone. The frontend `AuditTimeline` component checks the `table_name` field to display appropriate labels ("updated zone" vs "updated a record").
+
+**Implementation:**
+
+```javascript
+const express = require('express');
+const router = express.Router();
+
+/**
+ * Get audit logs for a zone
+ * Returns logs for BOTH the zone AND its records
+ * Performs server-side join with profiles table
+ */
+router.get('/zones/:id/audit-logs', authenticateToken, async (req, res) => {
+  try {
+    const { id: zoneId } = req.params;
+    
+    // Verify user has access to this zone
+    const { data: zone, error: zoneError } = await supabase
+      .from('zones')
+      .select('id, organization_id')
+      .eq('id', zoneId)
+      .single();
+    
+    if (zoneError || !zone) {
+      return res.status(404).json({ error: 'Zone not found' });
+    }
+    
+    // Check user has access to the organization
+    const hasAccess = await checkOrganizationAccess(req.user.id, zone.organization_id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Get all record IDs for this zone
+    const { data: records } = await supabase
+      .from('zone_records')
+      .select('id')
+      .eq('zone_id', zoneId);
+    
+    const recordIds = records?.map(r => r.id) || [];
+    
+    // Fetch audit logs for BOTH zone and its records
+    // Build the query to get logs where:
+    // 1. table_name='zones' AND record_id=zoneId (zone changes)
+    // 2. table_name='zone_records' AND record_id IN recordIds (record changes)
+    const { data: auditLogs, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .or(`and(table_name.eq.zones,record_id.eq.${zoneId}),and(table_name.eq.zone_records,record_id.in.(${recordIds.join(',')}))`)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    
+    // Fetch user profiles for audit logs (do join manually)
+    const userIds = [...new Set(auditLogs.map(log => log.user_id).filter(Boolean))];
+    
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, name, email')
+      .in('id', userIds);
+    
+    // Create a map for quick lookup
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    
+    // Combine data
+    const enrichedLogs = auditLogs.map(log => ({
+      id: log.id,
+      table_name: log.table_name,
+      record_id: log.record_id,
+      action: log.action,
+      old_data: log.old_data,
+      new_data: log.new_data,
+      user_id: log.user_id,
+      user_name: profileMap.get(log.user_id)?.name || 'Unknown User',
+      user_email: profileMap.get(log.user_id)?.email || 'unknown@example.com',
+      created_at: log.created_at,
+      ip_address: log.metadata?.ip_address,
+      user_agent: log.metadata?.user_agent,
+    }));
+    
+    return res.json({ data: enrichedLogs });
+  } catch (error) {
+    console.error('Error fetching zone audit logs:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+**Response format:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "table_name": "zones",
+      "record_id": "zone-uuid",
+      "action": "UPDATE",
+      "old_data": {"name": "old.com", "description": "Old description"},
+      "new_data": {"name": "new.com", "description": "New description"},
+      "user_id": "user-uuid",
+      "user_name": "John Doe",
+      "user_email": "john@example.com",
+      "created_at": "2024-01-01T00:00:00Z",
+      "ip_address": "192.0.2.1",
+      "user_agent": "Mozilla/5.0..."
+    },
+    {
+      "id": "uuid",
+      "table_name": "zone_records",
+      "record_id": "record-uuid",
+      "action": "INSERT",
+      "old_data": null,
+      "new_data": {"name": "www", "type": "A", "value": "192.0.2.100"},
+      "user_id": "user-uuid",
+      "user_name": "John Doe",
+      "user_email": "john@example.com",
+      "created_at": "2024-01-01T00:00:00Z",
+      "ip_address": "192.0.2.1",
+      "user_agent": "Mozilla/5.0..."
+    }
+  ]
+}
+```
+
+**Note**: The `table_name` field will be either `"zones"` (for zone changes) or `"zone_records"` (for DNS record changes). The frontend uses this field to display appropriate labels in the audit timeline.
+```
+
+#### B. Organization Audit Logs Endpoint
+
+**Create new endpoint:**
+```
+GET /api/organizations/:id/audit-logs?limit=10
+```
+
+**Purpose**: Fetch audit logs for a specific organization with user profile information.
+
+**Implementation:**
+
+```javascript
+/**
+ * Get audit logs for an organization
+ * Performs server-side join with profiles table
+ */
+router.get('/organizations/:id/audit-logs', authenticateToken, async (req, res) => {
+  try {
+    const { id: organizationId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Check user has access to the organization
+    const hasAccess = await checkOrganizationAccess(req.user.id, organizationId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Fetch audit logs
+    const { data: auditLogs, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('table_name', 'organizations')
+      .eq('record_id', organizationId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    
+    // Fetch user profiles (same manual join as zone audit logs)
+    const userIds = [...new Set(auditLogs.map(log => log.user_id).filter(Boolean))];
+    
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, name, email')
+      .in('id', userIds);
+    
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    
+    // Combine data
+    const enrichedLogs = auditLogs.map(log => ({
+      ...log,
+      profiles: profileMap.get(log.user_id) || { name: 'Unknown User', email: 'unknown@example.com' }
+    }));
+    
+    return res.json({ data: enrichedLogs });
+  } catch (error) {
+    console.error('Error fetching organization audit logs:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+#### C. Organization Activity Logs Endpoint
+
+**Create new endpoint:**
+```
+GET /api/organizations/:id/activity?limit=10
+```
+
+**Purpose**: Get comprehensive activity logs for an organization (calls RPC function if available).
+
+**Implementation:**
+
+```javascript
+/**
+ * Get activity logs for an organization
+ * Calls the get_organization_activity RPC function
+ */
+router.get('/organizations/:id/activity', authenticateToken, async (req, res) => {
+  try {
+    const { id: organizationId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Check user has access to the organization
+    const hasAccess = await checkOrganizationAccess(req.user.id, organizationId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Call RPC function
+    const { data, error } = await supabase.rpc('get_organization_activity', {
+      org_id: organizationId,
+      log_limit: limit
+    });
+    
+    if (error) {
+      // If RPC doesn't exist, fall back to organization audit logs
+      console.warn('get_organization_activity RPC not found, falling back to audit logs');
+      // Re-route to audit logs endpoint internally or return empty
+      return res.json({ data: [] });
+    }
+    
+    return res.json({ data: data || [] });
+  } catch (error) {
+    console.error('Error fetching organization activity logs:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+#### D. Update Existing Zones Endpoint
+
+**CRITICAL BUG FIX: `GET /api/zones/:id` Query Issue**
+
+The current endpoint has a bug where the `organization_members!inner` join causes the query to fail and return 404 even when the zone exists.
+
+**Current (BROKEN) Implementation:**
+```typescript
+const { data: zone, error } = await supabaseAdmin
+  .from("zones")
+  .select(`
+    id,
+    organization_id,
+    name,
+    description,
+    verification_status,
+    last_verified_at,
+    metadata,
+    soa_serial,
+    live,
+    admin_email,
+    negative_caching_ttl,
+    error,
+    created_at,
+    updated_at,
+    created_by,
+    deleted_at,
+    organizations(
+      id,
+      name,
+      organization_members!inner(user_id, role)  // ← BUG: !inner causes query to fail
+    )
+  `)
+  .eq("id", id)
+  .single();
+```
+
+**Problem:** The `!inner` join requires a matching `organization_members` record. If the join fails (even temporarily), the entire query returns no results, causing a 404 "Zone not found" error before the membership check can run.
+
+**Fixed Implementation:**
+```typescript
+export const getZone = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+
+  if (!validateUUID(id)) {
+    throw new ValidationError("Invalid zone ID");
+  }
+
+  // First, fetch the zone without the problematic inner join
+  const { data: zone, error } = await supabaseAdmin
+    .from("zones")
+    .select(`
+      id,
+      organization_id,
+      name,
+      description,
+      verification_status,
+      last_verified_at,
+      metadata,
+      records_count,
+      soa_serial,
+      live,
+      admin_email,
+      negative_caching_ttl,
+      error,
+      created_at,
+      updated_at,
+      created_by,
+      deleted_at,
+      organizations(
+        id,
+        name
+      )
+    `)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .single();
+
+  if (error || !zone) {
+    throw new NotFoundError("Zone not found");
+  }
+
+  // Check membership separately (more reliable)
+  const { data: membership } = await supabaseAdmin
+    .from("organization_members")
+    .select("user_id, role")
+    .eq("organization_id", zone.organization_id)
+    .eq("user_id", userId)
+    .single();
+
+  if (!membership) {
+    throw new ForbiddenError("You do not have access to this zone");
+  }
+
+  sendSuccess(res, zone);
+};
+```
+
+**Required Fields:** The endpoint must return these fields for the frontend:
+- `verification_status`
+- `last_verified_at`
+- `metadata`
+- `records_count` (if available, otherwise calculate from zone_records)
+
+#### Why This Is Important
+
+1. **Security**: Direct Supabase calls expose database structure to client
+2. **Foreign Key Issue**: The `audit_logs.user_id` → `profiles.id` foreign key doesn't exist, causing PostgREST joins to fail
+3. **Consistency**: All data access should go through Express API for centralized auth/validation
+4. **Performance**: Server-side joins are more efficient than client-side joins
+5. **Reliability**: Eliminates 400 errors from failed direct Supabase queries
+
+#### Frontend Changes Completed
+
+✅ The following frontend files have been updated to use Express API:
+- `lib/api/dns.ts` - Zone summary and audit logs now use Express API
+- `lib/api/audit.ts` - Organization audit/activity logs now use Express API
+- `lib/api-client.ts` - Added `auditLogs()` and `activityLogs()` methods
+
+---
+
+### 12. Audit Logging - Capturing User Information (January 2025)
+
+#### Problem
+
+Database triggers use `auth.uid()` to capture the user who made a change. However, when operations go through the Express API, the backend uses a **service role key** to execute database operations. In this context, `auth.uid()` returns NULL, resulting in audit logs showing "Unknown User" instead of the actual authenticated user.
+
+#### Root Cause
+
+```javascript
+// Express backend uses service role key
+const { data, error } = await supabase
+  .from('zones')
+  .update({ name: 'example.com' })
+  .eq('id', zoneId);
+
+// Database trigger fires
+// auth.uid() returns NULL because there's no user session at the database level
+// user_id column in audit_logs becomes NULL
+```
+
+The JWT token is validated at the Express API layer (`req.user.id`), but the database doesn't know about this user context.
+
+#### Solution
+
+The Express backend must set a session variable before any INSERT/UPDATE/DELETE operation so the database trigger can read it.
+
+#### Implementation
+
+##### A. Call set_user_context() Before All Mutations
+
+**Before any database mutation, call the `set_user_context()` function:**
+
+```javascript
+// Example: Update zone endpoint
+router.put('/zones/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id: zoneId } = req.params;
+    const { name, description } = req.body;
+    
+    // STEP 1: Set user context for audit logging
+    await supabase.rpc('set_user_context', { user_id: req.user.id });
+    
+    // STEP 2: Perform the database operation
+    const { data, error } = await supabase
+      .from('zones')
+      .update({ name, description })
+      .eq('id', zoneId)
+      .select()
+      .single();
+    
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    // The audit log trigger automatically captured the user_id from the session variable
+    return res.json({ data });
+  } catch (error) {
+    console.error('Error updating zone:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+##### B. Affected Endpoints
+
+**ALL endpoints that create, update, or delete the following resources must set user context:**
+
+**Organizations:**
+- `POST /api/organizations` - Create organization
+- `PUT /api/organizations/:id` - Update organization  
+- `DELETE /api/organizations/:id` - Delete organization
+
+**Zones:**
+- `POST /api/zones` - Create zone
+- `PUT /api/zones/:id` - Update zone
+- `DELETE /api/zones/:id` - Delete zone
+
+**Zone Records (DNS Records):**
+- `POST /api/dns-records` - Create DNS record
+- `PUT /api/dns-records/:id` - Update DNS record
+- `DELETE /api/dns-records/:id` - Delete DNS record
+
+##### C. Implementation Approach - PostgreSQL Functions (REQUIRED)
+
+**CRITICAL:** The backend MUST use the PostgreSQL functions defined in migration `20251230000002_audit_logging_functions.sql` for all mutations. These functions wrap the mutations and ensure `user_id` is captured correctly in audit logs.
+
+**Why This Approach:**
+- ✅ Guarantees user_id capture (single transaction/connection)
+- ✅ Works reliably with service role keys
+- ✅ No connection pooling issues
+- ✅ Industry standard pattern for audit logging
+
+**DO NOT** use direct `INSERT`/`UPDATE`/`DELETE` statements or Supabase's query builder for these tables when using the service role key.
+
+##### D. Database Function Details
+
+The migration `20251230000002_audit_logging_functions.sql` provides these functions:
+
+**Zones:**
+- `create_zone_with_audit(p_user_id, p_name, p_organization_id, p_description, p_admin_email, p_negative_caching_ttl)` → returns zones
+- `update_zone_with_audit(p_user_id, p_zone_id, p_name, p_description, p_admin_email, p_negative_caching_ttl, p_live)` → returns zones
+- `delete_zone_with_audit(p_user_id, p_zone_id)` → returns zones (soft delete)
+
+**Zone Records:**
+- `create_zone_record_with_audit(p_user_id, p_zone_id, p_name, p_type, p_value, p_ttl, p_comment)` → returns zone_records
+- `update_zone_record_with_audit(p_user_id, p_record_id, p_name, p_type, p_value, p_ttl, p_comment)` → returns zone_records
+- `delete_zone_record_with_audit(p_user_id, p_record_id)` → returns zone_records
+
+**Organizations:**
+- `create_organization_with_audit(p_user_id, p_name, p_description, p_slug, p_owner_id)` → returns organizations
+- `update_organization_with_audit(p_user_id, p_org_id, p_name, p_description, p_slug, p_logo_url, p_settings, p_is_active)` → returns organizations
+- `delete_organization_with_audit(p_user_id, p_org_id)` → returns organizations (soft delete)
+
+Each function internally:
+1. Sets `app.current_user_id` session variable
+2. Performs the mutation
+3. Returns the affected record
+
+The `handle_audit_log()` trigger reads from this session variable:
+
+```sql
+user_id = coalesce(
+  nullif(current_setting('app.current_user_id', true), '')::uuid,  -- Session variable
+  auth.uid()  -- Fallback for direct operations
+)
+```
+
+##### E. Backend Implementation Examples
+
+**Example 1: Create Zone**
+
+```javascript
+// INCORRECT - DO NOT USE
+const { data, error } = await supabaseAdmin
+  .from('zones')
+  .insert({ name: 'example.com', organization_id: orgId })
+  .select()
+  .single();
+
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('create_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_name: 'example.com',
+    p_organization_id: orgId,
+    p_description: 'My zone',
+    p_admin_email: 'admin@example.com',
+    p_negative_caching_ttl: 3600
+  });
+```
+
+**Example 2: Update Zone**
+
+```javascript
+// INCORRECT - DO NOT USE
+const { data, error } = await supabaseAdmin
+  .from('zones')
+  .update({ name: 'updated.com' })
+  .eq('id', zoneId)
+  .select()
+  .single();
+
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('update_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_zone_id: zoneId,
+    p_name: 'updated.com',
+    // Other fields are optional - only pass what you want to update
+  });
+```
+
+**Example 3: Create DNS Record**
+
+```javascript
+// INCORRECT - DO NOT USE
+const { data, error } = await supabaseAdmin
+  .from('zone_records')
+  .insert({
+    zone_id: zoneId,
+    name: 'www',
+    type: 'A',
+    value: '192.0.2.1',
+    ttl: 3600
+  })
+  .select()
+  .single();
+
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('create_zone_record_with_audit', {
+    p_user_id: req.user.id,
+    p_zone_id: zoneId,
+    p_name: 'www',
+    p_type: 'A',
+    p_value: '192.0.2.1',
+    p_ttl: 3600,
+    p_comment: 'Web server'
+  });
+```
+
+**Example 4: Update DNS Record**
+
+```javascript
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('update_zone_record_with_audit', {
+    p_user_id: req.user.id,
+    p_record_id: recordId,
+    p_value: '192.0.2.2',
+    // Only pass fields you want to update
+  });
+```
+
+**Example 5: Delete Zone (Soft Delete)**
+
+```javascript
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('delete_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_zone_id: zoneId
+  });
+```
+
+**Example 6: Delete DNS Record (Hard Delete)**
+
+```javascript
+// CORRECT - Use the PostgreSQL function
+const { data, error } = await supabaseAdmin
+  .rpc('delete_zone_record_with_audit', {
+    p_user_id: req.user.id,
+    p_record_id: recordId
+  });
+```
+
+##### F. Error Handling
+
+```javascript
+const { data, error } = await supabaseAdmin
+  .rpc('create_zone_with_audit', {
+    p_user_id: req.user.id,
+    p_name: name,
+    p_organization_id: orgId
+  });
+
+if (error) {
+  console.error('Failed to create zone:', error);
+  throw new Error(`Failed to create zone: ${error.message}`);
+}
+
+return data; // Returns the created zone
+```
+
+---
 
 ## Migration Notes
 

@@ -11,51 +11,77 @@ export interface AuditLog {
   new_data: any
   user_id: string | null
   created_at: string
+  profiles?: { name?: string; email?: string }
 }
 
 /**
  * Get recent audit logs for an organization
+ * Routes through Express API for proper authorization
  */
-export async function getOrganizationAuditLogs(organizationId: string, limit: number = 10) {
-  const supabase = await createClient()
-  
-  const { data, error } = await supabase
-    .from('audit_logs')
-    .select(`
-      *,
-      profiles(name, email)
-    `)
-    .eq('table_name', 'organizations')
-    .eq('record_id', organizationId)
-    .order('created_at', { ascending: false })
-    .limit(limit)
-  
-  if (error) {
-    // Silently fail and return empty array if audit logs aren't available yet
-    return []
+export async function getOrganizationAuditLogs(organizationId: string, limit: number = 10): Promise<AuditLog[]> {
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return [];
+    }
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations/${organizationId}/audit-logs?limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const result = await response.json();
+    return result.data || result || [];
+  } catch (error) {
+    console.error('Error fetching organization audit logs:', error);
+    return [];
   }
-  
-  return data || []
 }
 
 /**
  * Get recent audit logs for environments and zones in an organization
+ * Routes through Express API for proper authorization
  */
-export async function getOrganizationActivityLogs(organizationId: string, limit: number = 10) {
-  const supabase = await createClient()
-  
-  // Get all audit logs related to this organization's resources
-  const { data, error } = await supabase.rpc('get_organization_activity', {
-    org_id: organizationId,
-    log_limit: limit
-  })
-  
-  // If the RPC function doesn't exist yet, fall back to fetching org logs only
-  if (error) {
-    return getOrganizationAuditLogs(organizationId, limit)
+export async function getOrganizationActivityLogs(organizationId: string, limit: number = 10): Promise<AuditLog[]> {
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return [];
+    }
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations/${organizationId}/activity?limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      // Fallback to audit logs if activity endpoint not available
+      return getOrganizationAuditLogs(organizationId, limit);
+    }
+
+    const result = await response.json();
+    return result.data || result || [];
+  } catch (error) {
+    console.error('Error fetching organization activity logs:', error);
+    // Fallback to audit logs on error
+    return getOrganizationAuditLogs(organizationId, limit);
   }
-  
-  return data || []
 }
 
 /**

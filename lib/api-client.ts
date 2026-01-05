@@ -277,14 +277,36 @@ export const organizationsApi = {
   /**
    * Create a new organization
    */
-  create: (data: { name: string; description?: string }) => {
+  create: (data: { 
+    name: string; 
+    description?: string;
+    billing_phone?: string;
+    billing_email?: string;
+    billing_address?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_zip?: string;
+    admin_contact_email?: string;
+    admin_contact_phone?: string;
+  }) => {
     return apiClient.post('/organizations', data);
   },
 
   /**
    * Update an organization
    */
-  update: (id: string, data: { name: string; description?: string }) => {
+  update: (id: string, data: { 
+    name?: string; 
+    description?: string;
+    billing_phone?: string;
+    billing_email?: string;
+    billing_address?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_zip?: string;
+    admin_contact_email?: string;
+    admin_contact_phone?: string;
+  }) => {
     return apiClient.put(`/organizations/${id}`, data);
   },
 
@@ -321,6 +343,20 @@ export const organizationsApi = {
    */
   removeMember: (id: string, userId: string) => {
     return apiClient.delete(`/organizations/${id}/members/${userId}`);
+  },
+
+  /**
+   * Get audit logs for an organization
+   */
+  auditLogs: (id: string, limit: number = 10) => {
+    return apiClient.get(`/organizations/${id}/audit-logs?limit=${limit}`);
+  },
+
+  /**
+   * Get activity logs for an organization
+   */
+  activityLogs: (id: string, limit: number = 10) => {
+    return apiClient.get(`/organizations/${id}/activity?limit=${limit}`);
   },
 };
 
@@ -366,6 +402,13 @@ export const zonesApi = {
    */
   delete: (id: string) => {
     return apiClient.delete(`/zones/${id}`);
+  },
+
+  /**
+   * Get audit logs for a zone
+   */
+  auditLogs: (id: string) => {
+    return apiClient.get(`/zones/${id}/audit-logs`);
   },
 };
 

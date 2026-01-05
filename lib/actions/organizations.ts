@@ -7,7 +7,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function createOrganization(formData: { 
   name: string
-  description?: string 
+  description?: string
+  billing_phone?: string
+  billing_email?: string
+  billing_address?: string
+  billing_city?: string
+  billing_state?: string
+  billing_zip?: string
+  admin_contact_email?: string
+  admin_contact_phone?: string
 }) {
   try {
     // Get session from server-side Supabase client (uses cookies)
@@ -27,7 +35,15 @@ export async function createOrganization(formData: {
       },
       body: JSON.stringify({
         name: formData.name,
-        description: formData.description
+        description: formData.description,
+        billing_phone: formData.billing_phone,
+        billing_email: formData.billing_email,
+        billing_address: formData.billing_address,
+        billing_city: formData.billing_city,
+        billing_state: formData.billing_state,
+        billing_zip: formData.billing_zip,
+        admin_contact_email: formData.admin_contact_email,
+        admin_contact_phone: formData.admin_contact_phone,
       }),
     });
 
@@ -48,7 +64,18 @@ export async function createOrganization(formData: {
 
 export async function updateOrganization(
   id: string, 
-  formData: { name: string; description?: string }
+  formData: { 
+    name?: string; 
+    description?: string;
+    billing_phone?: string;
+    billing_email?: string;
+    billing_address?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_zip?: string;
+    admin_contact_email?: string;
+    admin_contact_phone?: string;
+  }
 ) {
   try {
     // Get session from server-side Supabase client (uses cookies)
@@ -68,7 +95,15 @@ export async function updateOrganization(
       },
       body: JSON.stringify({
         name: formData.name,
-        description: formData.description
+        description: formData.description,
+        billing_phone: formData.billing_phone,
+        billing_email: formData.billing_email,
+        billing_address: formData.billing_address,
+        billing_city: formData.billing_city,
+        billing_state: formData.billing_state,
+        billing_zip: formData.billing_zip,
+        admin_contact_email: formData.admin_contact_email,
+        admin_contact_phone: formData.admin_contact_phone,
       }),
     });
 

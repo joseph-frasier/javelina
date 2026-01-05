@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AuditLog, formatRelativeTime } from '@/lib/mock-dns-data';
+import { getChangeSummary, isSystemOnlyChange } from '@/lib/utils/audit-formatting';
 import Dropdown from '@/components/ui/Dropdown';
 
 interface AuditTimelineProps {
@@ -16,10 +17,15 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
   // Get unique users
   const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user_email)));
 
-  // Filter logs
+  // Filter logs - exclude system-only changes (e.g., SOA auto-increment)
   const filteredLogs = auditLogs.filter(log => {
+    // Filter by user selection
     if (filterAction !== 'all' && log.action !== filterAction) return false;
     if (filterUser !== 'all' && log.user_email !== filterUser) return false;
+    
+    // Filter out system-only changes (e.g., SOA serial auto-increment)
+    if (isSystemOnlyChange(log.old_data, log.new_data, log.table_name)) return false;
+    
     return true;
   });
 
@@ -135,9 +141,36 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                     <p className="text-sm text-gray-slate">
                       <span className="font-medium text-orange-dark">{log.user_name}</span>
                       {' '}
-                      {log.action === 'INSERT' && 'created a record'}
-                      {log.action === 'UPDATE' && 'updated a record'}
-                      {log.action === 'DELETE' && 'deleted a record'}
+                      {/* Display different text based on table_name */}
+                      {log.table_name === 'zones' && (
+                        <>
+                          {log.action === 'INSERT' && 'created the zone'}
+                          {log.action === 'UPDATE' && 'updated the zone'}
+                          {log.action === 'DELETE' && 'deleted the zone'}
+                        </>
+                      )}
+                      {log.table_name === 'zone_records' && (
+                        <>
+                          {log.action === 'INSERT' && 'created a record'}
+                          {log.action === 'UPDATE' && 'updated a record'}
+                          {log.action === 'DELETE' && 'deleted a record'}
+                        </>
+                      )}
+                      {log.table_name === 'organizations' && (
+                        <>
+                          {log.action === 'INSERT' && 'created the organization'}
+                          {log.action === 'UPDATE' && 'updated the organization'}
+                          {log.action === 'DELETE' && 'deleted the organization'}
+                        </>
+                      )}
+                      {/* Fallback for other table types */}
+                      {!['zones', 'zone_records', 'organizations'].includes(log.table_name) && (
+                        <>
+                          {log.action === 'INSERT' && `created ${log.table_name}`}
+                          {log.action === 'UPDATE' && `updated ${log.table_name}`}
+                          {log.action === 'DELETE' && `deleted ${log.table_name}`}
+                        </>
+                      )}
                     </p>
                     <p className="text-xs text-gray-slate mt-1">
                       {log.user_email}
@@ -154,18 +187,10 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                   </button>
                 </div>
 
-                {/* Quick preview of changes */}
-                {log.action === 'UPDATE' && log.old_data && log.new_data && (
-                  <div className="mt-2 text-xs font-mono text-gray-slate p-2 rounded">
-                    {Object.keys(log.new_data).filter(key => 
-                      JSON.stringify(log.old_data[key]) !== JSON.stringify(log.new_data[key])
-                    ).map(key => (
-                      <div key={key} className="truncate">
-                        <span className="text-red-600">- {key}: {JSON.stringify(log.old_data[key])}</span>
-                        <br />
-                        <span className="text-green-600">+ {key}: {JSON.stringify(log.new_data[key])}</span>
-                      </div>
-                    )).slice(0, 2)}
+                {/* Quick preview of changes - Now using formatted summary (Option 2) */}
+                {(log.action === 'UPDATE' || log.action === 'INSERT' || log.action === 'DELETE') && (
+                  <div className="mt-2 text-xs text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded px-2 py-1.5">
+                    {getChangeSummary(log.old_data, log.new_data, log.table_name, 2)}
                   </div>
                 )}
               </div>

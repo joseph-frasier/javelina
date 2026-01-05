@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { getChangedFields, formatTimestamp, type ChangedField } from '@/lib/utils/audit-formatting';
 
 interface DiffViewerProps {
   oldData: any;
   newData: any;
+  tableName?: string;
   onClose: () => void;
 }
 
-export function DiffViewer({ oldData, newData, onClose }: DiffViewerProps) {
-  const [mode, setMode] = useState<'side-by-side' | 'unified'>('side-by-side');
+export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClose }: DiffViewerProps) {
+  const [mode, setMode] = useState<'formatted' | 'raw'>('formatted');
   const [copied, setCopied] = useState(false);
 
   const formatJSON = (data: any) => {
@@ -23,71 +25,55 @@ export function DiffViewer({ oldData, newData, onClose }: DiffViewerProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const getChanges = () => {
-    if (!oldData && newData) return { type: 'added', keys: Object.keys(newData) };
-    if (oldData && !newData) return { type: 'deleted', keys: Object.keys(oldData) };
-    if (!oldData || !newData) return { type: 'none', keys: [] };
-
-    const changes: { key: string; type: 'added' | 'modified' | 'deleted' }[] = [];
-    const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
-
-    allKeys.forEach(key => {
-      if (!(key in oldData)) {
-        changes.push({ key, type: 'added' });
-      } else if (!(key in newData)) {
-        changes.push({ key, type: 'deleted' });
-      } else if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
-        changes.push({ key, type: 'modified' });
-      }
-    });
-
-    return { type: 'modified', changes };
-  };
-
-  const changes = getChanges();
+  const changedFields = getChangedFields(oldData, newData, tableName);
+  
+  // Determine the change type
+  const changeType = !oldData && newData ? 'created' : 
+                     oldData && !newData ? 'deleted' : 
+                     'updated';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-slate rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-light flex items-center justify-between">
+        <div className="p-6 border-b border-gray-light dark:border-gray-700 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-orange-dark">Change Diff</h2>
-            <p className="text-sm text-gray-slate mt-1">
-              {changes.type === 'added' && 'New record created'}
-              {changes.type === 'deleted' && 'Record deleted'}
-              {changes.type === 'modified' && `${(changes as any).changes.length} field(s) changed`}
+            <h2 className="text-2xl font-bold text-orange-dark dark:text-orange">Change Diff</h2>
+            <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">
+              {changeType === 'created' && 'New record created'}
+              {changeType === 'deleted' && 'Record deleted'}
+              {changeType === 'updated' && `${changedFields.length} field(s) changed`}
             </p>
           </div>
           <div className="flex items-center space-x-3">
             {/* Mode Toggle */}
-            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
               <button
-                onClick={() => setMode('side-by-side')}
+                onClick={() => setMode('formatted')}
                 className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  mode === 'side-by-side'
-                    ? 'bg-white text-orange-dark shadow-sm'
-                    : 'text-gray-slate hover:text-orange-dark'
+                  mode === 'formatted'
+                    ? 'bg-white dark:bg-gray-700 text-orange-dark dark:text-orange shadow-sm'
+                    : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange'
                 }`}
               >
-                Side by Side
+                Formatted
               </button>
               <button
-                onClick={() => setMode('unified')}
+                onClick={() => setMode('raw')}
                 className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  mode === 'unified'
-                    ? 'bg-white text-orange-dark shadow-sm'
-                    : 'text-gray-slate hover:text-orange-dark'
+                  mode === 'raw'
+                    ? 'bg-white dark:bg-gray-700 text-orange-dark dark:text-orange shadow-sm'
+                    : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange'
                 }`}
               >
-                Unified
+                Raw JSON
               </button>
             </div>
             
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="text-gray-slate hover:text-orange-dark"
+              className="text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -98,22 +84,87 @@ export function DiffViewer({ oldData, newData, onClose }: DiffViewerProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {mode === 'side-by-side' ? (
+          {mode === 'formatted' ? (
+            /* Formatted View - Field by Field List (Option 1) */
+            <div className="space-y-4">
+              {changedFields.length === 0 ? (
+                <div className="text-center py-8 text-gray-slate dark:text-gray-400">
+                  No changes detected
+                </div>
+              ) : (
+                changedFields.map((change) => (
+                  <div
+                    key={change.field}
+                    className="border border-gray-light dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50"
+                  >
+                    {/* Field Name */}
+                    <div className="flex items-center mb-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        {change.fieldName}
+                      </h4>
+                      {changeType === 'updated' && (
+                        <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
+                          Modified
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Values Comparison */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Before Value */}
+                      <div>
+                        <div className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">
+                          Before
+                        </div>
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded px-3 py-2 min-h-[2.5rem] flex items-center">
+                          <span className="text-sm text-red-900 dark:text-red-100 break-all">
+                            {change.oldFormatted}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* After Value */}
+                      <div>
+                        <div className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">
+                          After
+                        </div>
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded px-3 py-2 min-h-[2.5rem] flex items-center">
+                          <span className="text-sm text-green-900 dark:text-green-100 break-all">
+                            {change.newFormatted}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {/* Metadata Footer */}
+              {(oldData?.updated_at || newData?.updated_at) && (
+                <div className="mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+                  <p className="text-xs text-gray-slate dark:text-gray-400">
+                    Last updated: {formatTimestamp(newData?.updated_at || oldData?.updated_at)}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Raw JSON View */
             <div className="grid grid-cols-2 gap-4">
               {/* Old Data */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-red-600">Before</h3>
+                  <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Before</h3>
                   {oldData && (
                     <button
                       onClick={() => handleCopy(formatJSON(oldData))}
-                      className="text-xs text-gray-slate hover:text-orange-dark"
+                      className="text-xs text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange"
                     >
                       {copied ? 'Copied!' : 'Copy'}
                     </button>
                   )}
                 </div>
-                <pre className="bg-red-50 border border-red-200 rounded-lg p-4 text-xs font-mono overflow-x-auto">
+                <pre className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-xs font-mono overflow-x-auto text-gray-900 dark:text-gray-100">
                   {formatJSON(oldData)}
                 </pre>
               </div>
@@ -121,78 +172,19 @@ export function DiffViewer({ oldData, newData, onClose }: DiffViewerProps) {
               {/* New Data */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-green-600">After</h3>
+                  <h3 className="text-sm font-semibold text-green-600 dark:text-green-400">After</h3>
                   {newData && (
                     <button
                       onClick={() => handleCopy(formatJSON(newData))}
-                      className="text-xs text-gray-slate hover:text-orange-dark"
+                      className="text-xs text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange"
                     >
                       {copied ? 'Copied!' : 'Copy'}
                     </button>
                   )}
                 </div>
-                <pre className="bg-green-50 border border-green-200 rounded-lg p-4 text-xs font-mono overflow-x-auto">
+                <pre className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-xs font-mono overflow-x-auto text-gray-900 dark:text-gray-100">
                   {formatJSON(newData)}
                 </pre>
-              </div>
-            </div>
-          ) : (
-            /* Unified View */
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-orange-dark">Unified Diff</h3>
-                <button
-                  onClick={() => handleCopy(`Before:\n${formatJSON(oldData)}\n\nAfter:\n${formatJSON(newData)}`)}
-                  className="text-xs text-gray-slate hover:text-orange-dark"
-                >
-                  {copied ? 'Copied!' : 'Copy All'}
-                </button>
-              </div>
-              <div className="space-y-2">
-                {changes.type === 'modified' && (changes as any).changes.map((change: any) => (
-                  <div key={change.key} className="border border-gray-light rounded-lg overflow-hidden">
-                    <div className={`px-3 py-1 text-xs font-medium ${
-                      change.type === 'added' ? 'bg-green-100 text-green-800' :
-                      change.type === 'deleted' ? 'bg-red-100 text-red-800' :
-                      'bg-amber-100 text-amber-800'
-                    }`}>
-                      {change.key}
-                      <span className="ml-2 font-normal opacity-75">
-                        ({change.type})
-                      </span>
-                    </div>
-                    <div className="p-3">
-                      {change.type !== 'added' && oldData && (
-                        <div className="mb-1">
-                          <span className="text-xs text-red-600 font-medium">- </span>
-                          <span className="text-xs font-mono text-red-800">
-                            {JSON.stringify(oldData[change.key])}
-                          </span>
-                        </div>
-                      )}
-                      {change.type !== 'deleted' && newData && (
-                        <div>
-                          <span className="text-xs text-green-600 font-medium">+ </span>
-                          <span className="text-xs font-mono text-green-800">
-                            {JSON.stringify(newData[change.key])}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {changes.type === 'added' && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-sm font-medium text-green-800 mb-2">New record created</p>
-                    <pre className="text-xs font-mono text-green-700">{formatJSON(newData)}</pre>
-                  </div>
-                )}
-                {changes.type === 'deleted' && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="text-sm font-medium text-red-800 mb-2">Record deleted</p>
-                    <pre className="text-xs font-mono text-red-700">{formatJSON(oldData)}</pre>
-                  </div>
-                )}
               </div>
             </div>
           )}
