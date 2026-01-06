@@ -17,11 +17,6 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
   // Get unique users
   const uniqueUsers = Array.from(new Set(auditLogs.map(log => log.user_email)));
 
-  // Calculate total non-system changes (for accurate count display)
-  const totalNonSystemChanges = auditLogs.filter(log => 
-    !isSystemOnlyChange(log.old_data, log.new_data, log.table_name)
-  ).length;
-
   // Filter logs - exclude system-only changes (e.g., SOA auto-increment)
   const filteredLogs = auditLogs.filter(log => {
     // Filter by user selection
@@ -203,13 +198,6 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
           ))
         )}
       </div>
-
-      {/* Summary */}
-      {filteredLogs.length > 0 && (
-        <div className="pt-3 text-xs text-gray-slate text-center">
-          Showing {filteredLogs.length} of {totalNonSystemChanges} changes
-        </div>
-      )}
     </div>
   );
 }
