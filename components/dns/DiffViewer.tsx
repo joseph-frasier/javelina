@@ -50,8 +50,24 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
                      displayOldData && !displayNewData ? 'deleted' : 
                      'updated';
 
-  const changeTypeMessage = changeType === 'created' ? 'New record created' :
-                            changeType === 'deleted' ? 'Record deleted' :
+  // Get the entity name based on table name
+  const getEntityName = (tableName: string) => {
+    switch (tableName) {
+      case 'zones':
+        return 'zone';
+      case 'zone_records':
+        return 'record';
+      case 'organizations':
+        return 'organization';
+      default:
+        return 'record';
+    }
+  };
+
+  const entityName = getEntityName(displayTableName);
+
+  const changeTypeMessage = changeType === 'created' ? `New ${entityName} created` :
+                            changeType === 'deleted' ? `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} deleted` :
                             `${changedFields.length} field(s) changed`;
 
   return (
