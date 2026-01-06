@@ -386,7 +386,6 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
           <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
         </Card>
         <Card title="Deployment Status" className="p-4 sm:p-6">
-          <p className="text-sm text-gray-slate dark:text-gray-400 mb-2">Current status</p>
           <div className="space-y-2">
             <div className="flex items-center">
               {zoneSummary.status === 'ok' && (
