@@ -52,6 +52,7 @@ export function EditBillingInfoModal({
   const [adminContactEmail, setAdminContactEmail] = useState('');
   const [adminContactPhone, setAdminContactPhone] = useState('');
   const [copyBillingEmail, setCopyBillingEmail] = useState(false);
+  const [copyBillingPhone, setCopyBillingPhone] = useState(false);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<BillingValidationErrors>({});
@@ -177,11 +178,20 @@ export function EditBillingInfoModal({
                 id="edit-billing-phone"
                 type="tel"
                 value={billingPhone}
-                onChange={(e) => setBillingPhone(normalizePhoneInput(e.target.value))}
+                onChange={(e) => {
+                  const normalized = normalizePhoneInput(e.target.value);
+                  setBillingPhone(normalized);
+                  if (copyBillingPhone) {
+                    setAdminContactPhone(normalized);
+                  }
+                }}
                 onBlur={(e) => {
                   const formatted = formatUSPhone(e.target.value);
                   if (formatted !== e.target.value) {
                     setBillingPhone(formatted);
+                    if (copyBillingPhone) {
+                      setAdminContactPhone(formatted);
+                    }
                   }
                 }}
                 placeholder="(555) 123-4567"
@@ -339,7 +349,7 @@ export function EditBillingInfoModal({
                   }
                 }}
                 placeholder="(555) 123-4567"
-                disabled={isSubmitting}
+                disabled={isSubmitting || copyBillingPhone}
                 className={errors.admin_contact_phone ? 'border-red-500' : ''}
               />
               {errors.admin_contact_phone && (
@@ -348,6 +358,23 @@ export function EditBillingInfoModal({
               <p className="mt-1 text-xs text-gray-slate">
                 Format: (XXX) XXX-XXXX or XXX-XXX-XXXX
               </p>
+              <div className="mt-2">
+                <label className="flex items-center text-sm text-gray-slate">
+                  <input
+                    type="checkbox"
+                    checked={copyBillingPhone}
+                    onChange={(e) => {
+                      setCopyBillingPhone(e.target.checked);
+                      if (e.target.checked) {
+                        setAdminContactPhone(billingPhone);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="mr-2"
+                  />
+                  Same as billing phone
+                </label>
+              </div>
             </div>
           </div>
         </div>

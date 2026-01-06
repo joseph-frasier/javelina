@@ -423,7 +423,7 @@ function SettingsContent() {
                     </div>
 
                     {/* More Settings Coming Soon */}
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <div className="pt-6">
                       <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
