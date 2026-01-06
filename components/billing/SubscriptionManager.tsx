@@ -217,9 +217,9 @@ export function SubscriptionManager({
           {/* Lifetime plan actions - only for lifetime plans */}
           {!isSubscriptionPlan && (
             <>
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 w-fit">
                 <p className="text-sm text-blue-900">
-                  <strong>Lifetime plan:</strong> You have a lifetime subscription with a one-time payment. You can upgrade to a higher tier at any time.
+                  <strong>Lifetime plan:</strong> You have a lifetime subscription with a one-time payment.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
