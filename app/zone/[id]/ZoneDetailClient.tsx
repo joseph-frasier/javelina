@@ -521,8 +521,12 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
               onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
               placeholder="Zone description (optional)"
               rows={3}
+              maxLength={500}
               className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
             />
+            <p className="mt-1 text-xs text-gray-slate">
+              {editFormData.description.length}/500 characters
+            </p>
           </div>
 
           {/* SOA Configuration Section */}
