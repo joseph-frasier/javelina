@@ -134,7 +134,7 @@ export function SubscriptionManager({
 
         {/* Price */}
         {subscription?.plan?.metadata?.price && (
-          <div className="mb-4 pb-4 border-b border-gray-light">
+          <div className="mb-4 pb-4 border-b border-gray-light -mx-6 px-6">
             <div className="flex flex-col">
               <span className="text-3xl font-black text-orange-dark">
                 ${Number(subscription.plan.metadata.price).toFixed(2)}
