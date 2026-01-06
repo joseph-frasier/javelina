@@ -82,7 +82,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex items-center space-x-4 pb-4 border-b border-gray-light">
+      <div className="flex items-center space-x-4 pb-4">
         <div className="flex-1">
           <Dropdown
             label="Filter by Action"
@@ -201,7 +201,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
 
       {/* Summary */}
       {filteredLogs.length > 0 && (
-        <div className="pt-3 border-t border-gray-light text-xs text-gray-slate text-center">
+        <div className="pt-3 text-xs text-gray-slate text-center">
           Showing {filteredLogs.length} of {auditLogs.length} changes
         </div>
       )}
