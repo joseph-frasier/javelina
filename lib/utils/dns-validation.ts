@@ -589,3 +589,48 @@ export function getFQDN(recordName: string, zoneName: string): string {
   return `${normalized}.${zoneName}`;
 }
 
+/**
+ * Detects if a zone name has hierarchical overlap with existing zones
+ * Returns true if the new zone would be a parent or child of any existing zone
+ * 
+ * Examples:
+ * - "acme.com" conflicts with "foo.acme.com" (parent/child)
+ * - "foo.acme.com" conflicts with "acme.com" (child/parent)
+ * - "bar.example.com" does NOT conflict with "foo.example.com" (siblings)
+ */
+export function detectZoneOverlap(
+  zoneName: string, 
+  existingZones: string[]
+): { hasOverlap: boolean; conflictingZone?: string } {
+  const normalizedZoneName = zoneName.trim().toLowerCase();
+  
+  for (const existingZone of existingZones) {
+    const normalizedExisting = existingZone.trim().toLowerCase();
+    
+    // Skip if exactly the same (this will be caught by other validation)
+    if (normalizedZoneName === normalizedExisting) {
+      continue;
+    }
+    
+    // Check if new zone is a subdomain of existing zone
+    // e.g., creating "foo.acme.com" when "acme.com" exists
+    if (normalizedZoneName.endsWith(`.${normalizedExisting}`)) {
+      return {
+        hasOverlap: true,
+        conflictingZone: existingZone
+      };
+    }
+    
+    // Check if existing zone is a subdomain of new zone
+    // e.g., creating "acme.com" when "foo.acme.com" exists
+    if (normalizedExisting.endsWith(`.${normalizedZoneName}`)) {
+      return {
+        hasOverlap: true,
+        conflictingZone: existingZone
+      };
+    }
+  }
+  
+  return { hasOverlap: false };
+}
+
