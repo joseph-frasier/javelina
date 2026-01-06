@@ -145,10 +145,15 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
       />
 
       {/* Modal content */}
-      <div className="flex min-h-full items-center justify-center p-4 relative" style={{ zIndex: 10000 }}>
+      <div 
+        className="flex min-h-full items-center justify-center p-4 relative" 
+        style={{ zIndex: 10000 }}
+        onClick={onClose}
+      >
         <div
           ref={modalRef}
           className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl`}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="p-6 border-b border-gray-light">

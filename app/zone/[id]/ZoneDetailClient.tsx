@@ -521,12 +521,16 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
               onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
               placeholder="Zone description (optional)"
               rows={3}
+              maxLength={500}
               className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
             />
+            <p className="mt-1 text-xs text-gray-slate">
+              {editFormData.description.length}/500 characters
+            </p>
           </div>
 
           {/* SOA Configuration Section */}
-          <div className="pt-4 border-t border-gray-light dark:border-gray-700">
+          <div className="pt-4 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">SOA Configuration</h3>
             <p className="text-xs text-gray-slate mb-4">
               Root NS records are system-managed by the DNS service. SOA settings control zone metadata.
@@ -577,7 +581,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
           </div>
 
         </div>
-        <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-light">
+        <div className="flex justify-end space-x-3 pt-6 mt-6">
           <Button 
             variant="secondary"
             onClick={() => setShowEditModal(false)} 
@@ -624,14 +628,13 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       </Modal>
 
       {/* Diff Viewer Modal */}
-      {selectedLog && (
-        <DiffViewer
-          oldData={selectedLog.old_data}
-          newData={selectedLog.new_data}
-          tableName={selectedLog.table_name}
-          onClose={() => setSelectedLog(null)}
-        />
-      )}
+      <DiffViewer
+        oldData={selectedLog?.old_data || null}
+        newData={selectedLog?.new_data || null}
+        tableName={selectedLog?.table_name || 'zone_records'}
+        onClose={() => setSelectedLog(null)}
+        isOpen={!!selectedLog}
+      />
 
       {/* DNS Record Modals */}
       <ManageDNSRecordModal

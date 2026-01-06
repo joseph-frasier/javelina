@@ -10,6 +10,7 @@ import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useZones } from '@/lib/hooks/useZones';
 import { useTags } from '@/lib/hooks/useTags';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
+import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
 
 interface SidebarProps {
@@ -37,6 +38,7 @@ export function Sidebar({
   // Get organizations from authenticated user (already from Supabase)
   const userOrganizations = user?.organizations || [];
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   // Animate mobile menu
   useEffect(() => {
@@ -265,6 +267,34 @@ export function Sidebar({
           </div>
         </nav>
 
+        {/* Feedback Button - Mobile */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700 bg-white dark:bg-orange-dark">
+          <button
+            onClick={() => {
+              setIsFeedbackModalOpen(true);
+              if (onMobileMenuClose) {
+                onMobileMenuClose();
+              }
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-orange hover:text-white text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-transparent group"
+            aria-label="Give feedback"
+          >
+            <svg
+              className="w-5 h-5 flex-shrink-0 group-hover:text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              />
+            </svg>
+            <span className="font-medium">Give feedback</span>
+          </button>
+        </div>
       </aside>
 
       {/* Desktop Sidebar */}
@@ -333,6 +363,53 @@ export function Sidebar({
           renderOrganizations()
         )}
       </nav>
+
+      {/* Feedback Button - Desktop */}
+      <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700">
+        {isCollapsed ? (
+          <button
+            onClick={() => setIsFeedbackModalOpen(true)}
+            className="w-full p-2 rounded-md transition-colors flex items-center justify-center hover:bg-orange hover:text-white text-gray-900 dark:text-gray-300 group"
+            title="Give feedback"
+            aria-label="Give feedback"
+          >
+            <svg
+              className="w-6 h-6 group-hover:text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsFeedbackModalOpen(true)}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-orange hover:text-white text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-transparent group"
+            aria-label="Give feedback"
+          >
+            <svg
+              className="w-5 h-5 flex-shrink-0 group-hover:text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              />
+            </svg>
+            <span className="font-medium text-sm">Give feedback</span>
+          </button>
+        )}
+      </div>
     </aside>
 
       {/* Add Organization Modal */}
@@ -340,6 +417,12 @@ export function Sidebar({
         isOpen={isAddOrgModalOpen}
         onClose={() => setIsAddOrgModalOpen(false)}
         onSuccess={handleOrganizationSuccess}
+      />
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
       />
     </>
   );

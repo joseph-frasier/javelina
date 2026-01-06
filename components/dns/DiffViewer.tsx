@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { Modal } from '@/components/ui/Modal';
 import { getChangedFields, formatTimestamp, type ChangedField } from '@/lib/utils/audit-formatting';
 
 interface DiffViewerProps {
@@ -8,11 +9,28 @@ interface DiffViewerProps {
   newData: any;
   tableName?: string;
   onClose: () => void;
+  isOpen?: boolean;
 }
 
-export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClose }: DiffViewerProps) {
+export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClose, isOpen = true }: DiffViewerProps) {
   const [mode, setMode] = useState<'formatted' | 'raw'>('formatted');
   const [copied, setCopied] = useState(false);
+  
+  // Preserve data during close animation - store last valid data
+  const preservedDataRef = useRef({ oldData: null, newData: null, tableName });
+  
+  useEffect(() => {
+    // Update preserved data when we have valid data
+    if (oldData || newData) {
+      preservedDataRef.current = { oldData, newData, tableName };
+    }
+  }, [oldData, newData, tableName]);
+  
+  // Use current props if valid, otherwise fall back to preserved data during close animation
+  // This ensures first render after refresh shows data, and close animation doesn't collapse
+  const displayOldData = (oldData || newData) ? oldData : preservedDataRef.current.oldData;
+  const displayNewData = (oldData || newData) ? newData : preservedDataRef.current.newData;
+  const displayTableName = (oldData || newData) ? tableName : preservedDataRef.current.tableName;
 
   const formatJSON = (data: any) => {
     if (!data) return 'null';
@@ -25,65 +43,69 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const changedFields = getChangedFields(oldData, newData, tableName);
+  const changedFields = getChangedFields(displayOldData, displayNewData, displayTableName);
   
   // Determine the change type
-  const changeType = !oldData && newData ? 'created' : 
-                     oldData && !newData ? 'deleted' : 
+  const changeType = !displayOldData && displayNewData ? 'created' : 
+                     displayOldData && !displayNewData ? 'deleted' : 
                      'updated';
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-light dark:border-gray-700 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-orange-dark dark:text-orange">Change Diff</h2>
-            <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">
-              {changeType === 'created' && 'New record created'}
-              {changeType === 'deleted' && 'Record deleted'}
-              {changeType === 'updated' && `${changedFields.length} field(s) changed`}
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            {/* Mode Toggle */}
-            <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-              <button
-                onClick={() => setMode('formatted')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  mode === 'formatted'
-                    ? 'bg-white dark:bg-gray-700 text-orange-dark dark:text-orange shadow-sm'
-                    : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange'
-                }`}
-              >
-                Formatted
-              </button>
-              <button
-                onClick={() => setMode('raw')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  mode === 'raw'
-                    ? 'bg-white dark:bg-gray-700 text-orange-dark dark:text-orange shadow-sm'
-                    : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange'
-                }`}
-              >
-                Raw JSON
-              </button>
-            </div>
-            
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
+  // Get the entity name based on table name
+  const getEntityName = (tableName: string) => {
+    switch (tableName) {
+      case 'zones':
+        return 'zone';
+      case 'zone_records':
+        return 'record';
+      case 'organizations':
+        return 'organization';
+      default:
+        return 'record';
+    }
+  };
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+  const entityName = getEntityName(displayTableName);
+
+  const changeTypeMessage = changeType === 'created' ? `New ${entityName} created` :
+                            changeType === 'deleted' ? `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} deleted` :
+                            `${changedFields.length} field(s) changed`;
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Change Diff"
+      subtitle={changeTypeMessage}
+      size="large"
+    >
+      {/* Mode Toggle */}
+      <div className="flex items-center justify-end mb-6 pb-4 dark:border-gray-700">
+        <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <button
+            onClick={() => setMode('formatted')}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              mode === 'formatted'
+                ? 'bg-white dark:bg-gray-700 text-orange-dark dark:text-orange shadow-sm'
+                : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange'
+            }`}
+          >
+            Formatted
+          </button>
+          <button
+            onClick={() => setMode('raw')}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              mode === 'raw'
+                ? 'bg-white dark:bg-gray-700 text-orange-dark dark:text-orange shadow-sm'
+                : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange'
+            }`}
+          >
+            Raw JSON
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-h-[60vh] overflow-y-auto">
           {mode === 'formatted' ? (
             /* Formatted View - Field by Field List (Option 1) */
             <div className="space-y-4">
@@ -140,10 +162,10 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
               )}
 
               {/* Metadata Footer */}
-              {(oldData?.updated_at || newData?.updated_at) && (
-                <div className="mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+              {(displayOldData?.updated_at || displayNewData?.updated_at) && (
+                <div className="mt-6 pt-4 dark:border-gray-700">
                   <p className="text-xs text-gray-slate dark:text-gray-400">
-                    Last updated: {formatTimestamp(newData?.updated_at || oldData?.updated_at)}
+                    Last updated: {formatTimestamp(displayNewData?.updated_at || displayOldData?.updated_at)}
                   </p>
                 </div>
               )}
@@ -155,9 +177,9 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Before</h3>
-                  {oldData && (
+                  {displayOldData && (
                     <button
-                      onClick={() => handleCopy(formatJSON(oldData))}
+                      onClick={() => handleCopy(formatJSON(displayOldData))}
                       className="text-xs text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange"
                     >
                       {copied ? 'Copied!' : 'Copy'}
@@ -165,7 +187,7 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
                   )}
                 </div>
                 <pre className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-xs font-mono overflow-x-auto text-gray-900 dark:text-gray-100">
-                  {formatJSON(oldData)}
+                  {formatJSON(displayOldData)}
                 </pre>
               </div>
 
@@ -173,9 +195,9 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-green-600 dark:text-green-400">After</h3>
-                  {newData && (
+                  {displayNewData && (
                     <button
-                      onClick={() => handleCopy(formatJSON(newData))}
+                      onClick={() => handleCopy(formatJSON(displayNewData))}
                       className="text-xs text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-orange"
                     >
                       {copied ? 'Copied!' : 'Copy'}
@@ -183,14 +205,13 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
                   )}
                 </div>
                 <pre className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-xs font-mono overflow-x-auto text-gray-900 dark:text-gray-100">
-                  {formatJSON(newData)}
+                  {formatJSON(displayNewData)}
                 </pre>
               </div>
             </div>
           )}
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

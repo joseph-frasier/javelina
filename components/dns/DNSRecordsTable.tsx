@@ -426,7 +426,7 @@ export function DNSRecordsTable({
                 <tr
                   key={record.id}
                   className={clsx(
-                    'border-b border-gray-light dark:border-gray-700 transition-colors cursor-pointer',
+                    'dark:border-gray-700 transition-colors cursor-pointer',
                     isSelected
                       ? 'bg-orange/10 dark:bg-orange/20'
                       : 'hover:bg-gray-light/30 dark:hover:bg-gray-700/30'
