@@ -389,20 +389,51 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card title="Total Records" className="p-4 sm:p-6">
           <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{zoneSummary.totalRecords}</p>
           <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
         </Card>
-        <Card title="Health Status" className="p-4 sm:p-6">
-          <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange capitalize">{zoneSummary.healthStatus}</p>
-          <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">Current status</p>
-        </Card>
-        <Card title="Last Deployed" className="p-4 sm:p-6">
-          <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">
-            {zoneSummary.lastDeployedAt ? new Date(zoneSummary.lastDeployedAt).toLocaleDateString() : 'Never'}
-          </p>
-          <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">Deployment date</p>
+        <Card title="Deployment Status" className="p-4 sm:p-6">
+          <p className="text-sm text-gray-slate dark:text-gray-400 mb-2">Current status</p>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              {zoneSummary.status === 'ok' && (
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">OK</span>
+                </div>
+              )}
+              {zoneSummary.status === 'pending' && (
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">Pending</span>
+                </div>
+              )}
+              {zoneSummary.status === 'error' && (
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <span className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400 block">Error</span>
+                    {zoneSummary.errorMessage && (
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-2 break-words">
+                        {zoneSummary.errorMessage}
+                      </p>
+                    )}
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      Last valid serial: {zoneSummary.lastValidSerial}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </Card>
       </div>
 
