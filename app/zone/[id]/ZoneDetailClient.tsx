@@ -67,6 +67,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
   
   // DNS Records state
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
@@ -289,8 +290,9 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       // Invalidate React Query cache to update sidebar immediately
       queryClient.invalidateQueries({ queryKey: ['zones', zone.organization_id] });
       
-      addToast('success', `Zone ${zone.name} archived successfully`);
+      addToast('success', `Zone ${zone.name} deleted permanently`);
       setShowDeleteModal(false);
+      setDeleteConfirmationInput('');
       
       // Redirect to organization page
       if (organization) {
@@ -623,28 +625,63 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       {/* Delete Zone Modal */}
       <Modal 
         isOpen={showDeleteModal} 
-        onClose={() => setShowDeleteModal(false)} 
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirmationInput('');
+        }} 
         title="Delete Zone"
         size="small"
       >
-        <div className="text-center">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div>
+          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
+            <svg className="w-6 h-6 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-gray-slate dark:text-gray-400 mb-6">
-            Are you sure you want to delete <span className="font-bold text-orange-dark dark:text-white">{zone.name}</span>?
-            This action cannot be undone and will delete all {zoneSummary.totalRecords} DNS records.
+          <h3 className="text-lg font-semibold text-orange-dark dark:text-white text-center mb-2">
+            Permanently Delete Zone
+          </h3>
+          <p className="text-sm text-gray-slate dark:text-gray-400 text-center mb-6">
+            This action <span className="font-bold text-red-600 dark:text-red-500">cannot be undone</span>. 
+            This will permanently delete the zone <span className="font-bold text-orange-dark dark:text-white">{zone.name}</span> and 
+            all {zoneSummary?.totalRecords || 0} associated DNS records.
           </p>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2 text-left">
+              Type <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-orange-dark dark:text-orange">{zone.name}</span> to confirm:
+            </label>
+            <Input
+              type="text"
+              value={deleteConfirmationInput}
+              onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+              placeholder="Enter zone name"
+              className="w-full"
+              autoFocus
+            />
+            {deleteConfirmationInput && deleteConfirmationInput !== zone.name && (
+              <p className="text-xs text-red-600 dark:text-red-500 mt-2 text-left">
+                Zone name does not match
+              </p>
+            )}
+          </div>
+
           <div className="flex space-x-3">
-            <Button variant="outline" className="flex-1" onClick={() => setShowDeleteModal(false)}>
+            <Button 
+              variant="outline" 
+              className="flex-1" 
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirmationInput('');
+              }}
+            >
               Cancel
             </Button>
             <Button
               variant="primary"
-              className="flex-1 bg-red-600 hover:bg-red-700"
+              className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleDeleteZone}
+              disabled={deleteConfirmationInput !== zone.name}
             >
               Delete Zone
             </Button>

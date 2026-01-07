@@ -72,7 +72,6 @@ export async function renameFlaggedZone(zoneId: string, newName: string) {
       .from('zones')
       .select('id')
       .eq('name', newName)
-      .is('deleted_at', null)
       .limit(1)
       .single()
 
@@ -141,7 +140,7 @@ export async function renameFlaggedZone(zoneId: string, newName: string) {
 }
 
 /**
- * Delete a flagged zone (soft delete)
+ * Delete a flagged zone (hard delete)
  */
 export async function deleteFlaggedZone(zoneId: string) {
   try {
@@ -158,22 +157,28 @@ export async function deleteFlaggedZone(zoneId: string) {
       .eq('id', zoneId)
       .single()
 
-    // Soft delete the zone
-    const { data, error } = await client
-      .from('zones')
-      .update({ 
-        deleted_at: new Date().toISOString(),
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', zoneId)
-      .select()
-      .single()
-
-    if (error) {
-      return { error: error.message }
+    if (!zone) {
+      return { error: 'Zone not found' }
     }
 
-    // Log the admin action
+    // Create audit log entry BEFORE deletion (since we can't after it's gone)
+    await client
+      .from('audit_logs')
+      .insert({
+        table_name: 'zones',
+        record_id: zoneId,
+        action: 'DELETE',
+        old_data: zone,
+        new_data: null,
+        metadata: {
+          deleted_by_admin: admin.id,
+          deleted_at: new Date().toISOString(),
+          reason: 'admin_deleted_flagged_zone',
+          permanent: true
+        }
+      })
+
+    // Log the admin action BEFORE deletion
     await logAdminAction({
       actorId: admin.id,
       action: 'zone.deleted',
@@ -181,99 +186,28 @@ export async function deleteFlaggedZone(zoneId: string) {
       resourceId: zoneId,
       details: { 
         zone_name: zone?.name, 
-        deleted_at: new Date().toISOString() 
+        deleted_at: new Date().toISOString(),
+        permanent: true
       }
     })
 
-    // Create audit log entry for zone deletion
-    await client
-      .from('audit_logs')
-      .insert({
-        table_name: 'zones',
-        record_id: zoneId,
-        action: 'zone.archived',
-        old_data: zone,
-        new_data: data,
-        metadata: {
-          deleted_by_admin: admin.id,
-          deleted_at: new Date().toISOString(),
-          reason: 'admin_deleted_flagged_zone'
-        }
-      })
+    // Hard delete the zone (cascade deletes zone_records and zone_tags)
+    const { error } = await client
+      .from('zones')
+      .delete()
+      .eq('id', zoneId)
 
-    return { success: true, data }
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { success: true, data: zone }
   } catch (error) {
     console.error('Failed to delete flagged zone:', error)
     return { error: 'Failed to delete flagged zone' }
   }
 }
 
-/**
- * Restore a soft-deleted zone
- */
-export async function restoreZone(zoneId: string) {
-  try {
-    const { client, admin } = await verifyAdminAndGetClient()
-
-    if (!client) {
-      return { error: 'Admin backend functionality not yet available in development mode' }
-    }
-
-    // Get zone data before restoration
-    const { data: zone } = await client
-      .from('zones')
-      .select('*')
-      .eq('id', zoneId)
-      .single()
-
-    // Restore the zone
-    const { data, error } = await client
-      .from('zones')
-      .update({ 
-        deleted_at: null,
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', zoneId)
-      .select()
-      .single()
-
-    if (error) {
-      return { error: error.message }
-    }
-
-    // Log the admin action
-    await logAdminAction({
-      actorId: admin.id,
-      action: 'zone.restored',
-      resourceType: 'zone',
-      resourceId: zoneId,
-      details: { 
-        zone_name: zone?.name, 
-        restored_at: new Date().toISOString() 
-      }
-    })
-
-    // Create audit log entry for zone restoration
-    await client
-      .from('audit_logs')
-      .insert({
-        table_name: 'zones',
-        record_id: zoneId,
-        action: 'zone.restored',
-        old_data: zone,
-        new_data: data,
-        metadata: {
-          restored_by_admin: admin.id,
-          restored_at: new Date().toISOString()
-        }
-      })
-
-    return { success: true, data }
-  } catch (error) {
-    console.error('Failed to restore zone:', error)
-    return { error: 'Failed to restore zone' }
-  }
-}
 
 /**
  * Get all flagged zones (live = false)
@@ -296,7 +230,6 @@ export async function getFlaggedZones() {
         )
       `)
       .eq('live', false)
-      .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
     if (error) {
