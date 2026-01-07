@@ -56,6 +56,18 @@ export function AddZoneModal({
   const currentZoneCount = usage?.zones ?? 0;
   const isAtZoneLimit = wouldExceedLimit('zones', currentZoneCount);
 
+  // Debug logging
+  console.log('AddZoneModal Debug:', {
+    planCode,
+    tier,
+    limits,
+    usage,
+    currentZoneCount,
+    isAtZoneLimit,
+    isLoadingUsage,
+    organizationId
+  });
+
   const validateForm = (): boolean => {
     const newErrors: { name?: string; admin_email?: string; negative_caching_ttl?: string } = {};
 
