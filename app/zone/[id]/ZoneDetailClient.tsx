@@ -24,7 +24,6 @@ const RecordDistributionChart = dynamic(
 );
 import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
-import { VerificationStatusBadge, HealthStatusBadge, LastDeployedBadge } from '@/components/dns/StatusBadges';
 import Dropdown from '@/components/ui/Dropdown';
 import { updateZone, deleteZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
@@ -68,6 +67,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
   
   // DNS Records state
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
@@ -290,8 +290,9 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       // Invalidate React Query cache to update sidebar immediately
       queryClient.invalidateQueries({ queryKey: ['zones', zone.organization_id] });
       
-      addToast('success', `Zone ${zone.name} archived successfully`);
+      addToast('success', `Zone ${zone.name} deleted permanently`);
       setShowDeleteModal(false);
+      setDeleteConfirmationInput('');
       
       // Redirect to organization page
       if (organization) {
@@ -342,10 +343,6 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-3 break-words">{zone.name}</h1>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {/* Temporarily commented out - may be useful in the future */}
-              {/* <VerificationStatusBadge status={zoneSummary.verificationStatus} /> */}
-              {/* <HealthStatusBadge status={zoneSummary.healthStatus} /> */}
-              {/* <LastDeployedBadge timestamp={zoneSummary.lastDeployedAt} /> */}
               {/* SOA Serial Badge */}
               <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                 <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -385,20 +382,50 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card title="Total Records" className="p-4 sm:p-6">
           <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{zoneSummary.totalRecords}</p>
           <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
         </Card>
-        <Card title="Health Status" className="p-4 sm:p-6">
-          <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange capitalize">{zoneSummary.healthStatus}</p>
-          <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">Current status</p>
-        </Card>
-        <Card title="Last Deployed" className="p-4 sm:p-6">
-          <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">
-            {zoneSummary.lastDeployedAt ? new Date(zoneSummary.lastDeployedAt).toLocaleDateString() : 'Never'}
-          </p>
-          <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">Deployment date</p>
+        <Card title="Deployment Status" className="p-4 sm:p-6">
+          <div className="space-y-2">
+            <div className="flex items-center">
+              {zoneSummary.status === 'ok' && (
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">OK</span>
+                </div>
+              )}
+              {zoneSummary.status === 'pending' && (
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">Pending</span>
+                </div>
+              )}
+              {zoneSummary.status === 'error' && (
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <span className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400 block">Error</span>
+                    {zoneSummary.errorMessage && (
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-2 break-words">
+                        {zoneSummary.errorMessage}
+                      </p>
+                    )}
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      Last valid serial: {zoneSummary.lastValidSerial}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </Card>
       </div>
 
@@ -598,28 +625,63 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       {/* Delete Zone Modal */}
       <Modal 
         isOpen={showDeleteModal} 
-        onClose={() => setShowDeleteModal(false)} 
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirmationInput('');
+        }} 
         title="Delete Zone"
         size="small"
       >
-        <div className="text-center">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div>
+          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
+            <svg className="w-6 h-6 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-gray-slate dark:text-gray-400 mb-6">
-            Are you sure you want to delete <span className="font-bold text-orange-dark dark:text-white">{zone.name}</span>?
-            This action cannot be undone and will delete all {zoneSummary.totalRecords} DNS records.
+          <h3 className="text-lg font-semibold text-orange-dark dark:text-white text-center mb-2">
+            Permanently Delete Zone
+          </h3>
+          <p className="text-sm text-gray-slate dark:text-gray-400 text-center mb-6">
+            This action <span className="font-bold text-red-600 dark:text-red-500">cannot be undone</span>. 
+            This will permanently delete the zone <span className="font-bold text-orange-dark dark:text-white">{zone.name}</span> and 
+            all {zoneSummary?.totalRecords || 0} associated DNS records.
           </p>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2 text-left">
+              Type <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-orange-dark dark:text-orange">{zone.name}</span> to confirm:
+            </label>
+            <Input
+              type="text"
+              value={deleteConfirmationInput}
+              onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+              placeholder="Enter zone name"
+              className="w-full"
+              autoFocus
+            />
+            {deleteConfirmationInput && deleteConfirmationInput !== zone.name && (
+              <p className="text-xs text-red-600 dark:text-red-500 mt-2 text-left">
+                Zone name does not match
+              </p>
+            )}
+          </div>
+
           <div className="flex space-x-3">
-            <Button variant="outline" className="flex-1" onClick={() => setShowDeleteModal(false)}>
+            <Button 
+              variant="outline" 
+              className="flex-1" 
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirmationInput('');
+              }}
+            >
               Cancel
             </Button>
             <Button
               variant="primary"
-              className="flex-1 bg-red-600 hover:bg-red-700"
+              className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleDeleteZone}
+              disabled={deleteConfirmationInput !== zone.name}
             >
               Delete Zone
             </Button>

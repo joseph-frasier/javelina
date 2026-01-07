@@ -76,8 +76,7 @@ export default function AdminOrganizationDetailPage() {
       const { data: zonesData } = await client
         .from('zones')
         .select('id, name, organization_id, live')
-        .eq('organization_id', orgId)
-        .is('deleted_at', null);
+        .eq('organization_id', orgId);
 
       setZones((zonesData || []) as Zone[]);
     } catch (error) {

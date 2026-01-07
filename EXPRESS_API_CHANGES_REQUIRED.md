@@ -1598,6 +1598,239 @@ return data; // Returns the created zone
   - Added PTR to zone_records type constraint
   - Removed nameservers column from zones table
 
+## 10. Zone Creation Validation Enhancements (January 2025)
+
+### Overview
+Three new validation rules have been added to zone creation to improve data quality and prevent DNS conflicts:
+1. **Hierarchical Zone Overlap Detection** - Prevent parent/child zone conflicts
+2. **Minimum Label Requirement** - Enforce at least 2 labels in zone names
+3. **Default TTL Updates** - Standardize NS and CAA record TTLs to 1 hour
+
+### A. Zone Overlap Validation
+
+#### Location
+Update the zone creation endpoint:
+- `POST /api/zones`
+
+#### Changes Needed
+
+Add validation to detect hierarchical zone conflicts (parent/child relationships):
+
+```javascript
+// Helper function to detect zone overlap
+function detectZoneOverlap(zoneName, existingZones) {
+  const normalizedZoneName = zoneName.trim().toLowerCase();
+  
+  for (const existingZone of existingZones) {
+    const normalizedExisting = existingZone.trim().toLowerCase();
+    
+    // Skip if exactly the same (handled by unique constraint)
+    if (normalizedZoneName === normalizedExisting) {
+      continue;
+    }
+    
+    // Check if new zone is a subdomain of existing zone
+    // e.g., creating "foo.acme.com" when "acme.com" exists
+    if (normalizedZoneName.endsWith(`.${normalizedExisting}`)) {
+      return {
+        hasOverlap: true,
+        conflictingZone: existingZone
+      };
+    }
+    
+    // Check if existing zone is a subdomain of new zone
+    // e.g., creating "acme.com" when "foo.acme.com" exists
+    if (normalizedExisting.endsWith(`.${normalizedZoneName}`)) {
+      return {
+        hasOverlap: true,
+        conflictingZone: existingZone
+      };
+    }
+  }
+  
+  return { hasOverlap: false };
+}
+
+// In zone creation endpoint, before inserting:
+// Fetch all zone names globally (including soft-deleted zones)
+const { data: existingZones, error } = await supabase
+  .from('zones')
+  .select('name');
+
+if (error) {
+  return res.status(500).json({ error: 'Failed to validate zone name' });
+}
+
+const existingZoneNames = existingZones.map(z => z.name);
+const overlapResult = detectZoneOverlap(zoneName, existingZoneNames);
+
+if (overlapResult.hasOverlap) {
+  return res.status(400).json({
+    error: `Zone conflicts with existing zone: ${overlapResult.conflictingZone}. Cannot create parent or child zones.`
+  });
+}
+```
+
+**Important Notes:**
+- Check is **global** across all organizations
+- Includes **soft-deleted zones** (zones with `deleted_at` set)
+- Applies to **all zone types** (forward and reverse DNS zones)
+- Sibling subdomains are allowed (e.g., `foo.example.com` and `bar.example.com`)
+
+**Test Cases:**
+```javascript
+// Should REJECT:
+// - Creating "foo.acme.com" when "acme.com" exists
+// - Creating "acme.com" when "foo.acme.com" exists
+// - Creating "sub.foo.acme.com" when "acme.com" exists
+
+// Should ALLOW:
+// - Creating "bar.example.com" when "foo.example.com" exists (siblings)
+// - Creating "acme.com" when "example.com" exists (different TLDs)
+// - Creating "acme.net" when "acme.com" exists (different TLDs)
+```
+
+### B. Minimum Label Requirement
+
+#### Location
+Update the zone creation endpoint:
+- `POST /api/zones`
+
+#### Changes Needed
+
+Add validation to enforce at least 2 labels (one dot) in zone names:
+
+```javascript
+// Validation logic to add
+function validateMinimumLabels(zoneName) {
+  const labels = zoneName.split('.').filter(l => l.length > 0);
+  
+  if (labels.length < 2) {
+    return {
+      valid: false,
+      error: 'Zone name must have at least 2 labels (e.g., example.com, not just "example")'
+    };
+  }
+  
+  return { valid: true };
+}
+
+// In zone creation endpoint:
+const labelValidation = validateMinimumLabels(zoneName);
+if (!labelValidation.valid) {
+  return res.status(400).json({ error: labelValidation.error });
+}
+```
+
+**Regex Pattern:**
+```javascript
+// Updated regex that enforces at least one dot (2+ labels)
+const zoneNameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+if (!zoneNameRegex.test(zoneName)) {
+  return res.status(400).json({
+    error: 'Zone name must be a valid domain with at least 2 labels'
+  });
+}
+```
+
+**Test Cases:**
+```javascript
+// Should REJECT:
+// - "example" (single label)
+// - "localhost" (single label)
+// - ".com" (starts with dot)
+// - "example." (ends with dot, only 1 label)
+
+// Should ALLOW:
+// - "example.com" (2 labels)
+// - "sub.example.com" (3 labels)
+// - "1.0.10.in-addr.arpa" (reverse zone, 4 labels)
+// - "foo.bar.baz.example.com" (5 labels)
+```
+
+### C. Default TTL Updates for NS and CAA Records
+
+#### Location
+Update the DNS record creation logic:
+- `POST /api/dns-records`
+- Default TTL assignment for new records
+
+#### Changes Needed
+
+Update default TTL values for NS and CAA record types from 86400 seconds (1 day) to 3600 seconds (1 hour):
+
+```javascript
+// Updated default TTL mapping
+const DEFAULT_TTLS = {
+  'A': 3600,
+  'AAAA': 3600,
+  'CNAME': 3600,
+  'MX': 3600,
+  'NS': 3600,      // Changed from 86400
+  'TXT': 3600,
+  'SRV': 3600,
+  'CAA': 3600,     // Changed from 86400
+  'SOA': 86400,    // Remains 1 day (system-managed)
+  'PTR': 3600
+};
+
+// When creating a new record without explicit TTL:
+const ttl = recordData.ttl || DEFAULT_TTLS[recordData.type] || 3600;
+```
+
+**Important Notes:**
+- This change **only affects new records**
+- Existing NS and CAA records with 86400s TTL are **not modified**
+- SOA records remain at 86400s (1 day) as they are system-managed
+- Users can still manually set any valid TTL (10 to 604800 seconds)
+
+**Rationale:**
+- Standardizes default TTLs across most record types
+- 1 hour is a reasonable balance between caching efficiency and change propagation
+- Aligns with modern DNS best practices
+
+### Summary of Validation Flow
+
+```
+Zone Creation Request
+  ↓
+1. Basic validation (required fields, format)
+  ↓
+2. Minimum 2 labels check
+  ↓
+3. Fetch all existing zone names (global, including deleted)
+  ↓
+4. Check for hierarchical overlap
+  ↓
+5. Check organization limits
+  ↓
+6. Create zone in database
+  ↓
+Success
+```
+
+### Error Response Format
+
+All validation errors should return HTTP 400 with clear error messages:
+
+```javascript
+// Zone overlap error
+{
+  "error": "Zone conflicts with existing zone: acme.com. Cannot create parent or child zones."
+}
+
+// Minimum labels error
+{
+  "error": "Zone name must have at least 2 labels (e.g., example.com, not just \"example\")"
+}
+
+// Invalid format error
+{
+  "error": "Zone name must be a valid domain name (e.g., example.com or subdomain.example.com)"
+}
+```
+
 ## Frontend Changes Completed
 
 ✅ All frontend changes have been implemented:
@@ -1608,6 +1841,9 @@ return data; // Returns the created zone
 - Zone edit modal updated (nameservers field removed)
 - DNS records table updated (root NS records filtered from display)
 - Manage DNS record modal updated (PTR added to dropdown, TTL minimum updated)
+- **Zone overlap detection function added** (January 2025)
+- **Zone creation modal updated with 2-label minimum and overlap validation** (January 2025)
+- **NS and CAA default TTLs updated to 3600s** (January 2025)
 
 ## Contact
 
@@ -1615,4 +1851,6 @@ If you have questions about these changes, please refer to:
 - Plan document: `zone-records-schema.plan.md`
 - Migration file: `supabase/migrations/20251209000000_add_ptr_and_remove_nameservers.sql`
 - Frontend validation: `lib/utils/dns-validation.ts`
+- Zone validation enhancements: `lib/utils/dns-validation.ts` (detectZoneOverlap function)
+- Zone creation modal: `components/modals/AddZoneModal.tsx`
 
