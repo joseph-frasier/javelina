@@ -199,7 +199,13 @@ export function ManageDNSRecordModal({
     setIsSubmitting(true);
     
     try {
-      await onSubmit(formData);
+      // Use normalized values from validation when saving
+      const recordToSave = {
+        ...formData,
+        name: validation.normalizedName || formData.name,
+        value: validation.normalizedValue || formData.value
+      };
+      await onSubmit(recordToSave);
       onClose();
     } catch (error: any) {
       setErrors({ general: error.message || 'Failed to save record' });

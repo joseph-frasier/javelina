@@ -30,6 +30,8 @@ export interface DNSValidationResult {
   valid: boolean;
   errors: Record<string, string>;
   warnings: string[];
+  normalizedName?: string;
+  normalizedValue?: string;
 }
 
 export interface ImportConflict {
