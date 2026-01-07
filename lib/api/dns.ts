@@ -13,10 +13,10 @@ export interface ZoneSummary {
   recordTypeCounts: RecordTypeCount[];
   ttlDistribution: TTLBucket[];
   totalRecords: number;
-  verificationStatus: 'verified' | 'pending' | 'failed' | 'unverified';
-  lastVerifiedAt: string | null;
-  healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown';
-  lastDeployedAt: string | null;
+  status: 'error' | 'pending' | 'ok';
+  errorMessage: string | null;
+  lastValidSerial: number;
+  soaSerial: number;
 }
 
 /**
@@ -27,9 +27,23 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
   // Fetch zone data from Express API
   const zone = await zonesApi.get(zoneId);
 
-  // Health status and last deployed are now zone-level (simplified after removing environments)
-  const healthStatus: 'healthy' | 'degraded' | 'down' | 'unknown' = 'unknown';
-  const lastDeployedAt: string | null = null;
+  // Compute zone status based on error, last_valid_serial, and soa_serial
+  // Status Logic:
+  //   1. ERROR: If error IS NOT NULL
+  //   2. PENDING: If error IS NULL AND last_valid_serial != soa_serial
+  //   3. OK: If error IS NULL AND last_valid_serial = soa_serial
+  const errorMessage = zone?.error || null;
+  const lastValidSerial = zone?.last_valid_serial ?? 0;
+  const soaSerial = zone?.soa_serial ?? 1;
+  
+  let status: 'error' | 'pending' | 'ok';
+  if (errorMessage !== null) {
+    status = 'error';
+  } else if (lastValidSerial !== soaSerial) {
+    status = 'pending';
+  } else {
+    status = 'ok';
+  }
 
   // Fetch DNS records through Express API for consistency
   const dnsRecords = await getZoneDNSRecords(zoneId, zoneName);
@@ -42,10 +56,10 @@ export async function getZoneSummary(zoneId: string, zoneName: string, recordsCo
     recordTypeCounts,
     ttlDistribution,
     totalRecords: zone?.records_count || realRecords.length,
-    verificationStatus: (zone?.verification_status as any) || 'unverified',
-    lastVerifiedAt: zone?.last_verified_at || null,
-    healthStatus,
-    lastDeployedAt,
+    status,
+    errorMessage,
+    lastValidSerial,
+    soaSerial,
   };
 }
 

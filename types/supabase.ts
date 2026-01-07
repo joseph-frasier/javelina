@@ -226,60 +226,54 @@ export interface Database {
       zones: {
         Row: {
           id: string
-          environment_id: string
+          organization_id: string
           name: string
           description: string | null
-          verification_status: 'verified' | 'pending' | 'failed' | 'unverified'
-          last_verified_at: string | null
           soa_serial: number
+          last_valid_serial: number
           admin_email: string
           negative_caching_ttl: number
           live: boolean
           error: string | null
-          deleted_at: string | null
           created_at: string
           updated_at: string
           created_by: string | null
         }
         Insert: {
           id?: string
-          environment_id: string
+          organization_id: string
           name: string
           description?: string | null
-          verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
-          last_verified_at?: string | null
           soa_serial?: number
+          last_valid_serial?: number
           admin_email?: string
           negative_caching_ttl?: number
           live?: boolean
           error?: string | null
-          deleted_at?: string | null
           created_at?: string
           updated_at?: string
           created_by?: string | null
         }
         Update: {
           id?: string
-          environment_id?: string
+          organization_id?: string
           name?: string
           description?: string | null
-          verification_status?: 'verified' | 'pending' | 'failed' | 'unverified'
-          last_verified_at?: string | null
           soa_serial?: number
+          last_valid_serial?: number
           admin_email?: string
           negative_caching_ttl?: number
           live?: boolean
           error?: string | null
-          deleted_at?: string | null
           created_at?: string
           updated_at?: string
           created_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: 'zones_environment_id_fkey'
-            columns: ['environment_id']
-            referencedRelation: 'environments'
+            foreignKeyName: 'zones_organization_id_fkey'
+            columns: ['organization_id']
+            referencedRelation: 'organizations'
             referencedColumns: ['id']
           }
         ]
