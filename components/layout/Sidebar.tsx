@@ -268,7 +268,8 @@ export function Sidebar({
         </nav>
 
         {/* Feedback Button - Mobile */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700 bg-white dark:bg-orange-dark">
+        {/* Temporarily hidden */}
+        {/* <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700 bg-white dark:bg-orange-dark">
           <button
             onClick={() => {
               setIsFeedbackModalOpen(true);
@@ -294,7 +295,7 @@ export function Sidebar({
             </svg>
             <span className="font-medium">Give feedback</span>
           </button>
-        </div>
+        </div> */}
       </aside>
 
       {/* Desktop Sidebar */}
@@ -365,7 +366,8 @@ export function Sidebar({
       </nav>
 
       {/* Feedback Button - Desktop */}
-      <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700">
+      {/* Temporarily hidden */}
+      {/* <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700">
         {isCollapsed ? (
           <button
             onClick={() => setIsFeedbackModalOpen(true)}
@@ -409,7 +411,7 @@ export function Sidebar({
             <span className="font-medium text-sm">Give feedback</span>
           </button>
         )}
-      </div>
+      </div> */}
     </aside>
 
       {/* Add Organization Modal */}
