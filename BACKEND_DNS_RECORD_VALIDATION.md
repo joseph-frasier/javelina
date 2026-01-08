@@ -91,12 +91,20 @@ function validateMXRecord(value) {
     };
   }
   
-  // Validate priority (first field)
-  const priority = parseInt(parts[0], 10);
-  if (isNaN(priority) || priority < 0 || priority > 65535) {
+  // Validate priority (first field) - must be ONLY digits (no decimals, no special chars)
+  const priorityStr = parts[0];
+  if (!/^\d+$/.test(priorityStr)) {
     return { 
       valid: false, 
-      error: 'MX priority must be a number between 0 and 65535' 
+      error: 'MX priority must be a whole number between 0 and 65535' 
+    };
+  }
+  
+  const priority = parseInt(priorityStr, 10);
+  if (priority < 0 || priority > 65535) {
+    return { 
+      valid: false, 
+      error: 'MX priority must be between 0 and 65535' 
     };
   }
   
@@ -149,22 +157,31 @@ function validateSRVRecord(value) {
   
   const [priorityStr, weightStr, portStr, ...targetParts] = parts;
   
-  // Validate priority
+  // Validate priority - must be ONLY digits (no decimals, no special chars)
+  if (!/^\d+$/.test(priorityStr)) {
+    return { valid: false, error: 'SRV priority must be a whole number between 0 and 65535' };
+  }
   const priority = parseInt(priorityStr, 10);
-  if (isNaN(priority) || priority < 0 || priority > 65535) {
-    return { valid: false, error: 'SRV priority must be a number between 0 and 65535' };
+  if (priority < 0 || priority > 65535) {
+    return { valid: false, error: 'SRV priority must be between 0 and 65535' };
   }
   
-  // Validate weight
+  // Validate weight - must be ONLY digits
+  if (!/^\d+$/.test(weightStr)) {
+    return { valid: false, error: 'SRV weight must be a whole number between 0 and 65535' };
+  }
   const weight = parseInt(weightStr, 10);
-  if (isNaN(weight) || weight < 0 || weight > 65535) {
-    return { valid: false, error: 'SRV weight must be a number between 0 and 65535' };
+  if (weight < 0 || weight > 65535) {
+    return { valid: false, error: 'SRV weight must be between 0 and 65535' };
   }
   
-  // Validate port (note: port 0 is technically valid in SRV records)
+  // Validate port - must be ONLY digits (note: port 0 is technically valid in SRV records)
+  if (!/^\d+$/.test(portStr)) {
+    return { valid: false, error: 'SRV port must be a whole number between 0 and 65535' };
+  }
   const port = parseInt(portStr, 10);
-  if (isNaN(port) || port < 0 || port > 65535) {
-    return { valid: false, error: 'SRV port must be a number between 0 and 65535' };
+  if (port < 0 || port > 65535) {
+    return { valid: false, error: 'SRV port must be between 0 and 65535' };
   }
   
   // Get target hostname
