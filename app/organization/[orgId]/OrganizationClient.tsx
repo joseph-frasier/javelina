@@ -338,7 +338,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
                         d="M12 4v16m8-8H4"
                       />
                     </svg>
-                    Buy Organization
+                    Create Organization
                   </Button>
                 </Link>
                 <Link href="/profile" className="block">

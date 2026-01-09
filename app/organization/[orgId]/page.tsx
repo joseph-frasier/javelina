@@ -68,7 +68,6 @@ export default async function OrganizationPage({
     .from('zones')
     .select('id, name, organization_id, live', { count: 'exact' })
     .eq('organization_id', orgId)
-    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   // Fetch records count for each zone

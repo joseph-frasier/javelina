@@ -72,6 +72,45 @@ export function isValidDomain(domain: string): boolean {
 }
 
 /**
+ * Checks if a string is an IPv4 or IPv6 address
+ */
+export function isIPAddress(value: string): boolean {
+  const trimmed = value.trim();
+  
+  // Check IPv4: xxx.xxx.xxx.xxx
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (ipv4Regex.test(trimmed)) {
+    // Validate octets are 0-255
+    const octets = trimmed.split('.');
+    return octets.every(octet => {
+      const num = parseInt(octet, 10);
+      return num >= 0 && num <= 255;
+    });
+  }
+  
+  // Check IPv6: contains colons
+  if (trimmed.includes(':')) {
+    // Simple check: if it has colons and valid hex characters, it's likely IPv6
+    // More thorough validation can be added if needed
+    const ipv6Regex = /^[0-9a-fA-F:]+$/;
+    return ipv6Regex.test(trimmed);
+  }
+  
+  return false;
+}
+
+/**
+ * Normalizes whitespace in DNS record values
+ * - Trims leading/trailing whitespace
+ * - Collapses multiple consecutive spaces to single space
+ */
+export function normalizeWhitespace(value: string): string {
+  return value
+    .trim()                        // Remove leading/trailing
+    .replace(/\s+/g, ' ');         // Collapse multiple spaces
+}
+
+/**
  * Validates record name
  * Allows: alphanumerics, backslash, hyphens, underscores, dots
  * Maximum length: 253 characters
@@ -137,32 +176,53 @@ export function isValidTTL(ttl: number): { valid: boolean; error?: string } {
  * Validates MX record format
  * Expected format: "priority hostname" (e.g., "10 mail.example.com")
  */
-export function validateMXRecord(value: string): { valid: boolean; error?: string } {
-  const parts = value.trim().split(/\s+/);
+export function validateMXRecord(value: string): { valid: boolean; error?: string; normalized?: string } {
+  // Normalize whitespace first
+  const normalized = normalizeWhitespace(value);
+  const parts = normalized.split(' ');
   
   if (parts.length < 2) {
     return { valid: false, error: 'MX record must include priority and hostname (e.g., "10 mail.example.com")' };
   }
   
-  const priority = parseInt(parts[0], 10);
-  if (isNaN(priority) || priority < 0 || priority > 65535) {
-    return { valid: false, error: 'Priority must be a number between 0 and 65535' };
+  // Validate priority - must be ONLY digits (no decimals, no special chars)
+  const priorityStr = parts[0];
+  if (!/^\d+$/.test(priorityStr)) {
+    return { valid: false, error: 'MX priority must be a whole number between 0 and 65535' };
   }
   
-  const hostname = parts.slice(1).join(' ').trim();
+  const priority = parseInt(priorityStr, 10);
+  if (priority < 0 || priority > 65535) {
+    return { valid: false, error: 'MX priority must be between 0 and 65535' };
+  }
+  
+  // Get hostname (everything after priority)
+  const hostname = parts.slice(1).join(' ');
+  
+  // Check if hostname is an IP address
+  if (isIPAddress(hostname)) {
+    return { 
+      valid: false, 
+      error: 'MX records cannot use IP addresses. Use a hostname instead (e.g., mail.example.com)'
+    };
+  }
+  
+  // Validate hostname format
   if (!isValidDomain(hostname)) {
-    return { valid: false, error: 'Invalid mail server domain' };
+    return { valid: false, error: 'Invalid mail server hostname' };
   }
   
-  return { valid: true };
+  return { valid: true, normalized };
 }
 
 /**
  * Validates SRV record format
  * Expected format: "priority weight port target" (e.g., "10 10 5060 sip.example.com")
  */
-export function validateSRVRecord(value: string): { valid: boolean; error?: string } {
-  const parts = value.trim().split(/\s+/);
+export function validateSRVRecord(value: string): { valid: boolean; error?: string; normalized?: string } {
+  // Normalize whitespace first
+  const normalized = normalizeWhitespace(value);
+  const parts = normalized.split(' ');
   
   if (parts.length < 4) {
     return { valid: false, error: 'SRV record must include priority, weight, port, and target (e.g., "10 10 5060 sip.example.com")' };
@@ -170,28 +230,50 @@ export function validateSRVRecord(value: string): { valid: boolean; error?: stri
   
   const [priorityStr, weightStr, portStr, ...targetParts] = parts;
   
+  // Validate priority - must be ONLY digits
+  if (!/^\d+$/.test(priorityStr)) {
+    return { valid: false, error: 'SRV priority must be a whole number between 0 and 65535' };
+  }
   const priority = parseInt(priorityStr, 10);
-  if (isNaN(priority) || priority < 0 || priority > 65535) {
-    return { valid: false, error: 'Priority must be a number between 0 and 65535' };
+  if (priority < 0 || priority > 65535) {
+    return { valid: false, error: 'SRV priority must be between 0 and 65535' };
   }
   
+  // Validate weight - must be ONLY digits
+  if (!/^\d+$/.test(weightStr)) {
+    return { valid: false, error: 'SRV weight must be a whole number between 0 and 65535' };
+  }
   const weight = parseInt(weightStr, 10);
-  if (isNaN(weight) || weight < 0 || weight > 65535) {
-    return { valid: false, error: 'Weight must be between 0 and 65535' };
+  if (weight < 0 || weight > 65535) {
+    return { valid: false, error: 'SRV weight must be between 0 and 65535' };
   }
   
+  // Validate port - must be ONLY digits (note: port 0 is technically valid in SRV records)
+  if (!/^\d+$/.test(portStr)) {
+    return { valid: false, error: 'SRV port must be a whole number between 0 and 65535' };
+  }
   const port = parseInt(portStr, 10);
-  if (isNaN(port) || port < 0 || port > 65535) {
-    return { valid: false, error: 'Port must be between 0 and 65535' };
+  if (port < 0 || port > 65535) {
+    return { valid: false, error: 'SRV port must be between 0 and 65535' };
   }
   
-  const target = targetParts.join(' ').trim();
+  // Get target hostname
+  const target = targetParts.join(' ');
   
+  // Check if target is an IP address
+  if (isIPAddress(target)) {
+    return { 
+      valid: false, 
+      error: 'SRV target cannot be an IP address. Use a hostname instead (e.g., sip.example.com)'
+    };
+  }
+  
+  // Validate target format
   if (!isValidDomain(target)) {
-    return { valid: false, error: 'Invalid target domain' };
+    return { valid: false, error: 'Invalid SRV target hostname' };
   }
   
-  return { valid: true };
+  return { valid: true, normalized };
 }
 
 /**
@@ -354,10 +436,21 @@ export function validateDNSRecord(
   const errors: Record<string, string> = {};
   const warnings: string[] = [];
   
-  // Validate name
-  if (!formData.name.trim()) {
+  // Normalize whitespace in name and value fields for ALL record types
+  const normalizedName = normalizeWhitespace(formData.name);
+  const normalizedValue = normalizeWhitespace(formData.value);
+  
+  // Create normalized form data to use throughout validation
+  const normalizedFormData = {
+    ...formData,
+    name: normalizedName,
+    value: normalizedValue
+  };
+  
+  // Validate name (use normalized value)
+  if (!normalizedName.trim()) {
     errors.name = 'Record name is required';
-  } else if (!isValidRecordName(formData.name)) {
+  } else if (!isValidRecordName(normalizedName)) {
     errors.name = 'Invalid record name format';
   }
   
@@ -369,10 +462,10 @@ export function validateDNSRecord(
   
   // Check for CNAME conflicts (applies to all record types)
   // CNAME records cannot coexist with any other records at the same name
-  if (formData.type === 'CNAME') {
+  if (normalizedFormData.type === 'CNAME') {
     // When creating a CNAME, check if ANY other record exists with this name
     const existingRecordsAtName = existingRecords.filter(
-      r => r.name === formData.name && r.id !== recordId
+      r => r.name === normalizedFormData.name && r.id !== recordId
     );
     if (existingRecordsAtName.length > 0) {
       errors.name = `Cannot create CNAME: ${existingRecordsAtName.length} other record(s) already exist at this name. CNAME cannot coexist with other records.`;
@@ -380,34 +473,34 @@ export function validateDNSRecord(
   } else {
     // When creating any other record type, check if a CNAME exists with this name
     const cnameAtName = existingRecords.find(
-      r => r.name === formData.name && r.type === 'CNAME' && r.id !== recordId
+      r => r.name === normalizedFormData.name && r.type === 'CNAME' && r.id !== recordId
     );
     if (cnameAtName) {
-      errors.name = `Cannot create ${formData.type} record: a CNAME record already exists at this name. CNAME cannot coexist with other records.`;
+      errors.name = `Cannot create ${normalizedFormData.type} record: a CNAME record already exists at this name. CNAME cannot coexist with other records.`;
     }
   }
   
   // Type-specific validation
-  switch (formData.type) {
+  switch (normalizedFormData.type) {
     case 'A':
-      if (!isValidIPv4(formData.value)) {
+      if (!isValidIPv4(normalizedFormData.value)) {
         errors.value = 'Invalid IPv4 address format';
       }
       break;
       
     case 'AAAA':
-      if (!isValidIPv6(formData.value)) {
+      if (!isValidIPv6(normalizedFormData.value)) {
         errors.value = 'Enter a valid IPv6 address';
       }
       break;
       
     case 'CNAME':
-      if (!isValidDomain(formData.value)) {
+      if (!isValidDomain(normalizedFormData.value)) {
         errors.value = 'Invalid domain name';
       }
       
       // Prevent CNAME at zone root
-      if (formData.name === '@' || formData.name === '') {
+      if (normalizedFormData.name === '@' || normalizedFormData.name === '') {
         errors.name = 'The domain root (@) cannot be a CNAME. Please use a subdomain instead.';
       }
       
@@ -415,28 +508,28 @@ export function validateDNSRecord(
       break;
       
     case 'MX':
-      const mxValidation = validateMXRecord(formData.value);
+      const mxValidation = validateMXRecord(normalizedFormData.value);
       if (!mxValidation.valid) {
         errors.value = mxValidation.error || 'Invalid MX record';
       }
       break;
       
     case 'NS':
-      if (!isValidDomain(formData.value)) {
+      if (!isValidDomain(normalizedFormData.value)) {
         errors.value = 'Invalid nameserver domain';
       }
       
       // Validate NS record placement - prevent root NS records
       if (zoneName) {
-        const placementValidation = validateNSRecordPlacement(formData.name, zoneName);
+        const placementValidation = validateNSRecordPlacement(normalizedFormData.name, zoneName);
         if (!placementValidation.valid) {
           errors.name = placementValidation.error || 'Invalid NS record placement';
         }
         
         // Check if NS target is subdomain of current zone (requires glue records)
-        const nsTarget = formData.value.endsWith('.') 
-          ? formData.value.slice(0, -1) 
-          : formData.value;
+        const nsTarget = normalizedFormData.value.endsWith('.') 
+          ? normalizedFormData.value.slice(0, -1) 
+          : normalizedFormData.value;
         
         // Check if NS target ends with current zone name (is subdomain)
         if (nsTarget.endsWith(`.${zoneName}`) || nsTarget === zoneName) {
@@ -454,7 +547,7 @@ export function validateDNSRecord(
       break;
       
     case 'TXT':
-      const txtValidation = validateTXTRecord(formData.value);
+      const txtValidation = validateTXTRecord(normalizedFormData.value);
       if (!txtValidation.valid) {
         errors.value = txtValidation.error || 'Invalid TXT record';
       }
@@ -464,14 +557,14 @@ export function validateDNSRecord(
       break;
       
     case 'SRV':
-      const srvValidation = validateSRVRecord(formData.value);
+      const srvValidation = validateSRVRecord(normalizedFormData.value);
       if (!srvValidation.valid) {
         errors.value = srvValidation.error || 'Invalid SRV record';
       }
       break;
       
     case 'CAA':
-      const caaValidation = validateCAARecord(formData.value);
+      const caaValidation = validateCAARecord(normalizedFormData.value);
       if (!caaValidation.valid) {
         errors.value = caaValidation.error || 'Invalid CAA record';
       }
@@ -482,14 +575,14 @@ export function validateDNSRecord(
       break;
       
     case 'PTR':
-      const ptrValidation = validatePTRRecord(formData.value);
+      const ptrValidation = validatePTRRecord(normalizedFormData.value);
       if (!ptrValidation.valid) {
         errors.value = ptrValidation.error || 'Invalid PTR record';
       }
       
       // Validate PTR record name (applies strict validation for reverse zones only)
       if (zoneName) {
-        const nameValidation = validatePTRRecordName(formData.name, zoneName);
+        const nameValidation = validatePTRRecordName(normalizedFormData.name, zoneName);
         if (!nameValidation.valid) {
           errors.name = nameValidation.error || 'Invalid PTR record name';
         }
@@ -499,9 +592,9 @@ export function validateDNSRecord(
   
   // Check for duplicate records
   const duplicate = existingRecords.find(
-    r => r.name === formData.name && 
-         r.type === formData.type && 
-         r.value === formData.value && 
+    r => r.name === normalizedFormData.name && 
+         r.type === normalizedFormData.type && 
+         r.value === normalizedFormData.value && 
          r.id !== recordId
   );
   if (duplicate) {
@@ -511,18 +604,18 @@ export function validateDNSRecord(
   // Check for TTL consistency across records with same name+type
   // All records with the same name and type must have identical TTL values
   const recordsWithSameNameType = existingRecords.filter(
-    r => r.name === formData.name && 
-         r.type === formData.type && 
+    r => r.name === normalizedFormData.name && 
+         r.type === normalizedFormData.type && 
          r.id !== recordId
   );
   
   if (recordsWithSameNameType.length > 0) {
     const existingTTLs = recordsWithSameNameType.map(r => r.ttl);
-    const allTTLs = [...existingTTLs, formData.ttl];
+    const allTTLs = [...existingTTLs, normalizedFormData.ttl];
     const uniqueTTLs = new Set(allTTLs);
     
     if (uniqueTTLs.size > 1) {
-      errors.ttl = `All records with name "${formData.name}" and type ${formData.type} must have the same TTL. Existing records use: ${existingTTLs.join(', ')} seconds`;
+      errors.ttl = `All records with name "${normalizedFormData.name}" and type ${normalizedFormData.type} must have the same TTL. Existing records use: ${existingTTLs.join(', ')} seconds`;
     }
   }
   
@@ -530,6 +623,8 @@ export function validateDNSRecord(
     valid: Object.keys(errors).length === 0,
     errors,
     warnings,
+    normalizedName,
+    normalizedValue,
   };
 }
 
@@ -587,5 +682,50 @@ export function getFQDN(recordName: string, zoneName: string): string {
     return zoneName;
   }
   return `${normalized}.${zoneName}`;
+}
+
+/**
+ * Detects if a zone name has hierarchical overlap with existing zones
+ * Returns true if the new zone would be a parent or child of any existing zone
+ * 
+ * Examples:
+ * - "acme.com" conflicts with "foo.acme.com" (parent/child)
+ * - "foo.acme.com" conflicts with "acme.com" (child/parent)
+ * - "bar.example.com" does NOT conflict with "foo.example.com" (siblings)
+ */
+export function detectZoneOverlap(
+  zoneName: string, 
+  existingZones: string[]
+): { hasOverlap: boolean; conflictingZone?: string } {
+  const normalizedZoneName = zoneName.trim().toLowerCase();
+  
+  for (const existingZone of existingZones) {
+    const normalizedExisting = existingZone.trim().toLowerCase();
+    
+    // Skip if exactly the same (this will be caught by other validation)
+    if (normalizedZoneName === normalizedExisting) {
+      continue;
+    }
+    
+    // Check if new zone is a subdomain of existing zone
+    // e.g., creating "foo.acme.com" when "acme.com" exists
+    if (normalizedZoneName.endsWith(`.${normalizedExisting}`)) {
+      return {
+        hasOverlap: true,
+        conflictingZone: existingZone
+      };
+    }
+    
+    // Check if existing zone is a subdomain of new zone
+    // e.g., creating "acme.com" when "foo.acme.com" exists
+    if (normalizedExisting.endsWith(`.${normalizedZoneName}`)) {
+      return {
+        hasOverlap: true,
+        conflictingZone: existingZone
+      };
+    }
+  }
+  
+  return { hasOverlap: false };
 }
 

@@ -30,6 +30,8 @@ export interface DNSValidationResult {
   valid: boolean;
   errors: Record<string, string>;
   warnings: string[];
+  normalizedName?: string;
+  normalizedValue?: string;
 }
 
 export interface ImportConflict {
@@ -108,7 +110,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     label: 'NS',
     description: 'Name Server',
     requiresPriority: false,
-    defaultTTL: 86400,
+    defaultTTL: 3600,
     placeholder: 'ns1.example.com',
     hint: 'Enter nameserver domain. Zones should have at least 2 NS records.',
   },
@@ -132,7 +134,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     label: 'CAA',
     description: 'Certification Authority Authorization',
     requiresPriority: false,
-    defaultTTL: 86400,
+    defaultTTL: 3600,
     placeholder: '0 issue "letsencrypt.org"',
     hint: 'Format: flags tag "value" (e.g., 0 issue "letsencrypt.org")',
   },

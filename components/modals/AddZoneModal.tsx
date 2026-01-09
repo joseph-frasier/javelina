@@ -11,6 +11,8 @@ import { useToastStore } from '@/lib/toast-store';
 import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
 import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
 import { UpgradeLimitBanner } from '@/components/ui/UpgradeLimitBanner';
+import { detectZoneOverlap } from '@/lib/utils/dns-validation';
+import { createClient } from '@/lib/supabase/client';
 
 interface AddZoneModalProps {
   isOpen: boolean;
@@ -38,12 +40,39 @@ export function AddZoneModal({
   const [negativeCachingTTL, setNegativeCachingTTL] = useState(3600);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; admin_email?: string; negative_caching_ttl?: string; general?: string }>({});
+  const [allZoneNames, setAllZoneNames] = useState<string[]>([]);
 
   const { addToast } = useToastStore();
   
   // Plan limits and usage tracking
   const { limits, tier, wouldExceedLimit } = usePlanLimits(planCode);
   const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsageCounts(organizationId);
+  
+  // Fetch all zone names globally for overlap detection
+  useEffect(() => {
+    const fetchAllZones = async () => {
+      if (!isOpen) return;
+      
+      try {
+        const supabase = createClient();
+        // Fetch all zone names globally (across all orgs, including deleted)
+        const { data, error } = await supabase
+          .from('zones')
+          .select('name');
+        
+        if (error) {
+          console.error('Error fetching zones for validation:', error);
+          return;
+        }
+        
+        setAllZoneNames((data || []).map(z => z.name));
+      } catch (error) {
+        console.error('Error fetching zones:', error);
+      }
+    };
+    
+    fetchAllZones();
+  }, [isOpen]);
   
   // Refetch usage counts when modal opens to get fresh data
   useEffect(() => {
@@ -56,6 +85,18 @@ export function AddZoneModal({
   const currentZoneCount = usage?.zones ?? 0;
   const isAtZoneLimit = wouldExceedLimit('zones', currentZoneCount);
 
+  // Debug logging
+  console.log('AddZoneModal Debug:', {
+    planCode,
+    tier,
+    limits,
+    usage,
+    currentZoneCount,
+    isAtZoneLimit,
+    isLoadingUsage,
+    organizationId
+  });
+
   const validateForm = (): boolean => {
     const newErrors: { name?: string; admin_email?: string; negative_caching_ttl?: string } = {};
 
@@ -63,8 +104,20 @@ export function AddZoneModal({
       newErrors.name = 'Zone name is required';
     } else if (name.length > 253) {
       newErrors.name = 'Zone name must be 253 characters or less';
-    } else if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(name)) {
-      newErrors.name = 'Zone name must be a valid domain name (e.g., example.com or subdomain.example.com)';
+    } else {
+      // Check minimum 2 labels requirement (must have at least one dot)
+      const labels = name.split('.').filter(l => l.length > 0);
+      if (labels.length < 2) {
+        newErrors.name = 'Zone name must have at least 2 labels (e.g., example.com, not just "example")';
+      } else if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(name)) {
+        newErrors.name = 'Zone name must be a valid domain name (e.g., example.com or subdomain.example.com)';
+      } else {
+        // Check for zone overlap (hierarchical conflicts)
+        const overlapResult = detectZoneOverlap(name, allZoneNames);
+        if (overlapResult.hasOverlap) {
+          newErrors.name = `Zone conflicts with existing zone: ${overlapResult.conflictingZone}`;
+        }
+      }
     }
 
     // Validate admin email
@@ -226,7 +279,7 @@ export function AddZoneModal({
         </div>
 
         {/* SOA Configuration Section */}
-        <div className="pt-4 border-t border-gray-light">
+        <div className="pt-4 border-t border-gray-light -mx-6 px-6">
           <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">
             SOA Configuration
           </h3>
