@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Token refresh doesn't need profile refetch
         // User is already authenticated and profile is loaded
         // This prevents page "reload" appearance when switching tabs
-        console.log('[AuthProvider] Token refreshed - skipping re-initialization');
       } else if (event === 'SIGNED_OUT') {
         // Clear ALL auth state fields
         useAuthStore.setState({
