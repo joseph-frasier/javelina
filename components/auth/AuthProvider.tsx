@@ -21,7 +21,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        initializeAuth();
+        // Only re-initialize if we don't have a user yet (actual login)
+        // Skip re-initialization on token refresh when user is already authenticated
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) {
+          initializeAuth();
+        }
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Token refresh doesn't need profile refetch
+        // User is already authenticated and profile is loaded
+        // This prevents page "reload" appearance when switching tabs
       } else if (event === 'SIGNED_OUT') {
         // Clear ALL auth state fields
         useAuthStore.setState({
