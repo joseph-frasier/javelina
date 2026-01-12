@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export interface QuickAction {
   label: string;
@@ -17,6 +17,25 @@ interface QuickActionsDropdownProps {
 
 export function QuickActionsDropdown({ actions, align = 'right' }: QuickActionsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current && dropdownRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const dropdownHeight = dropdownRef.current.offsetHeight;
+      const spaceBelow = window.innerHeight - buttonRect.bottom;
+      const spaceAbove = buttonRect.top;
+
+      // If there's not enough space below but there is above, open upward
+      if (spaceBelow < dropdownHeight + 20 && spaceAbove > dropdownHeight + 20) {
+        setOpenUpward(true);
+      } else {
+        setOpenUpward(false);
+      }
+    }
+  }, [isOpen]);
 
   const handleActionClick = (action: QuickAction) => {
     setIsOpen(false);
@@ -26,6 +45,7 @@ export function QuickActionsDropdown({ actions, align = 'right' }: QuickActionsD
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
@@ -48,7 +68,10 @@ export function QuickActionsDropdown({ actions, align = 'right' }: QuickActionsD
           
           {/* Dropdown Menu */}
           <div
-            className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 overflow-hidden`}
+            ref={dropdownRef}
+            className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} ${
+              openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
+            } w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 overflow-hidden`}
           >
             <div className="py-1">
               {actions.map((action, index) => (
