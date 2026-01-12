@@ -196,13 +196,28 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
           if (result.error || !result.data) {
             console.error('Error fetching profile:', result.error)
-            // Do not create fallback user - set error state instead
-            set({
-              user: null,
-              isAuthenticated: true, // Still have a valid Supabase session
-              profileReady: false,
-              profileError: 'We could not load your profile. Please sign out and try again.',
-            })
+            
+            // Check if this is a disabled account error
+            const isDisabledError = result.error?.toLowerCase().includes('disabled')
+            
+            if (isDisabledError) {
+              // Sign them out for disabled accounts
+              await supabase.auth.signOut()
+              set({
+                user: null,
+                isAuthenticated: false,
+                profileReady: false,
+                profileError: result.error || 'Your account has been disabled. Please contact support for assistance.',
+              })
+            } else {
+              // For other errors, keep the session but show the error
+              set({
+                user: null,
+                isAuthenticated: true, // Still have a valid Supabase session
+                profileReady: false,
+                profileError: result.error || 'We could not load your profile. Please sign out and try again.',
+              })
+            }
             return
           }
 
