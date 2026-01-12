@@ -97,23 +97,12 @@ export function IdleLogoutGuard() {
   /**
    * Use idle logout hook
    */
-  const { isWarning, reset } = useIdleLogout({
+  const { reset, triggerLogout } = useIdleLogout({
     enabled,
     mode,
     onWarning: handleWarning,
     onLogout: handleLogout,
   });
-
-  /**
-   * Sync warning state with hook
-   */
-  useEffect(() => {
-    if (isWarning && mode === 'full') {
-      setShowWarningModal(true);
-    } else {
-      setShowWarningModal(false);
-    }
-  }, [isWarning, mode]);
 
   /**
    * Handle "Stay signed in" button
@@ -124,12 +113,20 @@ export function IdleLogoutGuard() {
   }, [reset]);
 
   /**
-   * Close modal (treat as "Stay signed in")
+   * Handle "Log out now" button
+   */
+  const handleLogoutNow = useCallback(() => {
+    setShowWarningModal(false);
+    triggerLogout();
+  }, [triggerLogout]);
+
+  /**
+   * Close modal via X button - just close, let timer continue
    */
   const handleCloseModal = useCallback(() => {
     setShowWarningModal(false);
-    reset();
-  }, [reset]);
+    // Don't reset - timer continues, will auto-logout
+  }, []);
 
   // Don't render anything (this is just a guard)
   // But we do render the warning modal when needed
@@ -138,12 +135,12 @@ export function IdleLogoutGuard() {
       {showWarningModal && (
         <ConfirmationModal
           isOpen={showWarningModal}
-          onClose={handleCloseModal}
-          onConfirm={handleStaySignedIn}
+          onClose={handleStaySignedIn}
+          onConfirm={handleLogoutNow}
           title="Session Timeout Warning"
           message="You'll be logged out in 2 minutes due to inactivity. Would you like to stay signed in?"
-          confirmText="Stay signed in"
-          cancelText="Log out now"
+          confirmText="Log out now"
+          cancelText="Stay signed in"
           variant="warning"
         />
       )}
