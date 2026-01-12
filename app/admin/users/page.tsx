@@ -19,6 +19,7 @@ import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { getActivityStatus, getActivityBadge } from '@/lib/utils/activity';
+import { createClient } from '@/lib/supabase/client';
 
 interface User {
   id: string;
@@ -283,8 +284,16 @@ export default function AdminUsersPage() {
     setActioningUserId(email);
     setConfirmModal({ ...confirmModal, isOpen: false });
     try {
-      await adminApi.sendPasswordReset(email);
-      addToast('success', 'Password reset email sent');
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      
+      if (error) {
+        addToast('error', error.message || 'Failed to send password reset email');
+      } else {
+        addToast('success', 'Password reset email sent');
+      }
     } catch (error: any) {
       addToast('error', error.message || 'Failed to send password reset email');
     } finally {

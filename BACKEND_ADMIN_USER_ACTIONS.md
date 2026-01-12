@@ -2,13 +2,15 @@
 
 ## Overview
 
-This document specifies the backend API requirements for admin user management actions. All endpoints use the regular Supabase client (no service role key needed) and follow the existing authentication architecture.
+This document specifies the backend API requirements for admin user management actions. The disable/enable endpoints use the Express API with audit logging, while password reset uses direct Supabase calls for simplicity and consistency with user-initiated password resets.
 
 ---
 
 ## Architecture
 
-- **Frontend**: Makes API calls to Express backend with admin JWT
+- **Frontend**: 
+  - Disable/Enable User: Makes API calls to Express backend with admin JWT
+  - Password Reset: Direct Supabase call (same as user-initiated password reset)
 - **Backend**: Validates admin privileges, performs database operations, logs audit events
 - **Authentication**: Uses standard JWT tokens from Supabase Auth
 - **Database**: Updates `profiles` table status field, logs to `audit_logs` table
@@ -38,6 +40,8 @@ module.exports = { supabase };
 ---
 
 ## API Endpoints
+
+> **Note**: Password reset is handled via direct Supabase call from the frontend (see [Password Reset Section](#password-reset-direct-supabase-call) below). Only disable/enable endpoints are implemented in the backend API.
 
 ### 1. Disable User
 
@@ -300,94 +304,54 @@ router.get('/profile', authenticateUser, async (req, res) => {
 
 ---
 
-### 4. Send Password Reset
+### 4. Password Reset (Direct Supabase Call)
 
-**Endpoint**: `POST /admin/users/password-reset`
+**Implementation**: Password reset is handled directly from the frontend using Supabase's `resetPasswordForEmail()` method. **No backend endpoint is needed.**
 
-**Authentication**: Requires admin JWT
+**Why Direct Call?**
+- Consistency: User-initiated password reset also uses direct Supabase call
+- Simplicity: No backend endpoint needed, no audit logging complexity
+- Security: Doesn't change any database state, just triggers an email
+- Same Flow: Admin and user password resets work identically
 
-**Request Body**:
+**Frontend Implementation**:
 
-```json
-{
-  "email": "user@example.com"
-}
-```
-
-**Implementation**:
-
-```javascript
-router.post('/password-reset', authenticateUser, verifyAdmin, async (req, res) => {
+```typescript
+// In app/admin/users/page.tsx
+const handleSendResetEmail = async (email: string) => {
   try {
-    const { email } = req.body;
-    const adminId = req.user.id;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
-    
-    // 1. Check if user exists (for audit logging only)
-    const { data: targetUser } = await supabase
-      .from('profiles')
-      .select('id, email, name')
-      .eq('email', email)
-      .single();
-    
-    // 2. Use regular Supabase client to trigger password reset
-    // Note: This uses the built-in resetPasswordForEmail which doesn't require admin privileges
+    const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.FRONTEND_URL}/reset-password`
+      redirectTo: `${window.location.origin}/reset-password`
     });
     
-    if (!error) {
-      // 3. Log audit event (only if user exists)
-      if (targetUser) {
-        await supabase.from('audit_logs').insert({
-          table_name: 'profiles',
-          record_id: targetUser.id,
-          action: 'UPDATE',
-          user_id: adminId,
-          new_data: { 
-            action: 'password_reset_sent',
-            target_email: email,
-            sent_by: adminId,
-            sent_at: new Date().toISOString()
-          }
-        });
-      }
+    if (error) {
+      addToast('error', error.message || 'Failed to send password reset email');
+    } else {
+      addToast('success', 'Password reset email sent');
     }
-    
-    // Always return success (don't leak if email exists or not)
-    res.json({
-      success: true,
-      message: 'If an account exists with that email, a password reset link has been sent.'
-    });
-  } catch (error) {
-    console.error('Password reset error:', error);
-    // Still return success to avoid leaking user existence
-    res.json({
-      success: true,
-      message: 'If an account exists with that email, a password reset link has been sent.'
-    });
+  } catch (error: any) {
+    addToast('error', error.message || 'Failed to send password reset email');
   }
-});
+};
 ```
 
-**Response**:
-
-```json
-{
-  "success": true,
-  "message": "If an account exists with that email, a password reset link has been sent."
-}
-```
+**How It Works**:
+1. Admin clicks "Send Password Reset" for a user
+2. Frontend calls `supabase.auth.resetPasswordForEmail(email)`
+3. Supabase sends password reset email to the user
+4. User clicks link in email → redirected to `/reset-password`
+5. User enters new password → password updated via Supabase
+6. User logs in with new password
 
 **Important Notes**:
-- Uses `supabase.auth.resetPasswordForEmail()` - no service role key needed!
-- Always return the same message regardless of whether the email exists (security)
-- Supabase will automatically send the email
+- Uses `supabase.auth.resetPasswordForEmail()` - no admin privileges needed
+- Supabase automatically sends the email
 - The `redirectTo` URL should point to your frontend reset-password page
 - The reset link expires after 1 hour by default (Supabase setting)
+- No audit logging (optional: could add client-side logging if needed)
+
+**Backend Action Required**: ❌ **None** - This is handled entirely on the frontend
 
 ---
 
@@ -432,17 +396,20 @@ module.exports = { verifyAdmin };
 Apply strict rate limits to prevent abuse:
 
 - **Disable/Enable user**: 10 requests per minute per admin
-- **Password reset**: 5 requests per minute per admin
+
+Note: Password reset rate limiting is handled by Supabase automatically (direct call, no backend endpoint).
 
 ### Audit Logging
 
-ALL admin actions MUST be logged with:
+Admin actions that change database state MUST be logged with:
 
 - Admin user ID (who performed the action)
 - Target user ID
-- Action type (disable, enable, password_reset_sent)
+- Action type (disable, enable)
 - Timestamp
 - Before/after state (for disable/enable)
+
+Note: Password reset is not audited as it doesn't change database state (just triggers an email).
 
 ### Session Handling
 
@@ -483,15 +450,14 @@ Consider implementing:
 - [ ] Confirmation modal shows before action
 - [ ] Already enabled users return appropriate error
 
-### Password Reset
+### Password Reset (Frontend Only)
 - [ ] Admin can trigger password reset for any user
 - [ ] User receives password reset email
-- [ ] Reset link redirects to correct frontend URL
+- [ ] Reset link redirects to correct frontend URL (`/reset-password`)
 - [ ] Reset link works and allows password change
-- [ ] Audit log entry created (only if user exists)
-- [ ] Endpoint returns same message whether email exists or not
-- [ ] Rate limiting prevents abuse
 - [ ] Confirmation modal shows before action
+- [ ] Supabase rate limiting prevents abuse (automatic)
+- [ ] Works identically to user-initiated password reset
 
 ### Security
 - [ ] Non-admin users cannot access any admin endpoints (403)
@@ -538,16 +504,18 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 ## Summary
 
 **Supported Admin Actions**:
-1. **Disable User** - Sets status to 'disabled', prevents future logins
-2. **Enable User** - Sets status to 'active', allows login again
-3. **Send Password Reset** - Triggers password reset email for any user
+1. **Disable User** - Sets status to 'disabled', prevents future logins (via Express API)
+2. **Enable User** - Sets status to 'active', allows login again (via Express API)
+3. **Send Password Reset** - Triggers password reset email for any user (direct Supabase call)
 
 **Key Points**:
+- Disable/Enable use Express API with audit logging
+- Password reset uses direct Supabase call (consistent with user password reset)
 - Uses regular Supabase client (no service role key needed)
 - Simple status field check in database
 - Frontend checks status during login and profile fetch
 - Middleware provides additional protection
-- All actions are audited
+- Database-changing actions are audited
 - Rate limiting prevents abuse
 - Security through simplicity
 

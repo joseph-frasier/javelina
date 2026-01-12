@@ -493,13 +493,6 @@ export const adminApi = {
   },
 
   /**
-   * Send password reset email
-   */
-  sendPasswordReset: (email: string) => {
-    return apiClient.post('/admin/users/password-reset', { email });
-  },
-
-  /**
    * Update user role
    */
   updateUserRole: (userId: string, role: string) => {
