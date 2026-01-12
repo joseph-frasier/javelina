@@ -231,11 +231,11 @@ router.get('/profile', authenticateUser, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch profile' });
     }
     
-    // NEW: Check if user is disabled
+    // CRITICAL: Check if user is disabled
+    // This error message will be displayed to the user on the login page
     if (profile.status === 'disabled') {
       return res.status(403).json({ 
-        error: 'Your account has been disabled. Please contact support for assistance.',
-        code: 'ACCOUNT_DISABLED'
+        error: 'Your account has been disabled. Please contact support for assistance.'
       });
     }
     
