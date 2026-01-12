@@ -102,6 +102,23 @@ export async function middleware(request: NextRequest) {
     // Check if user just completed payment (allow dashboard access)
     const paymentComplete = request.nextUrl.searchParams.get('payment_complete') === 'true'
 
+    // Check if authenticated user's profile is disabled
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.status === 'disabled') {
+        // Sign them out and redirect to login
+        await supabase.auth.signOut()
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('error', 'Your account has been disabled')
+        return NextResponse.redirect(loginUrl)
+      }
+    }
+
     // If user is not authenticated and trying to access a protected route (but allow /admin/* routes and payment completion)
     if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
       const redirectUrl = new URL('/login', request.url)
