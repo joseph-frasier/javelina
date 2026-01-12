@@ -207,6 +207,20 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             return
           }
 
+          // Check if user is disabled
+          if (result.data.status === 'disabled') {
+            console.log('User account is disabled')
+            // Sign them out
+            await supabase.auth.signOut()
+            set({
+              user: null,
+              isAuthenticated: false,
+              profileReady: false,
+              profileError: 'Your account has been disabled. Please contact support for assistance.',
+            })
+            return
+          }
+
           // Map organizations to Organization interface
           const organizations: Organization[] = (result.data.organizations || []).map((org) => ({
             id: org.id,

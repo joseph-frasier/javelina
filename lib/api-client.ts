@@ -500,13 +500,6 @@ export const adminApi = {
   },
 
   /**
-   * Delete a user
-   */
-  deleteUser: (userId: string) => {
-    return apiClient.delete(`/admin/users/${userId}`);
-  },
-
-  /**
    * Update user role
    */
   updateUserRole: (userId: string, role: string) => {
