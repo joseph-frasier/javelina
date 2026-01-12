@@ -160,7 +160,7 @@ export function DNSRecordDetailModal({
         </div>
 
         {/* Metadata */}
-        <div className="border-t border-gray-light dark:border-gray-700 pt-4">
+        <div className="pt-4">
           <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
             Metadata
           </h4>
@@ -197,7 +197,7 @@ export function DNSRecordDetailModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-light dark:border-gray-700">
+        <div className="flex items-center justify-between gap-3 pt-4">
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
