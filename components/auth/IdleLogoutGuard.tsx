@@ -131,19 +131,15 @@ export function IdleLogoutGuard() {
   // Don't render anything (this is just a guard)
   // But we do render the warning modal when needed
   return (
-    <>
-      {showWarningModal && (
-        <ConfirmationModal
-          isOpen={showWarningModal}
-          onClose={handleStaySignedIn}
-          onConfirm={handleLogoutNow}
-          title="Session Timeout Warning"
-          message="You'll be logged out in 2 minutes due to inactivity. Would you like to stay signed in?"
-          confirmText="Log out now"
-          cancelText="Stay signed in"
-          variant="warning"
-        />
-      )}
-    </>
+    <ConfirmationModal
+      isOpen={showWarningModal}
+      onClose={handleStaySignedIn}
+      onConfirm={handleLogoutNow}
+      title="Session Timeout Warning"
+      message="You'll be logged out in 2 minutes due to inactivity. Would you like to stay signed in?"
+      confirmText="Log out now"
+      cancelText="Stay signed in"
+      variant="warning"
+    />
   );
 }
