@@ -12,8 +12,8 @@ export function WelcomeGuidance() {
     },
     {
       number: 2,
-      title: 'Add Environment',
-      description: 'Create production, staging, or development environments',
+      title: 'Invite Team Members',
+      description: 'Add team members with role-based permissions',
     },
     {
       number: 3,
@@ -45,7 +45,7 @@ export function WelcomeGuidance() {
         </svg>
       ),
       title: 'Hierarchical Organization',
-      description: 'Structure your DNS with organizations, environments, and zones',
+      description: 'Structure your DNS with organizations and zones',
     },
     {
       icon: (
