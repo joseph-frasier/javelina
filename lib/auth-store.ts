@@ -4,6 +4,7 @@ import { getAuthCallbackURL } from '@/lib/utils/get-url'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { classifySignupResult, type SignupOutcome } from '@/lib/utils/signup-classifier'
+import { getIdleSync } from '@/lib/idle/idleSync'
 
 // CRITICAL: Clean up old persisted auth storage IMMEDIATELY on module load
 // This must happen before any Zustand store is created to prevent
@@ -465,6 +466,15 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             profileReady: false,
             profileError: null,
           })
+          
+          // Broadcast logout to other tabs
+          try {
+            const sync = getIdleSync()
+            sync.publishLogout()
+          } catch (error) {
+            console.error('Error broadcasting logout:', error)
+          }
+          
           return
         }
         
@@ -479,8 +489,24 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             profileReady: false,
             profileError: null,
           })
+          
+          // Broadcast logout to other tabs
+          try {
+            const sync = getIdleSync()
+            sync.publishLogout()
+          } catch (error) {
+            console.error('Error broadcasting logout:', error)
+          }
         } catch (error) {
           console.error('Error logging out:', error)
+          
+          // Still broadcast logout even on error
+          try {
+            const sync = getIdleSync()
+            sync.publishLogout()
+          } catch (broadcastError) {
+            console.error('Error broadcasting logout:', broadcastError)
+          }
         }
       },
 }))
