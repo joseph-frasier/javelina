@@ -3,8 +3,8 @@
  * Defaults to 60 minutes idle timeout with 58 minute warning
  */
 
-const DEFAULT_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
-const DEFAULT_WARNING_MS = 58 * 60 * 1000; // 58 minutes
+const DEFAULT_IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (testing)
+const DEFAULT_WARNING_MS = 3 * 60 * 1000; // 3 minutes (testing)
 
 /**
  * Parse integer from env with fallback
