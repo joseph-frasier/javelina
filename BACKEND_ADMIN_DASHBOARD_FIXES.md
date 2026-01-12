@@ -304,6 +304,73 @@ After implementing these endpoints:
 
 ---
 
+## Admin Users List
+
+**Frontend Location**: `app/admin/users/page.tsx`
+
+**Required**: The users list fetches data from the Express API endpoint.
+
+### Current Implementation
+
+The frontend currently calls:
+
+```typescript
+adminApi.listUsers(params?: { page?: number; limit?: number; search?: string })
+// Makes GET /admin/users?page=1&limit=25&search=query
+```
+
+**Critical**: The `/admin/users` endpoint **MUST** return the `status` field from the profiles table. The frontend uses this field to:
+- Display correct status badges in the UI
+- Show "Disabled Users" count in stats
+- Determine if the "Disable User" or "Enable User" action should be shown in the dropdown
+
+**Expected Response Format**:
+
+```json
+[
+  {
+    "id": "user-uuid",
+    "name": "User Name",
+    "email": "user@example.com",
+    "status": "active",
+    "role": "user",
+    "last_login": "2026-01-12T20:00:00.000Z",
+    "organization_members": [
+      { "organization_id": "org-uuid" }
+    ]
+  }
+]
+```
+
+**Backend SQL Query**:
+
+```sql
+SELECT 
+  p.id,
+  p.name,
+  p.email,
+  p.status,
+  p.role,
+  p.last_login,
+  p.created_at,
+  p.updated_at,
+  json_agg(
+    json_build_object('organization_id', om.organization_id)
+  ) FILTER (WHERE om.organization_id IS NOT NULL) as organization_members
+FROM profiles p
+LEFT JOIN organization_members om ON p.id = om.user_id
+WHERE ($1::text IS NULL OR 
+       p.name ILIKE '%' || $1 || '%' OR 
+       p.email ILIKE '%' || $1 || '%')
+GROUP BY p.id, p.name, p.email, p.status, p.role, p.last_login, p.created_at, p.updated_at
+ORDER BY p.created_at DESC
+LIMIT $2 OFFSET $3;
+```
+
+**Important**: The status field is critical for the UI to function correctly. Without it, the frontend will default to 'active' and show incorrect status badges.
+
+---
+
 ## Frontend API Client Reference
 
 The frontend already has these endpoints defined in `lib/api-client.ts`:
