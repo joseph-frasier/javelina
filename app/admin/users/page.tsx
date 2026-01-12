@@ -18,7 +18,7 @@ import { Pagination } from '@/components/admin/Pagination';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
-import { generateMockUsers, getActivityStatus, getActivityBadge } from '@/lib/mock-admin-data';
+import { getActivityStatus, getActivityBadge } from '@/lib/utils/activity';
 import { startImpersonation } from '@/lib/admin-impersonation';
 
 interface User {
@@ -76,10 +76,8 @@ export default function AdminUsersPage() {
       setUsers((data || []) as User[]);
     } catch (error) {
       console.error('Failed to fetch users:', error);
-      // Fallback to mock data on error
-      const mockUsers = generateMockUsers(50);
-      setUsers(mockUsers as any);
-      addToast('info', 'Using mock data for demonstration');
+      addToast('error', 'Failed to load users from API');
+      setUsers([]);
     } finally {
       setLoading(false);
     }

@@ -18,7 +18,6 @@ import { Pagination } from '@/components/admin/Pagination';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
-import { generateMockOrganizations } from '@/lib/mock-admin-data';
 import Link from 'next/link';
 
 interface Organization {
@@ -77,10 +76,8 @@ export default function AdminOrganizationsPage() {
       setOrgs((data || []) as Organization[]);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
-      // Fallback to mock data on error
-      const mockOrgs = generateMockOrganizations(20);
-      setOrgs(mockOrgs as any);
-      addToast('info', 'Using mock data for demonstration');
+      addToast('error', 'Failed to load organizations from API');
+      setOrgs([]);
     } finally {
       setLoading(false);
     }

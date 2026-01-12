@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/Card';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import Button from '@/components/ui/Button';
-import { generateTrendData } from '@/lib/mock-admin-data';
 
 interface KPIData {
   totalUsers: number;
@@ -38,17 +37,12 @@ export default function AdminDashboard() {
     totalOrganizations: 0,
     flaggedZones: 0
   });
-  const [trends, setTrends] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Generate mock trend data
-        const trendData = generateTrendData();
-        setTrends(trendData);
-
-        // Try to fetch real data first
+        // Fetch real data from API
         try {
           const { adminApi } = await import('@/lib/api-client');
           const data = await adminApi.getDashboard();
@@ -82,47 +76,6 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const renderTrend = (growth: string, isInverted: boolean = false) => {
-    const growthNum = parseFloat(growth);
-    const isPositive = growthNum > 0;
-    const isGood = isInverted ? !isPositive : isPositive;
-    
-    if (growthNum === 0) {
-      return (
-        <span className="text-gray-500 text-xs flex items-center gap-1">
-          <span>—</span>
-          <span>No change</span>
-        </span>
-      );
-    }
-
-    return (
-      <span className={`text-xs flex items-center gap-1 ${
-        isGood ? 'text-green-600' : 'text-red-600'
-      }`}>
-        {isPositive ? (
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-          </svg>
-        ) : (
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        )}
-        <span className="font-semibold">{Math.abs(growthNum)}%</span>
-        <span className="text-gray-500">vs last week</span>
-      </span>
-    );
-  };
 
   return (
     <AdminProtectedRoute>
@@ -151,7 +104,6 @@ export default function AdminDashboard() {
               <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">
                 {loading ? '—' : kpis.totalUsers.toLocaleString()}
               </p>
-              {!loading && trends && renderTrend(trends.users.weeklyGrowth)}
               <Button
                 size="sm"
                 variant="ghost"
@@ -177,7 +129,6 @@ export default function AdminDashboard() {
               <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">
                 {loading ? '—' : kpis.totalOrganizations.toLocaleString()}
               </p>
-              {!loading && trends && renderTrend(trends.organizations.weeklyGrowth)}
               <Button
                 size="sm"
                 variant="ghost"
