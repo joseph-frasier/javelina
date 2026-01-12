@@ -90,6 +90,10 @@ export function IdleLogoutGuard() {
       console.error('[IdleLogoutGuard] Failed to clear last activity:', error);
     }
 
+    // Small delay to ensure session is fully cleared before redirect
+    // This prevents middleware from seeing stale authenticated session
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Redirect to login
     router.replace('/login');
   }, [mode, authStoreLogout, router]);
