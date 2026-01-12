@@ -7,7 +7,7 @@ export function WelcomeGuidance() {
   const steps = [
     {
       number: 1,
-      title: 'Buy an Organization',
+      title: 'Create an Organization',
       description: 'Choose a plan that fits your needs',
     },
     {
