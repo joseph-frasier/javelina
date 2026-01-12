@@ -205,20 +205,12 @@ export function useIdleLogout(options: UseIdleLogoutOptions = {}): UseIdleLogout
       window.addEventListener(event, handleActivity, { passive: true });
     });
     
-    // Initialize timers on mount (full mode only)
+    // Initialize timers on mount
+    // Treat mounting in authenticated state as fresh activity to avoid login loops
+    // after idle logout (old timestamp in localStorage would cause immediate re-logout)
     if (mode === 'full') {
-      // Check persisted last activity to see if we're already past timeout
-      const sync = getIdleSync();
-      const lastActivity = sync.getLastActivityTimestamp();
-      const elapsed = Date.now() - lastActivity;
-      
-      if (elapsed >= idleTimeoutMs) {
-        // Already past timeout, log out immediately
-        triggerLogout();
-      } else {
-        // Schedule timers
-        scheduleTimers();
-      }
+      // Reset activity and schedule fresh timers
+      reset();
     } else {
       // activityOnly mode: just update last activity
       reset();

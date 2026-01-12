@@ -79,9 +79,16 @@ export function IdleLogoutGuard() {
       // Continue with redirect even on error
     }
 
-    // Broadcast logout to other tabs
+    // Broadcast logout to other tabs and clear stale timestamp
     const sync = getIdleSync();
     sync.publishLogout();
+    
+    // Clear the stale lastActivityAt timestamp to prevent login loops
+    try {
+      localStorage.removeItem('javelina-last-activity');
+    } catch (error) {
+      console.error('[IdleLogoutGuard] Failed to clear last activity:', error);
+    }
 
     // Redirect to login
     router.replace('/login');

@@ -471,6 +471,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           try {
             const sync = getIdleSync()
             sync.publishLogout()
+            // Clear stale timestamp to prevent login loops
+            localStorage.removeItem('javelina-last-activity')
           } catch (error) {
             console.error('Error broadcasting logout:', error)
           }
@@ -494,6 +496,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           try {
             const sync = getIdleSync()
             sync.publishLogout()
+            // Clear stale timestamp to prevent login loops
+            localStorage.removeItem('javelina-last-activity')
           } catch (error) {
             console.error('Error broadcasting logout:', error)
           }
@@ -504,6 +508,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           try {
             const sync = getIdleSync()
             sync.publishLogout()
+            // Clear stale timestamp to prevent login loops
+            localStorage.removeItem('javelina-last-activity')
           } catch (broadcastError) {
             console.error('Error broadcasting logout:', broadcastError)
           }
