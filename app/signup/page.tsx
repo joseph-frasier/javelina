@@ -566,7 +566,7 @@ export default function SignupPage() {
                   Take control of your DNS
                 </h1>
                 <p className="text-xl font-light text-white/90 leading-relaxed">
-                  Manage zones, records, and environments with confidence
+                  Manage zones, records, and organizations with confidence
                 </p>
               </div>
             </div>
@@ -608,7 +608,7 @@ export default function SignupPage() {
                   Take control of your DNS
                 </h1>
                 <p className="text-lg font-light text-white/90 mb-8 leading-relaxed">
-                  Manage zones, records, and environments with confidence
+                  Manage zones, records, and organizations with confidence
                 </p>
                 <Button
                   onClick={handleFlip}

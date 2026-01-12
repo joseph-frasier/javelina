@@ -60,7 +60,12 @@ export default function Dropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark dark:text-gray-100 flex items-center justify-between transition-colors hover:border-orange/50"
+        className={clsx(
+          "w-full px-4 py-2.5 rounded-md border bg-white dark:bg-gray-800 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-0 text-orange-dark dark:text-gray-100 flex items-center justify-between transition-colors",
+          isOpen
+            ? "border-orange"
+            : "border-gray-light dark:border-gray-600 hover:border-orange/50"
+        )}
       >
         <span className="font-regular">{selectedOption?.label || 'Select...'}</span>
         <svg
