@@ -68,6 +68,12 @@ async function apiRequest<T = any>(
 
     // Handle errors
     if (!response.ok) {
+      // Special handling for disabled organization errors
+      if (response.status === 403 && data?.error === 'Organization is disabled') {
+        const errorMessage = data?.message || 'This organization is currently disabled. Contact support for assistance.';
+        throw new ApiError(errorMessage, response.status, data);
+      }
+      
       const errorMessage = data?.error || data?.message || `Request failed with status ${response.status}`;
       throw new ApiError(errorMessage, response.status, data);
     }
@@ -523,6 +529,34 @@ export const adminApi = {
    */
   softDeleteOrganization: (orgId: string) => {
     return apiClient.put(`/admin/organizations/${orgId}/soft-delete`);
+  },
+
+  /**
+   * Get single organization with full details (admin only)
+   */
+  getOrganization: (orgId: string) => {
+    return apiClient.get(`/admin/organizations/${orgId}`);
+  },
+
+  /**
+   * Get organization members (admin only)
+   */
+  getOrganizationMembers: (orgId: string) => {
+    return apiClient.get(`/admin/organizations/${orgId}/members`);
+  },
+
+  /**
+   * Disable organization (admin only)
+   */
+  disableOrganization: (orgId: string) => {
+    return apiClient.put(`/admin/organizations/${orgId}/disable`);
+  },
+
+  /**
+   * Enable organization (admin only)
+   */
+  enableOrganization: (orgId: string) => {
+    return apiClient.put(`/admin/organizations/${orgId}/enable`);
   },
 
   /**

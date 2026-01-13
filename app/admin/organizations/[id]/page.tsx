@@ -3,17 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
-import {
-  addMemberToOrganization,
-  removeMemberFromOrganization,
-  changeMemberRole
-} from '@/lib/actions/admin/organizations';
+import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
+import { formatDateWithRelative } from '@/lib/utils/time';
 import Link from 'next/link';
 
 interface Organization {
@@ -21,6 +15,19 @@ interface Organization {
   name: string;
   description?: string;
   created_at: string;
+  updated_at?: string;
+  is_active?: boolean;
+  billing_phone?: string;
+  billing_email?: string;
+  billing_address?: string;
+  billing_city?: string;
+  billing_state?: string;
+  billing_zip?: string;
+  admin_contact_email?: string;
+  admin_contact_phone?: string;
+  member_count?: number;
+  zone_count?: number;
+  record_count?: number;
 }
 
 interface Member {
@@ -43,45 +50,29 @@ export default function AdminOrganizationDetailPage() {
   const { addToast } = useToastStore();
   const [org, setOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [zones, setZones] = useState<Zone[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [addMemberEmail, setAddMemberEmail] = useState('');
-  const [addMemberRole, setAddMemberRole] = useState('Viewer');
-  const [isAddingMember, setIsAddingMember] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
-      const client = createServiceRoleClient();
+      // Fetch organization details via API
+      const orgData = await adminApi.getOrganization(orgId);
+      setOrg(orgData as Organization);
 
-      // Fetch organization
-      const { data: orgData } = await client
-        .from('organizations')
-        .select('*')
-        .eq('id', orgId)
-        .single();
-
-      setOrg(orgData);
-
-      // Fetch members with user profiles
-      const { data: membersData } = await client
-        .from('organization_members')
-        .select('*, profiles:user_id(name, email)')
-        .eq('organization_id', orgId);
-
-      setMembers((membersData || []) as any[]);
-
-      // Fetch zones directly for this organization
-      const { data: zonesData } = await client
-        .from('zones')
-        .select('id, name, organization_id, live')
-        .eq('organization_id', orgId);
-
-      setZones((zonesData || []) as Zone[]);
-    } catch (error) {
+      // Fetch members via API
+      const membersData = await adminApi.getOrganizationMembers(orgId);
+      setMembers((membersData || []).map((m: any) => ({
+        organization_id: orgId,
+        user_id: m.user_id,
+        role: m.role,
+        profiles: {
+          name: m.name,
+          email: m.email,
+        },
+      })));
+    } catch (error: any) {
       console.error('Failed to fetch organization data:', error);
-      addToast('error', 'Failed to fetch organization data');
+      addToast('error', error.message || 'Failed to fetch organization data');
     } finally {
       setLoading(false);
     }
@@ -93,74 +84,6 @@ export default function AdminOrganizationDetailPage() {
     }
   }, [orgId, fetchData]);
 
-  const handleAddMember = async () => {
-    if (!addMemberEmail.trim()) {
-      addToast('error', 'Email is required');
-      return;
-    }
-
-    setIsAddingMember(true);
-    try {
-      // Find user by email
-      const client = createServiceRoleClient();
-      const { data: user } = await client
-        .from('profiles')
-        .select('id')
-        .eq('email', addMemberEmail)
-        .single();
-
-      if (!user) {
-        addToast('error', 'User not found');
-        return;
-      }
-
-      const result = await addMemberToOrganization(orgId, user.id, addMemberRole);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'Member added successfully');
-        setAddMemberEmail('');
-        setShowAddMember(false);
-        await fetchData();
-      }
-    } finally {
-      setIsAddingMember(false);
-    }
-  };
-
-  const handleRemoveMember = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this member?')) return;
-
-    try {
-      const result = await removeMemberFromOrganization(orgId, userId);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'Member removed successfully');
-        setMembers(members.filter(m => m.user_id !== userId));
-      }
-    } catch (error) {
-      addToast('error', 'Failed to remove member');
-    }
-  };
-
-  const handleChangeRole = async (userId: string, newRole: string) => {
-    try {
-      const result = await changeMemberRole(orgId, userId, newRole);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', 'Role updated successfully');
-        setMembers(
-          members.map(m =>
-            m.user_id === userId ? { ...m, role: newRole } : m
-          )
-        );
-      }
-    } catch (error) {
-      addToast('error', 'Failed to update role');
-    }
-  };
 
   if (loading) {
     return (
@@ -198,16 +121,45 @@ export default function AdminOrganizationDetailPage() {
           </Link>
 
           <div>
-            <h1 className="text-3xl font-bold text-orange-dark">{org.name}</h1>
+            <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">{org.name}</h1>
             {org.description && (
-              <p className="text-gray-slate mt-2">{org.description}</p>
+              <p className="text-gray-slate dark:text-gray-300 mt-2">{org.description}</p>
             )}
           </div>
 
+          {/* Disabled Organization Banner */}
+          {org.is_active === false && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <div>
+                  <h3 className="text-sm font-semibold text-red-800 dark:text-red-400">
+                    Organization Disabled
+                  </h3>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                    This organization has been disabled by an administrator. Members cannot perform any actions until it is re-enabled.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Tabs */}
           <Card className="p-6">
-            <div className="flex gap-4 mb-6 border-b border-gray-light pb-4">
-              {['overview', 'members', 'zones'].map((tab) => (
+            <div className="flex gap-4 mb-6 border-b border-gray-light dark:border-gray-700 pb-4">
+              {['overview', 'members'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -224,128 +176,98 @@ export default function AdminOrganizationDetailPage() {
 
             {/* Overview Tab */}
             {activeTab === 'overview' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-slate">Members</p>
-                    <p className="text-2xl font-bold text-orange-dark mt-2">{members.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-slate">Zones</p>
-                    <p className="text-2xl font-bold text-orange-dark mt-2">{zones.length}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Members Tab */}
-            {activeTab === 'members' && (
               <div className="space-y-6">
-                <Button
-                  variant="primary"
-                  onClick={() => setShowAddMember(!showAddMember)}
-                >
-                  {showAddMember ? 'Cancel' : '+ Add Member'}
-                </Button>
-
-                {showAddMember && (
-                  <Card className="p-4 bg-orange-50">
-                    <div className="space-y-3">
-                      <Input
-                        type="email"
-                        placeholder="Enter member email..."
-                        value={addMemberEmail}
-                        onChange={(e) => setAddMemberEmail(e.target.value)}
-                      />
-                      <select
-                        value={addMemberRole}
-                        onChange={(e) => setAddMemberRole(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-light rounded-md"
-                      >
-                        <option value="Viewer">Viewer</option>
-                        <option value="Editor">Editor</option>
-                        <option value="BillingContact">Billing Contact</option>
-                        <option value="Admin">Admin</option>
-                        <option value="SuperAdmin">Super Admin</option>
-                      </select>
-                      <Button
-                        variant="primary"
-                        disabled={isAddingMember}
-                        onClick={handleAddMember}
-                      >
-                        Add Member
-                      </Button>
+                <div>
+                  <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+                    Basic Information
+                  </h3>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</span>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        org.is_active === false
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      }`}>
+                        {org.is_active === false ? 'Disabled' : 'Active'}
+                      </span>
                     </div>
-                  </Card>
-                )}
+                    {org.created_at && (
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Created</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">
+                          {formatDateWithRelative(org.created_at).absolute}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-light">
-                        <th className="text-left py-3 px-4 font-semibold">Name</th>
-                        <th className="text-left py-3 px-4 font-semibold">Email</th>
-                        <th className="text-left py-3 px-4 font-semibold">Role</th>
-                        <th className="text-right py-3 px-4 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members.map((member) => (
-                        <tr key={member.user_id} className="border-b border-gray-light">
-                          <td className="py-3 px-4">{member.profiles?.name}</td>
-                          <td className="py-3 px-4">{member.profiles?.email}</td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={member.role}
-                              onChange={(e) => handleChangeRole(member.user_id, e.target.value)}
-                              className="px-2 py-1 border border-gray-light rounded text-sm"
-                            >
-                              <option value="Viewer">Viewer</option>
-                              <option value="Editor">Editor</option>
-                              <option value="BillingContact">Billing Contact</option>
-                              <option value="Admin">Admin</option>
-                              <option value="SuperAdmin">Super Admin</option>
-                            </select>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="!text-red-600"
-                              onClick={() => handleRemoveMember(member.user_id)}
-                            >
-                              Remove
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div>
+                  <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+                    Usage Statistics
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-orange-dark dark:text-orange">
+                        {org.member_count || 0}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Members</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-orange-dark dark:text-orange">
+                        {org.zone_count || 0}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Zones</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
+                      <p className="text-3xl font-bold text-orange-dark dark:text-orange">
+                        {org.record_count || 0}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Records</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Zones Tab */}
-            {activeTab === 'zones' && (
-              <div>
-                {zones.length === 0 ? (
-                  <p className="text-center py-8 text-gray-slate">No zones</p>
+            {/* Members Tab - Read Only */}
+            {activeTab === 'members' && (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {members.length} {members.length === 1 ? 'member' : 'members'}
+                </p>
+
+                {members.length === 0 ? (
+                  <p className="text-center py-8 text-gray-slate dark:text-gray-300">No members</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-light">
-                          <th className="text-left py-3 px-4 font-semibold">Name</th>
-                          <th className="text-left py-3 px-4 font-semibold">Status</th>
+                        <tr className="border-b border-gray-light dark:border-gray-700">
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Email</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Role</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {zones.map((zone) => (
-                          <tr key={zone.id} className="border-b border-gray-light">
-                            <td className="py-3 px-4">{zone.name}</td>
+                        {members.map((member) => (
+                          <tr key={member.user_id} className="border-b border-gray-light dark:border-gray-700">
+                            <td className="py-3 px-4 text-gray-900 dark:text-white">{member.profiles?.name}</td>
+                            <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{member.profiles?.email}</td>
                             <td className="py-3 px-4">
-                              <span className={`px-2 py-1 rounded text-xs ${zone.live ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                {zone.live ? 'Live' : 'Flagged'}
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                member.role === 'SuperAdmin'
+                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+                                  : member.role === 'Admin'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                  : member.role === 'Editor'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                  : member.role === 'BillingContact'
+                                  ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                              }`}>
+                                {member.role === 'BillingContact' ? 'Billing Contact' : member.role === 'SuperAdmin' ? 'Super Admin' : member.role}
                               </span>
                             </td>
                           </tr>
