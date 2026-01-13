@@ -485,6 +485,13 @@ export const adminApi = {
   },
 
   /**
+   * Get user details (admin only)
+   */
+  getUser: (userId: string) => {
+    return apiClient.get(`/admin/users/${userId}`);
+  },
+
+  /**
    * Disable a user
    */
   disableUser: (userId: string) => {
@@ -562,12 +569,13 @@ export const adminApi = {
   /**
    * Get all audit logs (admin only)
    */
-  getAuditLogs: (params?: { page?: number; limit?: number; table_name?: string; action?: string }) => {
+  getAuditLogs: (params?: { page?: number; limit?: number; table_name?: string; action?: string; actor_type?: string }) => {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('limit', params.limit.toString());
     if (params?.table_name) query.append('table_name', params.table_name);
     if (params?.action) query.append('action', params.action);
+    if (params?.actor_type) query.append('actor_type', params.actor_type);
     const queryString = query.toString();
     return apiClient.get(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`);
   },
