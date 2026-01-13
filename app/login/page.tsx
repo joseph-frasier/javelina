@@ -62,9 +62,16 @@ export default function LoginPage() {
       console.log('[Login] Redirecting to dashboard');
       router.push('/');
     } else {
-      setErrors({ 
-        email: result.error,
-        password: result.error 
+      // Determine which field to show the error under
+      const errorMsg = result.error || 'Login failed';
+      const isEmailError = errorMsg.toLowerCase().includes('email') || 
+                          errorMsg.toLowerCase().includes('user not found') ||
+                          errorMsg.toLowerCase().includes('disabled');
+      
+      setErrors(isEmailError ? { 
+        email: errorMsg 
+      } : { 
+        password: errorMsg 
       });
     }
   };
