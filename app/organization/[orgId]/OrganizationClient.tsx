@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { DisabledOrganizationBanner } from '@/components/ui/DisabledOrganizationBanner';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
@@ -49,6 +50,7 @@ interface OrganizationData {
   name: string;
   description: string | null;
   role: 'SuperAdmin' | 'Admin' | 'BillingContact' | 'Editor' | 'Viewer';
+  is_active: boolean;
   zonesCount: number;
   zones: Zone[];
   recentActivity: ActivityLog[];
@@ -67,6 +69,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   
   // Feature flags for starter-only launch
   const { hideTeamInvites } = useFeatureFlags();
+  
+  // Check if organization is disabled
+  const isOrgDisabled = !org.is_active;
   
   // Sync hierarchy store with current organization
   useEffect(() => {
@@ -118,29 +123,34 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   // Tag handlers
   const handleCreateTag = (newTag: { name: string; color: string }) => {
+    if (isOrgDisabled) return;
     createTagMutation.mutate(newTag);
   };
 
   const handleToggleFavorite = useCallback((tagId: string) => {
+    if (isOrgDisabled) return;
     const tag = tags.find(t => t.id === tagId);
     if (tag) {
       toggleFavoriteMutation.mutate({ tagId, isFavorite: tag.is_favorite });
     }
-  }, [tags, toggleFavoriteMutation]);
+  }, [tags, toggleFavoriteMutation, isOrgDisabled]);
 
   // Reorder tags handler - updates tag order after drag and drop
   const handleReorderTags = useCallback((reorderedTags: Tag[]) => {
+    if (isOrgDisabled) return;
     reorderTagsMutation.mutate(reorderedTags);
-  }, [reorderTagsMutation]);
+  }, [reorderTagsMutation, isOrgDisabled]);
 
   // Edit tag handler - opens modal in edit mode
   const handleEditTag = useCallback((tag: Tag) => {
+    if (isOrgDisabled) return;
     setTagToEdit(tag);
     setIsCreateTagModalOpen(true);
-  }, []);
+  }, [isOrgDisabled]);
 
   // Save edited tag
   const handleSaveEditedTag = (updatedTag: Tag) => {
+    if (isOrgDisabled) return;
     updateTagMutation.mutate({
       id: updatedTag.id,
       data: {
@@ -153,6 +163,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   // Delete tag and clean up assignments
   const handleDeleteTag = (tagId: string) => {
+    if (isOrgDisabled) return;
     deleteTagMutation.mutate(tagId);
     // Clear from active filters if present
     setActiveTagIds(prev => prev.filter(id => id !== tagId));
@@ -179,6 +190,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   }, []);
 
   const handleOpenAssignTags = (zoneId: string, zoneName: string) => {
+    if (isOrgDisabled) return;
     // Clear any pending timeout from a previous modal close to prevent race condition
     if (assignTagsCloseTimeoutRef.current) {
       clearTimeout(assignTagsCloseTimeoutRef.current);
@@ -189,6 +201,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   };
 
   const handleSaveTagAssignments = (zoneId: string, tagIds: string[]) => {
+    if (isOrgDisabled) return;
     updateZoneTagsMutation.mutate({ zoneId, tagIds });
   };
 
@@ -262,6 +275,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   return (
     <>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
+        {/* Disabled Organization Banner */}
+        {isOrgDisabled && (
+          <DisabledOrganizationBanner className="mb-6" />
+        )}
+
         {/* Hero Section - Custom Greeting */}
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -279,13 +297,13 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Create Tag Button (Mockup) */}
-            <Button variant="secondary" size="sm" onClick={() => setIsCreateTagModalOpen(true)} className="justify-center">
+            <Button variant="secondary" size="sm" onClick={() => setIsCreateTagModalOpen(true)} className="justify-center" disabled={isOrgDisabled}>
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
               Create Tag
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setIsAddZoneModalOpen(true)} className="justify-center">
+            <Button variant="secondary" size="sm" onClick={() => setIsAddZoneModalOpen(true)} className="justify-center" disabled={isOrgDisabled}>
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -296,6 +314,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               size="sm" 
               onClick={() => router.push(`/settings/billing/${org.id}?openModal=true`)} 
               className="justify-center !bg-orange hover:!bg-orange-dark !text-white"
+              disabled={isOrgDisabled}
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -303,7 +322,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               Upgrade Plan
             </Button>
             {canEditOrg && (
-              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-orange hover:!bg-orange-dark !text-white justify-center">
+              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-orange hover:!bg-orange-dark !text-white justify-center" disabled={isOrgDisabled}>
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -415,11 +434,13 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               onClearFilters={handleClearTagFilters}
               onToggleFavorite={handleToggleFavorite}
               onCreateTag={() => {
+                if (isOrgDisabled) return;
                 setTagToEdit(null);
                 setIsCreateTagModalOpen(true);
               }}
               onEditTag={handleEditTag}
               onReorderTags={handleReorderTags}
+              disabled={isOrgDisabled}
             />
 
             {/* Zones List with Tags */}

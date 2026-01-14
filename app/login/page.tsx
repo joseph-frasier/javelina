@@ -62,10 +62,22 @@ export default function LoginPage() {
       console.log('[Login] Redirecting to dashboard');
       router.push('/');
     } else {
-      setErrors({ 
-        email: result.error,
-        password: result.error 
-      });
+      const errorMsg = result.error || 'Login failed';
+      
+      // Check if it's a specific account-related error (shows under email only)
+      const isAccountError = errorMsg.toLowerCase().includes('disabled') ||
+                            errorMsg.toLowerCase().includes('banned');
+      
+      if (isAccountError) {
+        // Account status errors - show under email only
+        setErrors({ email: errorMsg });
+      } else {
+        // Generic auth errors (invalid credentials, etc.) - show under BOTH for security
+        setErrors({ 
+          email: errorMsg,
+          password: errorMsg 
+        });
+      }
     }
   };
 

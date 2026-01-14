@@ -4,21 +4,20 @@ import { useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { Modal } from '@/components/ui/Modal';
 import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Dropdown from '@/components/ui/Dropdown';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
+import { ViewOrganizationDetailsModal } from '@/components/modals/ViewOrganizationDetailsModal';
+import { ViewOrganizationMembersModal } from '@/components/modals/ViewOrganizationMembersModal';
+import { ConfirmDisableOrganizationModal } from '@/components/modals/ConfirmDisableOrganizationModal';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
-import { generateMockOrganizations } from '@/lib/mock-admin-data';
 import Link from 'next/link';
 
 interface Organization {
@@ -26,7 +25,20 @@ interface Organization {
   name: string;
   description?: string;
   created_at: string;
+  updated_at?: string;
   deleted_at?: string;
+  is_active?: boolean;
+  billing_phone?: string;
+  billing_email?: string;
+  billing_address?: string;
+  billing_city?: string;
+  billing_state?: string;
+  billing_zip?: string;
+  admin_contact_email?: string;
+  admin_contact_phone?: string;
+  member_count?: number;
+  zone_count?: number;
+  record_count?: number;
   organization_members?: Array<{ organization_id: string }>;
 }
 
@@ -51,10 +63,6 @@ export default function AdminOrganizationsPage() {
   const itemsPerPage = 25;
   
   const [actioningOrgId, setActioningOrgId] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [createName, setCreateName] = useState('');
-  const [createDescription, setCreateDescription] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
   
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -71,16 +79,23 @@ export default function AdminOrganizationsPage() {
     variant: 'danger',
   });
 
+  // Modal states for viewing organization details and members
+  const [viewDetailsOrgId, setViewDetailsOrgId] = useState<string | null>(null);
+  const [viewDetailsOrgName, setViewDetailsOrgName] = useState<string>('');
+  const [viewMembersOrgId, setViewMembersOrgId] = useState<string | null>(null);
+  const [viewMembersOrgName, setViewMembersOrgName] = useState<string>('');
+  const [disableOrgId, setDisableOrgId] = useState<string | null>(null);
+  const [disableOrgName, setDisableOrgName] = useState<string>('');
+  const [disableOrgIsDisabled, setDisableOrgIsDisabled] = useState<boolean>(false);
+
   const fetchOrganizations = useCallback(async () => {
     try {
       const data = await adminApi.listOrganizations();
       setOrgs((data || []) as Organization[]);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
-      // Fallback to mock data on error
-      const mockOrgs = generateMockOrganizations(20);
-      setOrgs(mockOrgs as any);
-      addToast('info', 'Using mock data for demonstration');
+      addToast('error', 'Failed to load organizations from API');
+      setOrgs([]);
     } finally {
       setLoading(false);
     }
@@ -215,29 +230,6 @@ export default function AdminOrganizationsPage() {
     });
   };
 
-  const handleCreateOrganization = async () => {
-    if (!createName.trim()) {
-      addToast('error', 'Organization name is required');
-      return;
-    }
-
-    setIsCreating(true);
-    try {
-      await adminApi.createOrganization({
-        name: createName,
-        description: createDescription,
-      });
-      addToast('success', 'Organization created successfully');
-      setCreateName('');
-      setCreateDescription('');
-      setShowCreateForm(false);
-      await fetchOrganizations();
-    } catch (error: any) {
-      addToast('error', error.message || 'Failed to create organization');
-    } finally {
-      setIsCreating(false);
-    }
-  };
 
   const confirmDeleteOrganization = (orgId: string, orgName: string) => {
     setConfirmModal({
@@ -268,56 +260,101 @@ export default function AdminOrganizationsPage() {
     }
   };
 
-  const getQuickActions = (org: Organization): QuickAction[] => [
-    {
-      label: 'View Details',
-      icon: (
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-      ),
-      onClick: () => window.location.href = `/admin/organizations/${org.id}`,
-    },
-    {
-      label: 'View Members',
-      icon: (
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      onClick: () => addToast('info', 'View members functionality coming soon'),
-    },
-    {
-      label: 'Edit Organization',
-      icon: (
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-      ),
-      onClick: () => addToast('info', 'Edit functionality coming soon'),
-      divider: true,
-    },
-    {
-      label: 'Delete Organization',
-      icon: (
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      ),
-      onClick: () => confirmDeleteOrganization(org.id, org.name),
-      variant: 'danger',
-    },
-  ];
+  const handleDisableOrganization = async () => {
+    if (!disableOrgId) return;
+
+    setActioningOrgId(disableOrgId);
+    const isCurrentlyDisabled = disableOrgIsDisabled;
+
+    try {
+      if (isCurrentlyDisabled) {
+        await adminApi.enableOrganization(disableOrgId);
+        addToast('success', 'Organization enabled successfully');
+        setOrgs((prevOrgs) =>
+          prevOrgs.map((org) =>
+            org.id === disableOrgId ? { ...org, is_active: true } : org
+          )
+        );
+      } else {
+        await adminApi.disableOrganization(disableOrgId);
+        addToast('success', 'Organization disabled successfully');
+        setOrgs((prevOrgs) =>
+          prevOrgs.map((org) =>
+            org.id === disableOrgId ? { ...org, is_active: false } : org
+          )
+        );
+      }
+    } catch (error: any) {
+      addToast('error', error.message || `Failed to ${isCurrentlyDisabled ? 'enable' : 'disable'} organization`);
+    } finally {
+      setActioningOrgId(null);
+      setDisableOrgId(null);
+    }
+  };
+
+  const getQuickActions = (org: Organization): QuickAction[] => {
+    const isDisabled = org.is_active === false;
+    
+    return [
+      {
+        label: 'View Details',
+        icon: (
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        ),
+        onClick: () => {
+          setViewDetailsOrgId(org.id);
+          setViewDetailsOrgName(org.name);
+        },
+      },
+      {
+        label: 'View Members',
+        icon: (
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        ),
+        onClick: () => {
+          setViewMembersOrgId(org.id);
+          setViewMembersOrgName(org.name);
+        },
+        divider: true,
+      },
+      {
+        label: isDisabled ? 'Enable Organization' : 'Disable Organization',
+        icon: isDisabled ? (
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ) : (
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+          </svg>
+        ),
+        onClick: () => {
+          setDisableOrgId(org.id);
+          setDisableOrgName(org.name);
+          setDisableOrgIsDisabled(isDisabled);
+        },
+        variant: isDisabled ? undefined : 'danger',
+      },
+    ];
+  };
 
   const getMemberCount = (org: Organization) => org.organization_members?.length || 0;
-  const getStatus = (org: Organization) => org.deleted_at ? 'deleted' : 'active';
+  const getStatus = (org: Organization) => {
+    if (org.deleted_at) return 'deleted';
+    if (org.is_active === false) return 'disabled';
+    return 'active';
+  };
 
   // Calculate stats
   const stats = {
     total: orgs.length,
     active: orgs.filter((o) => !o.deleted_at).length,
-    deleted: orgs.filter((o) => o.deleted_at).length,
+    disabled: orgs.filter((o) => o.is_active === false).length,
     totalMembers: orgs.reduce((sum, org) => sum + getMemberCount(org), 0),
   };
 
@@ -342,16 +379,8 @@ export default function AdminOrganizationsPage() {
               <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all organizations</p>
             </div>
             
-            {/* Buttons - Stacked vertically on mobile, side-by-side on desktop */}
-            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 flex-shrink-0">
-              <Button
-                variant="primary"
-                onClick={() => setShowCreateForm(true)}
-                size="sm"
-                className="flex items-center gap-2 !py-2 border-2 border-transparent"
-              >
-                + Create Organization
-              </Button>
+            {/* Export Button */}
+            <div className="flex-shrink-0">
               <ExportButton 
                 data={selectedIds.size > 0 
                   ? filteredOrgs.filter(o => selectedIds.has(o.id))
@@ -386,12 +415,12 @@ export default function AdminOrganizationsPage() {
                 }
               />
               <StatCard
-                label="Deleted"
-                value={stats.deleted}
+                label="Disabled Organizations"
+                value={stats.disabled}
                 color="red"
                 icon={
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
                 }
               />
@@ -407,70 +436,6 @@ export default function AdminOrganizationsPage() {
               />
             </div>
           )}
-
-          {/* Create Organization Modal */}
-          <Modal
-            isOpen={showCreateForm}
-            onClose={() => {
-              setShowCreateForm(false);
-              setCreateName('');
-              setCreateDescription('');
-            }}
-            title="Create New Organization"
-            size="medium"
-          >
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="org-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                  Organization Name <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  id="org-name"
-                  type="text"
-                  placeholder="e.g., Acme Corp"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                  disabled={isCreating}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="org-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                  Description
-                </label>
-                <textarea
-                  id="org-description"
-                  placeholder="Optional description or notes"
-                  value={createDescription}
-                  onChange={(e) => setCreateDescription(e.target.value)}
-                  disabled={isCreating}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
-                />
-              </div>
-
-              <div className="flex items-center justify-end space-x-3 pt-4">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setCreateName('');
-                    setCreateDescription('');
-                  }}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleCreateOrganization}
-                  disabled={isCreating || !createName.trim()}
-                >
-                  {isCreating ? 'Creating...' : 'Create Organization'}
-                </Button>
-              </div>
-            </div>
-          </Modal>
 
           {/* Organizations Table */}
           <Card className="p-6">
@@ -580,9 +545,11 @@ export default function AdminOrganizationsPage() {
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                             getStatus(org) === 'active'
                               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : getStatus(org) === 'disabled'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                               : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                           }`}>
-                            {getStatus(org) === 'active' ? 'Active' : 'Deleted'}
+                            {getStatus(org) === 'active' ? 'Active' : getStatus(org) === 'disabled' ? 'Disabled' : 'Deleted'}
                           </span>
                         </div>
 
@@ -708,14 +675,16 @@ export default function AdminOrganizationsPage() {
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                                 org.deleted_at
+                                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                  : org.is_active === false
                                   ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                   : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                               }`}
                             >
                               <span className={`w-1.5 h-1.5 rounded-full ${
-                                org.deleted_at ? 'bg-red-600' : 'bg-green-600'
+                                org.deleted_at ? 'bg-gray-600' : org.is_active === false ? 'bg-red-600' : 'bg-green-600'
                               }`} />
-                              {org.deleted_at ? 'Deleted' : 'Active'}
+                              {org.deleted_at ? 'Deleted' : org.is_active === false ? 'Disabled' : 'Active'}
                             </span>
                           </td>
                           <td className="py-3 px-4">
@@ -767,6 +736,32 @@ export default function AdminOrganizationsPage() {
           title={confirmModal.title}
           message={confirmModal.message}
           variant={confirmModal.variant}
+          isLoading={actioningOrgId !== null}
+        />
+
+        {/* View Organization Details Modal */}
+        <ViewOrganizationDetailsModal
+          isOpen={viewDetailsOrgId !== null}
+          onClose={() => setViewDetailsOrgId(null)}
+          organizationId={viewDetailsOrgId || ''}
+          organizationName={viewDetailsOrgName}
+        />
+
+        {/* View Organization Members Modal */}
+        <ViewOrganizationMembersModal
+          isOpen={viewMembersOrgId !== null}
+          onClose={() => setViewMembersOrgId(null)}
+          organizationId={viewMembersOrgId || ''}
+          organizationName={viewMembersOrgName}
+        />
+
+        {/* Confirm Disable/Enable Organization Modal */}
+        <ConfirmDisableOrganizationModal
+          isOpen={disableOrgId !== null}
+          onClose={() => setDisableOrgId(null)}
+          onConfirm={handleDisableOrganization}
+          organizationName={disableOrgName}
+          isDisabled={disableOrgIsDisabled}
           isLoading={actioningOrgId !== null}
         />
       </AdminLayout>

@@ -67,7 +67,7 @@ interface AuthState {
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
-  fetchProfile: () => Promise<void>
+  fetchProfile: (accessToken?: string) => Promise<void>
   initializeAuth: () => Promise<void>
 }
 
@@ -176,7 +176,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       },
 
       // Fetch user profile via Express API
-      fetchProfile: async () => {
+      fetchProfile: async (accessToken?: string) => {
         const supabase = createClient()
 
         try {
@@ -193,19 +193,23 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           const supabaseUser = session.user
 
           // Fetch profile with organizations from Express API via server action
-          const result = await getProfile()
+          // Use provided access token (from fresh login) or session token
+          const result = await getProfile(accessToken || session.access_token)
 
           if (result.error || !result.data) {
             console.error('Error fetching profile:', result.error)
-            // Do not create fallback user - set error state instead
+            
             set({
               user: null,
-              isAuthenticated: true, // Still have a valid Supabase session
+              isAuthenticated: false,
               profileReady: false,
-              profileError: 'We could not load your profile. Please sign out and try again.',
+              profileError: result.error || 'We could not load your profile. Please sign out and try again.',
             })
             return
           }
+
+          // Disabled users are blocked by Supabase ban - they can't authenticate
+          // No need to check status here
 
           // Map organizations to Organization interface
           const organizations: Organization[] = (result.data.organizations || []).map((org) => ({
@@ -276,12 +280,25 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           })
 
           if (error) {
+            // Check if it's a ban/disabled account error
+            const isBannedError = error.message.toLowerCase().includes('ban') || 
+                                  error.message.toLowerCase().includes('disabled')
+            
+            if (isBannedError) {
+              set({ isLoading: false })
+              return { 
+                success: false, 
+                error: 'Your account has been disabled. Please contact support for assistance.' 
+              }
+            }
+            
             set({ isLoading: false })
             return { success: false, error: error.message }
           }
 
-          if (data.user) {
-            await get().fetchProfile()
+          if (data.user && data.session) {
+            // Pass the fresh access token to fetchProfile
+            await get().fetchProfile(data.session.access_token)
             
             // Check if profile loaded successfully
             const { profileReady, user, profileError } = get()

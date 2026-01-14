@@ -68,6 +68,12 @@ async function apiRequest<T = any>(
 
     // Handle errors
     if (!response.ok) {
+      // Special handling for disabled organization errors
+      if (response.status === 403 && data?.error === 'Organization is disabled') {
+        const errorMessage = data?.message || 'This organization is currently disabled. Contact support for assistance.';
+        throw new ApiError(errorMessage, response.status, data);
+      }
+      
       const errorMessage = data?.error || data?.message || `Request failed with status ${response.status}`;
       throw new ApiError(errorMessage, response.status, data);
     }
@@ -479,6 +485,13 @@ export const adminApi = {
   },
 
   /**
+   * Get user details (admin only)
+   */
+  getUser: (userId: string) => {
+    return apiClient.get(`/admin/users/${userId}`);
+  },
+
+  /**
    * Disable a user
    */
   disableUser: (userId: string) => {
@@ -490,20 +503,6 @@ export const adminApi = {
    */
   enableUser: (userId: string) => {
     return apiClient.put(`/admin/users/${userId}/enable`);
-  },
-
-  /**
-   * Send password reset email
-   */
-  sendPasswordReset: (email: string) => {
-    return apiClient.post('/admin/users/password-reset', { email });
-  },
-
-  /**
-   * Delete a user
-   */
-  deleteUser: (userId: string) => {
-    return apiClient.delete(`/admin/users/${userId}`);
   },
 
   /**
@@ -540,14 +539,43 @@ export const adminApi = {
   },
 
   /**
+   * Get single organization with full details (admin only)
+   */
+  getOrganization: (orgId: string) => {
+    return apiClient.get(`/admin/organizations/${orgId}`);
+  },
+
+  /**
+   * Get organization members (admin only)
+   */
+  getOrganizationMembers: (orgId: string) => {
+    return apiClient.get(`/admin/organizations/${orgId}/members`);
+  },
+
+  /**
+   * Disable organization (admin only)
+   */
+  disableOrganization: (orgId: string) => {
+    return apiClient.put(`/admin/organizations/${orgId}/disable`);
+  },
+
+  /**
+   * Enable organization (admin only)
+   */
+  enableOrganization: (orgId: string) => {
+    return apiClient.put(`/admin/organizations/${orgId}/enable`);
+  },
+
+  /**
    * Get all audit logs (admin only)
    */
-  getAuditLogs: (params?: { page?: number; limit?: number; table_name?: string; action?: string }) => {
+  getAuditLogs: (params?: { page?: number; limit?: number; table_name?: string; action?: string; actor_type?: string }) => {
     const query = new URLSearchParams();
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('limit', params.limit.toString());
     if (params?.table_name) query.append('table_name', params.table_name);
     if (params?.action) query.append('action', params.action);
+    if (params?.actor_type) query.append('actor_type', params.actor_type);
     const queryString = query.toString();
     return apiClient.get(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`);
   },
