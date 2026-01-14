@@ -67,7 +67,7 @@ interface AuthState {
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
-  fetchProfile: () => Promise<void>
+  fetchProfile: (accessToken?: string) => Promise<void>
   initializeAuth: () => Promise<void>
 }
 

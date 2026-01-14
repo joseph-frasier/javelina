@@ -338,7 +338,7 @@ export default function AdminOrganizationsPage() {
           setDisableOrgName(org.name);
           setDisableOrgIsDisabled(isDisabled);
         },
-        variant: isDisabled ? undefined : 'warning',
+        variant: isDisabled ? undefined : 'danger',
       },
     ];
   };
