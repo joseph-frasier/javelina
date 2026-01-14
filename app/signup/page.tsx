@@ -9,6 +9,8 @@ import gsap from 'gsap';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
+import HCaptchaField, { HCaptchaFieldHandle } from '@/components/auth/HCaptchaField';
+import { isHCaptchaEnabled } from '@/lib/captcha/config';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -26,15 +28,18 @@ export default function SignupPage() {
     password?: string;
     confirmPassword?: string;
     terms?: string;
+    captcha?: string;
   }>({});
   const [successMessage, setSuccessMessage] = useState('');
   const [globalError, setGlobalError] = useState('');
   const [isFlipped, setIsFlipped] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   
   const heroRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const mobileFormRef = useRef<HTMLDivElement>(null);
+  const captchaRef = useRef<HCaptchaFieldHandle>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -114,6 +119,10 @@ export default function SignupPage() {
       newErrors.terms = 'You must agree to the terms and conditions';
     }
 
+    if (isHCaptchaEnabled && !captchaToken) {
+      newErrors.captcha = 'Please complete the captcha';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -128,13 +137,20 @@ export default function SignupPage() {
     // Clear any previous global errors
     setGlobalError('');
 
-    const result = await signUp(email, password, name);
+    const result = await signUp(email, password, name, captchaToken || undefined);
 
     if (result.success) {
       setSuccessMessage(
         'Account created! Please check your email to verify your account, then return here to sign in.'
       );
+      // Reset captcha after successful signup
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
     } else {
+      // Reset captcha after failed signup (tokens are single-use)
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
+      
       // Check if this is an "email already exists" case
       if (result.outcome === 'existing_email') {
         setGlobalError('A user with this email address already exists. Please sign in instead.');
@@ -145,6 +161,24 @@ export default function SignupPage() {
         });
       }
     }
+  };
+
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    // Clear captcha error if present
+    if (errors.captcha) {
+      setErrors({ ...errors, captcha: undefined });
+    }
+  };
+
+  const handleCaptchaExpire = () => {
+    setCaptchaToken(null);
+    setErrors({ ...errors, captcha: 'Captcha expired. Please try again.' });
+  };
+
+  const handleCaptchaError = (error: string) => {
+    setCaptchaToken(null);
+    setErrors({ ...errors, captcha: 'Captcha error. Please try again.' });
   };
 
   const handleFlip = () => {
@@ -443,12 +477,29 @@ export default function SignupPage() {
                   )}
                 </div>
 
+                {/* hCaptcha */}
+                {isHCaptchaEnabled && (
+                  <div>
+                    <HCaptchaField
+                      ref={captchaRef}
+                      onVerify={handleCaptchaVerify}
+                      onExpire={handleCaptchaExpire}
+                      onError={handleCaptchaError}
+                    />
+                    {errors.captcha && (
+                      <p className="mt-1.5 text-sm font-regular text-red-500 text-center">
+                        {errors.captcha}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={isLoading || (isHCaptchaEnabled && !captchaToken)}
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
@@ -866,12 +917,29 @@ export default function SignupPage() {
                     )}
                   </div>
 
+                  {/* hCaptcha */}
+                  {isHCaptchaEnabled && (
+                    <div>
+                      <HCaptchaField
+                        ref={captchaRef}
+                        onVerify={handleCaptchaVerify}
+                        onExpire={handleCaptchaExpire}
+                        onError={handleCaptchaError}
+                      />
+                      {errors.captcha && (
+                        <p className="mt-1.5 text-sm font-regular text-red-500 text-center">
+                          {errors.captcha}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <Button
                     type="submit"
                     variant="primary"
                     size="lg"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isLoading || (isHCaptchaEnabled && !captchaToken)}
                   >
                     {isLoading ? 'Creating account...' : 'Create Account'}
                   </Button>

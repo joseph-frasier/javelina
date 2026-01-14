@@ -64,7 +64,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   loginWithOAuth: (provider: 'google' | 'github') => Promise<void>
   logout: () => Promise<void>
-  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
+  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
   fetchProfile: (accessToken?: string) => Promise<void>
@@ -335,7 +335,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       },
 
       // Sign up new user
-      signUp: async (email: string, password: string, name: string) => {
+      signUp: async (email: string, password: string, name: string, captchaToken?: string) => {
         const supabase = createClient()
         set({ isLoading: true })
 
@@ -347,6 +347,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
               data: {
                 name, // This will be stored in user_metadata
               },
+              captchaToken,
             },
           })
 
