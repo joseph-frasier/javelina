@@ -354,6 +354,7 @@ export default function AdminOrganizationsPage() {
   const stats = {
     total: orgs.length,
     active: orgs.filter((o) => !o.deleted_at).length,
+    disabled: orgs.filter((o) => o.is_active === false).length,
     totalMembers: orgs.reduce((sum, org) => sum + getMemberCount(org), 0),
   };
 
@@ -392,7 +393,7 @@ export default function AdminOrganizationsPage() {
 
           {/* Stat Cards */}
           {!loading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 label="Total Organizations"
                 value={stats.total}
@@ -410,6 +411,16 @@ export default function AdminOrganizationsPage() {
                 icon={
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                }
+              />
+              <StatCard
+                label="Disabled Organizations"
+                value={stats.disabled}
+                color="red"
+                icon={
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
                 }
               />

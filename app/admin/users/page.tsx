@@ -15,6 +15,7 @@ import { ExportButton } from '@/components/admin/ExportButton';
 import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
+import { ViewUserDetailsModal } from '@/components/modals/ViewUserDetailsModal';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
@@ -69,6 +70,10 @@ export default function AdminUsersPage() {
     onConfirm: () => {},
     variant: 'danger',
   });
+
+  // View user details modal state
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
+  const [viewUserName, setViewUserName] = useState<string>('');
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -302,6 +307,19 @@ export default function AdminUsersPage() {
   };
 
   const getQuickActions = (user: User): QuickAction[] => [
+    {
+      label: 'View Details',
+      icon: (
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      ),
+      onClick: () => {
+        setViewUserId(user.id);
+        setViewUserName(user.name);
+      },
+    },
     {
       label: 'Send Password Reset',
       icon: (
@@ -759,6 +777,19 @@ export default function AdminUsersPage() {
           variant={confirmModal.variant}
           isLoading={actioningUserId !== null}
         />
+
+        {/* View User Details Modal */}
+        {viewUserId && (
+          <ViewUserDetailsModal
+            isOpen={viewUserId !== null}
+            onClose={() => {
+              setViewUserId(null);
+              setViewUserName('');
+            }}
+            userId={viewUserId}
+            userName={viewUserName}
+          />
+        )}
       </AdminLayout>
     </AdminProtectedRoute>
   );

@@ -123,29 +123,34 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   // Tag handlers
   const handleCreateTag = (newTag: { name: string; color: string }) => {
+    if (isOrgDisabled) return;
     createTagMutation.mutate(newTag);
   };
 
   const handleToggleFavorite = useCallback((tagId: string) => {
+    if (isOrgDisabled) return;
     const tag = tags.find(t => t.id === tagId);
     if (tag) {
       toggleFavoriteMutation.mutate({ tagId, isFavorite: tag.is_favorite });
     }
-  }, [tags, toggleFavoriteMutation]);
+  }, [tags, toggleFavoriteMutation, isOrgDisabled]);
 
   // Reorder tags handler - updates tag order after drag and drop
   const handleReorderTags = useCallback((reorderedTags: Tag[]) => {
+    if (isOrgDisabled) return;
     reorderTagsMutation.mutate(reorderedTags);
-  }, [reorderTagsMutation]);
+  }, [reorderTagsMutation, isOrgDisabled]);
 
   // Edit tag handler - opens modal in edit mode
   const handleEditTag = useCallback((tag: Tag) => {
+    if (isOrgDisabled) return;
     setTagToEdit(tag);
     setIsCreateTagModalOpen(true);
-  }, []);
+  }, [isOrgDisabled]);
 
   // Save edited tag
   const handleSaveEditedTag = (updatedTag: Tag) => {
+    if (isOrgDisabled) return;
     updateTagMutation.mutate({
       id: updatedTag.id,
       data: {
@@ -158,6 +163,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
 
   // Delete tag and clean up assignments
   const handleDeleteTag = (tagId: string) => {
+    if (isOrgDisabled) return;
     deleteTagMutation.mutate(tagId);
     // Clear from active filters if present
     setActiveTagIds(prev => prev.filter(id => id !== tagId));
@@ -184,6 +190,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   }, []);
 
   const handleOpenAssignTags = (zoneId: string, zoneName: string) => {
+    if (isOrgDisabled) return;
     // Clear any pending timeout from a previous modal close to prevent race condition
     if (assignTagsCloseTimeoutRef.current) {
       clearTimeout(assignTagsCloseTimeoutRef.current);
@@ -194,6 +201,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   };
 
   const handleSaveTagAssignments = (zoneId: string, tagIds: string[]) => {
+    if (isOrgDisabled) return;
     updateZoneTagsMutation.mutate({ zoneId, tagIds });
   };
 
@@ -426,11 +434,13 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               onClearFilters={handleClearTagFilters}
               onToggleFavorite={handleToggleFavorite}
               onCreateTag={() => {
+                if (isOrgDisabled) return;
                 setTagToEdit(null);
                 setIsCreateTagModalOpen(true);
               }}
               onEditTag={handleEditTag}
               onReorderTags={handleReorderTags}
+              disabled={isOrgDisabled}
             />
 
             {/* Zones List with Tags */}
