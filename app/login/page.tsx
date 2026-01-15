@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
 import { Logo } from '@/components/ui/Logo';
+import HCaptchaField, { HCaptchaFieldHandle } from '@/components/auth/HCaptchaField';
+import { isHCaptchaEnabled } from '@/lib/captcha/config';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,9 +19,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
-  );
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ 
+    email?: string; 
+    password?: string;
+    captcha?: string;
+  }>({});
+  const captchaRef = useRef<HCaptchaFieldHandle>(null);
 
   // Redirect if already authenticated - always go to dashboard
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function LoginPage() {
   }, [isAuthenticated, user, router]);
 
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; captcha?: string } = {};
 
     if (!email) {
       newErrors.email = 'Email is required';
@@ -44,6 +50,10 @@ export default function LoginPage() {
       newErrors.password = 'Password must be at least 6 characters';
     }
 
+    if (isHCaptchaEnabled && !captchaToken) {
+      newErrors.captcha = 'Please complete the captcha';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -55,13 +65,17 @@ export default function LoginPage() {
       return;
     }
 
-    const result = await login(email, password);
+    const result = await login(email, password, captchaToken || undefined);
     
     if (result.success) {
       // Always redirect to dashboard - welcome guidance will show for first-time users
       console.log('[Login] Redirecting to dashboard');
       router.push('/');
     } else {
+      // Reset captcha after failed login (tokens are single-use)
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
+      
       const errorMsg = result.error || 'Login failed';
       
       // Check if it's a specific account-related error (shows under email only)
@@ -79,6 +93,24 @@ export default function LoginPage() {
         });
       }
     }
+  };
+
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    // Clear captcha error if present
+    if (errors.captcha) {
+      setErrors({ ...errors, captcha: undefined });
+    }
+  };
+
+  const handleCaptchaExpire = () => {
+    setCaptchaToken(null);
+    setErrors({ ...errors, captcha: 'Captcha expired. Please try again.' });
+  };
+
+  const handleCaptchaError = (error: string) => {
+    setCaptchaToken(null);
+    setErrors({ ...errors, captcha: 'Captcha error. Please try again.' });
   };
 
 
@@ -222,13 +254,30 @@ export default function LoginPage() {
               </Link>
             </div>
 
+            {/* hCaptcha */}
+            {isHCaptchaEnabled && (
+              <div>
+                <HCaptchaField
+                  ref={captchaRef}
+                  onVerify={handleCaptchaVerify}
+                  onExpire={handleCaptchaExpire}
+                  onError={handleCaptchaError}
+                />
+                {errors.captcha && (
+                  <p className="mt-1.5 text-sm font-regular text-red-500 text-center">
+                    {errors.captcha}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Submit Button */}
             <Button
               type="submit"
               variant="primary"
               size="lg"
               className="w-full mt-6"
-              disabled={isLoading}
+              disabled={isLoading || (isHCaptchaEnabled && !captchaToken)}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
