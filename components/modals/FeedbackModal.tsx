@@ -73,8 +73,8 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title="Send us your feedback" 
-      subtitle="We'd love to hear from you"
+      title="Submit a ticket" 
+      subtitle="We're here to help"
       size="xlarge"
     >
       <div className={`feedback-modal-content ${isDarkMode ? 'dark-mode' : ''}`}>
