@@ -64,7 +64,18 @@ export default function ForgotPasswordPage() {
       setCaptchaToken(null);
       captchaRef.current?.resetCaptcha();
       
-      setError(result.error || 'An error occurred. Please try again.');
+      const errorMsg = result.error || 'An error occurred. Please try again.';
+      
+      // Check if it's a captcha-related error
+      const isCaptchaError = errorMsg.toLowerCase().includes('captcha');
+      
+      if (isCaptchaError) {
+        // Captcha errors - show as form-level captcha error only
+        setCaptchaError('Please complete the captcha to continue.');
+      } else {
+        // Other errors - show as general error
+        setError(errorMsg);
+      }
     }
   };
 

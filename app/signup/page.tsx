@@ -151,13 +151,21 @@ export default function SignupPage() {
       setCaptchaToken(null);
       captchaRef.current?.resetCaptcha();
       
-      // Check if this is an "email already exists" case
-      if (result.outcome === 'existing_email') {
+      const errorMsg = result.error || 'Signup failed';
+      
+      // Check if it's a captcha-related error
+      const isCaptchaError = errorMsg.toLowerCase().includes('captcha');
+      
+      if (isCaptchaError) {
+        // Captcha errors - show as form-level error only
+        setErrors({ captcha: 'Please complete the captcha to continue.' });
+      } else if (result.outcome === 'existing_email') {
+        // Email already exists case
         setGlobalError('A user with this email address already exists. Please sign in instead.');
       } else {
         // For other errors, show them as field-level errors on email
         setErrors({
-          email: result.error,
+          email: errorMsg,
         });
       }
     }

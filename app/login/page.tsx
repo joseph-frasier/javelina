@@ -78,26 +78,34 @@ export default function LoginPage() {
       
       const errorMsg = result.error || 'Login failed';
       
-      // Check if it's a specific account-related error (shows under email only)
-      const isAccountError = errorMsg.toLowerCase().includes('disabled') ||
-                            errorMsg.toLowerCase().includes('banned');
+      // Check if it's a captcha-related error
+      const isCaptchaError = errorMsg.toLowerCase().includes('captcha');
       
-      if (isAccountError) {
-        // Account status errors - show under email only
-        setErrors({ email: errorMsg });
+      if (isCaptchaError) {
+        // Captcha errors - show as form-level error only
+        setErrors({ captcha: 'Please complete the captcha to continue.' });
       } else {
-        // Generic auth errors (invalid credentials, etc.) - show under BOTH for security
-        setErrors({ 
-          email: errorMsg,
-          password: errorMsg 
-        });
+        // Check if it's a specific account-related error (shows under email only)
+        const isAccountError = errorMsg.toLowerCase().includes('disabled') ||
+                              errorMsg.toLowerCase().includes('banned');
+        
+        if (isAccountError) {
+          // Account status errors - show under email only
+          setErrors({ email: errorMsg });
+        } else {
+          // Generic auth errors (invalid credentials, etc.) - show under BOTH for security
+          setErrors({ 
+            email: errorMsg,
+            password: errorMsg 
+          });
+        }
       }
     }
   };
 
   const handleCaptchaVerify = (token: string) => {
     setCaptchaToken(token);
-    // Clear captcha error if present
+    // Clear all captcha-related errors when captcha is completed
     if (errors.captcha) {
       setErrors({ ...errors, captcha: undefined });
     }
