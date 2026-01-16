@@ -35,8 +35,6 @@ export default function ResetPasswordPage() {
         );
         return;
       }
-
-      console.log('Valid password reset session detected');
     };
 
     checkSession();
