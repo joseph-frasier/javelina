@@ -79,13 +79,11 @@ export async function middleware(request: NextRequest) {
     const isLoginPage = request.nextUrl.pathname === '/login'
     
     if (passwordResetRequired && !isLoginPage && request.nextUrl.pathname !== '/reset-password') {
-      console.log('[Middleware] Password reset required - redirecting to reset-password page')
       return NextResponse.redirect(new URL('/reset-password?recovery=true', request.url))
     }
     
     // If user navigates to login during password reset, clear the reset cookie
     if (passwordResetRequired && isLoginPage) {
-      console.log('[Middleware] User navigated to login during password reset - clearing cookie')
       response.cookies.set('password_reset_required', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
