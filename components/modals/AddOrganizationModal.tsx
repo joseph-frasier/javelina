@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { createOrganization } from '@/lib/actions/organizations';
 import { organizationsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -396,22 +397,19 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                 <label htmlFor="billing-state" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
                   State <span className="text-red-500">*</span>
                 </label>
-                <select
-                  id="billing-state"
+                <Dropdown
                   value={billingState}
-                  onChange={(e) => setBillingState(e.target.value)}
+                  options={[
+                    { value: '', label: 'Select State' },
+                    ...US_STATES.map((state) => ({
+                      value: state.code,
+                      label: state.name,
+                    })),
+                  ]}
+                  onChange={(value) => setBillingState(value)}
                   disabled={isSubmitting}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed ${
-                    errors.billing_state ? 'border-red-500' : 'border-gray-light'
-                  }`}
-                >
-                  <option value="">Select State</option>
-                  {US_STATES.map((state) => (
-                    <option key={state.code} value={state.code}>
-                      {state.name}
-                    </option>
-                  ))}
-                </select>
+                  className={errors.billing_state ? '[&_button]:border-red-500' : ''}
+                />
                 {errors.billing_state && (
                   <p className="mt-1 text-sm text-red-600">{errors.billing_state}</p>
                 )}
