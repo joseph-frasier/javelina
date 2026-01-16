@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Security headers including Content Security Policy
+  // Note: If you deploy with a separate backend API domain (e.g., api.yourdomain.com),
+  // add it to the connect-src directive below
   async headers() {
     return [
       {
@@ -14,7 +16,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com",
               "style-src 'self' 'unsafe-inline' https://hcaptcha.com https://newassets.hcaptcha.com",
               "frame-src 'self' https://js.hcaptcha.com https://newassets.hcaptcha.com https://checkout.stripe.com https://irongrove.freshdesk.com",
-              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://events.launchdarkly.com https://hcaptcha.com https://irongrove.freshdesk.com https://*.freshdesk.com",
+              "connect-src 'self' http://localhost:3001 https://*.supabase.co https://api.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://events.launchdarkly.com https://hcaptcha.com https://irongrove.freshdesk.com https://*.freshdesk.com",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
               "base-uri 'self'",
