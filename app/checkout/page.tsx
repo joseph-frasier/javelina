@@ -481,7 +481,7 @@ function CheckoutContent() {
 
                   {/* Upgrade Pricing Breakdown */}
                   {isUpgrade && checkoutData.original_price !== undefined && (
-                    <div className="space-y-3 py-4 border-t border-b border-gray-light dark:border-gray-700">
+                    <div className="space-y-3 py-4">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-slate dark:text-gray-400">
                           {checkoutData.plan_name} Price
@@ -553,7 +553,7 @@ function CheckoutContent() {
 
                   {/* Upgrade Benefits */}
                   {isUpgrade && (
-                    <div className="pt-4 border-t border-gray-light dark:border-gray-700">
+                    <div className="pt-4">
                       <h4 className="text-sm font-bold text-orange-dark dark:text-white mb-3">
                         What you get:
                       </h4>
