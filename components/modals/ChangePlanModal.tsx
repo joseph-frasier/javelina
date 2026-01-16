@@ -440,7 +440,7 @@ export function ChangePlanModal({
                         <span className="text-gray-600 dark:text-gray-400">Credit from Current Subscription:</span>
                         <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
                       </div>
-                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
+                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 -mx-6 px-6 flex justify-between">
                         <span className="text-gray-900 dark:text-white font-bold">Total Due Today:</span>
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
@@ -460,7 +460,7 @@ export function ChangePlanModal({
                         <span className="text-gray-600 dark:text-gray-400">Current Plan Credit:</span>
                         <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
                       </div>
-                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
+                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 -mx-6 px-6 flex justify-between">
                         <span className="text-gray-900 dark:text-white font-bold">Upgrade Cost:</span>
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
@@ -482,7 +482,7 @@ export function ChangePlanModal({
                           <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
+                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 -mx-6 px-6 flex justify-between">
                         <span className="text-gray-900 dark:text-white font-bold">Total Due Today:</span>
                         <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
                       </div>
