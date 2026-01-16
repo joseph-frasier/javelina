@@ -289,9 +289,6 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                {/* Divider - Only show for non-lifetime plans with discount section */}
-                {!isLifetime && <div className="border-t border-gray-light"></div>}
-
                 {/* Discount Code Input - Hidden for lifetime plans */}
                 {!isLifetime && (
                   <>
@@ -379,7 +376,7 @@ function CheckoutContent() {
                 )}
 
                 {/* Total */}
-                <div className="flex justify-between items-center pt-4 border-t border-gray-light">
+                <div className="flex justify-between items-center pt-4">
                   <span className="text-lg font-bold text-orange-dark">
                     Total due today
                   </span>
