@@ -520,11 +520,6 @@ function CheckoutContent() {
                     </div>
                   )}
 
-                  {/* Non-upgrade/non-discount divider */}
-                  {!isUpgrade && !appliedDiscount && (
-                    <div className="border-t border-gray-light dark:border-gray-700"></div>
-                  )}
-
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-lg font-bold text-orange-dark dark:text-white">
@@ -536,7 +531,7 @@ function CheckoutContent() {
                   </div>
 
                   {/* Fine Print */}
-                  <div className="pt-4 border-t border-gray-light dark:border-gray-700">
+                  <div className="pt-4">
                     {isLifetime ? (
                       <p className="text-xs text-gray-slate dark:text-gray-400 font-light">
                         This is a one-time payment for lifetime access. 
