@@ -338,7 +338,7 @@ export function AvatarUpload({
 
       {/* Crop Modal */}
       {imageSrc && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 overflow-y-auto p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center overflow-y-auto p-4" style={{ zIndex: 10001 }}>
           <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-2xl mx-auto my-auto max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-orange-dark mb-4">
               Crop Your Photo
