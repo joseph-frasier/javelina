@@ -45,13 +45,6 @@ export default function ProfilePage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrganizations = sortedOrganizations.slice(startIndex, endIndex);
-  
-  // Calculate display range for pagination text
-  // When all items fit on one page, show total-total instead of 1-total
-  const actualEnd = Math.min(endIndex, sortedOrganizations.length);
-  const actualStart = sortedOrganizations.length > 0 && actualEnd === sortedOrganizations.length && startIndex === 0
-    ? actualEnd  // Show "5-5 of 5" when all items fit on one page
-    : startIndex + 1;  // Show "1-10 of 25" for normal pagination
 
   // Scroll to top on page load
   useEffect(() => {
@@ -241,9 +234,6 @@ export default function ProfilePage() {
               <div className="mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Organization Membership
-                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                    ({actualStart}-{actualEnd} of {sortedOrganizations.length})
-                  </span>
                 </h3>
               </div>
               <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
