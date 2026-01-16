@@ -72,8 +72,6 @@ interface DbPlan {
  * Handles both lifetime plans and monthly subscription plans
  */
 function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
-  console.log('Converting plans from API:', dbPlans);
-  
   if (!dbPlans || !Array.isArray(dbPlans)) {
     console.error('Invalid dbPlans data:', dbPlans);
     return [];
@@ -151,7 +149,6 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
     return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
   });
   
-  console.log('Converted plans:', plans);
   return plans;
 }
 

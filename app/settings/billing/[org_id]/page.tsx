@@ -109,7 +109,6 @@ export default function OrganizationBillingPage() {
         // No subscription found, default to free
         setCurrentPlanCode('free');
       }
-      console.log('Fetched plan data:', data);
       
       // Check if we should auto-open the modal (from query parameter)
       const shouldOpenModal = searchParams.get('openModal');
