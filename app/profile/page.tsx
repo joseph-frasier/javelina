@@ -58,7 +58,11 @@ export default function ProfilePage() {
       try {
         const data = await subscriptionsApi.getAllWithSubscriptions();
         const activeCount = Array.isArray(data) 
-          ? data.filter((item: any) => item.status === 'active' || item.status === 'trialing').length 
+          ? data.filter((item: any) => 
+              item.status === 'active' || 
+              item.status === 'trialing' || 
+              item.status === 'lifetime'
+            ).length 
           : 0;
         setSubscriptionCount(activeCount);
       } catch (error) {
