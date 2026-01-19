@@ -292,7 +292,7 @@ export function EditBillingInfoModal({
         </div>
 
         {/* Admin Contact Section */}
-        <div className="pt-4 border-t border-gray-light -mx-6 px-6">
+        <div className="pt-4 -mx-6 px-6">
           <h3 className="text-base font-semibold text-orange-dark mb-4">Administrative Contact</h3>
           
           <div className="space-y-4">
