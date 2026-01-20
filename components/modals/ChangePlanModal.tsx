@@ -7,6 +7,7 @@ import { stripeApi } from '@/lib/api-client';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
+import Button from '@/components/ui/Button';
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -504,23 +505,24 @@ export function ChangePlanModal({
               {/* Confirmation Section */}
               {selectedPlanCode && upgradePricing && !calculatingPrice && (
                 <div className="flex gap-3 justify-end">
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={() => {
                       setSelectedPlanCode(null);
                       setUpgradePricing(null);
                     }}
                     disabled={isSubmitting}
-                    className="px-6 py-3 rounded-lg font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
                     onClick={handleConfirmChange}
                     disabled={isSubmitting}
-                    className="px-6 py-3 rounded-lg font-bold bg-orange hover:bg-orange-dark text-white transition-colors disabled:opacity-50 disabled:cursor-wait min-w-[180px]"
+                    className="min-w-[180px]"
                   >
                     {isSubmitting ? 'Processing...' : 'Confirm Upgrade'}
-                  </button>
+                  </Button>
                 </div>
               )}
             </>
