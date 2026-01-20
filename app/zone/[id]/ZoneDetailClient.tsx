@@ -668,7 +668,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
 
           <div className="flex space-x-3">
             <Button 
-              variant="outline" 
+              variant="secondary" 
               className="flex-1" 
               onClick={() => {
                 setShowDeleteModal(false);
@@ -678,8 +678,8 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
               Cancel
             </Button>
             <Button
-              variant="primary"
-              className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="danger"
+              className="flex-1"
               onClick={handleDeleteZone}
               disabled={deleteConfirmationInput !== zone.name}
             >
