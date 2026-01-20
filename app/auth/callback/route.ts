@@ -50,7 +50,6 @@ export async function GET(request: Request) {
       // User IS authenticated but we redirect them to reset-password page
       // Set a flag so middleware knows to restrict access
       if (type === 'recovery') {
-        console.log('[Auth Callback] Password reset flow - redirecting to reset-password page')
         const resetUrl = new URL('/reset-password', requestUrl.origin)
         resetUrl.searchParams.set('recovery', 'true')
         

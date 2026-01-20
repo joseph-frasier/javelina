@@ -35,6 +35,7 @@ interface TagsManagerCardProps {
   onCreateTag: () => void;
   onEditTag?: (tag: Tag) => void;
   onReorderTags?: (reorderedTags: Tag[]) => void;
+  disabled?: boolean;
 }
 
 // Sortable Tag Item Component - Memoized to prevent unnecessary re-renders during drag
@@ -45,6 +46,7 @@ const SortableTagItem = memo(function SortableTagItem({
   onTagClick,
   onEditTag,
   onToggleFavorite,
+  disabled,
 }: {
   tag: Tag;
   zoneCount: number;
@@ -52,6 +54,7 @@ const SortableTagItem = memo(function SortableTagItem({
   onTagClick: (tagId: string) => void;
   onEditTag?: (tag: Tag) => void;
   onToggleFavorite: (tagId: string) => void;
+  disabled?: boolean;
 }) {
   const {
     attributes,
@@ -86,11 +89,16 @@ const SortableTagItem = memo(function SortableTagItem({
       <div className="flex items-center gap-3">
         {/* Drag Handle */}
         <button
-          {...attributes}
-          {...listeners}
-          className="p-1 rounded cursor-grab active:cursor-grabbing hover:bg-gray-light dark:hover:bg-gray-600 transition-colors touch-none"
-          title="Drag to reorder"
+          {...(disabled ? {} : attributes)}
+          {...(disabled ? {} : listeners)}
+          className={`p-1 rounded transition-colors touch-none ${
+            disabled 
+              ? 'cursor-not-allowed opacity-40' 
+              : 'cursor-grab active:cursor-grabbing hover:bg-gray-light dark:hover:bg-gray-600'
+          }`}
+          title={disabled ? 'Organization disabled' : 'Drag to reorder'}
           onClick={(e) => e.stopPropagation()}
+          disabled={disabled}
         >
           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
@@ -100,13 +108,14 @@ const SortableTagItem = memo(function SortableTagItem({
         {/* Checkbox indicator */}
         <div
           className={`
-            w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer
+            w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
+            ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
             ${isActive
               ? 'bg-orange border-orange'
               : 'border-gray-400 dark:border-gray-500'
             }
           `}
-          onClick={() => onTagClick(tag.id)}
+          onClick={() => !disabled && onTagClick(tag.id)}
         >
           {isActive && (
             <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,13 +124,18 @@ const SortableTagItem = memo(function SortableTagItem({
           )}
         </div>
         
-        <div className="cursor-pointer" onClick={() => onTagClick(tag.id)}>
+        <div 
+          className={disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} 
+          onClick={() => !disabled && onTagClick(tag.id)}
+        >
           <TagBadge name={tag.name} color={tag.color} size="md" />
         </div>
         
         <span 
-          className="text-xs text-gray-slate dark:text-gray-400 cursor-pointer"
-          onClick={() => onTagClick(tag.id)}
+          className={`text-xs text-gray-slate dark:text-gray-400 ${
+            disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
+          }`}
+          onClick={() => !disabled && onTagClick(tag.id)}
         >
           {zoneCount} {zoneCount === 1 ? 'zone' : 'zones'}
         </span>
@@ -133,10 +147,15 @@ const SortableTagItem = memo(function SortableTagItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onEditTag(tag);
+              if (!disabled) onEditTag(tag);
             }}
-            className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-light dark:hover:bg-gray-600 transition-all"
-            title="Edit tag"
+            className={`p-1 rounded transition-all ${
+              disabled 
+                ? 'opacity-40 cursor-not-allowed' 
+                : 'opacity-0 group-hover:opacity-100 hover:bg-gray-light dark:hover:bg-gray-600'
+            }`}
+            title={disabled ? 'Organization disabled' : 'Edit tag'}
+            disabled={disabled}
           >
             <svg className="w-4 h-4 text-gray-400 hover:text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -147,10 +166,15 @@ const SortableTagItem = memo(function SortableTagItem({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onToggleFavorite(tag.id);
+            if (!disabled) onToggleFavorite(tag.id);
           }}
-          className="p-1 rounded hover:bg-gray-light dark:hover:bg-gray-600 transition-colors"
-          title={tag.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+          className={`p-1 rounded transition-colors ${
+            disabled 
+              ? 'opacity-40 cursor-not-allowed' 
+              : 'hover:bg-gray-light dark:hover:bg-gray-600'
+          }`}
+          title={disabled ? 'Organization disabled' : (tag.is_favorite ? 'Remove from favorites' : 'Add to favorites')}
+          disabled={disabled}
         >
           {tag.is_favorite ? (
             <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
@@ -173,7 +197,8 @@ const SortableTagItem = memo(function SortableTagItem({
     prevProps.tag.color === nextProps.tag.color &&
     prevProps.tag.is_favorite === nextProps.tag.is_favorite &&
     prevProps.zoneCount === nextProps.zoneCount &&
-    prevProps.isActive === nextProps.isActive
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.disabled === nextProps.disabled
   );
 });
 
@@ -187,6 +212,7 @@ export function TagsManagerCard({
   onCreateTag,
   onEditTag,
   onReorderTags,
+  disabled = false,
 }: TagsManagerCardProps) {
   const hasActiveFilters = activeTagIds.length > 0;
   const [isScrollbarVisible, setIsScrollbarVisible] = useState(false);
@@ -251,7 +277,13 @@ export function TagsManagerCard({
       title="Tags"
       description="Organize your zones with tags"
       action={
-        <Button variant="primary" size="sm" onClick={onCreateTag}>
+        <Button 
+          variant="primary" 
+          size="sm" 
+          onClick={onCreateTag}
+          disabled={disabled}
+          title={disabled ? 'Organization disabled' : 'Create a new tag'}
+        >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -275,14 +307,16 @@ export function TagsManagerCard({
             />
           </svg>
           <p className="text-gray-slate dark:text-gray-light text-sm mb-4">
-            No tags yet. Create your first tag to organize your zones.
+            {disabled ? 'This organization is disabled. No tags can be created.' : 'No tags yet. Create your first tag to organize your zones.'}
           </p>
-          <Button variant="primary" size="sm" onClick={onCreateTag}>
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create Tag
-          </Button>
+          {!disabled && (
+            <Button variant="primary" size="sm" onClick={onCreateTag}>
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Tag
+            </Button>
+          )}
         </div>
       ) : (
         <div className="mt-4">
@@ -347,6 +381,7 @@ export function TagsManagerCard({
                       onTagClick={onTagClick}
                       onEditTag={onEditTag}
                       onToggleFavorite={onToggleFavorite}
+                      disabled={disabled}
                     />
                   );
                 })}
@@ -357,7 +392,7 @@ export function TagsManagerCard({
           {/* Tag count indicator when scrolling */}
           {tags.length > 6 && (
             <p className="text-xs text-gray-slate dark:text-gray-500 mt-3">
-              {tags.length} tags total • Drag to reorder
+              {tags.length} tags total{!disabled && ' • Drag to reorder'}
             </p>
           )}
         </div>

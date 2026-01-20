@@ -58,7 +58,11 @@ export default function ProfilePage() {
       try {
         const data = await subscriptionsApi.getAllWithSubscriptions();
         const activeCount = Array.isArray(data) 
-          ? data.filter((item: any) => item.status === 'active' || item.status === 'trialing').length 
+          ? data.filter((item: any) => 
+              item.status === 'active' || 
+              item.status === 'trialing' || 
+              item.status === 'lifetime'
+            ).length 
           : 0;
         setSubscriptionCount(activeCount);
       } catch (error) {
@@ -230,9 +234,6 @@ export default function ProfilePage() {
               <div className="mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
                   Organization Membership
-                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                    ({startIndex + 1}-{Math.min(endIndex, sortedOrganizations.length)} of {sortedOrganizations.length})
-                  </span>
                 </h3>
               </div>
               <div className="grid gap-3 sm:gap-4 md:grid-cols-2">

@@ -47,19 +47,26 @@ export interface ProfileWithOrganizations extends ProfileData {
  * Get the current user's profile with organization memberships
  * Express API Required: GET /api/users/profile
  */
-export async function getProfile(): Promise<{ data?: ProfileWithOrganizations; error?: string }> {
+export async function getProfile(accessToken?: string): Promise<{ data?: ProfileWithOrganizations; error?: string }> {
   try {
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    let token = accessToken;
     
-    if (!session?.access_token) {
-      return { error: 'Not authenticated' }
+    // If no token provided, try to get it from the session
+    if (!token) {
+      const supabase = await createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        return { error: 'Not authenticated' }
+      }
+      
+      token = session.access_token;
     }
 
     const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${token}`,
       },
     });
 

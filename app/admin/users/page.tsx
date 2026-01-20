@@ -15,11 +15,12 @@ import { ExportButton } from '@/components/admin/ExportButton';
 import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
+import { ViewUserDetailsModal } from '@/components/modals/ViewUserDetailsModal';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
-import { generateMockUsers, getActivityStatus, getActivityBadge } from '@/lib/mock-admin-data';
-import { startImpersonation } from '@/lib/admin-impersonation';
+import { getActivityStatus, getActivityBadge } from '@/lib/utils/activity';
+import { createClient } from '@/lib/supabase/client';
 
 interface User {
   id: string;
@@ -70,16 +71,18 @@ export default function AdminUsersPage() {
     variant: 'danger',
   });
 
+  // View user details modal state
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
+  const [viewUserName, setViewUserName] = useState<string>('');
+
   const fetchUsers = useCallback(async () => {
     try {
       const data = await adminApi.listUsers();
       setUsers((data || []) as User[]);
     } catch (error) {
       console.error('Failed to fetch users:', error);
-      // Fallback to mock data on error
-      const mockUsers = generateMockUsers(50);
-      setUsers(mockUsers as any);
-      addToast('info', 'Using mock data for demonstration');
+      addToast('error', 'Failed to load users from API');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -224,7 +227,7 @@ export default function AdminUsersPage() {
     setConfirmModal({
       isOpen: true,
       title: 'Disable User',
-      message: `Are you sure you want to disable ${userName}? They will not be able to log in until re-enabled.`,
+      message: `This user will be unable to log in until re-enabled. Note: If they are currently logged in, they will be signed out when they try to navigate or refresh.`,
       variant: 'warning',
       onConfirm: () => handleDisableUser(userId),
     });
@@ -240,21 +243,11 @@ export default function AdminUsersPage() {
     });
   };
 
-  const confirmImpersonateUser = (user: User) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Impersonate User',
-      message: `You will be logged in as ${user.name} (${user.email}). You'll see the application as they see it. You can exit impersonation at any time.`,
-      variant: 'info',
-      onConfirm: () => handleImpersonateUser(user),
-    });
-  };
-
   const confirmSendResetEmail = (email: string, userName: string) => {
     setConfirmModal({
       isOpen: true,
       title: 'Send Password Reset',
-      message: `Send a password reset email to ${userName} (${email})?`,
+      message: `A password reset email will be sent to ${email}.`,
       variant: 'info',
       onConfirm: () => handleSendResetEmail(email),
     });
@@ -292,19 +285,20 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleImpersonateUser = (user: User) => {
-    setConfirmModal({ ...confirmModal, isOpen: false });
-    startImpersonation(user.id, user.name, user.email);
-    addToast('success', `Now viewing as ${user.name}`);
-    router.push('/'); // Redirect to main dashboard
-  };
-
   const handleSendResetEmail = async (email: string) => {
     setActioningUserId(email);
     setConfirmModal({ ...confirmModal, isOpen: false });
     try {
-      await adminApi.sendPasswordReset(email);
-      addToast('success', 'Password reset email sent');
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      
+      if (error) {
+        addToast('error', error.message || 'Failed to send password reset email');
+      } else {
+        addToast('success', 'Password reset email sent');
+      }
     } catch (error: any) {
       addToast('error', error.message || 'Failed to send password reset email');
     } finally {
@@ -314,13 +308,17 @@ export default function AdminUsersPage() {
 
   const getQuickActions = (user: User): QuickAction[] => [
     {
-      label: 'Login as User',
+      label: 'View Details',
       icon: (
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
       ),
-      onClick: () => confirmImpersonateUser(user),
+      onClick: () => {
+        setViewUserId(user.id);
+        setViewUserName(user.name);
+      },
     },
     {
       label: 'Send Password Reset',
@@ -343,18 +341,6 @@ export default function AdminUsersPage() {
           ? confirmDisableUser(user.id, user.name)
           : confirmEnableUser(user.id, user.name),
       divider: true,
-    },
-    {
-      label: 'Delete User',
-      icon: (
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      ),
-      onClick: () => {
-        addToast('info', 'Delete user functionality coming soon');
-      },
-      variant: 'danger',
     },
   ];
 
@@ -791,6 +777,19 @@ export default function AdminUsersPage() {
           variant={confirmModal.variant}
           isLoading={actioningUserId !== null}
         />
+
+        {/* View User Details Modal */}
+        {viewUserId && (
+          <ViewUserDetailsModal
+            isOpen={viewUserId !== null}
+            onClose={() => {
+              setViewUserId(null);
+              setViewUserName('');
+            }}
+            userId={viewUserId}
+            userName={viewUserName}
+          />
+        )}
       </AdminLayout>
     </AdminProtectedRoute>
   );

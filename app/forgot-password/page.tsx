@@ -1,19 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/lib/auth-store';
 import { Logo } from '@/components/ui/Logo';
+import HCaptchaField, { HCaptchaFieldHandle } from '@/components/auth/HCaptchaField';
+import { isHCaptchaEnabled } from '@/lib/captcha/config';
 
 export default function ForgotPasswordPage() {
   const { resetPassword } = useAuthStore();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptchaFieldHandle>(null);
 
   const validateEmail = (): boolean => {
     if (!email) {
@@ -24,12 +29,17 @@ export default function ForgotPasswordPage() {
       setError('Please enter a valid email');
       return false;
     }
+    if (isHCaptchaEnabled && !captchaToken) {
+      setCaptchaError('Please complete the captcha');
+      return false;
+    }
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setCaptchaError('');
     setSuccessMessage('');
 
     if (!validateEmail()) {
@@ -38,7 +48,7 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
 
-    const result = await resetPassword(email);
+    const result = await resetPassword(email, captchaToken || undefined);
 
     setIsLoading(false);
 
@@ -47,9 +57,41 @@ export default function ForgotPasswordPage() {
         'Password reset instructions have been sent to your email address. Please check your inbox and follow the link to reset your password.'
       );
       setEmail('');
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
     } else {
-      setError(result.error || 'An error occurred. Please try again.');
+      // Reset captcha after failed attempt (tokens are single-use)
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
+      
+      const errorMsg = result.error || 'An error occurred. Please try again.';
+      
+      // Check if it's a captcha-related error
+      const isCaptchaError = errorMsg.toLowerCase().includes('captcha');
+      
+      if (isCaptchaError) {
+        // Captcha errors - show as form-level captcha error only
+        setCaptchaError('Please complete the captcha to continue.');
+      } else {
+        // Other errors - show as general error
+        setError(errorMsg);
+      }
     }
+  };
+
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    setCaptchaError('');
+  };
+
+  const handleCaptchaExpire = () => {
+    setCaptchaToken(null);
+    setCaptchaError('Captcha expired. Please try again.');
+  };
+
+  const handleCaptchaError = (error: string) => {
+    setCaptchaToken(null);
+    setCaptchaError('Captcha error. Please try again.');
   };
 
   return (
@@ -136,13 +178,30 @@ export default function ForgotPasswordPage() {
                   required
                 />
 
+                {/* hCaptcha */}
+                {isHCaptchaEnabled && (
+                  <div>
+                    <HCaptchaField
+                      ref={captchaRef}
+                      onVerify={handleCaptchaVerify}
+                      onExpire={handleCaptchaExpire}
+                      onError={handleCaptchaError}
+                    />
+                    {captchaError && (
+                      <p className="mt-1.5 text-sm font-regular text-red-500 text-center">
+                        {captchaError}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={isLoading || (isHCaptchaEnabled && !captchaToken)}
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">

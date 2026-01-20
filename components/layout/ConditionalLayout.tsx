@@ -9,6 +9,7 @@ import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { useImpersonationStore } from '@/lib/admin-impersonation';
 import { useAuthStore } from '@/lib/auth-store';
 import { AIChatWidget } from '@/components/chat/AIChatWidget';
+import { IdleLogoutGuard } from '@/components/auth/IdleLogoutGuard';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -47,7 +48,12 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
 
   // For pages without Header/Sidebar (auth, pricing, admin), render immediately
   if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute) {
-    return <>{children}</>;
+    return (
+      <>
+        <IdleLogoutGuard />
+        {children}
+      </>
+    );
   }
 
   // For authenticated routes with Header/Sidebar, show loading until:
@@ -81,6 +87,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
 
   return (
     <>
+      <IdleLogoutGuard />
       <div className="flex flex-col h-screen">
         {isImpersonating && <ImpersonationBanner />}
         <Header 

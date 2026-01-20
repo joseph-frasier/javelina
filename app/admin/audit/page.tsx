@@ -22,7 +22,73 @@ interface AuditLog {
   record_id?: string;
   metadata?: Record<string, any>;
   ip_address?: string;
-  profiles: { name: string; email: string };
+  old_data?: Record<string, any>;
+  new_data?: Record<string, any>;
+  profiles: { name: string; email: string } | null;
+  target_name?: string | null;
+  target_email?: string | null;
+}
+
+// Helper function to interpret admin actions
+function getActionDescription(log: AuditLog): {
+  action: string;
+  targetName: string;
+  targetEmail?: string;
+  details: string;
+} {
+  const targetName = log.target_name || 'Unknown';
+  const targetEmail = log.target_email || undefined;
+  
+  // Interpret based on table and old_data/new_data
+  if (log.table_name === 'profiles') {
+    const oldStatus = log.old_data?.status;
+    const newStatus = log.new_data?.status;
+    
+    if (oldStatus === 'active' && newStatus === 'disabled') {
+      return { 
+        action: 'disabled user', 
+        targetName, 
+        targetEmail,
+        details: `Status changed from active to disabled`
+      };
+    }
+    if (oldStatus === 'disabled' && newStatus === 'active') {
+      return { 
+        action: 'enabled user', 
+        targetName, 
+        targetEmail,
+        details: `Status changed from disabled to active`
+      };
+    }
+  }
+  
+  if (log.table_name === 'organizations') {
+    const oldActive = log.old_data?.is_active;
+    const newActive = log.new_data?.is_active;
+    
+    if (oldActive === true && newActive === false) {
+      return { 
+        action: 'disabled organization', 
+        targetName,
+        details: `Organization disabled (is_active: true → false)`
+      };
+    }
+    if (oldActive === false && newActive === true) {
+      return { 
+        action: 'enabled organization', 
+        targetName,
+        details: `Organization enabled (is_active: false → true)`
+      };
+    }
+  }
+  
+  // Fallback
+  return { 
+    action: `updated ${log.table_name}`, 
+    targetName,
+    targetEmail,
+    details: `${log.action} operation on ${log.table_name}`
+  };
 }
 
 export default function AdminAuditPage() {
@@ -56,7 +122,8 @@ export default function AdminAuditPage() {
 
   const fetchAuditLogs = useCallback(async () => {
     try {
-      const data = await adminApi.getAuditLogs();
+      // Only fetch admin actions (actor_type = 'admin')
+      const data = await adminApi.getAuditLogs({ actor_type: 'admin' });
       setLogs((data || []) as AuditLog[]);
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
@@ -258,6 +325,8 @@ export default function AdminAuditPage() {
               <div className="space-y-2">
                 {filteredLogs.map((log) => {
                   const logDate = formatDateWithRelative(log.created_at);
+                  const description = getActionDescription(log);
+                  
                   return (
                     <div key={log.id}>
                       <button
@@ -266,17 +335,24 @@ export default function AdminAuditPage() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {log.profiles?.name || 'Unknown'}
+                            {/* Main action description */}
+                            <div className="mb-2">
+                              <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                {log.profiles?.name || 'Unknown Admin'}
                               </span>
-                              <span className="text-sm text-gray-slate dark:text-gray-400">
-                                {log.profiles?.email}
+                              <span className="text-gray-900 dark:text-gray-100"> {description.action} </span>
+                              <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                {description.targetName}
                               </span>
+                              {description.targetEmail && (
+                                <span className="text-sm text-gray-slate dark:text-gray-400">
+                                  {' '}({description.targetEmail})
+                                </span>
+                              )}
                             </div>
+                            
+                            {/* Metadata */}
                             <div className="flex items-center gap-2 text-sm flex-wrap">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">{log.action}</span>
-                              <span className="text-gray-slate dark:text-gray-400">•</span>
                               <span className="px-2 py-0.5 bg-orange-light dark:bg-orange-900/30 text-orange-dark dark:text-orange-400 text-xs rounded">
                                 {log.table_name}
                               </span>
@@ -294,29 +370,71 @@ export default function AdminAuditPage() {
 
                       {expandedId === log.id && (
                         <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border-t border-orange-100 dark:border-orange-900/30 rounded-b-lg mt-1">
-                          <div className="space-y-3 text-sm">
-                            {log.record_id && (
-                              <div>
-                                <p className="text-gray-slate dark:text-gray-400">Record ID</p>
-                                <p className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all">
-                                  {log.record_id}
-                                </p>
+                          <div className="space-y-4 text-sm">
+                            {/* Admin Info */}
+                            <div>
+                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Admin</p>
+                              <p className="text-gray-900 dark:text-gray-100">
+                                {log.profiles?.name || 'Unknown'} 
+                                {log.profiles?.email && (
+                                  <span className="text-gray-slate dark:text-gray-400"> ({log.profiles.email})</span>
+                                )}
+                              </p>
+                            </div>
+
+                            {/* Action */}
+                            <div>
+                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Action</p>
+                              <p className="text-gray-900 dark:text-gray-100 capitalize">{description.action}</p>
+                            </div>
+
+                            {/* Target */}
+                            <div>
+                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Target</p>
+                              <p className="text-gray-900 dark:text-gray-100">
+                                {description.targetName}
+                                {description.targetEmail && (
+                                  <span className="text-gray-slate dark:text-gray-400"> ({description.targetEmail})</span>
+                                )}
+                              </p>
+                            </div>
+
+                            {/* Changes */}
+                            <div>
+                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Changes</p>
+                              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-gray-light dark:border-gray-600">
+                                <p className="text-gray-900 dark:text-gray-100">{description.details}</p>
                               </div>
-                            )}
-                            {log.ip_address && (
-                              <div>
-                                <p className="text-gray-slate dark:text-gray-400">IP Address</p>
-                                <p className="text-gray-900 dark:text-gray-100">{log.ip_address}</p>
+                            </div>
+
+                            {/* Technical Details */}
+                            <div className="pt-3 border-t border-orange-200 dark:border-orange-900/50">
+                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-2">Technical Details</p>
+                              <div className="space-y-2">
+                                {log.record_id && (
+                                  <div>
+                                    <p className="text-xs text-gray-slate dark:text-gray-400">Record ID</p>
+                                    <p className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all">
+                                      {log.record_id}
+                                    </p>
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="text-xs text-gray-slate dark:text-gray-400">Table</p>
+                                  <p className="text-xs text-gray-900 dark:text-gray-100">{log.table_name}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-slate dark:text-gray-400">Timestamp</p>
+                                  <p className="text-xs text-gray-900 dark:text-gray-100">{logDate.absolute}</p>
+                                </div>
+                                {log.ip_address && (
+                                  <div>
+                                    <p className="text-xs text-gray-slate dark:text-gray-400">IP Address</p>
+                                    <p className="text-xs text-gray-900 dark:text-gray-100">{log.ip_address}</p>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            {log.metadata && Object.keys(log.metadata).length > 0 && (
-                              <div>
-                                <p className="text-gray-slate dark:text-gray-400 mb-2">Metadata</p>
-                                <pre className="bg-white dark:bg-gray-800 p-3 rounded text-xs overflow-x-auto border border-gray-light dark:border-gray-600 text-gray-900 dark:text-gray-100">
-                                  {JSON.stringify(log.metadata, null, 2)}
-                                </pre>
-                              </div>
-                            )}
+                            </div>
                           </div>
                         </div>
                       )}

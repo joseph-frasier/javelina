@@ -24,6 +24,16 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         script.type = 'text/javascript';
         script.src = 'https://s3.amazonaws.com/assets.freshdesk.com/widget/freshwidget.js';
         script.async = true;
+        
+        // Add error handling for script loading
+        script.onerror = (error) => {
+          console.error('Failed to load Freshdesk widget script:', error);
+        };
+        
+        script.onload = () => {
+          console.log('Freshdesk widget script loaded successfully');
+        };
+        
         document.head.appendChild(script);
       }
 
@@ -73,8 +83,8 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title="Send us your feedback" 
-      subtitle="We'd love to hear from you"
+      title="Submit a ticket" 
+      subtitle="We're here to help"
       size="xlarge"
     >
       <div className={`feedback-modal-content ${isDarkMode ? 'dark-mode' : ''}`}>

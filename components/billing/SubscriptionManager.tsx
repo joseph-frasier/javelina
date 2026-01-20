@@ -37,10 +37,6 @@ export function SubscriptionManager({
       const { subscriptionsApi } = await import('@/lib/api-client');
       const data = await subscriptionsApi.getCurrent(orgId);
 
-      console.log('SubscriptionManager received data:', data);
-      console.log('Plan object:', data.plan);
-      console.log('Subscription object:', data.subscription);
-
       setSubscription(data);
 
       // Build usage data - all limits are now unlimited (managed by Launch Darkly)

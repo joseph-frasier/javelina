@@ -98,6 +98,7 @@ export default async function OrganizationPage({
     name: org.name,
     description: org.description,
     role: userRole,
+    is_active: org.is_active !== false, // Default to true if not set
     zonesCount: zonesCount || 0,
     zones: zonesWithData,
     recentActivity: recentActivity,

@@ -79,13 +79,11 @@ export async function middleware(request: NextRequest) {
     const isLoginPage = request.nextUrl.pathname === '/login'
     
     if (passwordResetRequired && !isLoginPage && request.nextUrl.pathname !== '/reset-password') {
-      console.log('[Middleware] Password reset required - redirecting to reset-password page')
       return NextResponse.redirect(new URL('/reset-password?recovery=true', request.url))
     }
     
     // If user navigates to login during password reset, clear the reset cookie
     if (passwordResetRequired && isLoginPage) {
-      console.log('[Middleware] User navigated to login during password reset - clearing cookie')
       response.cookies.set('password_reset_required', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -101,6 +99,9 @@ export async function middleware(request: NextRequest) {
 
     // Check if user just completed payment (allow dashboard access)
     const paymentComplete = request.nextUrl.searchParams.get('payment_complete') === 'true'
+
+    // Disabled users are blocked by Supabase ban - they can't authenticate
+    // No need to check status here
 
     // If user is not authenticated and trying to access a protected route (but allow /admin/* routes and payment completion)
     if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
