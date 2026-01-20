@@ -25,16 +25,6 @@ export const HCAPTCHA_SITE_KEY = isProd
  */
 export const isHCaptchaEnabled = captchaEnabled && !!HCAPTCHA_SITE_KEY;
 
-// Debug logging (remove after testing)
-if (typeof window !== 'undefined') {
-  console.log('[hCaptcha Debug] captchaEnabled:', captchaEnabled);
-  console.log('[hCaptcha Debug] isProd:', isProd);
-  console.log('[hCaptcha Debug] HCAPTCHA_SITE_KEY:', HCAPTCHA_SITE_KEY ? 'SET (hidden)' : 'NOT SET');
-  console.log('[hCaptcha Debug] isHCaptchaEnabled:', isHCaptchaEnabled);
-  console.log('[hCaptcha Debug] NODE_ENV:', process.env.NODE_ENV);
-  console.log('[hCaptcha Debug] VERCEL_ENV:', process.env.VERCEL_ENV);
-}
-
 // Dev-time warning for misconfiguration
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   if (captchaEnabled && !HCAPTCHA_SITE_KEY) {
