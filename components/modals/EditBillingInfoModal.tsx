@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { organizationsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import {
@@ -247,22 +248,19 @@ export function EditBillingInfoModal({
                 <label htmlFor="edit-billing-state" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
                   State <span className="text-red-500">*</span>
                 </label>
-                <select
-                  id="edit-billing-state"
+                <Dropdown
                   value={billingState}
-                  onChange={(e) => setBillingState(e.target.value)}
+                  options={[
+                    { value: '', label: 'Select State' },
+                    ...US_STATES.map((state) => ({
+                      value: state.code,
+                      label: state.name,
+                    })),
+                  ]}
+                  onChange={(value) => setBillingState(value)}
                   disabled={isSubmitting}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed ${
-                    errors.billing_state ? 'border-red-500' : 'border-gray-light'
-                  }`}
-                >
-                  <option value="">Select State</option>
-                  {US_STATES.map((state) => (
-                    <option key={state.code} value={state.code}>
-                      {state.name}
-                    </option>
-                  ))}
-                </select>
+                  className={errors.billing_state ? '[&_button]:border-red-500' : ''}
+                />
                 {errors.billing_state && (
                   <p className="mt-1 text-sm text-red-600">{errors.billing_state}</p>
                 )}
@@ -294,7 +292,7 @@ export function EditBillingInfoModal({
         </div>
 
         {/* Admin Contact Section */}
-        <div className="pt-4 border-t border-gray-light -mx-6 px-6">
+        <div className="pt-4 -mx-6 px-6">
           <h3 className="text-base font-semibold text-orange-dark mb-4">Administrative Contact</h3>
           
           <div className="space-y-4">

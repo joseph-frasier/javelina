@@ -413,7 +413,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             return { success: true }
           }
           
-          console.log(`[Mock] Password reset email would be sent to: ${email}`)
           return { success: true }
         }
         
@@ -423,8 +422,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         try {
           // Use auth callback route which will handle the code exchange and redirect to reset-password
           const resetUrl = `${window.location.origin}/auth/callback?type=recovery`
-          console.log('Sending password reset email to:', email)
-          console.log('Reset URL:', resetUrl)
 
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: resetUrl,
@@ -443,7 +440,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             return { success: false, error: error.message }
           }
 
-          console.log('Password reset email sent successfully')
           return { success: true }
         } catch (error: any) {
           console.error('Password reset exception:', error)
