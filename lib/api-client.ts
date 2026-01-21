@@ -671,6 +671,9 @@ export interface PromotionCode {
   expires_at: string | null;
   is_active: boolean;
   metadata: Record<string, any>;
+  created_by: string | null;
+  creator_name: string | null;
+  creator_email: string | null;
   created_at: string;
   updated_at: string;
 }
