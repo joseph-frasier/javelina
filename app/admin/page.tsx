@@ -193,8 +193,9 @@ export default function AdminDashboard() {
     const fetchRecentLogs = async () => {
       try {
         const { adminApi } = await import('@/lib/api-client');
-        const logs = await adminApi.getAuditLogs({ actor_type: 'admin', limit: 5 });
-        setRecentLogs((logs || []) as AuditLog[]);
+        const logs = await adminApi.getAuditLogs({ actor_type: 'admin', limit: 4 });
+        // Ensure we only show 4 logs max
+        setRecentLogs(((logs || []) as AuditLog[]).slice(0, 4));
       } catch (error) {
         console.error('Failed to fetch recent audit logs:', error);
       } finally {
