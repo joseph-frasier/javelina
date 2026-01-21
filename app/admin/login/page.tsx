@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
@@ -19,6 +19,20 @@ export default function AdminLoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [rateLimited, setRateLimited] = useState(false);
   const [resetSeconds, setResetSeconds] = useState<number | null>(null);
+  const [showInactivityBanner, setShowInactivityBanner] = useState(false);
+
+  // Check for inactivity logout on mount
+  useEffect(() => {
+    const logoutReason = localStorage.getItem('admin-logout-reason');
+    if (logoutReason === 'inactivity') {
+      setShowInactivityBanner(true);
+    }
+  }, []);
+
+  const dismissBanner = () => {
+    localStorage.removeItem('admin-logout-reason');
+    setShowInactivityBanner(false);
+  };
 
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -68,6 +82,8 @@ export default function AdminLoginPage() {
       const result = await loginAdmin(email, password);
       
       if (result.success) {
+        // Clear inactivity flag on successful login
+        localStorage.removeItem('admin-logout-reason');
         addToast('success', 'Admin login successful!');
         router.push('/admin');
       } else {
@@ -112,6 +128,31 @@ export default function AdminLoginPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Inactivity Logout Banner */}
+          {showInactivityBanner && (
+            <div className="p-4 rounded-lg relative" style={{
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderColor: '#3b82f6',
+              borderWidth: '1px'
+            }}>
+              <button
+                type="button"
+                onClick={dismissBanner}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 transition-colors"
+                aria-label="Dismiss"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <p className="text-sm pr-6" style={{
+                color: '#3b82f6'
+              }}>
+                You were logged out due to inactivity. Please log in again.
+              </p>
+            </div>
+          )}
+
           {rateLimited && resetSeconds && (
             <div className="p-4 rounded-lg" style={{
               backgroundColor: 'rgba(239, 114, 21, 0.1)',
@@ -212,44 +253,6 @@ export default function AdminLoginPage() {
               'Sign In'
             )}
           </Button>
-
-          {/* Quick Login for Development */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full mt-3"
-            disabled={isLoading || rateLimited}
-            onClick={() => {
-              setEmail('admin@irongrove.com');
-              setPassword('admin123');
-              // Trigger submit after state updates
-              setTimeout(() => {
-                const form = document.querySelector('form');
-                if (form) form.requestSubmit();
-              }, 100);
-            }}
-          >
-            ⚡ Quick Login (Dev)
-          </Button>
-          
-          {/* SuperAdmin Setup Note */}
-          <div className="mt-4 p-3 rounded-lg text-xs" style={{
-            backgroundColor: 'rgba(239, 114, 21, 0.05)',
-            borderColor: 'var(--orange)',
-            borderWidth: '1px'
-          }}>
-            <p className="font-medium mb-1" style={{ color: 'var(--orange)' }}>
-              Note: SuperAdmin Access Required
-            </p>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Only users with SuperAdmin privileges can access this panel. 
-              Run <code className="px-1 py-0.5 rounded" style={{ 
-                backgroundColor: 'rgba(0,0,0,0.1)',
-                fontFamily: 'monospace',
-                fontSize: '0.9em'
-              }}>supabase/seed-superadmin.sql</code> to promote a user.
-            </p>
-          </div>
         </form>
 
         <div className="mt-8 pt-8" style={{
