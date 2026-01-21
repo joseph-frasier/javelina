@@ -30,7 +30,6 @@ export default function LoginPage() {
   // Redirect if already authenticated - always go to dashboard
   useEffect(() => {
     if (isAuthenticated && user) {
-      console.log('[Login] User authenticated, redirecting to dashboard');
       router.push('/');
     }
   }, [isAuthenticated, user, router]);
@@ -69,7 +68,6 @@ export default function LoginPage() {
     
     if (result.success) {
       // Always redirect to dashboard - welcome guidance will show for first-time users
-      console.log('[Login] Redirecting to dashboard');
       router.push('/');
     } else {
       // Reset captcha after failed login (tokens are single-use)

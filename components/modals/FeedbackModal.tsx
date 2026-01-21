@@ -30,10 +30,6 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           console.error('Failed to load Freshdesk widget script:', error);
         };
         
-        script.onload = () => {
-          console.log('Freshdesk widget script loaded successfully');
-        };
-        
         document.head.appendChild(script);
       }
 

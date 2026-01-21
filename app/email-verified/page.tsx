@@ -23,7 +23,6 @@ export default function EmailVerifiedPage() {
   // If user is authenticated, auto-redirect to dashboard
   useEffect(() => {
     if (!isChecking && isAuthenticated && user) {
-      console.log('[Email Verified] User is authenticated, redirecting to dashboard');
       // Always redirect to dashboard - welcome guidance will show for first-time users
       router.push('/');
     }
