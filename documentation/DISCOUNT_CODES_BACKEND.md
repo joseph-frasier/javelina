@@ -139,7 +139,11 @@ GET /api/discounts?active_only=true&page=1&limit=25
       "times_redeemed": 15,
       "expires_at": "2025-12-31T23:59:59Z",
       "is_active": true,
-      "created_at": "2025-12-01T00:00:00Z"
+      "created_by": "user-uuid-123",
+      "creator_name": "John Smith",
+      "creator_email": "john.smith@example.com",
+      "created_at": "2025-12-01T00:00:00Z",
+      "updated_at": "2025-12-01T00:00:00Z"
     }
   ],
   "total": 10,
@@ -150,7 +154,21 @@ GET /api/discounts?active_only=true&page=1&limit=25
 
 **Implementation Notes:**
 - Query the `promotion_codes` table
+- **JOIN with `profiles` table to get creator information:**
+  ```sql
+  SELECT 
+    pc.*,
+    p.name as creator_name,
+    p.email as creator_email
+  FROM promotion_codes pc
+  LEFT JOIN profiles p ON pc.created_by = p.id
+  WHERE ...
+  ```
+  **Important:** Both `promotion_codes.created_by` and `profiles.id` reference `auth.users(id)`, so they can be joined directly even though `created_by` doesn't have a direct foreign key to `profiles`.
+- Return `creator_name` (from `profiles.name`, NOT `full_name`) and `creator_email` for display in admin UI
+- If `created_by` is NULL or profile not found, return NULL for creator fields
 - Admin authentication required (superuser role check)
+- **Note:** You cannot use PostgREST automatic relationship expansion (e.g., `.select('*, created_by(*)')`) because `created_by` references `auth.users`, not `profiles`. Use raw SQL or manual joining.
 
 ---
 
