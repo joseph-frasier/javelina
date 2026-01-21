@@ -15,7 +15,7 @@ import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { Pagination } from '@/components/admin/Pagination';
 import { discountsApi, PromotionCode } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
-import { formatDateWithRelative } from '@/lib/utils/time';
+import { formatDateWithRelative, formatExpirationDate } from '@/lib/utils/time';
 
 // Create Discount Modal Component
 interface CreateDiscountModalProps {
@@ -656,6 +656,12 @@ export default function AdminDiscountsPage() {
                             </span>
                           </div>
                         )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Created by:</span>
+                          <span className="text-gray-900 dark:text-white">
+                            {code.creator_name || 'Unknown'}
+                          </span>
+                        </div>
                       </div>
                       {code.is_active && (
                         <div className="mt-3 pt-3 border-t border-gray-light dark:border-gray-700">
@@ -684,6 +690,7 @@ export default function AdminDiscountsPage() {
                         <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Status</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Expires</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Created</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Creator</th>
                         <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
                       </tr>
                     </thead>
@@ -713,9 +720,9 @@ export default function AdminDiscountsPage() {
                           </td>
                           <td className="py-3 px-4">
                             {code.expires_at ? (
-                              <Tooltip content={formatDateWithRelative(code.expires_at).absolute}>
+                              <Tooltip content={formatExpirationDate(code.expires_at).dateTime}>
                                 <span className="text-gray-600 dark:text-gray-300 cursor-help">
-                                  {formatDateWithRelative(code.expires_at).relative}
+                                  {formatExpirationDate(code.expires_at).date}
                                 </span>
                               </Tooltip>
                             ) : (
@@ -728,6 +735,17 @@ export default function AdminDiscountsPage() {
                                 {formatDateWithRelative(code.created_at).relative}
                               </span>
                             </Tooltip>
+                          </td>
+                          <td className="py-3 px-4">
+                            {code.creator_name ? (
+                              <Tooltip content={code.creator_email || 'No email available'}>
+                                <span className="text-gray-600 dark:text-gray-300 cursor-help">
+                                  {code.creator_name}
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              <span className="text-gray-400">Unknown</span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-right">
                             {code.is_active ? (
