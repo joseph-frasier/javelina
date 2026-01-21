@@ -16,6 +16,9 @@ import { IDLE_CONFIG } from '@/lib/idle/config';
  * - Normal routes: Shows warning at 58 minutes, logs out at 60 minutes
  * - Admin routes (/admin/*): Logs out at 15 minutes with no warning
  * - Auth pages (/login, /signup, etc.): Completely disabled
+ * 
+ * Note: Admin routes use separate cookie-based auth (not useAuthStore), 
+ * so we enable the guard based on route protection rather than auth state.
  */
 export function IdleLogoutGuard() {
   const pathname = usePathname();
@@ -25,6 +28,7 @@ export function IdleLogoutGuard() {
 
   // Determine if we should enable idle monitoring and which mode
   const isAdminRoute = pathname.startsWith('/admin');
+  const isAdminLoginPage = pathname === '/admin/login';
   const isAuthPage = [
     '/login',
     '/signup',
@@ -33,8 +37,10 @@ export function IdleLogoutGuard() {
     '/email-verified',
   ].includes(pathname) || pathname.startsWith('/auth/');
 
-  // Enable only when authenticated and not on auth pages
-  const enabled = isAuthenticated && !isAuthPage;
+  // Enable when:
+  // 1. Regular authenticated user on non-auth pages, OR
+  // 2. On admin routes (already protected by AdminProtectedRoute) but not the login page
+  const enabled = (isAuthenticated && !isAuthPage) || (isAdminRoute && !isAdminLoginPage);
   
   // All routes use full mode (with logout), but admin routes use shorter timeout
   const mode = 'full';
