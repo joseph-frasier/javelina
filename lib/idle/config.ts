@@ -1,12 +1,12 @@
 /**
  * Idle logout configuration
  * Defaults to 60 minutes idle timeout with 58 minute warning
- * Admin panel uses 15 minutes with no warning
+ * Admin panel uses 1 minute for testing (change back to 15 for production)
  */
 
 const DEFAULT_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 const DEFAULT_WARNING_MS = 58 * 60 * 1000; // 58 minutes
-const DEFAULT_ADMIN_IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+const DEFAULT_ADMIN_IDLE_TIMEOUT_MS = 1 * 60 * 1000; // 1 minute (TESTING - change back to 15 for production)
 
 /**
  * Parse integer from env with fallback
