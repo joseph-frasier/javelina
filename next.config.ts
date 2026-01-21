@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.stripe.com https://hcaptcha.com https://newassets.hcaptcha.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
               "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.stripe.com https://hcaptcha.com https://newassets.hcaptcha.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
               "frame-src 'self' https://js.hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://*.stripe.com https://checkout.stripe.com https://irongrove.freshdesk.com https://*.freshdesk.com https://euc-widget.freshworks.com",
-              "connect-src 'self' http://localhost:3001 https://*.supabase.co https://api.stripe.com https://*.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://events.launchdarkly.com https://hcaptcha.com https://irongrove.freshdesk.com https://*.freshdesk.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
+              "connect-src 'self' http://localhost:3001 https://*.vercel.app https://*.supabase.co https://api.stripe.com https://*.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://events.launchdarkly.com https://hcaptcha.com https://irongrove.freshdesk.com https://*.freshdesk.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
               "img-src 'self' data: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               "base-uri 'self'",
