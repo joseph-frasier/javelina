@@ -73,14 +73,6 @@ export async function GET(request: Request) {
 
       const hasOrganizations = memberships && memberships.length > 0
 
-      console.log('[Auth Callback] User authenticated:', {
-        userId: data.user.id,
-        email: data.user.email,
-        hasOrganizations,
-        isEmailVerification: !next,
-        isPasswordReset: type === 'recovery'
-      })
-
       // If they have a specific destination (OAuth with redirect), honor it
       if (next) {
         return NextResponse.redirect(new URL(next, requestUrl.origin))
@@ -88,12 +80,10 @@ export async function GET(request: Request) {
 
       // First-time user: send to dashboard with welcome guidance
       if (!hasOrganizations) {
-        console.log('[Auth Callback] First-time user → redirecting to dashboard')
         return NextResponse.redirect(new URL('/', requestUrl.origin))
       }
 
       // Returning user with organizations: send to dashboard
-      console.log('[Auth Callback] Returning user → redirecting to dashboard')
       return NextResponse.redirect(new URL('/', requestUrl.origin))
     }
   }

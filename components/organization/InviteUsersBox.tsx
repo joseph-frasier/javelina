@@ -64,7 +64,6 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
     } catch (error) {
       // Subscription API may fail for non-admin/billing roles (403 Forbidden)
       // That's OK - the usage API provides max limits that work for all roles
-      console.log('Could not fetch subscription (may lack billing permissions):', error);
       setPlanCode(null);
     }
   };

@@ -38,6 +38,5 @@ if (process.env.NODE_ENV !== 'production') {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(STRIPE_API_VERSION)) {
     throw new Error(`Invalid STRIPE_API_VERSION format: ${STRIPE_API_VERSION}. Expected format: YYYY-MM-DD`);
   }
-  console.log(`✅ Stripe client initialized with API version: ${STRIPE_API_VERSION}`);
 }
 

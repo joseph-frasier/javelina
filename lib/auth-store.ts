@@ -13,7 +13,6 @@ if (typeof window !== 'undefined') {
   try {
     const oldData = localStorage.getItem('auth-storage');
     if (oldData) {
-      console.log('[Auth Store] Removing old auth-storage data');
       localStorage.removeItem('auth-storage');
     }
   } catch (error) {
