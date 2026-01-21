@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
@@ -8,6 +8,8 @@ import Input from '@/components/ui/Input';
 import { loginAdmin } from '@/lib/admin-auth';
 import { checkRateLimit, getRateLimitReset } from '@/lib/rate-limit';
 import { useToastStore } from '@/lib/toast-store';
+import HCaptchaField, { HCaptchaFieldHandle } from '@/components/auth/HCaptchaField';
+import { isHCaptchaEnabled } from '@/lib/captcha/config';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -16,10 +18,12 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; captcha?: string }>({});
   const [rateLimited, setRateLimited] = useState(false);
   const [resetSeconds, setResetSeconds] = useState<number | null>(null);
   const [showInactivityBanner, setShowInactivityBanner] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptchaFieldHandle>(null);
 
   // Check for inactivity logout on mount
   useEffect(() => {
@@ -35,7 +39,7 @@ export default function AdminLoginPage() {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; captcha?: string } = {};
 
     if (!email) {
       newErrors.email = 'Email is required';
@@ -47,6 +51,11 @@ export default function AdminLoginPage() {
       newErrors.password = 'Password is required';
     } else if (password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    // Validate captcha if enabled
+    if (isHCaptchaEnabled && !captchaToken) {
+      newErrors.captcha = 'Please complete the captcha';
     }
 
     setErrors(newErrors);
@@ -79,7 +88,7 @@ export default function AdminLoginPage() {
     setErrors({});
 
     try {
-      const result = await loginAdmin(email, password);
+      const result = await loginAdmin(email, password, captchaToken);
       
       if (result.success) {
         // Clear inactivity flag on successful login
@@ -93,10 +102,20 @@ export default function AdminLoginPage() {
           email: errorMessage,
           password: errorMessage
         });
+        // Reset captcha on failed login
+        if (isHCaptchaEnabled) {
+          captchaRef.current?.resetCaptcha();
+          setCaptchaToken(null);
+        }
       }
     } catch (error) {
       addToast('error', 'An error occurred during login');
       console.error(error);
+      // Reset captcha on error
+      if (isHCaptchaEnabled) {
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -235,11 +254,35 @@ export default function AdminLoginPage() {
             )}
           </div>
 
+          {/* HCaptcha Field */}
+          {isHCaptchaEnabled && (
+            <div>
+              <HCaptchaField
+                ref={captchaRef}
+                onVerify={(token) => {
+                  setCaptchaToken(token);
+                  setErrors(prev => ({ ...prev, captcha: undefined }));
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                  setErrors(prev => ({ ...prev, captcha: 'Captcha expired, please try again' }));
+                }}
+                onError={(error) => {
+                  setCaptchaToken(null);
+                  setErrors(prev => ({ ...prev, captcha: 'Captcha error, please try again' }));
+                }}
+              />
+              {errors.captcha && (
+                <p className="mt-1 text-sm text-red-600 text-center">{errors.captcha}</p>
+              )}
+            </div>
+          )}
+
           <Button
             type="submit"
             variant="primary"
             className="w-full"
-            disabled={isLoading || rateLimited}
+            disabled={isLoading || rateLimited || (isHCaptchaEnabled && !captchaToken)}
           >
             {isLoading ? (
               <>
