@@ -82,6 +82,37 @@ function getActionDescription(log: AuditLog): {
     }
   }
   
+  if (log.table_name === 'promotion_codes') {
+    // For discount codes, the name is stored in metadata.code
+    const codeName = log.metadata?.code || log.new_data?.code || log.old_data?.code || 'Unknown';
+    
+    if (log.action === 'INSERT') {
+      return {
+        action: 'created discount code',
+        targetName: codeName,
+        details: `Discount code "${codeName}" created`
+      };
+    }
+    
+    const oldActive = log.old_data?.is_active;
+    const newActive = log.new_data?.is_active;
+    
+    if (oldActive === true && newActive === false) {
+      return {
+        action: 'deactivated discount code',
+        targetName: codeName,
+        details: `Discount code "${codeName}" deactivated`
+      };
+    }
+    
+    // Fallback for other promotion_codes actions
+    return {
+      action: 'updated discount code',
+      targetName: codeName,
+      details: `Discount code "${codeName}" modified`
+    };
+  }
+  
   // Fallback
   return { 
     action: `updated ${log.table_name}`, 
