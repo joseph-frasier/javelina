@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
-              "script-src-elem 'self' 'unsafe-inline' https://js.hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://js.hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
+              "script-src-elem 'self' 'unsafe-inline' https://vercel.live https://js.hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://clientstream.launchdarkly.com https://app.launchdarkly.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.stripe.com https://hcaptcha.com https://newassets.hcaptcha.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
               "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.stripe.com https://hcaptcha.com https://newassets.hcaptcha.com https://s3.amazonaws.com https://euc-widget.freshworks.com",
               "frame-src 'self' https://js.hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://*.stripe.com https://checkout.stripe.com https://irongrove.freshdesk.com https://*.freshdesk.com https://euc-widget.freshworks.com",
