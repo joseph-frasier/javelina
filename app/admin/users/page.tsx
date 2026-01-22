@@ -797,7 +797,10 @@ export default function AdminUsersPage() {
             onClose={() => {
               setViewUserId(null);
               setViewUserName('');
-              setViewUserData(null);
+              // Delay clearing data until after animation completes (300ms)
+              setTimeout(() => {
+                setViewUserData(null);
+              }, 300);
             }}
             userId={viewUserId}
             userName={viewUserName}
