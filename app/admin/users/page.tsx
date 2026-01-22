@@ -72,6 +72,7 @@ export default function AdminUsersPage() {
   });
 
   // View user details modal state
+  const [viewUserModalOpen, setViewUserModalOpen] = useState(false);
   const [viewUserId, setViewUserId] = useState<string | null>(null);
   const [viewUserName, setViewUserName] = useState<string>('');
   const [viewUserData, setViewUserData] = useState<any | null>(null);
@@ -324,6 +325,7 @@ export default function AdminUsersPage() {
           setViewUserData(data);
           setViewUserId(user.id);
           setViewUserName(user.name);
+          setViewUserModalOpen(true);
         } catch (error: any) {
           addToast('error', error.message || 'Failed to load user details');
         } finally {
@@ -791,14 +793,15 @@ export default function AdminUsersPage() {
         />
 
         {/* View User Details Modal */}
-        {viewUserId && (
+        {(viewUserModalOpen || viewUserId) && (
           <ViewUserDetailsModal
-            isOpen={viewUserId !== null}
+            isOpen={viewUserModalOpen}
             onClose={() => {
-              setViewUserId(null);
-              setViewUserName('');
-              // Delay clearing data until after animation completes (300ms)
+              setViewUserModalOpen(false);
+              // Clear data after animation completes
               setTimeout(() => {
+                setViewUserId(null);
+                setViewUserName('');
                 setViewUserData(null);
               }, 300);
             }}
