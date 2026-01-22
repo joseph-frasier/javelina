@@ -311,7 +311,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
           </p>
         </form>
 
-        <div className="p-6 border-t border-gray-light dark:border-gray-700 flex justify-end gap-3">
+        <div className="p-6 flex justify-end gap-3">
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
