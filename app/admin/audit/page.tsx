@@ -439,7 +439,7 @@ export default function AdminAuditPage() {
                             </div>
 
                             {/* Technical Details */}
-                            <div className="pt-3 border-t border-orange-200 dark:border-orange-900/50">
+                            <div className="pt-3">
                               <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-2">Technical Details</p>
                               <div className="space-y-2">
                                 {log.record_id && (
