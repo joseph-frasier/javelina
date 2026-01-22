@@ -641,11 +641,6 @@ function SettingsContent() {
                   <div className="mb-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-orange-dark dark:text-orange mb-2">
                       Billing & Subscription
-                      {sortedBillingOrgs.length > 0 && (
-                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                          ({billingStartIndex + 1}-{Math.min(billingEndIndex, sortedBillingOrgs.length)} of {sortedBillingOrgs.length})
-                        </span>
-                      )}
                     </h2>
                     <p className="text-sm text-gray-slate dark:text-gray-400">
                       Manage billing for your organizations
