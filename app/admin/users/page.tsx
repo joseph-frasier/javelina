@@ -340,6 +340,7 @@ export default function AdminUsersPage() {
         (user.status || 'active') === 'active'
           ? confirmDisableUser(user.id, user.name)
           : confirmEnableUser(user.id, user.name),
+      variant: (user.status || 'active') === 'active' ? 'danger' : 'default',
       divider: true,
     },
   ];
