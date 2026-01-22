@@ -327,7 +327,6 @@ export default function AdminOrganizationsPage() {
           setViewMembersOrgId(org.id);
           setViewMembersOrgName(org.name);
         },
-        divider: true,
       },
       {
         label: isDisabled ? 'Enable Organization' : 'Disable Organization',
@@ -346,6 +345,7 @@ export default function AdminOrganizationsPage() {
           setDisableOrgIsDisabled(isDisabled);
         },
         variant: isDisabled ? undefined : 'danger',
+        divider: true,
       },
     ];
   };
