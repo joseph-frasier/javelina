@@ -39,6 +39,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
@@ -150,6 +151,16 @@ export default function AdminUsersPage() {
     // Reset to page 1 when filters change
     setCurrentPage(1);
   }, [filterUsers]);
+
+  // Delay showing skeleton to avoid flash for quick loads
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setShowSkeleton(true), 150);
+      return () => clearTimeout(timer);
+    } else {
+      setShowSkeleton(false);
+    }
+  }, [loading]);
 
   // Handle column sorting
   const handleSort = (key: string) => {
@@ -323,8 +334,8 @@ export default function AdminUsersPage() {
         try {
           const data = await adminApi.getUser(user.id);
           setViewUserData(data);
-          setViewUserId(user.id);
-          setViewUserName(user.name);
+        setViewUserId(user.id);
+        setViewUserName(user.name);
           setViewUserModalOpen(true);
         } catch (error: any) {
           addToast('error', error.message || 'Failed to load user details');
@@ -494,14 +505,84 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+            {showSkeleton ? (
+              <>
+                {/* Mobile Skeleton */}
+                <div className="sm:hidden space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Card key={i} className="p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      </div>
+                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                        <div className="flex justify-between">
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
+                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
+                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-                <p className="text-gray-slate dark:text-gray-300 mt-4">Loading users...</p>
-              </div>
+
+                {/* Desktop Skeleton */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-light dark:border-gray-700">
+                        <th className="text-left py-3 px-4 w-12">
+                          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                        </th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Email</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Activity</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Status</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Last Login</th>
+                        <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...Array(8)].map((_, i) => (
+                        <tr key={i} className="border-b border-gray-light dark:border-gray-700">
+                          <td className="py-3 px-4">
+                            <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse" />
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 mt-1 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="mx-auto h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="mx-auto h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="ml-auto h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-12">
                 <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -513,7 +594,7 @@ export default function AdminUsersPage() {
                 </p>
               </div>
             ) : (
-              <>
+              <div className="animate-fadeIn">
               {/* Mobile Card View - Below 640px */}
               <div className="sm:hidden space-y-3">
                 {paginatedUsers.map((user) => {
@@ -769,7 +850,7 @@ export default function AdminUsersPage() {
                   />
                 )}
               </div>
-              </>
+              </div>
             )}
           </Card>
 
@@ -800,8 +881,8 @@ export default function AdminUsersPage() {
               setViewUserModalOpen(false);
               // Clear data after animation completes
               setTimeout(() => {
-                setViewUserId(null);
-                setViewUserName('');
+              setViewUserId(null);
+              setViewUserName('');
                 setViewUserData(null);
               }, 300);
             }}
