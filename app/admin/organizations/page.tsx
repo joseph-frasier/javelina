@@ -82,6 +82,7 @@ export default function AdminOrganizationsPage() {
   // Modal states for viewing organization details and members
   const [viewDetailsOrgId, setViewDetailsOrgId] = useState<string | null>(null);
   const [viewDetailsOrgName, setViewDetailsOrgName] = useState<string>('');
+  const [viewDetailsOrgData, setViewDetailsOrgData] = useState<any | null>(null);
   const [viewMembersOrgId, setViewMembersOrgId] = useState<string | null>(null);
   const [viewMembersOrgName, setViewMembersOrgName] = useState<string>('');
   const [disableOrgId, setDisableOrgId] = useState<string | null>(null);
@@ -304,9 +305,15 @@ export default function AdminOrganizationsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
         ),
-        onClick: () => {
-          setViewDetailsOrgId(org.id);
-          setViewDetailsOrgName(org.name);
+        onClick: async () => {
+          try {
+            const data = await adminApi.getOrganization(org.id);
+            setViewDetailsOrgData(data);
+            setViewDetailsOrgId(org.id);
+            setViewDetailsOrgName(org.name);
+          } catch (error) {
+            addToast('error', (error as Error).message || 'Failed to load organization details');
+          }
         },
       },
       {
@@ -742,9 +749,14 @@ export default function AdminOrganizationsPage() {
         {/* View Organization Details Modal */}
         <ViewOrganizationDetailsModal
           isOpen={viewDetailsOrgId !== null}
-          onClose={() => setViewDetailsOrgId(null)}
+          onClose={() => {
+            setViewDetailsOrgId(null);
+            setViewDetailsOrgName('');
+            setViewDetailsOrgData(null);
+          }}
           organizationId={viewDetailsOrgId || ''}
           organizationName={viewDetailsOrgName}
+          organizationData={viewDetailsOrgData}
         />
 
         {/* View Organization Members Modal */}

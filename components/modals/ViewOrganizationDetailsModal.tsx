@@ -31,6 +31,7 @@ interface ViewOrganizationDetailsModalProps {
   onClose: () => void;
   organizationId: string;
   organizationName?: string;
+  organizationData?: OrganizationDetails | null;
 }
 
 export function ViewOrganizationDetailsModal({
@@ -38,16 +39,24 @@ export function ViewOrganizationDetailsModal({
   onClose,
   organizationId,
   organizationName,
+  organizationData,
 }: ViewOrganizationDetailsModalProps) {
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<OrganizationDetails | null>(null);
 
   useEffect(() => {
-    if (isOpen && organizationId) {
-      fetchOrganizationDetails();
+    if (isOpen) {
+      if (organizationData) {
+        // Use pre-fetched data
+        setOrganization(organizationData);
+        setLoading(false);
+      } else if (organizationId) {
+        // Fetch if no data provided
+        fetchOrganizationDetails();
+      }
     }
-  }, [isOpen, organizationId]);
+  }, [isOpen, organizationId, organizationData]);
 
   const fetchOrganizationDetails = async () => {
     setLoading(true);
