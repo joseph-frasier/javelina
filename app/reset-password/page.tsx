@@ -35,8 +35,6 @@ export default function ResetPasswordPage() {
         );
         return;
       }
-
-      console.log('Valid password reset session detected');
     };
 
     checkSession();
@@ -101,7 +99,6 @@ export default function ResetPasswordPage() {
       // Redirect to login after 2 seconds using hard redirect
       // Use window.location.href instead of router.push() for reliable production behavior
       setTimeout(() => {
-        console.log('Redirecting to login page...');
         window.location.href = '/login';
       }, 2000);
     } catch (error: any) {

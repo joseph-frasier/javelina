@@ -268,8 +268,7 @@ export function Sidebar({
         </nav>
 
         {/* Feedback Button - Mobile */}
-        {/* Temporarily hidden */}
-        {/* <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700 bg-white dark:bg-orange-dark">
+        <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700 bg-white dark:bg-orange-dark">
           <button
             onClick={() => {
               setIsFeedbackModalOpen(true);
@@ -278,7 +277,7 @@ export function Sidebar({
               }
             }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-orange hover:text-white text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-transparent group"
-            aria-label="Give feedback"
+            aria-label="Submit a ticket"
           >
             <svg
               className="w-5 h-5 flex-shrink-0 group-hover:text-white"
@@ -293,9 +292,9 @@ export function Sidebar({
                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
               />
             </svg>
-            <span className="font-medium">Give feedback</span>
+            <span className="font-medium">Submit a ticket</span>
           </button>
-        </div> */}
+        </div>
       </aside>
 
       {/* Desktop Sidebar */}
@@ -366,14 +365,13 @@ export function Sidebar({
       </nav>
 
       {/* Feedback Button - Desktop */}
-      {/* Temporarily hidden */}
-      {/* <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700">
+      <div className="flex-shrink-0 p-4 border-t border-gray-light dark:border-gray-700">
         {isCollapsed ? (
           <button
             onClick={() => setIsFeedbackModalOpen(true)}
             className="w-full p-2 rounded-md transition-colors flex items-center justify-center hover:bg-orange hover:text-white text-gray-900 dark:text-gray-300 group"
-            title="Give feedback"
-            aria-label="Give feedback"
+            title="Submit a ticket"
+            aria-label="Submit a ticket"
           >
             <svg
               className="w-6 h-6 group-hover:text-white"
@@ -393,7 +391,7 @@ export function Sidebar({
           <button
             onClick={() => setIsFeedbackModalOpen(true)}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors bg-gray-200 dark:bg-gray-800 hover:bg-orange hover:text-white text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-transparent group"
-            aria-label="Give feedback"
+            aria-label="Submit a ticket"
           >
             <svg
               className="w-5 h-5 flex-shrink-0 group-hover:text-white"
@@ -408,10 +406,10 @@ export function Sidebar({
                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
               />
             </svg>
-            <span className="font-medium text-sm">Give feedback</span>
+            <span className="font-medium text-sm">Submit a ticket</span>
           </button>
         )}
-      </div> */}
+      </div>
     </aside>
 
       {/* Add Organization Modal */}

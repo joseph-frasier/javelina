@@ -189,7 +189,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
 
                 {/* Quick preview of changes - Now using formatted summary (Option 2) */}
                 {(log.action === 'UPDATE' || log.action === 'INSERT' || log.action === 'DELETE') && (
-                  <div className="mt-2 text-xs text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded px-2 py-1.5">
+                  <div className="mt-2 inline-block text-xs text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded px-2 py-1.5">
                     {getChangeSummary(log.old_data, log.new_data, log.table_name, 2)}
                   </div>
                 )}

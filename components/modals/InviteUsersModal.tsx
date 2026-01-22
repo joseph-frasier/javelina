@@ -51,13 +51,6 @@ export function InviteUsersModal({
   const maxMembers = usage?.maxMembers ?? fallbackLimits.users;
   const isAtMemberLimit = currentMemberCount >= maxMembers;
 
-  // Debug logging
-  console.log('InviteUsersModal - planCode:', planCode);
-  console.log('InviteUsersModal - tier:', tier);
-  console.log('InviteUsersModal - currentMemberCount:', currentMemberCount);
-  console.log('InviteUsersModal - maxMembers:', maxMembers);
-  console.log('InviteUsersModal - isAtMemberLimit:', isAtMemberLimit);
-
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);

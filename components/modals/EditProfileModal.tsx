@@ -181,15 +181,6 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            disabled={isLoading}
-            className="flex-1"
-          >
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
-          <Button
             type="button"
             variant="outline"
             size="md"
@@ -198,6 +189,15 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
             className="flex-1"
           >
             Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={isLoading}
+            className="flex-1"
+          >
+            {isLoading ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </form>

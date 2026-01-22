@@ -13,7 +13,6 @@ if (typeof window !== 'undefined') {
   try {
     const oldData = localStorage.getItem('auth-storage');
     if (oldData) {
-      console.log('[Auth Store] Removing old auth-storage data');
       localStorage.removeItem('auth-storage');
     }
   } catch (error) {
@@ -61,11 +60,11 @@ interface AuthState {
   isLoading: boolean
   profileReady: boolean
   profileError: string | null
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
   loginWithOAuth: (provider: 'google' | 'github') => Promise<void>
   logout: () => Promise<void>
-  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
-  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
+  resetPassword: (email: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
   fetchProfile: (accessToken?: string) => Promise<void>
   initializeAuth: () => Promise<void>
@@ -243,7 +242,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       },
 
       // Email/password login
-      login: async (email: string, password: string) => {
+      login: async (email: string, password: string, captchaToken?: string) => {
         set({ isLoading: true })
         
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
@@ -277,6 +276,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
+            options: {
+              captchaToken,
+            },
           })
 
           if (error) {
@@ -335,7 +337,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       },
 
       // Sign up new user
-      signUp: async (email: string, password: string, name: string) => {
+      signUp: async (email: string, password: string, name: string, captchaToken?: string) => {
         const supabase = createClient()
         set({ isLoading: true })
 
@@ -347,6 +349,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
               data: {
                 name, // This will be stored in user_metadata
               },
+              captchaToken,
             },
           })
 
@@ -393,7 +396,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       },
 
       // Reset password
-      resetPassword: async (email: string) => {
+      resetPassword: async (email: string, captchaToken?: string) => {
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
         
@@ -409,7 +412,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             return { success: true }
           }
           
-          console.log(`[Mock] Password reset email would be sent to: ${email}`)
           return { success: true }
         }
         
@@ -419,11 +421,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         try {
           // Use auth callback route which will handle the code exchange and redirect to reset-password
           const resetUrl = `${window.location.origin}/auth/callback?type=recovery`
-          console.log('Sending password reset email to:', email)
-          console.log('Reset URL:', resetUrl)
 
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: resetUrl,
+            captchaToken,
           })
 
           if (error) {
@@ -438,7 +439,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             return { success: false, error: error.message }
           }
 
-          console.log('Password reset email sent successfully')
           return { success: true }
         } catch (error: any) {
           console.error('Password reset exception:', error)

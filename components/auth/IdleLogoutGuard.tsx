@@ -7,14 +7,18 @@ import { useIdleLogout } from '@/lib/hooks/useIdleLogout';
 import { createClient } from '@/lib/supabase/client';
 import { getIdleSync } from '@/lib/idle/idleSync';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { IDLE_CONFIG } from '@/lib/idle/config';
 
 /**
- * IdleLogoutGuard - Monitors user activity and logs out after 60 minutes of inactivity
+ * IdleLogoutGuard - Monitors user activity and logs out after inactivity
  * 
  * Behavior:
  * - Normal routes: Shows warning at 58 minutes, logs out at 60 minutes
- * - Admin routes (/admin/*): Only broadcasts activity, no logout
+ * - Admin routes (/admin/*): Logs out at 15 minutes with no warning
  * - Auth pages (/login, /signup, etc.): Completely disabled
+ * 
+ * Note: Admin routes use separate cookie-based auth (not useAuthStore), 
+ * so we enable the guard based on route protection rather than auth state.
  */
 export function IdleLogoutGuard() {
   const pathname = usePathname();
@@ -24,6 +28,7 @@ export function IdleLogoutGuard() {
 
   // Determine if we should enable idle monitoring and which mode
   const isAdminRoute = pathname.startsWith('/admin');
+  const isAdminLoginPage = pathname === '/admin/login';
   const isAuthPage = [
     '/login',
     '/signup',
@@ -32,33 +37,49 @@ export function IdleLogoutGuard() {
     '/email-verified',
   ].includes(pathname) || pathname.startsWith('/auth/');
 
-  // Enable only when authenticated and not on auth pages
-  const enabled = isAuthenticated && !isAuthPage;
+  // Enable when:
+  // 1. Regular authenticated user on non-auth pages, OR
+  // 2. On admin routes (already protected by AdminProtectedRoute) but not the login page
+  const enabled = (isAuthenticated && !isAuthPage) || (isAdminRoute && !isAdminLoginPage);
   
-  // Admin routes use activityOnly mode, others use full mode
-  const mode = isAdminRoute ? 'activityOnly' : 'full';
+  // All routes use full mode (with logout), but admin routes use shorter timeout
+  const mode = 'full';
+  
+  // Configure timeout based on route type
+  const idleTimeout = isAdminRoute ? IDLE_CONFIG.ADMIN_IDLE_TIMEOUT_MS : IDLE_CONFIG.IDLE_TIMEOUT_MS;
+  const warningTimeout = isAdminRoute ? undefined : IDLE_CONFIG.WARNING_MS;
 
   /**
-   * Handle warning (58 minutes idle)
+   * Handle warning (58 minutes idle for normal routes, no warning for admin)
    */
   const handleWarning = useCallback(() => {
-    if (mode === 'full') {
+    if (!isAdminRoute) {
       setShowWarningModal(true);
     }
-  }, [mode]);
+  }, [isAdminRoute]);
 
   /**
-   * Handle logout (60 minutes idle)
+   * Handle logout (60 minutes idle for normal routes, 15 minutes for admin)
    */
   const handleLogout = useCallback(async () => {
-    if (mode === 'activityOnly') {
-      // Admin routes don't logout
+    setShowWarningModal(false);
+
+    if (isAdminRoute) {
+      // Admin routes: Set inactivity flag and redirect to admin login
+      try {
+        localStorage.setItem('admin-logout-reason', 'inactivity');
+        localStorage.removeItem('javelina-last-activity');
+      } catch (error) {
+        console.error('[IdleLogoutGuard] Failed to set logout reason:', error);
+      }
+      
+      // Admin logout happens via middleware checking the cookie expiration
+      // Just redirect to admin login page
+      router.replace('/admin/login');
       return;
     }
 
-    setShowWarningModal(false);
-
-    // Attempt to sign out of Supabase
+    // Normal routes: Attempt to sign out of Supabase
     try {
       // Check if we're in placeholder mode
       const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co';
@@ -96,7 +117,7 @@ export function IdleLogoutGuard() {
 
     // Redirect to login
     router.replace('/login');
-  }, [mode, authStoreLogout, router]);
+  }, [isAdminRoute, authStoreLogout, router]);
 
   /**
    * Use idle logout hook
@@ -104,6 +125,8 @@ export function IdleLogoutGuard() {
   const { reset, triggerLogout } = useIdleLogout({
     enabled,
     mode,
+    idleTimeoutMs: idleTimeout,
+    warningMs: warningTimeout,
     onWarning: handleWarning,
     onLogout: handleLogout,
   });
@@ -133,17 +156,21 @@ export function IdleLogoutGuard() {
   }, []);
 
   // Don't render anything (this is just a guard)
-  // But we do render the warning modal when needed
+  // But we do render the warning modal when needed (not for admin routes)
   return (
-    <ConfirmationModal
-      isOpen={showWarningModal}
-      onClose={handleStaySignedIn}
-      onConfirm={handleLogoutNow}
-      title="Session Timeout Warning"
-      message="You'll be logged out in 2 minutes due to inactivity. Would you like to stay signed in?"
-      confirmText="Log out now"
-      cancelText="Stay signed in"
-      variant="warning"
-    />
+    <>
+      {!isAdminRoute && (
+        <ConfirmationModal
+          isOpen={showWarningModal}
+          onClose={handleStaySignedIn}
+          onConfirm={handleLogoutNow}
+          title="Session Timeout Warning"
+          message="You'll be logged out in 2 minutes due to inactivity. Would you like to stay signed in?"
+          confirmText="Log out now"
+          cancelText="Stay signed in"
+          variant="warning"
+        />
+      )}
+    </>
   );
 }

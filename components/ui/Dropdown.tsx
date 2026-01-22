@@ -14,6 +14,7 @@ interface DropdownProps {
   options: DropdownOption[];
   onChange: (value: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function Dropdown({
@@ -22,6 +23,7 @@ export default function Dropdown({
   options,
   onChange,
   className,
+  disabled = false,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,12 +61,14 @@ export default function Dropdown({
       {/* Dropdown Button */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
         className={clsx(
           "w-full px-4 py-2.5 rounded-md border bg-white dark:bg-gray-800 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-0 text-orange-dark dark:text-gray-100 flex items-center justify-between transition-colors",
           isOpen
             ? "border-orange"
-            : "border-gray-light dark:border-gray-600 hover:border-orange/50"
+            : "border-gray-light dark:border-gray-600 hover:border-orange/50",
+          disabled && "opacity-50 cursor-not-allowed bg-gray-light dark:bg-gray-700"
         )}
       >
         <span className="font-regular">{selectedOption?.label || 'Select...'}</span>
