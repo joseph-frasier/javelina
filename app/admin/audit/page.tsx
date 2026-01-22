@@ -127,6 +127,7 @@ export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
@@ -232,6 +233,16 @@ export default function AdminAuditPage() {
     filterLogs();
   }, [filterLogs]);
 
+  // Delay showing skeleton to avoid flash for quick loads
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setShowSkeleton(true), 150);
+      return () => clearTimeout(timer);
+    } else {
+      setShowSkeleton(false);
+    }
+  }, [loading]);
+
   // Calculate stats
   const stats = {
     total: logs.length,
@@ -334,13 +345,39 @@ export default function AdminAuditPage() {
               </div>
             </div>
 
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-                </div>
-                <p className="text-gray-slate mt-4">Loading audit logs...</p>
+            {showSkeleton ? (
+              <div className="space-y-4">
+                {[...Array(8)].map((_, i) => (
+                  <Card key={i} className="p-6">
+                    <div className="flex items-start gap-4">
+                      {/* Timeline dot placeholder */}
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+                      </div>
+                      
+                      <div className="flex-1 space-y-3">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse" />
+                          </div>
+                          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20 animate-pulse" />
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="flex flex-wrap gap-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse" />
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28 animate-pulse" />
+                        </div>
+
+                        {/* Details box */}
+                        <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
             ) : filteredLogs.length === 0 ? (
               <div className="text-center py-12">
@@ -353,7 +390,7 @@ export default function AdminAuditPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fadeIn">
                 {filteredLogs.map((log) => {
                   const logDate = formatDateWithRelative(log.created_at);
                   const description = getActionDescription(log);
