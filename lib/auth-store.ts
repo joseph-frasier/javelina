@@ -1,10 +1,9 @@
 import { create } from 'zustand'
-import { createClient } from '@/lib/supabase/client'
-import { getAuthCallbackURL } from '@/lib/utils/get-url'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
-import { classifySignupResult, type SignupOutcome } from '@/lib/utils/signup-classifier'
 import { getIdleSync } from '@/lib/idle/idleSync'
+
+// API configuration for auth endpoints
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // CRITICAL: Clean up old persisted auth storage IMMEDIATELY on module load
 // This must happen before any Zustand store is created to prevent
@@ -60,13 +59,13 @@ interface AuthState {
   isLoading: boolean
   profileReady: boolean
   profileError: string | null
-  login: (email: string, password: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
-  loginWithOAuth: (provider: 'google' | 'github') => Promise<void>
+  login: () => void
+  loginWithOAuth: (provider: 'google' | 'github') => void
   logout: () => Promise<void>
-  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
+  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
   resetPassword: (email: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
-  fetchProfile: (accessToken?: string) => Promise<void>
+  fetchProfile: () => Promise<void>
   initializeAuth: () => Promise<void>
 }
 
@@ -136,7 +135,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   profileReady: false,
   profileError: null,
 
-      // Initialize auth - check for existing session
+      // Initialize auth - check for existing session via Express /auth/me
       initializeAuth: async () => {
         set({ isLoading: true, profileReady: false, profileError: null })
         
@@ -153,17 +152,17 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           return
         }
 
-        // Real Supabase authentication
-        const supabase = createClient()
-
+        // Check session with Express backend
         try {
-          const {
-            data: { user: supabaseUser },
-          } = await supabase.auth.getUser()
+          const response = await fetch(`${API_URL}/auth/me`, {
+            credentials: 'include', // Send session cookie
+          })
 
-          if (supabaseUser) {
+          if (response.ok) {
+            // Session is valid, fetch full profile
             await get().fetchProfile()
           } else {
+            // No valid session
             set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
           }
         } catch (error) {
@@ -174,26 +173,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         }
       },
 
-      // Fetch user profile via Express API
-      fetchProfile: async (accessToken?: string) => {
-        const supabase = createClient()
-
+      // Fetch user profile via Express API (uses session cookie)
+      fetchProfile: async () => {
         try {
-          // Get the session first to ensure user is authenticated
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
-
-          if (!session?.user) {
-            set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
-            return
-          }
-
-          const supabaseUser = session.user
-
           // Fetch profile with organizations from Express API via server action
-          // Use provided access token (from fresh login) or session token
-          const result = await getProfile(accessToken || session.access_token)
+          // Session cookie is sent automatically via credentials: 'include'
+          const result = await getProfile()
 
           if (result.error || !result.data) {
             console.error('Error fetching profile:', result.error)
@@ -206,9 +191,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             })
             return
           }
-
-          // Disabled users are blocked by Supabase ban - they can't authenticate
-          // No need to check status here
 
           // Map organizations to Organization interface
           const organizations: Organization[] = (result.data.organizations || []).map((org) => ({
@@ -234,106 +216,33 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           console.error('Error fetching profile:', error)
           set({
             user: null,
-            isAuthenticated: true,
+            isAuthenticated: false,
             profileReady: false,
             profileError: 'An error occurred while loading your profile. Please sign out and try again.',
           })
         }
       },
 
-      // Email/password login
-      login: async (email: string, password: string, captchaToken?: string) => {
-        set({ isLoading: true })
-        
+      // Login - redirect to Auth0 via Express
+      login: () => {
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
         
         if (isPlaceholderMode) {
-          // Use mock authentication
-          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
-          
-          const user = mockUsers.find(u => u.email === email)
-          const correctPassword = mockPasswords[email]
-          
-          if (!user || password !== correctPassword) {
-            set({ isLoading: false })
-            return { success: false, error: 'Invalid email or password' }
-          }
-          
-          set({ 
-            user, 
-            isAuthenticated: true, 
-            isLoading: false 
-          })
-          
-          return { success: true }
+          // Mock mode - no-op for now (would need custom mock login flow)
+          console.warn('Mock mode login not implemented for Auth0 migration')
+          return
         }
         
-        // Real Supabase authentication
-        const supabase = createClient()
-
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-            options: {
-              captchaToken,
-            },
-          })
-
-          if (error) {
-            // Check if it's a ban/disabled account error
-            const isBannedError = error.message.toLowerCase().includes('ban') || 
-                                  error.message.toLowerCase().includes('disabled')
-            
-            if (isBannedError) {
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: 'Your account has been disabled. Please contact support for assistance.' 
-              }
-            }
-            
-            set({ isLoading: false })
-            return { success: false, error: error.message }
-          }
-
-          if (data.user && data.session) {
-            // Pass the fresh access token to fetchProfile
-            await get().fetchProfile(data.session.access_token)
-            
-            // Check if profile loaded successfully
-            const { profileReady, user, profileError } = get()
-            
-            if (!profileReady || !user) {
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: profileError || 'We could not load your profile. Please try again.' 
-              }
-            }
-          }
-
-          set({ isLoading: false })
-          return { success: true }
-        } catch (error: any) {
-          set({ isLoading: false })
-          return { success: false, error: error.message || 'An error occurred' }
-        }
+        // Redirect to Express auth endpoint which will redirect to Auth0
+        window.location.href = `${API_URL}/auth/login`
       },
 
-      // OAuth login (Google, GitHub, etc.)
-      loginWithOAuth: async (provider: 'google' | 'github') => {
-        const supabase = createClient()
-        const redirectUrl = getAuthCallbackURL()
-
-        await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: redirectUrl,
-          },
-        })
-        // Note: This will redirect the user, so no return value
+      // OAuth login - redirect to Auth0 (handles all OAuth providers)
+      loginWithOAuth: (provider: 'google' | 'github') => {
+        // Auth0 Universal Login handles all OAuth providers
+        // Just redirect to the same login endpoint
+        window.location.href = `${API_URL}/auth/login`
       },
 
       // Sign up new user
@@ -470,7 +379,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return { success: true }
       },
 
-      // Logout
+      // Logout - call Express backend
       logout: async () => {
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
@@ -488,7 +397,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           try {
             const sync = getIdleSync()
             sync.publishLogout()
-            // Clear stale timestamp to prevent login loops
             localStorage.removeItem('javelina-last-activity')
           } catch (error) {
             console.error('Error broadcasting logout:', error)
@@ -497,11 +405,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           return
         }
         
-        // Real Supabase logout
-        const supabase = createClient()
-
+        // Call Express logout endpoint
         try {
-          await supabase.auth.signOut()
+          const response = await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include', // Send session cookie
+          })
+          
+          // Clear local state
           set({
             user: null,
             isAuthenticated: false,
@@ -513,19 +424,32 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           try {
             const sync = getIdleSync()
             sync.publishLogout()
-            // Clear stale timestamp to prevent login loops
             localStorage.removeItem('javelina-last-activity')
           } catch (error) {
             console.error('Error broadcasting logout:', error)
           }
+          
+          // If backend returns Auth0 logout URL, redirect to it
+          if (response.ok) {
+            const data = await response.json()
+            if (data.redirectUrl) {
+              window.location.href = data.redirectUrl
+            }
+          }
         } catch (error) {
           console.error('Error logging out:', error)
           
-          // Still broadcast logout even on error
+          // Still clear state and broadcast even on error
+          set({
+            user: null,
+            isAuthenticated: false,
+            profileReady: false,
+            profileError: null,
+          })
+          
           try {
             const sync = getIdleSync()
             sync.publishLogout()
-            // Clear stale timestamp to prevent login loops
             localStorage.removeItem('javelina-last-activity')
           } catch (broadcastError) {
             console.error('Error broadcasting logout:', broadcastError)

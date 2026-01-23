@@ -1,10 +1,9 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
  * Middleware runs on every request before it reaches your app
  * This middleware:
- * 1. Refreshes the Supabase session (important for keeping users logged in)
+ * 1. Checks for valid session cookie (set by Express backend)
  * 2. Protects routes that require authentication
  * 3. Redirects unauthenticated users to /login
  * 4. Redirects authenticated users away from /login and /signup
@@ -17,61 +16,9 @@ export async function middleware(request: NextRequest) {
   })
 
   try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            // Set cookie on request for this middleware execution
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            })
-            // Also set on response to persist for future requests
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            })
-            response.cookies.set({
-              name,
-              value,
-              ...options,
-            })
-          },
-          remove(name: string, options: CookieOptions) {
-            // Remove from request
-            request.cookies.set({
-              name,
-              value: '',
-              ...options,
-            })
-            // Also remove from response
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            })
-            response.cookies.set({
-              name,
-              value: '',
-              ...options,
-            })
-          },
-        },
-      }
-    )
-
-    // Refresh session if expired - required for Server Components
-    // This will check if the user is authenticated
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // Check for session cookie (set by Express backend after Auth0 login)
+    const sessionCookie = request.cookies.get('javelina_session')
+    const isAuthenticated = !!sessionCookie
 
     // Check if user is in password reset flow (must complete password reset before accessing anything else)
     // BUT allow navigation to login page (user can abandon reset and login normally)
@@ -104,32 +51,17 @@ export async function middleware(request: NextRequest) {
     // No need to check status here
 
     // If user is not authenticated and trying to access a protected route (but allow /admin/* routes and payment completion)
-    if (!user && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
+    if (!isAuthenticated && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
       const redirectUrl = new URL('/login', request.url)
       // Add the current URL as a redirect parameter so we can send them back after login
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
     }
 
-    // If user IS authenticated and trying to access login/signup pages
-    // Check if they have completed onboarding (have organizations)
-    if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
-      // Check if user has organizations
-      const { data: memberships } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .limit(1)
-
-      const hasOrganizations = memberships && memberships.length > 0
-
-      if (hasOrganizations) {
-        // User has completed onboarding, send to dashboard
-        return NextResponse.redirect(new URL('/', request.url))
-      } else {
-        // First-time user, send to pricing to complete onboarding
-        return NextResponse.redirect(new URL('/pricing?onboarding=true', request.url))
-      }
+    // If user IS authenticated and trying to access login/signup pages, redirect to dashboard
+    // Dashboard will handle onboarding check if needed
+    if (isAuthenticated && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+      return NextResponse.redirect(new URL('/', request.url))
     }
   } catch (error) {
     console.error('Middleware error:', error)

@@ -5,8 +5,6 @@
  * automatically attaching JWT tokens from Supabase auth and handling errors.
  */
 
-import { createClient } from '@/lib/supabase/client';
-
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -23,38 +21,24 @@ export class ApiError extends Error {
   }
 }
 
-// Get JWT token from Supabase auth
-async function getAuthToken(): Promise<string | null> {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || null;
-}
-
 // Generic API request function
 async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
   try {
-    // Get auth token
-    const token = await getAuthToken();
-
     // Build headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
 
-    // Add auth token if available
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Make request
+    // Make request with credentials for session cookies
     const url = `${API_BASE_URL}/api${endpoint}`;
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include', // Send/receive session cookies
     });
 
     // Parse response
