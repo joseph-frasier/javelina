@@ -74,12 +74,13 @@ Mock credentials:
 - Session persistence and refresh
 
 **Authorization System:**
-- **User Roles**: SuperAdmin (system-wide), Standard User
+- **Global SuperAdmin** - Javelina staff with access to all organizations (via `profiles.superadmin = true`)
 - **Organization Roles**: 
-  - SuperAdmin (full org control)
-  - Admin (user & resource management)
-  - Editor (content management)
-  - Viewer (read-only access)
+  - **SuperAdmin** - Full org control, can delete organization
+  - **Admin** - User & resource management, billing access
+  - **BillingContact** - Billing and subscription management only
+  - **Editor** - DNS management (zones, records, tags)
+  - **Viewer** - Read-only access
 - Row Level Security (RLS) enforced at database level
 - Protected routes with automatic redirects
 - Admin-only access controls
@@ -99,6 +100,7 @@ Mock credentials:
 - Remove team members
 - View team member activity
 - Pending invitation management
+- Role-based access control enforcement
 
 ### 🌐 DNS Zone Management
 
@@ -180,6 +182,13 @@ Mock credentials:
 - Lifetime plan purchase
 - Upgrade between lifetime tiers
 - Webhook-driven status updates
+
+**Proration Logic:**
+- Day-level granularity with whole-day rounding
+- Credit = (Remaining Days / Total Days) × Monthly Price
+- Automatic charging for upgrades using saved payment method
+- Proration disabled in Stripe, handled by backend
+- Full credit for lifetime-to-lifetime upgrades
 
 ### 👤 User Profile & Settings
 
@@ -521,7 +530,7 @@ Organizations → Zones → Zone Records
 2. **Configure webhook endpoint**:
    ```bash
    # Local development
-   stripe listen --forward-to localhost:3000/api/webhooks/stripe
+   stripe listen --forward-to localhost:3001/api/stripe/webhooks
    ```
 3. **Update environment variables**:
    ```env
@@ -535,6 +544,13 @@ Organizations → Zones → Zone Records
 - `invoice.payment_succeeded`
 - `invoice.payment_failed`
 - `payment_intent.succeeded`
+
+**Backend Configuration:**
+Backend handles webhooks at `/api/stripe/webhooks`. Ensure these environment variables are set in the backend:
+```env
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
 
 ## 🔐 OAuth Setup
 
@@ -557,11 +573,73 @@ npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
 
+# Full Stack (Frontend + Backend)
+npm run dev:full     # Run both frontend and backend
+npm run build:full   # Build both
+npm run start:full   # Start both in production
+
+# Backend Only
+npm run dev:backend     # Run Express API (port 5001)
+npm run build:backend   # Build backend
+npm run start:backend   # Start backend in production
+
 # Environment Management
 npm run env:dev      # Switch to dev environment
 npm run env:prod     # Switch to prod environment
 npm run env:status   # Check current environment
 ```
+
+## 🏗️ Architecture
+
+### Data Flow
+```
+Frontend (Next.js) → Express API → Supabase
+  localhost:3000      localhost:3001 (or 5001)
+```
+
+- Frontend makes API calls through `lib/api-client.ts`
+- Express API validates JWT tokens and queries Supabase
+- Supabase handles data storage and RLS policies
+
+### Authorization Layers
+
+1. **Database (Supabase RLS)**
+   - Row Level Security policies on all tables
+   - Global SuperAdmin bypass via `profiles.superadmin = true`
+   - Role-based policies for org members
+
+2. **Backend API (Express)**
+   - RBAC middleware validates user roles
+   - Applied to routes before handlers execute
+   - Fetches user's org role and validates against allowed roles
+
+3. **Frontend UI (React/Next.js)**
+   - Permission helper functions (`lib/permissions.ts`)
+   - UI elements conditionally render based on permissions
+   - Provides immediate feedback without server round-trip
+
+## 🔐 Role-Based Access Control (RBAC)
+
+### Organization Roles
+
+| Role | Permissions |
+|------|-------------|
+| **SuperAdmin** | Full control, can delete organization |
+| **Admin** | Manage resources, team, billing |
+| **BillingContact** | Billing management only, read-only for DNS |
+| **Editor** | Full DNS management (zones, records, tags) |
+| **Viewer** | Read-only access |
+
+### Permission Matrix
+
+| Permission | SuperAdmin | Admin | BillingContact | Editor | Viewer |
+|-----------|-----------|-------|----------------|--------|--------|
+| Edit org settings | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Invite/remove members | ✅ | ✅ | ❌ | ❌ | ❌ |
+| View/manage billing | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Create/edit zones | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Create/edit records | ✅ | ✅ | ❌ | ✅ | ❌ |
+| View zones/records | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## 🧪 Testing
 
@@ -589,6 +667,7 @@ npm run env:status   # Check current environment
 **Branch Deployment:**
 - `main` → Production
 - `dev` → Development preview
+- `qa` → QA/staging
 
 ### Backend
 
@@ -633,6 +712,48 @@ NEXT_PUBLIC_MOCK_MODE=false            # Enable mock mode
 NEXT_PUBLIC_APP_URL=                   # Frontend URL
 ```
 
+### Backend Environment Variables
+
+```env
+# Server Configuration
+PORT=5001
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+
+# Supabase Configuration
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+
+# Stripe Configuration
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+## 📝 Key Implementation Notes
+
+### Proration Calculation
+- Day-level granularity with rounding to nearest whole day
+- Formula: `Credit = (Remaining Days / Total Days) × Monthly Price`
+- Automatic charging for upgrades using saved payment method
+- Full credit for lifetime-to-lifetime upgrades
+
+### Webhook Handling
+- Webhooks handled by Express API at `/api/stripe/webhooks`
+- Raw body parsing configured for signature verification
+- Events: subscription created/updated/deleted, invoice payment succeeded/failed
+
+### Team Management
+- Only SuperAdmin and Admin can invite/remove members
+- Cannot change own role or remove self
+- Warn when removing last SuperAdmin/Admin
+- Invitation flow tracks pending invitations
+
+### Audit Logging
+- All user actions logged with timestamp, IP, user agent
+- Tracks DNS record changes, org modifications, access events
+- Filterable by user, action, resource, date range
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -652,5 +773,5 @@ NEXT_PUBLIC_APP_URL=                   # Frontend URL
 ---
 
 **Version**: 0.1.0  
-**Last Updated**: December 2024  
+**Last Updated**: January 2026  
 **Repository**: https://github.com/joseph-frasier/javelina
