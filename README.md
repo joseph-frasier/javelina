@@ -579,7 +579,7 @@ npm run build:full   # Build both
 npm run start:full   # Start both in production
 
 # Backend Only
-npm run dev:backend     # Run Express API (port 5001)
+npm run dev:backend     # Run Express API (port 3001)
 npm run build:backend   # Build backend
 npm run start:backend   # Start backend in production
 
@@ -594,7 +594,7 @@ npm run env:status   # Check current environment
 ### Data Flow
 ```
 Frontend (Next.js) → Express API → Supabase
-  localhost:3000      localhost:3001 (or 5001)
+  localhost:3000      localhost:3001
 ```
 
 - Frontend makes API calls through `lib/api-client.ts`
@@ -716,7 +716,7 @@ NEXT_PUBLIC_APP_URL=                   # Frontend URL
 
 ```env
 # Server Configuration
-PORT=5001
+PORT=3001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 
