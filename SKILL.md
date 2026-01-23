@@ -1,3 +1,8 @@
+---
+name: Javelina DNS Management Platform
+description: A modern DNS management platform built with Next.js, offering enterprise-grade DNS record management, multi-organization support, and comprehensive billing integration.
+---
+
 # Javelina DNS Management Platform
 
 A modern DNS management platform built with Next.js, offering enterprise-grade DNS record management, multi-organization support, and comprehensive billing integration.
