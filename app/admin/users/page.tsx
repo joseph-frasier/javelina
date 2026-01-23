@@ -874,7 +874,7 @@ export default function AdminUsersPage() {
         />
 
         {/* View User Details Modal */}
-        {(viewUserModalOpen || viewUserId) && (
+        {(viewUserModalOpen || viewUserId) && viewUserId && (
           <ViewUserDetailsModal
             isOpen={viewUserModalOpen}
             onClose={() => {
