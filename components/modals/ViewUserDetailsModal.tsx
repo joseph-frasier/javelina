@@ -25,6 +25,7 @@ interface ViewUserDetailsModalProps {
   onClose: () => void;
   userId: string;
   userName?: string;
+  userData?: UserDetails | null;
 }
 
 export function ViewUserDetailsModal({
@@ -32,16 +33,23 @@ export function ViewUserDetailsModal({
   onClose,
   userId,
   userName,
+  userData,
 }: ViewUserDetailsModalProps) {
   const { addToast } = useToastStore();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<UserDetails | null>(null);
 
+  // Use provided userData if available, otherwise fetch
   useEffect(() => {
     if (isOpen && userId) {
-      fetchUserDetails();
+      if (userData) {
+        setUser(userData);
+        setLoading(false);
+      } else {
+        fetchUserDetails();
+      }
     }
-  }, [isOpen, userId]);
+  }, [isOpen, userId, userData]);
 
   const fetchUserDetails = async () => {
     setLoading(true);

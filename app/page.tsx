@@ -6,24 +6,39 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuthStore } from '@/lib/auth-store';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const organizations = user?.organizations || [];
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Redirect users with orgs to their most recent org page
   useEffect(() => {
     if (user && organizations.length > 0) {
+      setIsRedirecting(true);
       const mostRecentOrg = organizations[organizations.length - 1];
       router.push(`/organization/${mostRecentOrg.id}`);
     }
   }, [user, organizations, router]);
 
+  // Show loading state while redirecting users with orgs
+  if (isRedirecting || (user && organizations.length > 0)) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center bg-orange-light">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+            <span className="text-orange-dark">Loading...</span>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   // Show welcome page for users without orgs
-  // Users with orgs will be redirected by the useEffect above
   return (
     <ProtectedRoute>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">

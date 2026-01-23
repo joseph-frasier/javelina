@@ -298,10 +298,7 @@ export default function AdminLoginPage() {
           </Button>
         </form>
 
-        <div className="mt-8 pt-8" style={{
-          borderTopColor: 'var(--border-color)',
-          borderTopWidth: '1px'
-        }}>
+        <div className="mt-8 pt-8">
           <p className="text-xs text-center" style={{
             color: 'var(--text-secondary)'
           }}>

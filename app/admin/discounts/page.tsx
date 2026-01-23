@@ -311,7 +311,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
           </p>
         </form>
 
-        <div className="p-6 border-t border-gray-light dark:border-gray-700 flex justify-end gap-3">
+        <div className="p-6 flex justify-end gap-3">
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
@@ -337,6 +337,7 @@ export default function AdminDiscountsPage() {
   const { addToast } = useToastStore();
   const [promotionCodes, setPromotionCodes] = useState<PromotionCode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Filters
@@ -380,6 +381,16 @@ export default function AdminDiscountsPage() {
   useEffect(() => {
     fetchPromotionCodes();
   }, [fetchPromotionCodes]);
+
+  // Delay showing skeleton to avoid flash for quick loads
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setShowSkeleton(true), 150);
+      return () => clearTimeout(timer);
+    } else {
+      setShowSkeleton(false);
+    }
+  }, [loading]);
 
   // Filter codes
   const filteredCodes = promotionCodes.filter((code) => {
@@ -600,14 +611,76 @@ export default function AdminDiscountsPage() {
               */}
             </div>
 
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+            {showSkeleton ? (
+              <>
+                {/* Mobile Skeleton */}
+                <div className="sm:hidden space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Card key={i} className="p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      </div>
+                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                        <div className="flex justify-between">
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
+                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
+                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-                <p className="text-gray-slate dark:text-gray-300 mt-4">Loading discount codes...</p>
-              </div>
+
+                {/* Desktop Skeleton */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-light dark:border-gray-700">
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Code</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Discount</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Uses</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Status</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Expires</th>
+                        <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...Array(8)].map((_, i) => (
+                        <tr key={i} className="border-b border-gray-light dark:border-gray-700">
+                          <td className="py-3 px-4">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mx-auto animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="mx-auto h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="ml-auto h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             ) : filteredCodes.length === 0 ? (
               <div className="text-center py-12">
                 <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -624,7 +697,7 @@ export default function AdminDiscountsPage() {
                 )}
               </div>
             ) : (
-              <>
+              <div className="animate-fadeIn">
                 {/* Mobile Card View */}
                 <div className="sm:hidden space-y-3">
                   {paginatedCodes.map((code) => (
@@ -778,7 +851,7 @@ export default function AdminDiscountsPage() {
                     position="bottom"
                   />
                 )}
-              </>
+              </div>
             )}
           </Card>
 
