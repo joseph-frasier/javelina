@@ -39,6 +39,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# cursor plans
-.cursor/plans/
+# cursor IDE configuration and AI assistants
+.cursor/
+.agents/
+.claude/
 
