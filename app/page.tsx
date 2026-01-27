@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/auth-store';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
 import { Logo } from '@/components/ui/Logo';
 
@@ -14,6 +14,8 @@ export default function HomePage() {
   const { user, isAuthenticated, isLoading, login } = useAuthStore();
   const organizations = user?.organizations || [];
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
+  const hasRedirected = useRef(false);
 
   // Redirect authenticated users with orgs to their most recent org page
   useEffect(() => {
@@ -24,13 +26,48 @@ export default function HomePage() {
     }
   }, [isAuthenticated, user, organizations, router]);
 
-  // Show loading state while auth is initializing
-  if (isLoading) {
+  // Auto-redirect unauthenticated users to Auth0 login (with fallback)
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !user && !hasRedirected.current) {
+      hasRedirected.current = true;
+      login(); // Redirect to Auth0 via Express backend
+      
+      // Show fallback button after 3 seconds if redirect hasn't completed
+      const fallbackTimer = setTimeout(() => {
+        setShowFallback(true);
+      }, 3000);
+
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [isLoading, isAuthenticated, user, login]);
+
+  // Show loading/redirect state for unauthenticated users
+  if (isLoading || (!isAuthenticated && !user)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
-        <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Loading...</span>
+      <div className="min-h-screen flex items-center justify-center bg-orange-light px-4">
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+            <span className="text-orange-dark font-medium">Redirecting to login...</span>
+          </div>
+          
+          {showFallback && (
+            <div className="mt-6 space-y-3">
+              <p className="text-sm text-gray-slate">
+                Taking longer than expected?
+              </p>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => {
+                  hasRedirected.current = false; // Reset to allow retry
+                  login();
+                }}
+              >
+                Click here to continue
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -43,67 +80,6 @@ export default function HomePage() {
         <div className="flex items-center space-x-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
           <span className="text-orange-dark">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Show login page for unauthenticated users
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-orange-light flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[420px]">
-          {/* Logo/Brand Section */}
-          <div className="flex flex-col items-center mb-0">
-            <Logo
-              width={300}
-              height={120}
-              priority
-            />
-          </div>
-
-          {/* Login Card */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-light p-8">
-            <div className="space-y-5">
-              <div className="text-center mb-6">
-                <h1 className="text-2xl font-semibold text-orange-dark mb-2">
-                  Welcome Back
-                </h1>
-                <p className="text-gray-slate">
-                  Sign in to manage your DNS zones
-                </p>
-              </div>
-
-              {/* Auth0 Login Button */}
-              <Button
-                type="button"
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={login}
-              >
-                Sign In with Auth0
-              </Button>
-
-              <div className="text-center text-sm text-gray-slate mt-4">
-                <p>
-                  Auth0 handles secure authentication with email/password,
-                  Google, and GitHub
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sign Up Link */}
-          <p className="mt-6 text-center text-sm font-light text-gray-slate">
-            Don&rsquo;t have an account?{' '}
-            <Link
-              href="/signup"
-              className="font-medium text-orange hover:underline transition-colors"
-            >
-              Sign up
-            </Link>
-          </p>
         </div>
       </div>
     );
