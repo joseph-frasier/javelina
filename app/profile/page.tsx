@@ -135,17 +135,9 @@ export default function ProfilePage() {
                 <h2 className="text-lg sm:text-xl font-bold text-orange-dark dark:text-orange mb-1">
                   {user.name}
                 </h2>
-                <p className="text-sm text-gray-slate dark:text-gray-300 mb-2 break-words">
-                  {user.email}
-                </p>
-                {user.display_name && (
+                {(user.display_name || user.title) && (
                   <p className="text-sm text-gray-slate dark:text-gray-300 mb-2">
-                    {user.display_name}
-                  </p>
-                )}
-                {user.title && (
-                  <p className="text-sm text-gray-slate dark:text-gray-300 mb-2">
-                    {user.title}
+                    {user.display_name || user.title}
                   </p>
                 )}
                 {user.role === 'superuser' && (
