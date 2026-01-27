@@ -381,7 +381,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return { success: true }
       },
 
-      // Logout - call Express backend
+      // Logout - navigate to Next.js API route for smooth transition
       logout: async () => {
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
@@ -409,23 +409,18 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           return
         }
         
-        // Broadcast logout to other tabs
+        // Broadcast logout to other tabs (non-blocking, fires before navigation)
         try {
           const sync = getIdleSync()
           sync.publishLogout()
           localStorage.removeItem('javelina-last-activity')
         } catch (error) {
-          console.error('Error broadcasting logout:', error)
+          // Ignore broadcast errors to avoid delaying logout
         }
         
-        // Use traditional form POST to navigate immediately (no async wait, no flashes)
-        // This creates a synchronous navigation that prevents any intermediate renders
-        const form = document.createElement('form')
-        form.method = 'POST'
-        form.action = `${API_URL}/auth/logout`
-        document.body.appendChild(form)
-        form.submit()
-        
-        // Form submission navigates away immediately, so code after this won't execute
+        // Navigate to Next.js API route - single smooth transition
+        // Server-side handles backend call and redirect
+        // No async waits, no React re-renders, no intermediate pages
+        window.location.href = '/api/logout'
       },
 }))
