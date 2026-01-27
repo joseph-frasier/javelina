@@ -138,6 +138,11 @@ export default function ProfilePage() {
                 <p className="text-sm text-gray-slate dark:text-gray-300 mb-2 break-words">
                   {user.email}
                 </p>
+                {user.display_name && (
+                  <p className="text-sm text-gray-slate dark:text-gray-300 mb-2">
+                    {user.display_name}
+                  </p>
+                )}
                 {user.title && (
                   <p className="text-sm text-gray-slate dark:text-gray-300 mb-2">
                     {user.title}
@@ -236,33 +241,57 @@ export default function ProfilePage() {
                   Organization Membership
                 </h3>
               </div>
-              <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-                {paginatedOrganizations.map((org) => (
-                  <div 
-                    key={org.id} 
-                    className="border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-3 sm:p-4"
+              {sortedOrganizations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <svg
+                    className="w-16 h-16 text-gray-light dark:text-gray-600 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                      <h4 className="font-medium text-orange-dark dark:text-orange break-words">
-                        {org.name}
-                      </h4>
-                      <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)} flex-shrink-0 self-start sm:self-auto`}>
-                        {getRoleDisplayText(org.role)}
-                      </span>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <p className="text-gray-slate dark:text-gray-400 mb-2">
+                    You&rsquo;re not currently a member of any organizations
+                  </p>
+                  <p className="text-sm text-gray-slate/70 dark:text-gray-500">
+                    Create an organization to get started managing your DNS zones
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+                  {paginatedOrganizations.map((org) => (
+                    <div 
+                      key={org.id} 
+                      className="border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-3 sm:p-4"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <h4 className="font-medium text-orange-dark dark:text-orange break-words">
+                          {org.name}
+                        </h4>
+                        <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)} flex-shrink-0 self-start sm:self-auto`}>
+                          {getRoleDisplayText(org.role)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="justify-center"
+                          onClick={() => handleGoToOrg(org.id)}
+                        >
+                          Go to Org
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="justify-center"
-                        onClick={() => handleGoToOrg(org.id)}
-                      >
-                        Go to Org
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
