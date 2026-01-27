@@ -805,6 +805,74 @@ export interface ZoneTagAssignment {
   tag_ids: string[];
 }
 
+// Support API (AI KB Assistant)
+export const supportApi = {
+  /**
+   * Send a chat message to the support assistant
+   */
+  chat: (data: {
+    message: string;
+    conversationId?: string;
+    entryPoint?: string;
+    pageUrl?: string;
+    userId: string;
+    orgId?: string;
+    tier?: string;
+    attemptCount?: number;
+  }): Promise<SupportChatResponse> => {
+    return apiClient.post('/support/chat', data);
+  },
+
+  /**
+   * Submit feedback for a support conversation
+   */
+  submitFeedback: (data: {
+    conversationId: string;
+    resolved: boolean;
+    rating?: number;
+    comment?: string;
+    userId: string;
+    orgId?: string;
+    tier?: string;
+  }): Promise<{ success: boolean }> => {
+    return apiClient.post('/support/feedback', data);
+  },
+
+  /**
+   * Log a bug (escalation path)
+   */
+  logBug: (data: {
+    subject: string;
+    description: string;
+    page_url: string;
+    user_id: string;
+  }): Promise<{ success: boolean; ticket_id?: string }> => {
+    return apiClient.post('/support/log-bug', data);
+  },
+};
+
+// Types for support API
+export interface SupportCitation {
+  title: string;
+  articleId: string;
+  javelinaUrl: string;
+  confidence: number;
+}
+
+export interface SupportChatResponse {
+  reply: string;
+  citations: SupportCitation[];
+  intent: string;
+  resolution: {
+    needsConfirmation: boolean;
+  };
+  nextAction: {
+    type: 'none' | 'ask_clarifying' | 'offer_ticket' | 'log_bug';
+    reason: string;
+  };
+  conversationId?: string;
+}
+
 // Export everything
 export default apiClient;
 
