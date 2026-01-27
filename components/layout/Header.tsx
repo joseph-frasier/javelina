@@ -41,6 +41,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
   // ConditionalLayout gates initial render, but logout causes brief null state
   const userName = user?.name || user?.email?.split('@')[0] || 'Unknown';
   const userEmail = user?.email || '';
+  const userDisplayName = user?.display_name || user?.title || '';
   const userRole = user?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatar_url;
@@ -335,7 +336,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                           {userName}
                         </p>
                         <p className="text-xs text-gray-slate truncate">
-                          {userEmail}
+                          {userDisplayName || userEmail}
                         </p>
                         {userRole === 'superuser' && (
                           <p className="text-xs font-semibold text-orange truncate">
