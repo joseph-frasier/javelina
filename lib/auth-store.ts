@@ -387,7 +387,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
         
         if (isPlaceholderMode) {
-          // Mock mode - just clear the state
+          // Mock mode - just clear the state and redirect
           set({
             user: null,
             isAuthenticated: false,
@@ -404,58 +404,24 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             console.error('Error broadcasting logout:', error)
           }
           
+          // Redirect to root (which will redirect to Auth0 login)
+          window.location.href = '/'
           return
         }
         
-        // Call Express logout endpoint
+        // Broadcast logout to other tabs before redirect
         try {
-          const response = await fetch(`${API_URL}/auth/logout`, {
-            method: 'POST',
-            credentials: 'include', // Send session cookie
-          })
-          
-          // Clear local state
-          set({
-            user: null,
-            isAuthenticated: false,
-            profileReady: false,
-            profileError: null,
-          })
-          
-          // Broadcast logout to other tabs
-          try {
-            const sync = getIdleSync()
-            sync.publishLogout()
-            localStorage.removeItem('javelina-last-activity')
-          } catch (error) {
-            console.error('Error broadcasting logout:', error)
-          }
-          
-          // If backend returns Auth0 logout URL, redirect to it
-          if (response.ok) {
-            const data = await response.json()
-            if (data.redirectUrl) {
-              window.location.href = data.redirectUrl
-            }
-          }
+          const sync = getIdleSync()
+          sync.publishLogout()
+          localStorage.removeItem('javelina-last-activity')
         } catch (error) {
-          console.error('Error logging out:', error)
-          
-          // Still clear state and broadcast even on error
-          set({
-            user: null,
-            isAuthenticated: false,
-            profileReady: false,
-            profileError: null,
-          })
-          
-          try {
-            const sync = getIdleSync()
-            sync.publishLogout()
-            localStorage.removeItem('javelina-last-activity')
-          } catch (broadcastError) {
-            console.error('Error broadcasting logout:', broadcastError)
-          }
+          console.error('Error broadcasting logout:', error)
         }
+        
+        // Redirect to Express logout endpoint
+        // Backend will clear session cookie and redirect to Auth0 logout
+        // Auth0 will then redirect back to our app
+        // This creates a clean, single redirect flow from the user's perspective
+        window.location.href = `${API_URL}/auth/logout`
       },
 }))

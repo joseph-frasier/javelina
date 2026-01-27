@@ -48,13 +48,8 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
+    // Logout function handles all redirects
     await logout();
-    
-    // Small delay to ensure session is fully cleared before redirect
-    // This prevents middleware from seeing stale authenticated session
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    router.push('/');
   };
 
   const cycleTheme = () => {
