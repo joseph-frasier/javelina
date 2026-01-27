@@ -5,6 +5,7 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useUser } from '@/lib/hooks/useUser';
 import { supportApi, type SupportChatResponse, type SupportCitation } from '@/lib/api-client';
+import { isMockMode, mockChat, mockSubmitFeedback, mockLogBug } from '@/lib/support/mock-support-api';
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -110,7 +111,10 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   }, [isOpen, shouldRender]);
 
   const handleSend = async () => {
-    if (!inputValue.trim() || !user) return;
+    if (!inputValue.trim()) return;
+    
+    // Allow mock mode without user for testing
+    if (!user && !isMockMode()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -124,16 +128,23 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     setLoading(true);
 
     try {
-      const response = await supportApi.chat({
-        message: inputValue,
-        conversationId,
-        entryPoint: entryPoint || 'chat_widget',
-        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
-        userId: user.id,
-        orgId,
-        tier,
-        attemptCount,
-      });
+      // Use mock API if enabled, otherwise use real API
+      const response = isMockMode() 
+        ? await mockChat({
+            message: inputValue,
+            conversationId,
+            attemptCount,
+          })
+        : await supportApi.chat({
+            message: inputValue,
+            conversationId,
+            entryPoint: entryPoint || 'chat_widget',
+            pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+            userId: user!.id,
+            orgId,
+            tier,
+            attemptCount,
+          });
 
       // Update conversation ID if provided
       if (response.conversationId) {
@@ -179,16 +190,25 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   };
 
   const handleResolutionResponse = async (resolved: boolean) => {
-    if (!user || !conversationId) return;
+    if (!conversationId) return;
+    if (!user && !isMockMode()) return;
 
     try {
-      await supportApi.submitFeedback({
-        conversationId,
-        resolved,
-        userId: user.id,
-        orgId,
-        tier,
-      });
+      // Use mock API if enabled, otherwise use real API
+      if (isMockMode()) {
+        await mockSubmitFeedback({
+          conversationId,
+          resolved,
+        });
+      } else {
+        await supportApi.submitFeedback({
+          conversationId,
+          resolved,
+          userId: user!.id,
+          orgId,
+          tier,
+        });
+      }
 
       if (resolved) {
         const thankYouMessage: Message = {
@@ -226,17 +246,27 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   };
 
   const handleCreateTicket = async () => {
-    if (!user) return;
+    if (!user && !isMockMode()) return;
 
     try {
       const conversationText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
       
-      await supportApi.logBug({
-        subject: 'Support Request from Chat',
-        description: `User conversation:\n\n${conversationText}`,
-        page_url: typeof window !== 'undefined' ? window.location.href : '',
-        user_id: user.id,
-      });
+      // Use mock API if enabled, otherwise use real API
+      if (isMockMode()) {
+        await mockLogBug({
+          subject: 'Support Request from Chat',
+          description: `User conversation:\n\n${conversationText}`,
+          page_url: typeof window !== 'undefined' ? window.location.href : '',
+          user_id: 'mock-user',
+        });
+      } else {
+        await supportApi.logBug({
+          subject: 'Support Request from Chat',
+          description: `User conversation:\n\n${conversationText}`,
+          page_url: typeof window !== 'undefined' ? window.location.href : '',
+          user_id: user!.id,
+        });
+      }
 
       const confirmMessage: Message = {
         id: Date.now().toString(),
@@ -420,13 +450,13 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
+            placeholder={isMockMode() ? "Type a message... (DEMO MODE)" : "Type a message..."}
             className="flex-1 px-4 py-2.5 rounded-full border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-all text-sm"
-            disabled={loading || !user}
+            disabled={loading || (!user && !isMockMode())}
           />
           <button
             onClick={handleSend}
-            disabled={loading || !inputValue.trim() || !user}
+            disabled={loading || !inputValue.trim() || (!user && !isMockMode())}
             className="w-10 h-10 bg-orange hover:bg-orange-dark rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
