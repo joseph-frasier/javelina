@@ -409,7 +409,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           return
         }
         
-        // Broadcast logout to other tabs before redirect
+        // Broadcast logout to other tabs
         try {
           const sync = getIdleSync()
           sync.publishLogout()
@@ -418,32 +418,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           console.error('Error broadcasting logout:', error)
         }
         
-        // Call Express logout endpoint (POST)
-        // Backend will clear session cookie and return Auth0 logout URL
-        try {
-          const response = await fetch(`${API_URL}/auth/logout`, {
-            method: 'POST',
-            credentials: 'include', // Send session cookie to be cleared
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            // Redirect to Auth0 logout URL (which will redirect back to our app)
-            if (data.redirectUrl) {
-              window.location.href = data.redirectUrl
-            } else {
-              // Fallback: redirect to root if no Auth0 logout URL provided
-              window.location.href = '/'
-            }
-          } else {
-            console.error('Logout endpoint returned error:', response.status)
-            // Still redirect to clear UI state
-            window.location.href = '/'
-          }
-        } catch (error) {
-          console.error('Error calling logout endpoint:', error)
-          // Fallback: redirect to root even if backend fails
-          window.location.href = '/'
-        }
+        // Use traditional form POST to navigate immediately (no async wait, no flashes)
+        // This creates a synchronous navigation that prevents any intermediate renders
+        const form = document.createElement('form')
+        form.method = 'POST'
+        form.action = `${API_URL}/auth/logout`
+        document.body.appendChild(form)
+        form.submit()
+        
+        // Form submission navigates away immediately, so code after this won't execute
       },
 }))
