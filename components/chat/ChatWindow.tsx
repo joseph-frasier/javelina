@@ -108,9 +108,12 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle click outside
+  // Handle click outside (but NOT when ticket modal is open)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Don't close if ticket modal is open
+      if (isTicketModalOpen) return;
+      
       if (windowRef.current && !windowRef.current.contains(event.target as Node)) {
         onClose();
       }
@@ -123,7 +126,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isTicketModalOpen]);
 
   // GSAP animations
   useGSAP(() => {
@@ -311,9 +314,15 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
 
     setConversationSummary(summary);
     setIsTicketModalOpen(true);
+    // DO NOT call onClose() - it would unmount the modal too!
   };
 
   const handleTicketModalClose = () => {
+    setIsTicketModalOpen(false);
+    setShowEscalation(false);
+  };
+
+  const handleTicketSuccess = () => {
     setIsTicketModalOpen(false);
     setShowEscalation(false);
     
@@ -339,7 +348,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   return (
     <div
       ref={windowRef}
-      className={`fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50 ${isTicketModalOpen ? 'opacity-0 pointer-events-none' : ''}`}
+      className={`fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50 transition-opacity duration-200 ${isTicketModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-light dark:border-gray-600">
@@ -528,6 +537,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
         <TicketCreationModal
           isOpen={isTicketModalOpen}
           onClose={handleTicketModalClose}
+          onSuccess={handleTicketSuccess}
           conversationSummary={conversationSummary}
           snapshot={captureSnapshot()}
           sessionId={conversationId}

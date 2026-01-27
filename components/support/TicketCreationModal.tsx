@@ -7,6 +7,7 @@ import { supportApi } from '@/lib/api-client';
 interface TicketCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   conversationSummary: string;
   snapshot?: any;
   sessionId?: string;
@@ -17,6 +18,7 @@ interface TicketCreationModalProps {
 export function TicketCreationModal({
   isOpen,
   onClose,
+  onSuccess,
   conversationSummary,
   snapshot,
   sessionId,
@@ -68,7 +70,11 @@ export function TicketCreationModal({
       
       // Close modal after a short delay to show success state
       setTimeout(() => {
-        onClose();
+        if (onSuccess) {
+          onSuccess();  // Call success callback instead of onClose
+        } else {
+          onClose();
+        }
         // Reset form state after close animation completes
         setTimeout(() => {
           setSubject('Support Request from Chat');
@@ -284,7 +290,7 @@ export function TicketCreationModal({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-light dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange"
+              className="px-5 py-2.5 text-sm font-medium text-white bg-blue-electric hover:bg-blue-teal focus:ring-blue-electric rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
               disabled={loading}
             >
               Cancel

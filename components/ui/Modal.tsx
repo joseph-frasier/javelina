@@ -138,23 +138,23 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
       {/* Overlay */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-black bg-opacity-50"
+        className="fixed inset-0 bg-black bg-opacity-50 pointer-events-auto"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
         aria-hidden="true"
-        style={{ zIndex: 99999 }}
+        style={{ zIndex: 99999, pointerEvents: 'auto' }}
       />
 
       {/* Modal content */}
       <div 
-        className="flex min-h-full items-center justify-center p-4 relative" 
+        className="flex min-h-full items-center justify-center p-4 relative pointer-events-none" 
         style={{ zIndex: 100000 }}
       >
         <div
           ref={modalRef}
-          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl`}
+          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl pointer-events-auto`}
           onClick={(e) => {
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
