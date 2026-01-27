@@ -129,31 +129,36 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[9999] overflow-y-auto"
+      className="fixed inset-0 z-[99999] overflow-y-auto"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 99999 }}
     >
       {/* Overlay */}
       <div
         ref={overlayRef}
         className="fixed inset-0 bg-black bg-opacity-50"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         aria-hidden="true"
-        style={{ zIndex: 9999 }}
+        style={{ zIndex: 99999 }}
       />
 
       {/* Modal content */}
       <div 
         className="flex min-h-full items-center justify-center p-4 relative" 
-        style={{ zIndex: 10000 }}
-        onClick={onClose}
+        style={{ zIndex: 100000 }}
       >
         <div
           ref={modalRef}
           className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl`}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.nativeEvent.stopImmediatePropagation();
+          }}
         >
           {/* Header */}
           <div className="p-6 border-b border-gray-light">

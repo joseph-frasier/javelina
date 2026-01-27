@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { formatDistanceToNow } from 'date-fns';
 import { useUser } from '@/lib/hooks/useUser';
 import { supportApi, type SupportChatResponse, type SupportCitation } from '@/lib/api-client';
 import { isMockMode, mockChat, mockSubmitFeedback, mockLogBug } from '@/lib/support/mock-support-api';
+import { TicketCreationModal } from '@/components/support/TicketCreationModal';
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -25,6 +27,31 @@ interface Message {
   resolutionNeeded?: boolean;
 }
 
+interface AppSnapshot {
+  route: string;
+  view: string;
+  ui_state: {
+    theme?: 'light' | 'dark';
+    modal_open?: boolean;
+    tab?: string;
+    filter?: string;
+    sort?: string;
+    search_query?: string;
+  };
+  entities_on_screen: {
+    org_id?: string;
+    zone_id?: string;
+    record_id?: string;
+    user_id?: string;
+  };
+  user_action?: string;
+  errors?: Array<{
+    code: string;
+    field?: string;
+    message: string;
+  }>;
+}
+
 export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -36,7 +63,29 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   const [conversationId, setConversationId] = useState<string>();
   const [attemptCount, setAttemptCount] = useState(0);
   const [showEscalation, setShowEscalation] = useState(false);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [conversationSummary, setConversationSummary] = useState('');
   const { user } = useUser();
+
+  const captureSnapshot = (): AppSnapshot => {
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    const searchParams = typeof window !== 'undefined' ? 
+      new URLSearchParams(window.location.search) : new URLSearchParams();
+
+    return {
+      route: pathname,
+      view: 'ChatWindow',
+      ui_state: {
+        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        tab: searchParams.get('tab') || undefined,
+        filter: searchParams.get('filter') || undefined,
+      },
+      entities_on_screen: {
+        org_id: orgId,
+        user_id: user?.id,
+      },
+    };
+  };
 
   // Handle shouldRender state
   useEffect(() => {
@@ -128,6 +177,9 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     setLoading(true);
 
     try {
+      // Capture current app state snapshot
+      const snapshot = captureSnapshot();
+
       // Use mock API if enabled, otherwise use real API
       const response = isMockMode() 
         ? await mockChat({
@@ -144,6 +196,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             orgId,
             tier,
             attemptCount,
+            snapshot,
           });
 
       // Update conversation ID if provided
@@ -245,46 +298,33 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     }
   };
 
-  const handleCreateTicket = async () => {
+  const handleCreateTicket = () => {
     if (!user && !isMockMode()) return;
 
-    try {
-      const conversationText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
-      
-      // Use mock API if enabled, otherwise use real API
-      if (isMockMode()) {
-        await mockLogBug({
-          subject: 'Support Request from Chat',
-          description: `User conversation:\n\n${conversationText}`,
-          page_url: typeof window !== 'undefined' ? window.location.href : '',
-          user_id: 'mock-user',
-        });
-      } else {
-        await supportApi.logBug({
-          subject: 'Support Request from Chat',
-          description: `User conversation:\n\n${conversationText}`,
-          page_url: typeof window !== 'undefined' ? window.location.href : '',
-          user_id: user!.id,
-        });
-      }
+    // Generate conversation summary from messages
+    const summary = messages
+      .map(m => {
+        const role = m.role === 'user' ? 'User' : 'Assistant';
+        return `${role}: ${m.content}`;
+      })
+      .join('\n\n');
 
-      const confirmMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: "I've created a support ticket for you. Our team will reach out shortly. In the meantime, is there anything else I can help you with?",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, confirmMessage]);
-      setShowEscalation(false);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: "I encountered an error creating the ticket. Please contact support directly at support@javelina.com.",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    }
+    setConversationSummary(summary);
+    setIsTicketModalOpen(true);
+  };
+
+  const handleTicketModalClose = () => {
+    setIsTicketModalOpen(false);
+    setShowEscalation(false);
+    
+    // Add confirmation message after successful ticket creation
+    const confirmMessage: Message = {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: "I've created a support ticket for you. Our team will reach out shortly. In the meantime, is there anything else I can help you with?",
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, confirmMessage]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -299,7 +339,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   return (
     <div
       ref={windowRef}
-      className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50"
+      className={`fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50 ${isTicketModalOpen ? 'opacity-0 pointer-events-none' : ''}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-light dark:border-gray-600">
@@ -350,17 +390,23 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                     {message.citations && message.citations.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                         <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Sources:</p>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {message.citations.map((citation, idx) => (
-                            <a
-                              key={idx}
-                              href={citation.javelinaUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block text-xs text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange underline"
-                            >
-                              {citation.title}
-                            </a>
+                            <div key={idx} className="flex flex-col gap-0.5">
+                              <a
+                                href={citation.javelinaUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange underline"
+                              >
+                                {citation.title}
+                              </a>
+                              {citation.lastUpdated && (
+                                <span className="text-[10px] text-gray-500 dark:text-gray-500">
+                                  Updated {formatDistanceToNow(new Date(citation.lastUpdated), { addSuffix: true })}
+                                </span>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -476,6 +522,19 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
           </button>
         </div>
       </div>
+
+      {/* Ticket Creation Modal */}
+      {user && (
+        <TicketCreationModal
+          isOpen={isTicketModalOpen}
+          onClose={handleTicketModalClose}
+          conversationSummary={conversationSummary}
+          snapshot={captureSnapshot()}
+          sessionId={conversationId}
+          userId={user.id}
+          orgId={orgId}
+        />
+      )}
     </div>
   );
 }
