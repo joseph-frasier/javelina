@@ -3,10 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 /**
  * Middleware runs on every request before it reaches your app
  * This middleware:
- * 1. Checks for valid session cookie (set by Express backend)
+ * 1. Checks for valid session cookie (set by Express backend after Auth0 login)
  * 2. Protects routes that require authentication
- * 3. Redirects unauthenticated users to /login
- * 4. Redirects authenticated users away from /login and /signup
+ * 3. Redirects unauthenticated users trying to access protected routes to root (/)
+ * 4. Root (/) is accessible to all - shows login UI to unauthenticated, dashboard to authenticated
+ * 5. Redirects authenticated users away from /login and /signup to root (/)
  */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -41,25 +42,28 @@ export async function middleware(request: NextRequest) {
     }
 
     // Public routes that don't require authentication
-    const publicRoutes = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
-    const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
+    // Root path '/' is accessible to all (shows login to unauthenticated, dashboard to authenticated)
+    const publicRoutes = ['/', '/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
+    const isPublicRoute = publicRoutes.some((route) => {
+      // Exact match for root path
+      if (route === '/' && request.nextUrl.pathname === '/') {
+        return true
+      }
+      // Prefix match for other routes
+      return request.nextUrl.pathname.startsWith(route)
+    })
 
     // Check if user just completed payment (allow dashboard access)
     const paymentComplete = request.nextUrl.searchParams.get('payment_complete') === 'true'
 
-    // Disabled users are blocked by Supabase ban - they can't authenticate
-    // No need to check status here
-
     // If user is not authenticated and trying to access a protected route (but allow /admin/* routes and payment completion)
     if (!isAuthenticated && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
-      const redirectUrl = new URL('/login', request.url)
-      // Add the current URL as a redirect parameter so we can send them back after login
-      redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
-      return NextResponse.redirect(redirectUrl)
+      // Redirect to root (which shows login UI)
+      return NextResponse.redirect(new URL('/', request.url))
     }
 
     // If user IS authenticated and trying to access login/signup pages, redirect to dashboard
-    // Dashboard will handle onboarding check if needed
+    // Note: Don't redirect from '/' since it handles both auth states
     if (isAuthenticated && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
       return NextResponse.redirect(new URL('/', request.url))
     }

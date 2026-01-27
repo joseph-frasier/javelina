@@ -54,7 +54,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
     // This prevents middleware from seeing stale authenticated session
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    router.push('/login');
+    router.push('/');
   };
 
   const cycleTheme = () => {
