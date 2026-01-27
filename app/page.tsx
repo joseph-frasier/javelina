@@ -28,9 +28,16 @@ export default function HomePage() {
 
   // Auto-redirect unauthenticated users to Auth0 login (with fallback)
   useEffect(() => {
+    console.log('[REDIRECT CHECK]', { isLoading, isAuthenticated, user: !!user, hasRedirected: hasRedirected.current });
+    
     if (!isLoading && !isAuthenticated && !user && !hasRedirected.current) {
+      console.log('[REDIRECT] Triggering redirect to Auth0...');
       hasRedirected.current = true;
-      login(); // Redirect to Auth0 via Express backend
+      
+      // Trigger redirect immediately
+      const redirectUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/login`;
+      console.log('[REDIRECT] Redirecting to:', redirectUrl);
+      window.location.href = redirectUrl;
       
       // Show fallback button after 3 seconds if redirect hasn't completed
       const fallbackTimer = setTimeout(() => {
@@ -39,7 +46,8 @@ export default function HomePage() {
 
       return () => clearTimeout(fallbackTimer);
     }
-  }, [isLoading, isAuthenticated, user, login]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isAuthenticated, user]);
 
   // Show loading/redirect state for unauthenticated users
   if (isLoading || (!isAuthenticated && !user)) {

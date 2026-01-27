@@ -163,12 +163,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             await get().fetchProfile()
           } else {
             // No valid session
+            console.log('[AUTH] No valid session, setting unauthenticated state')
             set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
           }
         } catch (error) {
           console.error('Error initializing auth:', error)
           set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
         } finally {
+          console.log('[AUTH] Setting isLoading to false')
           set({ isLoading: false })
         }
       },
