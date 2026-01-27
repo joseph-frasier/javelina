@@ -3,22 +3,60 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useUser } from '@/lib/hooks/useUser';
+import { supportApi, type SupportChatResponse, type SupportCitation } from '@/lib/api-client';
 
 interface ChatWindowProps {
   isOpen: boolean;
   onClose: () => void;
+  orgId?: string;
+  tier?: string;
+  entryPoint?: string;
 }
 
-export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  citations?: SupportCitation[];
+  nextAction?: SupportChatResponse['nextAction'];
+  resolutionNeeded?: boolean;
+}
+
+export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [shouldRender, setShouldRender] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string>();
+  const [attemptCount, setAttemptCount] = useState(0);
+  const [showEscalation, setShowEscalation] = useState(false);
+  const { user } = useUser();
 
   // Handle shouldRender state
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
+      // Add welcome message on first open
+      if (messages.length === 0) {
+        setMessages([{
+          id: 'welcome',
+          role: 'assistant',
+          content: "Hi! I'm Javi, your Javelina support assistant. I'm here to help you with DNS management, zones, records, and anything else related to Javelina. How can I assist you today?",
+          timestamp: new Date(),
+        }]);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, messages.length]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // Handle click outside
   useEffect(() => {
@@ -71,12 +109,167 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     }
   }, [isOpen, shouldRender]);
 
+  const handleSend = async () => {
+    if (!inputValue.trim() || !user) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: inputValue,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setLoading(true);
+
+    try {
+      const response = await supportApi.chat({
+        message: inputValue,
+        conversationId,
+        entryPoint: entryPoint || 'chat_widget',
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        userId: user.id,
+        orgId,
+        tier,
+        attemptCount,
+      });
+
+      // Update conversation ID if provided
+      if (response.conversationId) {
+        setConversationId(response.conversationId);
+      }
+
+      // Create assistant message
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.reply,
+        timestamp: new Date(),
+        citations: response.citations,
+        nextAction: response.nextAction,
+        resolutionNeeded: response.resolution.needsConfirmation,
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Handle escalation scenarios
+      if (response.nextAction.type === 'log_bug' || response.nextAction.type === 'offer_ticket') {
+        setShowEscalation(true);
+      }
+
+      // Increment attempt count if clarifying
+      if (response.nextAction.type === 'ask_clarifying') {
+        setAttemptCount(prev => prev + 1);
+      } else {
+        setAttemptCount(0); // Reset on successful resolution path
+      }
+    } catch (error) {
+      // Show error message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "I'm sorry, I encountered an error. Please try again or contact support directly.",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResolutionResponse = async (resolved: boolean) => {
+    if (!user || !conversationId) return;
+
+    try {
+      await supportApi.submitFeedback({
+        conversationId,
+        resolved,
+        userId: user.id,
+        orgId,
+        tier,
+      });
+
+      if (resolved) {
+        const thankYouMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: "Great! I'm glad I could help. Is there anything else you need assistance with?",
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, thankYouMessage]);
+      } else {
+        setAttemptCount(prev => prev + 1);
+        if (attemptCount >= 1) {
+          // After 2 attempts, escalate
+          setShowEscalation(true);
+          const escalationMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: "I understand this hasn't fully resolved your issue. Would you like me to create a support ticket so our team can help you directly?",
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, escalationMessage]);
+        } else {
+          const clarifyMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: "I understand. Can you provide more details about what you're trying to do?",
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, clarifyMessage]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+    }
+  };
+
+  const handleCreateTicket = async () => {
+    if (!user) return;
+
+    try {
+      const conversationText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+      
+      await supportApi.logBug({
+        subject: 'Support Request from Chat',
+        description: `User conversation:\n\n${conversationText}`,
+        page_url: typeof window !== 'undefined' ? window.location.href : '',
+        user_id: user.id,
+      });
+
+      const confirmMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: "I've created a support ticket for you. Our team will reach out shortly. In the meantime, is there anything else I can help you with?",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, confirmMessage]);
+      setShowEscalation(false);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: "I encountered an error creating the ticket. Please contact support directly at support@javelina.com.",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   if (!shouldRender) return null;
 
   return (
     <div
       ref={windowRef}
-      className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[350px] h-[500px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50"
+      className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-light dark:border-gray-600 flex flex-col z-50"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-light dark:border-gray-600">
@@ -85,8 +278,8 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
             <span className="text-white font-bold text-sm">J</span>
           </div>
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Jave</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">AI Assistant</p>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Javi</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Support Assistant</p>
           </div>
         </div>
         <button
@@ -112,42 +305,130 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Welcome Message */}
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-orange rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">J</span>
-          </div>
-          <div className="flex-1">
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3">
-              <p className="text-sm text-gray-900 dark:text-white">
-                Hi! I&apos;m Jave, your AI assistant. I&apos;m here to help you with anything you need.
-              </p>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">Just now</p>
-          </div>
-        </div>
+        {messages.map((message) => (
+          <div key={message.id}>
+            {message.role === 'assistant' ? (
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-orange rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">J</span>
+                </div>
+                <div className="flex-1">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3">
+                    <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{message.content}</p>
+                    
+                    {/* Citations */}
+                    {message.citations && message.citations.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Sources:</p>
+                        <div className="space-y-1">
+                          {message.citations.map((citation, idx) => (
+                            <a
+                              key={idx}
+                              href={citation.javelinaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-xs text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange underline"
+                            >
+                              {citation.title}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-        {/* Placeholder for future messages */}
-        <div className="flex items-center justify-center py-8">
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-            Chat functionality coming soon...
-          </p>
-        </div>
+                  {/* Resolution Buttons */}
+                  {message.resolutionNeeded && (
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => handleResolutionResponse(true)}
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                      >
+                        Yes, resolved
+                      </button>
+                      <button
+                        onClick={() => handleResolutionResponse(false)}
+                        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                      >
+                        Not yet
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Escalation Options */}
+                  {showEscalation && message.nextAction?.type === 'offer_ticket' && (
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={handleCreateTicket}
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
+                      >
+                        Create Ticket
+                      </button>
+                      <button
+                        onClick={() => setShowEscalation(false)}
+                        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                      >
+                        Continue chatting
+                      </button>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 justify-end">
+                <div className="flex-1 flex flex-col items-end">
+                  <div className="bg-orange text-white rounded-2xl rounded-tr-none px-4 py-3 max-w-[85%]">
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mr-1">
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-orange rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-sm">J</span>
+            </div>
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
       <div className="p-4 border-t border-gray-light dark:border-gray-600">
         <div className="flex items-center gap-2">
           <input
+            ref={inputRef}
             type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1 px-4 py-2.5 rounded-full border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-all text-sm"
-            disabled
+            disabled={loading || !user}
           />
           <button
+            onClick={handleSend}
+            disabled={loading || !inputValue.trim() || !user}
             className="w-10 h-10 bg-orange hover:bg-orange-dark rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send message"
-            disabled
           >
             <svg
               className="w-5 h-5 text-white"
