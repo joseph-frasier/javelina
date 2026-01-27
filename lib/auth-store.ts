@@ -418,10 +418,32 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           console.error('Error broadcasting logout:', error)
         }
         
-        // Redirect to Express logout endpoint
-        // Backend will clear session cookie and redirect to Auth0 logout
-        // Auth0 will then redirect back to our app
-        // This creates a clean, single redirect flow from the user's perspective
-        window.location.href = `${API_URL}/auth/logout`
+        // Call Express logout endpoint (POST)
+        // Backend will clear session cookie and return Auth0 logout URL
+        try {
+          const response = await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include', // Send session cookie to be cleared
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            // Redirect to Auth0 logout URL (which will redirect back to our app)
+            if (data.redirectUrl) {
+              window.location.href = data.redirectUrl
+            } else {
+              // Fallback: redirect to root if no Auth0 logout URL provided
+              window.location.href = '/'
+            }
+          } else {
+            console.error('Logout endpoint returned error:', response.status)
+            // Still redirect to clear UI state
+            window.location.href = '/'
+          }
+        } catch (error) {
+          console.error('Error calling logout endpoint:', error)
+          // Fallback: redirect to root even if backend fails
+          window.location.href = '/'
+        }
       },
 }))
