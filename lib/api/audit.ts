@@ -1,6 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 export interface AuditLog {
   id: string
@@ -16,71 +18,69 @@ export interface AuditLog {
 
 /**
  * Get recent audit logs for an organization
- * Routes through Express API for proper authorization
+ * Routes through Express API with session cookie
  */
 export async function getOrganizationAuditLogs(organizationId: string, limit: number = 10): Promise<AuditLog[]> {
   try {
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      return [];
+    if (!sessionCookie) {
+      return []
     }
-
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     const response = await fetch(`${API_BASE_URL}/api/organizations/${organizationId}/audit-logs?limit=${limit}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
-    });
+      cache: 'no-store',
+    })
 
     if (!response.ok) {
-      return [];
+      return []
     }
 
-    const result = await response.json();
-    return result.data || result || [];
+    const result = await response.json()
+    return result.data || result || []
   } catch (error) {
-    console.error('Error fetching organization audit logs:', error);
-    return [];
+    console.error('Error fetching organization audit logs:', error)
+    return []
   }
 }
 
 /**
  * Get recent audit logs for environments and zones in an organization
- * Routes through Express API for proper authorization
+ * Routes through Express API with session cookie
  */
 export async function getOrganizationActivityLogs(organizationId: string, limit: number = 10): Promise<AuditLog[]> {
   try {
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      return [];
+    if (!sessionCookie) {
+      return []
     }
-
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     const response = await fetch(`${API_BASE_URL}/api/organizations/${organizationId}/activity?limit=${limit}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
-    });
+      cache: 'no-store',
+    })
 
     if (!response.ok) {
       // Fallback to audit logs if activity endpoint not available
-      return getOrganizationAuditLogs(organizationId, limit);
+      return getOrganizationAuditLogs(organizationId, limit)
     }
 
-    const result = await response.json();
-    return result.data || result || [];
+    const result = await response.json()
+    return result.data || result || []
   } catch (error) {
-    console.error('Error fetching organization activity logs:', error);
+    console.error('Error fetching organization activity logs:', error)
     // Fallback to audit logs on error
-    return getOrganizationAuditLogs(organizationId, limit);
+    return getOrganizationAuditLogs(organizationId, limit)
   }
 }
 

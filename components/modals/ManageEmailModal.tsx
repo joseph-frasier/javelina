@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/lib/auth-store';
 
 interface ManageEmailModalProps {
   isOpen: boolean;
@@ -10,26 +9,8 @@ interface ManageEmailModalProps {
 }
 
 export function ManageEmailModal({ isOpen, onClose }: ManageEmailModalProps) {
-  const [currentEmail, setCurrentEmail] = useState('');
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchUserEmail();
-    }
-  }, [isOpen]);
-
-  const fetchUserEmail = async () => {
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user?.email) {
-        setCurrentEmail(user.email);
-      }
-    } catch (error) {
-      console.error('Error fetching user email:', error);
-    }
-  };
+  const { user } = useAuthStore();
+  const currentEmail = user?.email || '';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Email address">

@@ -69,17 +69,13 @@ function SettingsContent() {
   }, []);
 
   const checkOAuthConnections = async () => {
+    // TODO: Auth0 OAuth connections check
+    // For now, disable OAuth connection UI for Auth0 users
+    // This feature needs backend endpoint: GET /api/auth/connections
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user?.identities) {
-        const googleIdentity = user.identities.find(id => id.provider === 'google');
-        const githubIdentity = user.identities.find(id => id.provider === 'github');
-        
-        setIsGoogleConnected(!!googleIdentity);
-        setIsGithubConnected(!!githubIdentity);
-      }
+      // Placeholder - Auth0 users don't have Supabase identities
+      setIsGoogleConnected(false);
+      setIsGithubConnected(false);
     } catch (error) {
       console.error('Error checking OAuth connections:', error);
     }

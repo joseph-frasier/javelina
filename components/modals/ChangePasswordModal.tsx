@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
-import { createClient } from '@/lib/supabase/client';
+import { apiClient } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/auth-store';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -14,25 +15,24 @@ interface ChangePasswordModalProps {
 export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { addToast } = useToastStore();
+  const { user } = useAuthStore();
 
   const handleSendResetEmail = async () => {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user?.email) {
         addToast('error', 'No email found for password reset');
         return;
       }
 
-      // Use auth callback route which will handle the code exchange and redirect to reset-password
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      // TODO: Backend endpoint required: POST /api/auth/password-reset
+      // For now, use apiClient which will use session cookies
+      // Backend should handle both Supabase Auth and Auth0 users
+      await apiClient.post('/auth/password-reset', {
+        email: user.email,
         redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
       });
-
-      if (error) throw error;
 
       addToast('success', 'Password reset email sent. Check your inbox.');
       onClose();

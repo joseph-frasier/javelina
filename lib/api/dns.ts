@@ -1,5 +1,4 @@
 import { zonesApi, apiClient } from '@/lib/api-client';
-import { createClient } from '@/lib/supabase/client';
 import {
   calculateRecordTypeCounts,
   calculateTTLDistribution,
@@ -115,35 +114,13 @@ export async function exportZoneJSON(zoneId: string, zoneName: string): Promise<
 
 /**
  * Get DNS records for a zone
- * Routes through Express API for consistent authorization and error handling
+ * Routes through Express API (uses session cookies)
  */
 export async function getZoneDNSRecords(zoneId: string, zoneName: string): Promise<DNSRecord[]> {
   try {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.access_token) {
-      console.error('Not authenticated');
-      return [];
-    }
-
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    
-    const response = await fetch(`${API_BASE_URL}/api/dns-records/zone/${zoneId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      cache: 'no-store', // Ensure fresh data
-    });
-
-    if (!response.ok) {
-      console.error('Failed to fetch DNS records:', response.statusText);
-      return [];
-    }
-
-    const result = await response.json();
-    return (result.data || result || []) as DNSRecord[];
+    // Fetch DNS records through Express API (apiClient handles session cookies)
+    const records = await apiClient.get(`/dns-records/zone/${zoneId}`);
+    return (records || []) as DNSRecord[];
   } catch (error) {
     console.error('Error fetching DNS records:', error);
     return [];
