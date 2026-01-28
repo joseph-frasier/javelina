@@ -70,10 +70,20 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
     );
   }
 
-  // If not authenticated after initialization, allow root path to render (for Auth0 redirect)
-  // Other protected pages prevented from mounting during logout
-  // to avoid firing API calls without authentication
-  if (!isAuthenticated && hasInitialized && pathname !== '/') {
+  // If not authenticated after initialization, render without layout
+  if (!isAuthenticated && hasInitialized) {
+    // Root path shows landing page, other paths show redirect
+    if (pathname === '/') {
+      // Landing page - no header/sidebar
+      return (
+        <>
+          <IdleLogoutGuard />
+          {children}
+        </>
+      );
+    }
+    
+    // Other protected pages show redirect loading
     return (
       <div className="min-h-screen flex items-center justify-center bg-orange-light">
         <div className="flex items-center space-x-2">
@@ -84,6 +94,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
     );
   }
 
+  // Authenticated users get full layout with header/sidebar
   return (
     <>
       <IdleLogoutGuard />

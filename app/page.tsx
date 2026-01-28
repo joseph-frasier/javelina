@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/auth-store';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
 import { Logo } from '@/components/ui/Logo';
 
@@ -14,8 +14,6 @@ export default function HomePage() {
   const { user, isAuthenticated, isLoading, login } = useAuthStore();
   const organizations = user?.organizations || [];
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [showFallback, setShowFallback] = useState(false);
-  const hasRedirected = useRef(false);
 
   // Redirect authenticated users with orgs to their most recent org page
   useEffect(() => {
@@ -26,56 +24,40 @@ export default function HomePage() {
     }
   }, [isAuthenticated, user, organizations, router]);
 
-  // Auto-redirect unauthenticated users to Auth0 login (with fallback)
-  useEffect(() => {
-    console.log('[REDIRECT CHECK]', { isLoading, isAuthenticated, user: !!user, hasRedirected: hasRedirected.current });
-    
-    if (!isLoading && !isAuthenticated && !user && !hasRedirected.current) {
-      console.log('[REDIRECT] Triggering redirect to Auth0...');
-      hasRedirected.current = true;
-      
-      // Trigger redirect immediately
-      const redirectUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/login`;
-      console.log('[REDIRECT] Redirecting to:', redirectUrl);
-      window.location.href = redirectUrl;
-      
-      // Show fallback button after 3 seconds if redirect hasn't completed
-      const fallbackTimer = setTimeout(() => {
-        setShowFallback(true);
-      }, 3000);
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+          <span className="text-orange-dark font-medium">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
-      return () => clearTimeout(fallbackTimer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, isAuthenticated, user]);
-
-  // Show loading/redirect state for unauthenticated users
-  if (isLoading || (!isAuthenticated && !user)) {
+  // Show sign-in page for unauthenticated users (after logout or first visit)
+  if (!isAuthenticated && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-orange-light px-4">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-            <span className="text-orange-dark font-medium">Redirecting to login...</span>
+        <div className="flex flex-col items-center space-y-6 text-center max-w-md">
+          <Logo size="large" />
+          <div className="space-y-3">
+            <h1 className="font-black font-sans text-4xl text-orange-dark">
+              Welcome to Javelina
+            </h1>
+            <p className="font-light text-gray-slate text-lg">
+              Powerful DNS management for modern teams
+            </p>
           </div>
-          
-          {showFallback && (
-            <div className="mt-6 space-y-3">
-              <p className="text-sm text-gray-slate">
-                Taking longer than expected?
-              </p>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => {
-                  hasRedirected.current = false; // Reset to allow retry
-                  login();
-                }}
-              >
-                Click here to continue
-              </Button>
-            </div>
-          )}
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full max-w-xs"
+            onClick={login}
+          >
+            Sign In with Auth0
+          </Button>
         </div>
       </div>
     );
