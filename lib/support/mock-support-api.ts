@@ -77,25 +77,25 @@ export async function mockChat(params: {
   else if (messageLower.includes('record') || messageLower.includes('a record') || messageLower.includes('cname')) {
     intent = 'dns-records';
     relevantArticles = [mockArticles[1], mockArticles[2]];
-    reply = "DNS records are the entries within your zone that control how your domain behaves. Here are the main types:\n\n• **A Record**: Points your domain to an IPv4 address\n• **AAAA Record**: Points to an IPv6 address\n• **CNAME**: Creates an alias to another domain\n• **MX Record**: Handles email routing\n• **TXT Record**: Stores text data (often for verification)\n\nTo add a record, go to your zone and click 'Add Record'. Select the type, enter the name (like 'www' or '@' for root), and provide the value.\n\nDid this help answer your question?";
+    reply = "DNS records are the entries within your zone that control how your domain behaves. Here are the main types:\n\n• A Record: Points your domain to an IPv4 address\n• AAAA Record: Points to an IPv6 address\n• CNAME: Creates an alias to another domain\n• MX Record: Handles email routing\n• TXT Record: Stores text data (often for verification)\n\nTo add a record, go to your zone and click 'Add Record'. Select the type, enter the name (like 'www' or '@' for root), and provide the value.\n\nDid this help answer your question?";
   }
   // Organization/Members
   else if (messageLower.includes('organization') || messageLower.includes('member') || messageLower.includes('invite') || messageLower.includes('team')) {
     intent = 'organization';
     relevantArticles = [mockArticles[4]];
-    reply = "I can help you manage your organization! As an admin, you can:\n\n• **Invite members**: Click 'Manage Team' and enter their email address\n• **Assign roles**: Choose Admin (full access), Editor (manage zones/records), or Viewer (read-only)\n• **Remove members**: Click the options menu next to any member\n\nMembers will receive an email invitation to join your organization.\n\nIs this what you were looking for?";
+    reply = "I can help you manage your organization! As an admin, you can:\n\n• Invite members: Click 'Manage Team' and enter their email address\n• Assign roles: Choose Admin (full access), Editor (manage zones/records), or Viewer (read-only)\n• Remove members: Click the options menu next to any member\n\nMembers will receive an email invitation to join your organization.\n\nIs this what you were looking for?";
   }
   // Propagation/Troubleshooting
   else if (messageLower.includes('propagat') || messageLower.includes('not working') || messageLower.includes('slow') || messageLower.includes('delay')) {
     intent = 'troubleshooting';
     relevantArticles = [mockArticles[3]];
-    reply = "DNS propagation can take time! When you make DNS changes, it typically takes 1-48 hours for the changes to propagate worldwide. This is because:\n\n• DNS servers cache records based on TTL (Time To Live)\n• Global DNS infrastructure updates gradually\n• Different regions may see changes at different times\n\n**You can check propagation using**:\n• whatsmydns.net\n• dnschecker.org\n\nIf it's been more than 48 hours and changes still aren't visible, double-check that:\n1. The record was saved correctly in Javelina\n2. Your domain's nameservers point to Javelina\n\nDid this answer your question?";
+    reply = "DNS propagation can take time! When you make DNS changes, it typically takes 1-48 hours for the changes to propagate worldwide. This is because:\n\n• DNS servers cache records based on TTL (Time To Live)\n• Global DNS infrastructure updates gradually\n• Different regions may see changes at different times\n\nYou can check propagation using:\n• whatsmydns.net\n• dnschecker.org\n\nIf it's been more than 48 hours and changes still aren't visible, double-check that:\n1. The record was saved correctly in Javelina\n2. Your domain's nameservers point to Javelina\n\nDid this answer your question?";
   }
   // Billing/Plans
   else if (messageLower.includes('billing') || messageLower.includes('plan') || messageLower.includes('subscription') || messageLower.includes('upgrade')) {
     intent = 'billing';
     relevantArticles = [];
-    reply = "For billing and subscription questions, I can provide some general info:\n\n• **Starter Plan**: Free tier with basic features\n• **Pro Plan**: Advanced features and higher limits\n• **Business Plan**: Enterprise features and priority support\n\nYou can view and manage your subscription in Settings → Billing. For specific billing questions or issues, would you like me to create a support ticket so our billing team can assist you directly?";
+    reply = "For billing and subscription questions, I can provide some general info:\n\n• Starter Plan: Free tier with basic features\n• Pro Plan: Advanced features and higher limits\n• Business Plan: Enterprise features and priority support\n\nYou can view and manage your subscription in Settings → Billing. For specific billing questions or issues, would you like me to create a support ticket so our billing team can assist you directly?";
     nextActionType = 'offer_ticket';
     needsResolution = false;
   }
