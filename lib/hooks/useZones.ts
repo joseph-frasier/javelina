@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tantml:react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
 /**
