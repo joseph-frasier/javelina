@@ -5,7 +5,7 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { formatDistanceToNow } from 'date-fns';
 import { useUser } from '@/lib/hooks/useUser';
-import { supportApi, type SupportChatResponse, type SupportCitation } from '@/lib/api-client';
+import { supportApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
 import { isMockMode, mockChat, mockSubmitFeedback, mockLogBug } from '@/lib/support/mock-support-api';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
 
@@ -232,11 +232,20 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
         setAttemptCount(0); // Reset on successful resolution path
       }
     } catch (error) {
+      // Handle rate limit errors specially
+      let errorContent = "I'm sorry, I encountered an error. Please try again or contact support directly.";
+      
+      if (error instanceof ApiError && error.statusCode === 429) {
+        const resetInSeconds = error.details?.resetInSeconds || error.details?.retryAfter || 60;
+        const minutes = Math.ceil(resetInSeconds / 60);
+        errorContent = `You've reached the rate limit for chat messages. Please try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
+      }
+      
       // Show error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm sorry, I encountered an error. Please try again or contact support directly.",
+        content: errorContent,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
