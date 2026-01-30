@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
-import { supportApi } from '@/lib/api-client';
+import { supportApi, ApiError } from '@/lib/api-client';
 
 interface TicketCreationModalProps {
   isOpen: boolean;
@@ -85,11 +85,19 @@ export function TicketCreationModal({
       }, 1500);
     } catch (err) {
       console.error('Failed to create ticket:', err);
-      setError(
-        err instanceof Error 
-          ? err.message 
-          : 'Failed to create ticket. Please try again or contact support@javelina.com.'
-      );
+      
+      // Handle rate limit errors specially
+      if (err instanceof ApiError && err.statusCode === 429) {
+        const resetInSeconds = err.details?.resetInSeconds || err.details?.retryAfter || 86400;
+        const hours = Math.ceil(resetInSeconds / 3600);
+        setError(`Daily ticket creation limit reached (5 tickets per day). Please try again in ${hours} hour${hours !== 1 ? 's' : ''}.`);
+      } else {
+        setError(
+          err instanceof Error 
+            ? err.message 
+            : 'Failed to create ticket. Please try again or contact support@javelina.com.'
+        );
+      }
     } finally {
       setLoading(false);
     }
