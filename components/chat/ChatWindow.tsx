@@ -72,11 +72,31 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     const searchParams = typeof window !== 'undefined' ? 
       new URLSearchParams(window.location.search) : new URLSearchParams();
 
+    // Detect theme correctly - check for theme-dark class or localStorage
+    let theme: 'light' | 'dark' = 'light';
+    if (typeof window !== 'undefined') {
+      if (document.documentElement.classList.contains('theme-dark')) {
+        theme = 'dark';
+      } else if (document.documentElement.classList.contains('theme-light')) {
+        theme = 'light';
+      } else {
+        // Fallback to localStorage if class not found
+        try {
+          const stored = localStorage.getItem('javelina:theme');
+          if (stored === 'dark' || stored === 'light') {
+            theme = stored as 'light' | 'dark';
+          }
+        } catch (e) {
+          // localStorage might not be available
+        }
+      }
+    }
+
     return {
       route: pathname,
       view: 'ChatWindow',
       ui_state: {
-        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        theme,
         tab: searchParams.get('tab') || undefined,
         filter: searchParams.get('filter') || undefined,
       },
