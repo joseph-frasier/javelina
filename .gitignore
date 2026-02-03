@@ -46,3 +46,6 @@ next-env.d.ts
 .agents/
 .claude/
 
+# next.js docs
+.next-docs/
+
