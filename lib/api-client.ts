@@ -708,6 +708,18 @@ export const authApi = {
   }> => {
     return apiClient.get('/auth/me/verification-status');
   },
+
+  /**
+   * Refresh email verification status from Auth0 and sync to session/database
+   * Call this after user clicks verification link to ensure session is updated
+   */
+  refreshVerificationStatus: (): Promise<{
+    success: boolean;
+    email_verified: boolean;
+    message: string;
+  }> => {
+    return apiClient.post('/auth/refresh-verification-status');
+  },
 };
 
 // Tags API

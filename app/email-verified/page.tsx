@@ -1,32 +1,72 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/auth-store';
+import { authApi } from '@/lib/api-client';
+import { useToastStore } from '@/lib/toast-store';
 
 export default function EmailVerifiedPage() {
   const router = useRouter();
-  const { isAuthenticated, user, initializeAuth } = useAuthStore();
+  const { isAuthenticated, user, initializeAuth, fetchProfile } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
+  const hasCheckedRef = useRef(false); // Prevent duplicate checks
+  const addToast = useToastStore((state) => state.addToast);
 
-  // Check authentication status when page loads
+  // Check authentication status and refresh verification status when page loads
   useEffect(() => {
-    const checkAuth = async () => {
-      await initializeAuth();
-      setIsChecking(false);
+    // Prevent running multiple times
+    if (hasCheckedRef.current) return;
+    hasCheckedRef.current = true;
+
+    const checkAuthAndRefreshStatus = async () => {
+      try {
+        // First, initialize auth to check if user is logged in
+        await initializeAuth();
+
+        // If user is authenticated, force a refresh of their verification status from Auth0
+        if (useAuthStore.getState().isAuthenticated) {
+          console.log('[EMAIL-VERIFIED] User authenticated, refreshing verification status from Auth0...');
+          
+          // Wait a moment for Auth0's backend to fully process the verification
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Call the new backend endpoint that fetches status from Auth0 and updates session
+          const result = await authApi.refreshVerificationStatus();
+          
+          console.log('[EMAIL-VERIFIED] Refresh result:', result);
+          
+          if (result.email_verified) {
+            // Fetch fresh profile to update the UI
+            await fetchProfile();
+            
+            addToast('success', 'Email verified successfully!');
+            // Redirect to dashboard after a brief moment
+            setTimeout(() => router.push('/'), 800);
+          } else {
+            // Auth0 says email is still not verified
+            addToast('warning', 'Email verification is still pending. Please check your inbox or try again.');
+            setTimeout(() => router.push('/'), 2000);
+          }
+        } else {
+          // Not authenticated - redirect to login
+          addToast('info', 'Please log in to continue.');
+          setTimeout(() => router.push('/login'), 1000);
+        }
+      } catch (error) {
+        console.error('[EMAIL-VERIFIED] Error during verification check:', error);
+        addToast('error', 'Failed to verify email status. Redirecting to dashboard...');
+        setTimeout(() => router.push('/'), 2000);
+      } finally {
+        setIsChecking(false);
+      }
     };
-    checkAuth();
-  }, [initializeAuth]);
 
-  // If user is authenticated, auto-redirect to dashboard
-  useEffect(() => {
-    if (!isChecking && isAuthenticated && user) {
-      // Always redirect to dashboard - welcome guidance will show for first-time users
-      router.push('/');
-    }
-  }, [isAuthenticated, user, router, isChecking]);
+    checkAuthAndRefreshStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   // Show loading state while checking
   if (isChecking) {
