@@ -115,6 +115,28 @@ export default function ProfilePage() {
   // Early return after all hooks
   if (!user) return null;
 
+  // Derive display name: prioritize display_name, then format email username, then fall back to email
+  const getDisplayName = () => {
+    // If display_name is set and different from email, use it
+    if (user.display_name && user.display_name !== user.email) {
+      return user.display_name;
+    }
+    
+    // If name is set and is NOT just the email, use it
+    if (user.name && user.name !== user.email) {
+      return user.name;
+    }
+    
+    // Format email username: "seth.chesky@irongrove.com" → "Seth Chesky"
+    const emailUsername = user.email.split('@')[0];
+    return emailUsername
+      .split(/[._-]/) // Split on dots, underscores, hyphens
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const displayName = getDisplayName();
+
   return (
     <ProtectedRoute>
       <div className="p-4 sm:p-6 md:p-8">
@@ -122,40 +144,52 @@ export default function ProfilePage() {
           {/* Left Sidebar - Full width on mobile, 320px on desktop */}
           <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
             {/* Profile Card */}
-            <Card className="p-4 sm:p-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4">
-                  <AvatarUpload
-                    currentAvatarUrl={user.avatar_url}
-                    userInitial={user.name.charAt(0).toUpperCase()}
-                    userId={user.id}
-                    onAvatarUpdate={handleAvatarUpdate}
-                  />
+            <Card className="p-6">
+              <div className="flex flex-col">
+                {/* Avatar and primary info */}
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="flex-shrink-0">
+                    <AvatarUpload
+                      currentAvatarUrl={user.avatar_url}
+                      userInitial={displayName.charAt(0).toUpperCase()}
+                      userId={user.id}
+                      onAvatarUpdate={handleAvatarUpdate}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 pt-2">
+                    <h2 className="text-xl font-bold text-orange-dark dark:text-orange mb-1 truncate">
+                      {displayName}
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-2">
+                      {user.email}
+                    </p>
+                    {user.role === 'superuser' && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange/10 text-orange border border-orange/20">
+                        SuperUser
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold text-orange-dark dark:text-orange mb-1">
-                  {user.name}
-                </h2>
-                {user.display_name && (
-                  <p className="text-sm text-gray-slate dark:text-gray-300 mb-1">
-                    {user.display_name}
-                  </p>
-                )}
+
+                {/* Metadata section - only show if there's additional info beyond email */}
                 {user.title && (
-                  <p className="text-sm text-gray-slate dark:text-gray-300 mb-2">
-                    {user.title}
-                  </p>
+                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                      Title
+                    </p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100">
+                      {user.title}
+                    </p>
+                  </div>
                 )}
-                {user.role === 'superuser' && (
-                  <p className="text-sm font-semibold text-orange dark:text-orange mb-4">
-                    SuperUser
-                  </p>
-                )}
-                <div className="flex gap-2 justify-center">
+
+                {/* Action buttons */}
+                <div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowEditModal(true)}
-                    className="text-sm px-3"
+                    className="w-full justify-center"
                   >
                     Edit Profile
                   </Button>
@@ -163,7 +197,7 @@ export default function ProfilePage() {
                     variant="secondary"
                     size="sm"
                     onClick={() => setShowManageAccountModal(true)}
-                    className="text-sm px-3"
+                    className="w-full justify-center"
                   >
                     Manage Account
                   </Button>
