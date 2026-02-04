@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import { authApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -24,16 +24,62 @@ interface EmailVerificationBannerProps {
 export function EmailVerificationBanner({ email, onDismiss }: EmailVerificationBannerProps) {
   const [isResending, setIsResending] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const { addToast } = useToastStore();
+  const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const startCooldown = (seconds: number) => {
+    // Clear any existing interval
+    if (cooldownIntervalRef.current) {
+      clearInterval(cooldownIntervalRef.current);
+    }
+
+    setCooldownSeconds(seconds);
+    cooldownIntervalRef.current = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          if (cooldownIntervalRef.current) {
+            clearInterval(cooldownIntervalRef.current);
+            cooldownIntervalRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleResendEmail = async () => {
+    // Rate limiting check
+    if (cooldownSeconds > 0) {
+      addToast('warning', `Please wait ${cooldownSeconds} seconds before requesting another email.`);
+      return;
+    }
+
     setIsResending(true);
     try {
       await authApi.resendVerification();
       addToast('success', 'Verification email sent! Check your inbox.');
+      
+      // Start 60-second cooldown
+      startCooldown(60);
     } catch (error: any) {
       const message = error.message || 'Failed to send verification email';
       addToast('error', message);
+      
+      // If it's a rate limit error from backend, show longer cooldown
+      if (error.statusCode === 429) {
+        startCooldown(180); // 3 minute cooldown for rate limit errors
+      }
     } finally {
       setIsResending(false);
     }
@@ -88,11 +134,15 @@ export function EmailVerificationBanner({ email, onDismiss }: EmailVerificationB
               variant="outline"
               size="sm"
               onClick={handleResendEmail}
-              disabled={isResending}
+              disabled={isResending || cooldownSeconds > 0}
               className="text-xs"
               aria-label="Resend verification email"
             >
-              {isResending ? 'Sending...' : 'Resend Email'}
+              {isResending 
+                ? 'Sending...' 
+                : cooldownSeconds > 0 
+                  ? `Wait ${cooldownSeconds}s`
+                  : 'Resend Email'}
             </Button>
             {onDismiss && (
               <button
