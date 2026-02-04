@@ -11,6 +11,69 @@ All endpoints must:
 - Use Supabase service role key for database operations (bypasses RLS)
 - Return `401 Unauthorized` for invalid/missing sessions
 
+## Email Verification Enforcement
+
+All endpoints that perform write operations (create/update/delete) must enforce email verification.
+
+### Implementation Requirements
+
+1. **Check session for emailVerified field**:
+   - Every session must include `emailVerified: boolean`
+   - Updated on every login from Auth0 JWT claim (`decoded.email_verified`)
+
+2. **Middleware**: Use `requireEmailVerification` middleware for protected routes
+   - Apply to POST, PUT, PATCH, DELETE requests
+   - Allow GET requests without verification (read-only access)
+
+3. **Error Response**: When user is not verified, return:
+   ```json
+   {
+     "error": "Email verification required",
+     "message": "Please verify your email address to perform this action. Check your inbox for a verification link.",
+     "code": "EMAIL_NOT_VERIFIED",
+     "email": "user@example.com"
+   }
+   ```
+   - Status code: `403 Forbidden`
+
+### Email Verification Endpoints
+
+#### POST `/auth/resend-verification`
+
+Triggers Auth0 Management API to resend verification email.
+
+**Authentication**: Session cookie required
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Verification email sent successfully. Please check your inbox."
+}
+```
+
+**Error Response**:
+```json
+{
+  "error": "Failed to send verification email",
+  "message": "Please try again later"
+}
+```
+
+#### GET `/auth/me/verification-status`
+
+Returns current email verification status from database.
+
+**Authentication**: Session cookie required
+
+**Response**:
+```json
+{
+  "email_verified": true,
+  "email": "user@example.com"
+}
+```
+
 ## Required New Endpoints
 
 ### 1. GET `/api/organizations/:id/role`

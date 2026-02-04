@@ -58,6 +58,15 @@ async function apiRequest<T = any>(
         throw new ApiError(errorMessage, response.status, data);
       }
       
+      // Special handling for email verification errors
+      if (response.status === 403 && data?.code === 'EMAIL_NOT_VERIFIED') {
+        const errorMessage = data?.message || 'Please verify your email to continue';
+        const error = new ApiError(errorMessage, response.status, data);
+        // Add code to error details for frontend handling
+        (error as any).code = 'EMAIL_NOT_VERIFIED';
+        throw error;
+      }
+      
       const errorMessage = data?.error || data?.message || `Request failed with status ${response.status}`;
       throw new ApiError(errorMessage, response.status, data);
     }
@@ -677,6 +686,29 @@ export interface DiscountRedemption {
   promotion_code?: PromotionCode;
   organization_name?: string;
 }
+
+// Auth API
+export const authApi = {
+  /**
+   * Resend email verification email
+   */
+  resendVerification: (): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    return apiClient.post('/auth/resend-verification');
+  },
+
+  /**
+   * Get current user's email verification status
+   */
+  getVerificationStatus: (): Promise<{
+    email_verified: boolean;
+    email: string;
+  }> => {
+    return apiClient.get('/auth/me/verification-status');
+  },
+};
 
 // Tags API
 export const tagsApi = {

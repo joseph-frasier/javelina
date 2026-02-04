@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/auth-store';
 import { useEffect, useState } from 'react';
 import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
+import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import { Logo } from '@/components/ui/Logo';
 
 export default function HomePage() {
@@ -78,6 +79,11 @@ export default function HomePage() {
   // Show welcome dashboard for authenticated users without organizations
   return (
     <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
+      {/* Email Verification Banner */}
+      {user && !user.email_verified && (
+        <EmailVerificationBanner email={user.email} />
+      )}
+
       {/* Hero Section - Welcome */}
       <div className="mb-8">
         <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
