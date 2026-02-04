@@ -6,7 +6,6 @@ import { useGSAP } from '@gsap/react';
 import { formatDistanceToNow } from 'date-fns';
 import { useUser } from '@/lib/hooks/useUser';
 import { supportApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
-import { isMockMode, mockChat, mockSubmitFeedback, mockLogBug } from '@/lib/support/mock-support-api';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
 
 interface ChatWindowProps {
@@ -184,9 +183,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
-    
-    // Allow mock mode without user for testing
-    if (!user && !isMockMode()) return;
+    if (!user) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -203,24 +200,17 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       // Capture current app state snapshot
       const snapshot = captureSnapshot();
 
-      // Use mock API if enabled, otherwise use real API
-      const response = isMockMode() 
-        ? await mockChat({
-            message: inputValue,
-            conversationId,
-            attemptCount,
-          })
-        : await supportApi.chat({
-            message: inputValue,
-            conversationId,
-            entryPoint: entryPoint || 'chat_widget',
-            pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
-            userId: user!.id,
-            orgId,
-            tier,
-            attemptCount,
-            snapshot,
-          });
+      const response = await supportApi.chat({
+        message: inputValue,
+        conversationId,
+        entryPoint: entryPoint || 'chat_widget',
+        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        userId: user.id,
+        orgId,
+        tier,
+        attemptCount,
+        snapshot,
+      });
 
       // Update conversation ID if provided
       if (response.conversationId) {
@@ -276,24 +266,16 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
 
   const handleResolutionResponse = async (resolved: boolean) => {
     if (!conversationId) return;
-    if (!user && !isMockMode()) return;
+    if (!user) return;
 
     try {
-      // Use mock API if enabled, otherwise use real API
-      if (isMockMode()) {
-        await mockSubmitFeedback({
-          conversationId,
-          resolved,
-        });
-      } else {
-        await supportApi.submitFeedback({
-          conversationId,
-          resolved,
-          userId: user!.id,
-          orgId,
-          tier,
-        });
-      }
+      await supportApi.submitFeedback({
+        conversationId,
+        resolved,
+        userId: user.id,
+        orgId,
+        tier,
+      });
 
       if (resolved) {
         const thankYouMessage: Message = {
@@ -331,7 +313,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   };
 
   const handleCreateTicket = () => {
-    if (!user && !isMockMode()) return;
+    if (!user) return;
 
     // Generate conversation summary from messages
     const summary = messages
@@ -534,13 +516,13 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={isMockMode() ? "Type a message... (DEMO MODE)" : "Type a message..."}
+            placeholder="Type a message..."
             className="flex-1 px-4 py-2.5 rounded-full border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-all text-sm"
-            disabled={loading || (!user && !isMockMode())}
+            disabled={loading || !user}
           />
           <button
             onClick={handleSend}
-            disabled={loading || !inputValue.trim() || (!user && !isMockMode())}
+            disabled={loading || !inputValue.trim() || !user}
             className="w-10 h-10 bg-orange hover:bg-orange-dark rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
