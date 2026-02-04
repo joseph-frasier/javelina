@@ -20,7 +20,7 @@ export default function EmailVerifiedPage() {
 
   // Check authentication status and refresh verification status when page loads
   useEffect(() => {
-    // Check if we've already processed this verification in this session
+    // CRITICAL: Check and set flag IMMEDIATELY (synchronously) to prevent race conditions
     const alreadyProcessed = sessionStorage.getItem(VERIFICATION_PROCESSED_KEY);
     
     if (alreadyProcessed) {
@@ -30,6 +30,11 @@ export default function EmailVerifiedPage() {
       router.push('/');
       return;
     }
+
+    // Set flag IMMEDIATELY before any async operations
+    // This prevents React Strict Mode's double-mount from causing duplicates
+    sessionStorage.setItem(VERIFICATION_PROCESSED_KEY, 'true');
+    console.log('[EMAIL-VERIFIED] Flag set, starting verification check...');
 
     const checkAuthAndRefreshStatus = async () => {
       try {
@@ -48,8 +53,6 @@ export default function EmailVerifiedPage() {
           
           console.log('[EMAIL-VERIFIED] Refresh result:', result);
           
-          // Mark as processed BEFORE showing toast to prevent duplicates
-          sessionStorage.setItem(VERIFICATION_PROCESSED_KEY, 'true');
           setHasProcessed(true);
           
           if (result.email_verified) {
@@ -74,7 +77,10 @@ export default function EmailVerifiedPage() {
         } else {
           // Not authenticated - redirect to login
           addToast('info', 'Please log in to continue.');
-          setTimeout(() => router.push('/login'), 1000);
+          setTimeout(() => {
+            sessionStorage.removeItem(VERIFICATION_PROCESSED_KEY);
+            router.push('/login');
+          }, 1000);
         }
       } catch (error) {
         console.error('[EMAIL-VERIFIED] Error during verification check:', error);
