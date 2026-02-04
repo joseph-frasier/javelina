@@ -125,9 +125,12 @@ export function EmailVerificationBanner({ email, onDismiss }: EmailVerificationB
           <h3 className="text-sm font-bold text-orange-dark dark:text-orange mb-1">
             Email Verification Required
           </h3>
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
             Please verify <span className="font-medium">{email}</span> to create or modify resources. 
             Check your inbox for a verification link.
+          </p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 italic">
+            Don't see the email? Check your spam or junk folder.
           </p>
           <div className="flex items-center gap-3">
             <Button
