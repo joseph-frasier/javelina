@@ -64,6 +64,7 @@ export function TicketCreationModal({
         description: fullDescription,
         page_url: typeof window !== 'undefined' ? window.location.href : '',
         user_id: userId,
+        org_id: orgId,
       });
 
       setSuccess(true);
