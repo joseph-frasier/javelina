@@ -440,13 +440,25 @@ Once these features work perfectly in local, you'll need to configure for other 
 
 ---
 
+## Email Branding Setup
+
+For professional email delivery, configure Auth0 to send emails from `hello@javelina.cloud` instead of the default `no-reply@auth0user.net`.
+
+**📧 Complete Guide**: See `AUTH0_RESEND_EMAIL_SETUP.md` for step-by-step instructions on integrating your Resend account with Auth0.
+
+**Time**: ~20 minutes  
+**Cost**: FREE (included in Resend's free tier)
+
+---
+
 ## Next Steps
 
 After completing this plan:
-1. Test all flows end-to-end
-2. Update user documentation/onboarding
-3. Monitor Auth0 dashboard for usage/errors
-4. Consider enabling for production after demo day
-5. Add MFA requirement for admin accounts
+1. ✅ **Set up custom email** (see `AUTH0_RESEND_EMAIL_SETUP.md`)
+2. Test all flows end-to-end
+3. Update user documentation/onboarding
+4. Monitor Auth0 dashboard for usage/errors
+5. Consider enabling for production after demo day
+6. Add MFA requirement for admin accounts
 
 **Questions or issues?** Check Auth0 docs or ask for help!

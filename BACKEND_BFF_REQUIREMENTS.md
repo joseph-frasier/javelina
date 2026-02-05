@@ -74,6 +74,66 @@ Returns current email verification status from database.
 }
 ```
 
+#### POST `/api/auth/refresh-verification-status`
+
+Fetches current verification status directly from Auth0, updates database and session.
+
+**Authentication**: Session cookie required
+
+**Response**:
+```json
+{
+  "success": true,
+  "email_verified": true,
+  "message": "Email verification confirmed!"
+}
+```
+
+**Error Response**:
+```json
+{
+  "error": "Failed to refresh verification status"
+}
+```
+
+### Authentication Flow Endpoints
+
+#### GET `/auth/login`
+
+Redirects to Auth0 Universal Login. Supports optional `screen_hint` query parameter to control which screen is displayed.
+
+**Query Parameters**:
+- `screen_hint` (optional): 
+  - `signup` - Direct users to the sign-up screen
+  - Omit or use any other value for the default login screen
+
+**Examples**:
+- `/auth/login` - Shows login screen (default)
+- `/auth/login?screen_hint=signup` - Shows sign-up screen
+
+**Implementation**:
+```javascript
+router.get('/auth/login', (req, res) => {
+  const { screen_hint } = req.query;
+  
+  // Build Auth0 authorization URL
+  const params = new URLSearchParams({
+    client_id: process.env.AUTH0_CLIENT_ID,
+    redirect_uri: `${process.env.API_URL}/auth/callback`,
+    response_type: 'code',
+    scope: 'openid profile email',
+    // Include screen_hint if provided
+    ...(screen_hint && { screen_hint })
+  });
+  
+  res.redirect(`https://${process.env.AUTH0_DOMAIN}/authorize?${params}`);
+});
+```
+
+**Frontend Usage**:
+- Login button: Calls `/auth/login` (default login screen)
+- Sign Up / Get Started button: Calls `/auth/login?screen_hint=signup` (sign-up screen)
+
 ## Required New Endpoints
 
 ### 1. GET `/api/organizations/:id/role`
