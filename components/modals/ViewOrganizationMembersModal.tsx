@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -29,13 +29,7 @@ export function ViewOrganizationMembersModal({
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
 
-  useEffect(() => {
-    if (isOpen && organizationId) {
-      fetchMembers();
-    }
-  }, [isOpen, organizationId]);
-
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await adminApi.getOrganizationMembers(organizationId);
@@ -46,7 +40,13 @@ export function ViewOrganizationMembersModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId, addToast]);
+
+  useEffect(() => {
+    if (isOpen && organizationId) {
+      fetchMembers();
+    }
+  }, [isOpen, organizationId, fetchMembers]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {

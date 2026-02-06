@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -45,6 +45,19 @@ export function ViewOrganizationDetailsModal({
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<OrganizationDetails | null>(null);
 
+  const fetchOrganizationDetails = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminApi.getOrganization(organizationId);
+      setOrganization(data as OrganizationDetails);
+    } catch (error: any) {
+      console.error('Failed to fetch organization details:', error);
+      addToast('error', error.message || 'Failed to load organization details');
+    } finally {
+      setLoading(false);
+    }
+  }, [organizationId, addToast]);
+
   useEffect(() => {
     if (isOpen) {
       if (organizationData) {
@@ -56,20 +69,7 @@ export function ViewOrganizationDetailsModal({
         fetchOrganizationDetails();
       }
     }
-  }, [isOpen, organizationId, organizationData]);
-
-  const fetchOrganizationDetails = async () => {
-    setLoading(true);
-    try {
-      const data = await adminApi.getOrganization(organizationId);
-      setOrganization(data as OrganizationDetails);
-    } catch (error: any) {
-      console.error('Failed to fetch organization details:', error);
-      addToast('error', error.message || 'Failed to load organization details');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isOpen, organizationId, organizationData, fetchOrganizationDetails]);
 
   const InfoRow = ({ label, value }: { label: string; value: string | number | undefined | null }) => {
     if (value === undefined || value === null || value === '') {
