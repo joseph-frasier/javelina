@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
     // Forward cookies to backend for session clearing
     const cookies = request.headers.get('cookie') || '';
     
+    console.log('[Logout API] Starting logout process');
+    console.log('[Logout API] Current cookies:', cookies);
     console.log('[Logout API] Calling Express logout endpoint:', `${API_URL}/auth/logout`);
     
     // Call Express logout endpoint
@@ -43,8 +45,17 @@ export async function GET(request: NextRequest) {
       console.error('[Logout API] Backend logout failed:', backendResponse.status, backendResponse.statusText);
       const text = await backendResponse.text().catch(() => '');
       console.error('[Logout API] Backend response:', text);
-      // Still try to clear frontend state and redirect
-      return NextResponse.redirect(new URL('/', request.url));
+      // Even if backend fails, forcibly clear the cookie on frontend
+      const fallbackResponse = NextResponse.redirect(new URL('/', request.url));
+      fallbackResponse.cookies.set('javelina_session', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 0,
+      });
+      console.log('[Logout API] Fallback: Cleared session cookie via Next.js');
+      return fallbackResponse;
     }
     
     // Parse backend response to get Auth0 logout URL
@@ -52,30 +63,58 @@ export async function GET(request: NextRequest) {
     const auth0LogoutUrl = data.redirectUrl;
     
     console.log('[Logout API] Auth0 logout URL:', auth0LogoutUrl);
+    console.log('[Logout API] Backend response data:', data);
     
     if (!auth0LogoutUrl) {
       console.warn('[Logout API] No Auth0 logout URL provided by backend, redirecting to root');
-      // Fallback if no redirect URL provided
-      return NextResponse.redirect(new URL('/', request.url));
+      // Fallback - clear cookie and redirect
+      const fallbackResponse = NextResponse.redirect(new URL('/', request.url));
+      fallbackResponse.cookies.set('javelina_session', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 0,
+      });
+      return fallbackResponse;
     }
     
     // Redirect to Auth0 logout URL (this clears the Auth0 session)
     const redirectResponse = NextResponse.redirect(auth0LogoutUrl);
     
     // CRITICAL: Forward Set-Cookie headers from Express to browser
-    // This ensures the session cookie actually gets cleared in the user's browser
     const setCookieHeaders = backendResponse.headers.get('set-cookie');
+    console.log('[Logout API] Set-Cookie headers from backend:', setCookieHeaders);
+    
     if (setCookieHeaders) {
       console.log('[Logout API] Forwarding Set-Cookie headers to clear session');
       redirectResponse.headers.set('Set-Cookie', setCookieHeaders);
     } else {
-      console.warn('[Logout API] No Set-Cookie headers received from backend');
+      console.warn('[Logout API] No Set-Cookie headers from backend, clearing cookie via Next.js');
+      // Fallback: Clear the cookie ourselves
+      redirectResponse.cookies.set('javelina_session', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 0,
+      });
     }
     
+    console.log('[Logout API] Redirecting to Auth0 logout');
     return redirectResponse;
   } catch (error) {
     console.error('[Logout API] Logout API route error:', error);
-    // Even on error, redirect to root to clear UI
-    return NextResponse.redirect(new URL('/', request.url));
+    // Even on error, forcibly clear cookie and redirect
+    const errorResponse = NextResponse.redirect(new URL('/', request.url));
+    errorResponse.cookies.set('javelina_session', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    });
+    console.log('[Logout API] Error fallback: Cleared session cookie');
+    return errorResponse;
   }
 }

@@ -137,6 +137,25 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       // Initialize auth - check for existing session via Express /auth/me
       initializeAuth: async () => {
+        // Check if we just logged out (flag set by logout function)
+        try {
+          const justLoggedOut = sessionStorage.getItem('just-logged-out') === 'true'
+          if (justLoggedOut) {
+            console.log('[AUTH] Just logged out, skipping session check')
+            sessionStorage.removeItem('just-logged-out')
+            set({ 
+              user: null, 
+              isAuthenticated: false, 
+              profileReady: false, 
+              profileError: null,
+              isLoading: false 
+            })
+            return
+          }
+        } catch (error) {
+          // Ignore sessionStorage errors
+        }
+        
         set({ isLoading: true, profileReady: false, profileError: null })
         
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
@@ -154,9 +173,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
         // Check session with Express backend
         try {
+          console.log('[AUTH] Checking session with backend')
           const response = await fetch(`${API_URL}/auth/me`, {
             credentials: 'include', // Send session cookie
           })
+
+          console.log('[AUTH] Session check response:', response.status)
 
           if (response.ok) {
             // Session is valid, fetch full profile
@@ -167,7 +189,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
           }
         } catch (error) {
-          console.error('Error initializing auth:', error)
+          console.error('[AUTH] Error initializing auth:', error)
           set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
         } finally {
           console.log('[AUTH] Setting isLoading to false')
@@ -297,8 +319,17 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       // Logout - navigate to Next.js API route for smooth transition
       logout: async () => {
+        console.log('[AUTH] Logout initiated')
+        
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        // CRITICAL: Set flag to prevent re-initialization after logout
+        try {
+          sessionStorage.setItem('just-logged-out', 'true')
+        } catch (error) {
+          console.error('[AUTH] Could not set logout flag:', error)
+        }
         
         // CRITICAL: Clear local state immediately before redirecting
         // This prevents stale state from persisting after Auth0 redirects back
@@ -308,6 +339,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           profileReady: false,
           profileError: null,
         })
+        
+        console.log('[AUTH] Local state cleared')
         
         if (isPlaceholderMode) {
           // Mock mode - just clear the state and redirect
@@ -337,6 +370,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         // Navigate to Next.js API route - single smooth transition
         // Server-side handles backend call and redirect
         // No async waits, no React re-renders, no intermediate pages
+        console.log('[AUTH] Navigating to /api/logout')
         window.location.href = '/api/logout'
       },
 }))
