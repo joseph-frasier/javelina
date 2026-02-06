@@ -340,25 +340,22 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
         
         // CRITICAL: Set flag to prevent re-initialization after logout
+        // This allows AuthProvider to skip session check when page reloads after logout
         try {
           sessionStorage.setItem('just-logged-out', 'true')
         } catch (error) {
           console.error('[AUTH] Could not set logout flag:', error)
         }
         
-        // CRITICAL: Clear local state immediately before redirecting
-        // This prevents stale state from persisting after Auth0 redirects back
-        set({
-          user: null,
-          isAuthenticated: false,
-          profileReady: false,
-          profileError: null,
-        })
-        
-        console.log('[AUTH] Local state cleared')
-        
         if (isPlaceholderMode) {
-          // Mock mode - just clear the state and redirect
+          // Mock mode - clear state and redirect
+          set({
+            user: null,
+            isAuthenticated: false,
+            profileReady: false,
+            profileError: null,
+          })
+          
           // Broadcast logout to other tabs
           try {
             const sync = getIdleSync()
@@ -368,7 +365,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             console.error('Error broadcasting logout:', error)
           }
           
-          // Redirect to root (which will redirect to Auth0 login)
+          // Redirect to root
           window.location.href = '/'
           return
         }
@@ -383,8 +380,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         }
         
         // Navigate to Next.js API route - single smooth transition
-        // Server-side handles backend call and redirect
-        // No async waits, no React re-renders, no intermediate pages
+        // Flow: /api/logout → Express → Auth0 logout → Auth0 redirects to /
+        // When page loads at /, AuthProvider sees 'just-logged-out' flag and skips auth check
+        // Result: One clean transition, no flicker, no intermediate states
         console.log('[AUTH] Navigating to /api/logout')
         window.location.href = '/api/logout'
       },
