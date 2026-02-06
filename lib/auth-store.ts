@@ -247,62 +247,15 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         window.location.href = `${API_URL}/auth/login`
       },
 
-      // Sign up new user
+      // Sign up new user - Auth0 handles this via Universal Login
       signUp: async (email: string, password: string, name: string, captchaToken?: string) => {
-        const supabase = createClient()
-        set({ isLoading: true })
-
-        try {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                name, // This will be stored in user_metadata
-              },
-              captchaToken,
-            },
-          })
-
-          // Classify the signup result to distinguish new user, existing email, or error
-          const outcome = classifySignupResult(data.user, error)
-
-          switch (outcome) {
-            case 'new_user':
-              // Real successful signup - fetch profile
-              if (data.user) {
-                // Profile should be auto-created by database trigger
-                await get().fetchProfile()
-              }
-              set({ isLoading: false })
-              return { success: true, outcome: 'new_user' }
-
-            case 'existing_email':
-              // Email already exists - Supabase returned obfuscated user or explicit error
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: 'A user with this email address already exists.',
-                outcome: 'existing_email'
-              }
-
-            case 'error':
-            default:
-              // Actual error (network, validation, etc.)
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: error?.message || 'An error occurred during signup. Please try again.',
-                outcome: 'error'
-              }
-          }
-        } catch (error: any) {
-          set({ isLoading: false })
-          return { 
-            success: false, 
-            error: error.message || 'An error occurred',
-            outcome: 'error'
-          }
+        // With Auth0 migration, signup happens through Auth0's Universal Login UI
+        // This function is kept for backwards compatibility but should not be used
+        console.warn('Direct signup not supported with Auth0 - use Universal Login instead');
+        return { 
+          success: false, 
+          error: 'Please use the login page to sign up',
+          outcome: 'error'
         }
       },
 
