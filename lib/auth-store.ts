@@ -178,24 +178,28 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // Fetch user profile via Express API (uses session cookie)
       fetchProfile: async () => {
         try {
-          // Fetch profile with organizations from Express API via server action
-          // Session cookie is sent automatically via credentials: 'include'
-          const result = await getProfile()
+          // Call backend API directly with credentials to send session cookie
+          const response = await fetch(`${API_URL}/api/users/profile`, {
+            credentials: 'include', // Send session cookie
+          })
 
-          if (result.error || !result.data) {
-            console.error('Error fetching profile:', result.error)
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error('Error fetching profile:', errorText)
             
             set({
               user: null,
               isAuthenticated: false,
               profileReady: false,
-              profileError: result.error || 'We could not load your profile. Please sign out and try again.',
+              profileError: 'We could not load your profile. Please sign out and try again.',
             })
             return
           }
 
+          const result = await response.json()
+
           // Map organizations to Organization interface
-          const organizations: Organization[] = (result.data.organizations || []).map((org) => ({
+          const organizations: Organization[] = (result.organizations || []).map((org: any) => ({
             id: org.id,
             name: org.name,
             role: org.role,
@@ -203,11 +207,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
           set({
             user: {
-              ...result.data,
+              ...result,
               // Ensure required fields have non-null values
-              name: result.data.name || '',
-              email: result.data.email || '',
-              role: (result.data.role as UserRole) || 'user',
+              name: result.name || '',
+              email: result.email || '',
+              role: (result.role as UserRole) || 'user',
               organizations,
             },
             isAuthenticated: true,
