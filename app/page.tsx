@@ -45,7 +45,7 @@ export default function HomePage() {
         <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <Logo size="medium" />
+              <Logo width={120} height={32} />
               <Button
                 variant="outline"
                 size="md"
@@ -159,7 +159,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col md:flex-row items-center justify-between">
               <div className="flex items-center space-x-2 mb-4 md:mb-0">
-                <Logo size="small" />
+                <Logo width={100} height={27} />
                 <span className="text-gray-600">© 2026 Javelina DNS</span>
               </div>
               <div className="flex space-x-6 text-gray-600">
