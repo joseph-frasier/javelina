@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -47,35 +47,31 @@ export interface ProfileWithOrganizations extends ProfileData {
  * Get the current user's profile with organization memberships
  * Express API Required: GET /api/users/profile
  */
-export async function getProfile(accessToken?: string): Promise<{ data?: ProfileWithOrganizations; error?: string }> {
+export async function getProfile(): Promise<{ data?: ProfileWithOrganizations; error?: string }> {
   try {
-    let token = accessToken;
+    // Get session cookie from Next.js cookies
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    // If no token provided, try to get it from the session
-    if (!token) {
-      const supabase = await createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) {
-        return { error: 'Not authenticated' }
-      }
-      
-      token = session.access_token;
+    if (!sessionCookie) {
+      return { error: 'Not authenticated' }
     }
 
+    // Make request to Express backend with session cookie
     const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
+      cache: 'no-store', // Don't cache auth requests
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
       return { error: data.error || data.message || 'Failed to fetch profile' }
     }
 
+    const data = await response.json();
     return { data: data.data || data }
   } catch (error: any) {
     return { error: error.message || 'Failed to fetch profile' }
@@ -92,27 +88,31 @@ export async function getProfile(accessToken?: string): Promise<{ data?: Profile
  */
 export async function updateProfile(formData: Partial<ProfileData>): Promise<{ data?: ProfileData; error?: string }> {
   try {
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie from Next.js cookies
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
+    if (!sessionCookie) {
       return { error: 'Not authenticated' }
     }
 
+    // Make request to Express backend with session cookie
     const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
       body: JSON.stringify(formData),
+      cache: 'no-store',
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
       return { error: data.error || data.message || 'Failed to update profile' }
     }
+
+    const data = await response.json();
 
     revalidatePath('/profile')
     revalidatePath('/')

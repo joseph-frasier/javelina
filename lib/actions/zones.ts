@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -13,20 +13,20 @@ export async function createZone(formData: {
   negative_caching_ttl?: number
 }) {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/zones`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
       body: JSON.stringify({
         name: formData.name,
@@ -35,6 +35,7 @@ export async function createZone(formData: {
         admin_email: formData.admin_email,
         negative_caching_ttl: formData.negative_caching_ttl
       }),
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -70,20 +71,20 @@ export async function updateZone(
   }
 ) {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/zones/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
       body: JSON.stringify({
         name: formData.name,
@@ -91,6 +92,7 @@ export async function updateZone(
         admin_email: formData.admin_email,
         negative_caching_ttl: formData.negative_caching_ttl
       }),
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -111,20 +113,21 @@ export async function updateZone(
 
 export async function deleteZone(id: string) {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/zones/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -151,24 +154,25 @@ export async function verifyZoneNameservers(zoneId: string): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
+    if (!sessionCookie) {
       return {
         success: false,
         status: 'failed',
         message: 'Not authenticated',
         error: 'Not authenticated'
-      };
+      }
     }
 
     const response = await fetch(`${API_BASE_URL}/api/zones/${zoneId}/verification`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
+      cache: 'no-store',
     });
 
     const data = await response.json();

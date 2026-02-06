@@ -27,6 +27,8 @@ import { DiffViewer } from '@/components/dns/DiffViewer';
 import Dropdown from '@/components/ui/Dropdown';
 import { updateZone, deleteZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/auth-store';
+import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import { 
   getZoneSummary, 
   getZoneAuditLogs, 
@@ -60,6 +62,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const router = useRouter();
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
+  const { user } = useAuthStore();
   const [zoneSummary, setZoneSummary] = useState<ZoneSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [dnsRecords, setDnsRecords] = useState<DNSRecord[]>([]);
@@ -332,6 +335,11 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
 
   return (
     <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
+      {/* Email Verification Banner */}
+      {user && !user.email_verified && (
+        <EmailVerificationBanner email={user.email} />
+      )}
+
       {/* Breadcrumb */}
       {breadcrumbItems.length > 0 && (
         <Breadcrumb items={breadcrumbItems} className="mb-4 sm:mb-6" />

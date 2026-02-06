@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { StatCard, Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { createClient } from '@/lib/supabase/client';
+// No longer need Supabase client - using Express API with session cookies
 // Recharts is imported but not currently used (shows placeholder messages)
 // When analytics are implemented, consider dynamic imports to reduce bundle size
 
@@ -38,19 +38,13 @@ export default function AnalyticsPage() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
 
-  // Fetch organizations via Express API
+  // Fetch organizations via Express API (uses session cookie)
   useEffect(() => {
     const fetchOrganizations = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
       try {
-        // Get user profile which includes organizations
+        // apiClient handles session cookies automatically
         const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
+          credentials: 'include', // Send session cookie
         });
 
         if (!response.ok) return;
@@ -72,13 +66,9 @@ export default function AnalyticsPage() {
     fetchOrganizations();
   }, []);
 
-  // Fetch zones when organization changes via Express API
+  // Fetch zones when organization changes via Express API (uses session cookie)
   useEffect(() => {
     const fetchZones = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
       try {
         if (selectedOrg === 'all') {
           // Fetch zones from all user's orgs
@@ -86,9 +76,7 @@ export default function AnalyticsPage() {
           
           for (const org of organizations) {
             const response = await fetch(`${API_BASE_URL}/api/zones/organization/${org.id}`, {
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-              },
+              credentials: 'include', // Send session cookie
             });
 
             if (response.ok) {
@@ -106,9 +94,7 @@ export default function AnalyticsPage() {
         } else {
           // Fetch zones for selected org
           const response = await fetch(`${API_BASE_URL}/api/zones/organization/${selectedOrg}`, {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-            },
+            credentials: 'include', // Send session cookie
           });
 
           if (response.ok) {

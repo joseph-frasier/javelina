@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
 
@@ -14,25 +14,26 @@ export async function createDNSRecord(
   recordData: DNSRecordFormData
 ): Promise<DNSRecord> {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/dns-records`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
       body: JSON.stringify({
         zone_id: zoneId,
         ...recordData
       }),
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -59,22 +60,23 @@ export async function updateDNSRecord(
   recordData: DNSRecordFormData
 ): Promise<DNSRecord> {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/dns-records/${recordId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
       body: JSON.stringify(recordData),
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -99,20 +101,21 @@ export async function updateDNSRecord(
  */
 export async function deleteDNSRecord(recordId: string): Promise<void> {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/dns-records/${recordId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -159,20 +162,21 @@ export async function bulkDeleteDNSRecords(recordIds: string[]): Promise<{
  * Get a DNS record by ID
  */
 async function getDNSRecord(recordId: string): Promise<DNSRecord> {
-  // Get session from server-side Supabase client (uses cookies)
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  // Get session cookie
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get('javelina_session')
   
-  if (!session?.access_token) {
-    throw new Error('Not authenticated');
+  if (!sessionCookie) {
+    throw new Error('Not authenticated')
   }
 
-  // Make API call with auth token
+  // Make API call with session cookie
   const response = await fetch(`${API_BASE_URL}/api/dns-records/${recordId}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${session.access_token}`,
+      'Cookie': `javelina_session=${sessionCookie.value}`,
     },
+    cache: 'no-store',
   });
 
   const data = await response.json();
@@ -236,20 +240,21 @@ export async function bulkToggleDNSRecordStatus(
  */
 export async function getDNSRecords(zoneId: string): Promise<DNSRecord[]> {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/dns-records/zone/${zoneId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
+      cache: 'no-store',
     });
 
     const data = await response.json();

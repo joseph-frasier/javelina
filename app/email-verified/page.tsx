@@ -5,28 +5,98 @@ import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/auth-store';
+import { authApi } from '@/lib/api-client';
+import { useToastStore } from '@/lib/toast-store';
+
+// Session storage key to track if we've already processed verification
+const VERIFICATION_PROCESSED_KEY = 'email_verification_processed';
 
 export default function EmailVerifiedPage() {
   const router = useRouter();
-  const { isAuthenticated, user, initializeAuth } = useAuthStore();
+  const { isAuthenticated, initializeAuth, fetchProfile } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
+  const [hasProcessed, setHasProcessed] = useState(false);
+  const addToast = useToastStore((state) => state.addToast);
 
-  // Check authentication status when page loads
+  // Check authentication status and refresh verification status when page loads
   useEffect(() => {
-    const checkAuth = async () => {
-      await initializeAuth();
+    // CRITICAL: Check and set flag IMMEDIATELY (synchronously) to prevent race conditions
+    const alreadyProcessed = sessionStorage.getItem(VERIFICATION_PROCESSED_KEY);
+    
+    if (alreadyProcessed) {
+      console.log('[EMAIL-VERIFIED] Already processed in this session, redirecting...');
       setIsChecking(false);
-    };
-    checkAuth();
-  }, [initializeAuth]);
-
-  // If user is authenticated, auto-redirect to dashboard
-  useEffect(() => {
-    if (!isChecking && isAuthenticated && user) {
-      // Always redirect to dashboard - welcome guidance will show for first-time users
+      setHasProcessed(true);
       router.push('/');
+      return;
     }
-  }, [isAuthenticated, user, router, isChecking]);
+
+    // Set flag IMMEDIATELY before any async operations
+    // This prevents React Strict Mode's double-mount from causing duplicates
+    sessionStorage.setItem(VERIFICATION_PROCESSED_KEY, 'true');
+    console.log('[EMAIL-VERIFIED] Flag set, starting verification check...');
+
+    const checkAuthAndRefreshStatus = async () => {
+      try {
+        // First, initialize auth to check if user is logged in
+        await initializeAuth();
+
+        // If user is authenticated, force a refresh of their verification status from Auth0
+        if (useAuthStore.getState().isAuthenticated) {
+          console.log('[EMAIL-VERIFIED] User authenticated, refreshing verification status from Auth0...');
+          
+          // Wait a moment for Auth0's backend to fully process the verification
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Call the new backend endpoint that fetches status from Auth0 and updates session
+          const result = await authApi.refreshVerificationStatus();
+          
+          console.log('[EMAIL-VERIFIED] Refresh result:', result);
+          
+          setHasProcessed(true);
+          
+          if (result.email_verified) {
+            // Fetch fresh profile to update the UI
+            await fetchProfile();
+            
+            addToast('success', 'Email verified successfully!');
+            // Redirect to dashboard after a brief moment
+            setTimeout(() => {
+              // Clear the flag after redirect so user can verify again if needed
+              sessionStorage.removeItem(VERIFICATION_PROCESSED_KEY);
+              router.push('/');
+            }, 800);
+          } else {
+            // Auth0 says email is still not verified
+            addToast('warning', 'Email verification is still pending. Please check your inbox or try again.');
+            setTimeout(() => {
+              sessionStorage.removeItem(VERIFICATION_PROCESSED_KEY);
+              router.push('/');
+            }, 2000);
+          }
+        } else {
+          // Not authenticated - redirect to login
+          addToast('info', 'Please log in to continue.');
+          setTimeout(() => {
+            sessionStorage.removeItem(VERIFICATION_PROCESSED_KEY);
+            router.push('/login');
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('[EMAIL-VERIFIED] Error during verification check:', error);
+        addToast('error', 'Failed to verify email status. Redirecting to dashboard...');
+        setTimeout(() => {
+          sessionStorage.removeItem(VERIFICATION_PROCESSED_KEY);
+          router.push('/');
+        }, 2000);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkAuthAndRefreshStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   // Show loading state while checking
   if (isChecking) {

@@ -5,8 +5,6 @@
  * automatically attaching JWT tokens from Supabase auth and handling errors.
  */
 
-import { createClient } from '@/lib/supabase/client';
-
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -23,38 +21,24 @@ export class ApiError extends Error {
   }
 }
 
-// Get JWT token from Supabase auth
-async function getAuthToken(): Promise<string | null> {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || null;
-}
-
 // Generic API request function
 async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
   try {
-    // Get auth token
-    const token = await getAuthToken();
-
     // Build headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
 
-    // Add auth token if available
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Make request
+    // Make request with credentials for session cookies
     const url = `${API_BASE_URL}/api${endpoint}`;
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include', // Send/receive session cookies
     });
 
     // Parse response
@@ -72,6 +56,15 @@ async function apiRequest<T = any>(
       if (response.status === 403 && data?.error === 'Organization is disabled') {
         const errorMessage = data?.message || 'This organization is currently disabled. Contact support for assistance.';
         throw new ApiError(errorMessage, response.status, data);
+      }
+      
+      // Special handling for email verification errors
+      if (response.status === 403 && data?.code === 'EMAIL_NOT_VERIFIED') {
+        const errorMessage = data?.message || 'Please verify your email to continue';
+        const error = new ApiError(errorMessage, response.status, data);
+        // Add code to error details for frontend handling
+        (error as any).code = 'EMAIL_NOT_VERIFIED';
+        throw error;
       }
       
       const errorMessage = data?.error || data?.message || `Request failed with status ${response.status}`;
@@ -693,6 +686,41 @@ export interface DiscountRedemption {
   promotion_code?: PromotionCode;
   organization_name?: string;
 }
+
+// Auth API
+export const authApi = {
+  /**
+   * Resend email verification email
+   */
+  resendVerification: (): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    return apiClient.post('/auth/resend-verification');
+  },
+
+  /**
+   * Get current user's email verification status
+   */
+  getVerificationStatus: (): Promise<{
+    email_verified: boolean;
+    email: string;
+  }> => {
+    return apiClient.get('/auth/me/verification-status');
+  },
+
+  /**
+   * Refresh email verification status from Auth0 and sync to session/database
+   * Call this after user clicks verification link to ensure session is updated
+   */
+  refreshVerificationStatus: (): Promise<{
+    success: boolean;
+    email_verified: boolean;
+    message: string;
+  }> => {
+    return apiClient.post('/auth/refresh-verification-status');
+  },
+};
 
 // Tags API
 export const tagsApi = {

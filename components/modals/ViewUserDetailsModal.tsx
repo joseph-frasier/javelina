@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -39,19 +39,7 @@ export function ViewUserDetailsModal({
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<UserDetails | null>(null);
 
-  // Use provided userData if available, otherwise fetch
-  useEffect(() => {
-    if (isOpen && userId) {
-      if (userData) {
-        setUser(userData);
-        setLoading(false);
-      } else {
-        fetchUserDetails();
-      }
-    }
-  }, [isOpen, userId, userData]);
-
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     setLoading(true);
     try {
       const data = await adminApi.getUser(userId);
@@ -62,7 +50,19 @@ export function ViewUserDetailsModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, addToast]);
+
+  // Use provided userData if available, otherwise fetch
+  useEffect(() => {
+    if (isOpen && userId) {
+      if (userData) {
+        setUser(userData);
+        setLoading(false);
+      } else {
+        fetchUserDetails();
+      }
+    }
+  }, [isOpen, userId, userData, fetchUserDetails]);
 
   const InfoRow = ({ label, value }: { label: string; value: string | number | undefined | null }) => {
     if (value === undefined || value === null || value === '') {

@@ -1,5 +1,5 @@
+import { cookies } from 'next/headers';
 import { OrganizationClient } from './OrganizationClient';
-import { createClient } from '@/lib/supabase/server';
 import { getUserRoleInOrganization } from '@/lib/api/roles';
 import { getOrganizationAuditLogs, formatAuditLog } from '@/lib/api/audit';
 
@@ -7,26 +7,29 @@ import { getOrganizationAuditLogs, formatAuditLog } from '@/lib/api/audit';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-/**
- * NOTE: This server component uses direct Supabase calls for data fetching.
- * This is acceptable because:
- * 1. Auth checks (getUser) should remain direct per architecture
- * 2. Server components provide better initial load performance
- * 3. All mutations (create/update/delete) go through Express API via server actions
- */
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+/**
+ * Organization Page - BFF Architecture
+ * 
+ * This server component fetches data through the Express API backend instead of
+ * direct Supabase calls. This ensures Auth0 users (who don't have Supabase Auth
+ * sessions) can access the application.
+ * 
+ * Authentication: Uses session cookie set by Express backend
+ * Authorization: Handled by Express API using service role key
+ */
 export default async function OrganizationPage({ 
   params 
 }: { 
   params: Promise<{ orgId: string }> 
 }) {
   const { orgId } = await params;
-  const supabase = await createClient();
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('javelina_session');
 
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
+  // Check for session cookie (set by Express after Auth0 login)
+  if (!sessionCookie) {
     return (
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
         <h1 className="text-3xl font-bold text-orange-dark mb-4">Not Authenticated</h1>
@@ -35,21 +38,48 @@ export default async function OrganizationPage({
     );
   }
 
-  // Fetch organization
-  const { data: org, error: orgError } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('id', orgId)
-    .single();
+  // Fetch organization data from Express API
+  const orgResponse = await fetch(`${API_BASE_URL}/api/organizations/${orgId}`, {
+    method: 'GET',
+    headers: {
+      'Cookie': `javelina_session=${sessionCookie.value}`,
+    },
+    cache: 'no-store',
+  });
 
-  if (orgError || !org) {
+  if (!orgResponse.ok) {
+    const errorData = await orgResponse.json().catch(() => ({}));
+    
+    // Handle specific error cases
+    if (orgResponse.status === 404) {
+      return (
+        <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
+          <h1 className="text-3xl font-bold text-orange-dark mb-4">Organization Not Found</h1>
+          <p className="text-gray-slate">The organization does not exist or you don&apos;t have access to it.</p>
+        </div>
+      );
+    }
+    
+    if (orgResponse.status === 403) {
+      return (
+        <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
+          <h1 className="text-3xl font-bold text-orange-dark mb-4">Access Denied</h1>
+          <p className="text-gray-slate">You don&apos;t have access to this organization.</p>
+        </div>
+      );
+    }
+
+    // Generic error
     return (
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
-        <h1 className="text-3xl font-bold text-orange-dark mb-4">Organization Not Found</h1>
-        <p className="text-gray-slate">The organization does not exist or you don&apos;t have access to it.</p>
+        <h1 className="text-3xl font-bold text-orange-dark mb-4">Error Loading Organization</h1>
+        <p className="text-gray-slate">{errorData.error || 'An unexpected error occurred.'}</p>
       </div>
     );
   }
+
+  const orgResult = await orgResponse.json();
+  const org = orgResult.data || orgResult;
 
   // Fetch user's role in this organization
   const userRole = await getUserRoleInOrganization(orgId);
@@ -63,30 +93,32 @@ export default async function OrganizationPage({
     );
   }
 
-  // Fetch zones directly for this organization (no longer through environments)
-  const { data: allZones, count: zonesCount } = await supabase
-    .from('zones')
-    .select('id, name, organization_id, live', { count: 'exact' })
-    .eq('organization_id', orgId)
-    .order('created_at', { ascending: false });
+  // Fetch zones for this organization from Express API
+  const zonesResponse = await fetch(`${API_BASE_URL}/api/zones/organization/${orgId}`, {
+    method: 'GET',
+    headers: {
+      'Cookie': `javelina_session=${sessionCookie.value}`,
+    },
+    cache: 'no-store',
+  });
 
-  // Fetch records count for each zone
-  const zonesWithData = await Promise.all(
-    (allZones || []).map(async (zone) => {
-      const { count: recordsCount } = await supabase
-        .from('zone_records')
-        .select('id', { count: 'exact', head: true })
-        .eq('zone_id', zone.id);
-      
-      return {
-        id: zone.id,
-        name: zone.name,
-        organization_id: zone.organization_id,
-        status: (zone.live ? 'active' : 'inactive') as 'active' | 'inactive',
-        records_count: recordsCount || 0,
-      };
-    })
-  );
+  let zonesWithData = [];
+  let zonesCount = 0;
+
+  if (zonesResponse.ok) {
+    const zonesResult = await zonesResponse.json();
+    const allZones = zonesResult.data || zonesResult || [];
+    zonesCount = allZones.length;
+
+    // Transform zones data to match expected format
+    zonesWithData = allZones.map((zone: any) => ({
+      id: zone.id,
+      name: zone.name,
+      organization_id: zone.organization_id,
+      status: (zone.live ? 'active' : 'inactive') as 'active' | 'inactive',
+      records_count: zone.records_count || 0,
+    }));
+  }
 
   // Fetch recent activity from audit logs
   const auditLogs = await getOrganizationAuditLogs(orgId, 10);
@@ -99,7 +131,7 @@ export default async function OrganizationPage({
     description: org.description,
     role: userRole,
     is_active: org.is_active !== false, // Default to true if not set
-    zonesCount: zonesCount || 0,
+    zonesCount: zonesCount,
     zones: zonesWithData,
     recentActivity: recentActivity,
     created_at: org.created_at,
