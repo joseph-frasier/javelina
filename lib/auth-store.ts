@@ -62,7 +62,7 @@ interface AuthState {
   login: () => void
   loginWithOAuth: (provider: 'google' | 'github') => void
   logout: () => Promise<void>
-  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: string }>
   resetPassword: (email: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
   fetchProfile: () => Promise<void>
