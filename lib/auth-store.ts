@@ -225,7 +225,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         }
       },
 
-      // Login - redirect to Auth0 via Express (shows login screen)
+      // Login - redirect to Auth0 via Express
       login: () => {
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
@@ -236,23 +236,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           return
         }
         
-        // Redirect to Express auth endpoint which will redirect to Auth0 login screen
+        // Redirect to Express auth endpoint which will redirect to Auth0
         window.location.href = `${API_URL}/auth/login`
-      },
-
-      // Sign Up Redirect - redirect to Auth0 via Express (shows signup screen)
-      signUpRedirect: () => {
-        // Check if we're using placeholder Supabase credentials (development mode with mock data)
-        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
-        
-        if (isPlaceholderMode) {
-          // Mock mode - no-op for now (would need custom mock login flow)
-          console.warn('Mock mode signup not implemented for Auth0 migration')
-          return
-        }
-        
-        // Redirect to Express auth endpoint with screen_hint=signup to show signup screen
-        window.location.href = `${API_URL}/auth/login?screen_hint=signup`
       },
 
       // OAuth login - redirect to Auth0 (handles all OAuth providers)
