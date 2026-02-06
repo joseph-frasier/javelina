@@ -259,57 +259,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         }
       },
 
-      // Reset password
+      // Reset password - Auth0 handles this via Universal Login
       resetPassword: async (email: string, captchaToken?: string) => {
-        // Check if we're using placeholder Supabase credentials (development mode with mock data)
-        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
-        
-        if (isPlaceholderMode) {
-          // Mock mode - simulate sending email
-          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
-          
-          // Check if email exists in mock users
-          const userExists = mockUsers.some(u => u.email === email)
-          
-          if (!userExists) {
-            // Still return success to prevent email enumeration
-            return { success: true }
-          }
-          
-          return { success: true }
-        }
-        
-        // Real Supabase authentication
-        const supabase = createClient()
-
-        try {
-          // Use auth callback route which will handle the code exchange and redirect to reset-password
-          const resetUrl = `${window.location.origin}/auth/callback?type=recovery`
-
-          const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: resetUrl,
-            captchaToken,
-          })
-
-          if (error) {
-            console.error('Password reset error:', error)
-            // Return more specific error messages
-            if (error.message.includes('rate limit')) {
-              return { success: false, error: 'Too many requests. Please try again later.' }
-            }
-            if (error.message.includes('email')) {
-              return { success: false, error: 'Unable to send email. Please check your email address.' }
-            }
-            return { success: false, error: error.message }
-          }
-
-          return { success: true }
-        } catch (error: any) {
-          console.error('Password reset exception:', error)
-          return { 
-            success: false, 
-            error: error.message || 'Failed to send reset email. Please try again.' 
-          }
+        // With Auth0 migration, password resets happen through Auth0's password reset flow
+        // Users should use the "Forgot Password" link on the Auth0 login page
+        console.warn('Direct password reset not supported with Auth0 - use Universal Login forgot password flow');
+        return { 
+          success: false, 
+          error: 'Please use the forgot password link on the login page'
         }
       },
 
