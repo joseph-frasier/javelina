@@ -300,15 +300,17 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
         
+        // CRITICAL: Clear local state immediately before redirecting
+        // This prevents stale state from persisting after Auth0 redirects back
+        set({
+          user: null,
+          isAuthenticated: false,
+          profileReady: false,
+          profileError: null,
+        })
+        
         if (isPlaceholderMode) {
           // Mock mode - just clear the state and redirect
-          set({
-            user: null,
-            isAuthenticated: false,
-            profileReady: false,
-            profileError: null,
-          })
-          
           // Broadcast logout to other tabs
           try {
             const sync = getIdleSync()
