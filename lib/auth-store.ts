@@ -200,14 +200,18 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // Fetch user profile via Express API (uses session cookie)
       fetchProfile: async () => {
         try {
+          console.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
+          
           // Call backend API directly with credentials to send session cookie
           const response = await fetch(`${API_URL}/api/users/profile`, {
             credentials: 'include', // Send session cookie
           })
 
+          console.log('[AUTH] Profile response status:', response.status)
+
           if (!response.ok) {
             const errorText = await response.text()
-            console.error('Error fetching profile:', errorText)
+            console.error('[AUTH] Error fetching profile:', response.status, errorText)
             
             set({
               user: null,
@@ -219,29 +223,40 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           }
 
           const result = await response.json()
+          console.log('[AUTH] Profile data received:', result)
+
+          // Handle different response formats from backend
+          // Backend might return { data: {...} } or just {...}
+          const profileData = result.data || result
+
+          console.log('[AUTH] Profile data after unwrapping:', profileData)
 
           // Map organizations to Organization interface
-          const organizations: Organization[] = (result.organizations || []).map((org: any) => ({
+          const organizations: Organization[] = (profileData.organizations || []).map((org: any) => ({
             id: org.id,
             name: org.name,
             role: org.role,
           }))
 
+          const userProfile = {
+            ...profileData,
+            // Ensure required fields have non-null values
+            name: profileData.name || '',
+            email: profileData.email || '',
+            role: (profileData.role as UserRole) || 'user',
+            organizations,
+          }
+
+          console.log('[AUTH] Setting user profile:', userProfile)
+
           set({
-            user: {
-              ...result,
-              // Ensure required fields have non-null values
-              name: result.name || '',
-              email: result.email || '',
-              role: (result.role as UserRole) || 'user',
-              organizations,
-            },
+            user: userProfile,
             isAuthenticated: true,
             profileReady: true,
             profileError: null,
           })
         } catch (error) {
-          console.error('Error fetching profile:', error)
+          console.error('[AUTH] Error fetching profile:', error)
           set({
             user: null,
             isAuthenticated: false,
