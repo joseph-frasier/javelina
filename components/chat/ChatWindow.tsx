@@ -8,6 +8,8 @@ import { useAuthStore } from '@/lib/auth-store';
 import { supportApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 interface ChatWindowProps {
   isOpen: boolean;
   onClose: () => void;
@@ -503,12 +505,13 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
+            maxLength={MAX_MESSAGE_LENGTH}
             className="flex-1 px-4 py-2.5 rounded-full border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-all text-sm"
             disabled={loading || !isAuthenticated || !user}
           />
           <button
             onClick={handleSend}
-            disabled={loading || !inputValue.trim() || !isAuthenticated || !user}
+            disabled={loading || !inputValue.trim() || inputValue.length > MAX_MESSAGE_LENGTH || !isAuthenticated || !user}
             className="w-10 h-10 bg-orange hover:bg-orange-dark rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
@@ -527,6 +530,9 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             </svg>
           </button>
         </div>
+        <p className={`mt-1.5 text-right text-xs ${inputValue.length >= MAX_MESSAGE_LENGTH ? 'text-orange font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+          {inputValue.length} / {MAX_MESSAGE_LENGTH}
+        </p>
       </div>
 
       {/* Ticket Creation Modal */}
