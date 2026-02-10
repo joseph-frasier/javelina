@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { formatDistanceToNow } from 'date-fns';
-import { useUser } from '@/lib/hooks/useUser';
+import { useAuthStore } from '@/lib/auth-store';
 import { supportApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
 
@@ -64,7 +64,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   const [showEscalation, setShowEscalation] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [conversationSummary, setConversationSummary] = useState('');
-  const { user } = useUser();
+  const { user, isAuthenticated } = useAuthStore();
 
   const captureSnapshot = (): AppSnapshot => {
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -518,11 +518,11 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1 px-4 py-2.5 rounded-full border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-all text-sm"
-            disabled={loading || !user}
+            disabled={loading || !isAuthenticated || !user}
           />
           <button
             onClick={handleSend}
-            disabled={loading || !inputValue.trim() || !user}
+            disabled={loading || !inputValue.trim() || !isAuthenticated || !user}
             className="w-10 h-10 bg-orange hover:bg-orange-dark rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
