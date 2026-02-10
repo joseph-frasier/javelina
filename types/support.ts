@@ -207,6 +207,7 @@ export interface KBChunk {
   embedding: number[] | null;         // Vector embedding (1536 dimensions)
   tokens: number | null;              // Token count for the chunk
   created_at: string;
+  metadata?: Record<string, unknown> | null;  // Optional metadata from source system (source, articleId, locale, etc.)
 }
 
 // ============================================================================
