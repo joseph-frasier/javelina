@@ -60,6 +60,7 @@ interface AuthState {
   profileReady: boolean
   profileError: string | null
   login: () => void
+  signup: () => void
   loginWithOAuth: (provider: 'google' | 'github') => void
   logout: () => Promise<void>
   signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: string }>
@@ -279,6 +280,22 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         
         // Redirect to Express auth endpoint which will redirect to Auth0
         window.location.href = `${API_URL}/auth/login`
+      },
+
+      // Signup - redirect to Auth0 via Express with screen_hint=signup
+      signup: () => {
+        // Check if we're using placeholder Supabase credentials (development mode with mock data)
+        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        if (isPlaceholderMode) {
+          // Mock mode - no-op for now (would need custom mock signup flow)
+          console.warn('Mock mode signup not implemented for Auth0 migration')
+          return
+        }
+        
+        // Redirect to Express auth endpoint with screen_hint=signup parameter
+        // This tells Auth0 to show the signup screen instead of login screen
+        window.location.href = `${API_URL}/auth/login?screen_hint=signup`
       },
 
       // OAuth login - redirect to Auth0 (handles all OAuth providers)
