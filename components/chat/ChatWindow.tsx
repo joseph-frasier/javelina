@@ -433,39 +433,25 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                     )}
                   </div>
 
-                  {/* Resolution Buttons */}
-                  {message.resolutionNeeded && (
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        onClick={() => handleResolutionResponse(true)}
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-                      >
-                        Yes, resolved
-                      </button>
-                      <button
-                        onClick={() => handleResolutionResponse(false)}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
-                      >
-                        Not yet
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Escalation Options */}
-                  {showEscalation && message.nextAction?.type === 'offer_ticket' && (
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        onClick={handleCreateTicket}
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
-                      >
-                        Create Ticket
-                      </button>
-                      <button
-                        onClick={() => setShowEscalation(false)}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
-                      >
-                        Continue chatting
-                      </button>
+                  {/* Resolution & Escalation Buttons - side by side */}
+                  {(message.resolutionNeeded || (showEscalation && message.nextAction?.type === 'offer_ticket')) && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {message.resolutionNeeded && (
+                        <button
+                          onClick={() => handleResolutionResponse(true)}
+                          className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                        >
+                          Yes, resolved
+                        </button>
+                      )}
+                      {showEscalation && message.nextAction?.type === 'offer_ticket' && (
+                        <button
+                          onClick={handleCreateTicket}
+                          className="px-3 py-1.5 text-xs font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
+                        >
+                          Create Ticket
+                        </button>
+                      )}
                     </div>
                   )}
 
