@@ -56,7 +56,7 @@ interface AppSnapshot {
 export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [shouldRender, setShouldRender] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -349,12 +349,20 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     setMessages(prev => [...prev, confirmMessage]);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
+
+  // Auto-resize textarea as user types
+  useEffect(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 176)}px`;
+  }, [inputValue]);
 
   if (!shouldRender) return null;
 
@@ -497,26 +505,27 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
 
       {/* Input Area */}
       <div className="p-4 border-t border-gray-light dark:border-gray-600">
-        <div className="flex items-center gap-2">
-          <input
+        <div className="relative">
+          <textarea
             ref={inputRef}
-            type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             maxLength={MAX_MESSAGE_LENGTH}
-            className="flex-1 px-4 py-2.5 rounded-full border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-all text-sm"
+            rows={2}
+            className="w-full resize-none pr-12 px-4 py-4 min-h-[4.5rem] rounded-2xl border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-all text-sm overflow-y-auto"
+            style={{ maxHeight: '11rem' }}
             disabled={loading || !isAuthenticated || !user}
           />
           <button
             onClick={handleSend}
             disabled={loading || !inputValue.trim() || inputValue.length > MAX_MESSAGE_LENGTH || !isAuthenticated || !user}
-            className="w-10 h-10 bg-orange hover:bg-orange-dark rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute bottom-4 right-3 w-8 h-8 bg-orange hover:bg-orange-dark rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
             <svg
-              className="w-5 h-5 text-white"
+              className="w-4 h-4 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
