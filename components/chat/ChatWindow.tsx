@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/lib/auth-store';
-import { supportApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
+import { supportApi, zonesApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
 
 const MAX_MESSAGE_LENGTH = 2000;
@@ -66,12 +67,39 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   const [showEscalation, setShowEscalation] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [conversationSummary, setConversationSummary] = useState('');
+  const [zoneContext, setZoneContext] = useState<{ zoneId: string; zoneName: string } | null>(null);
+  const pathname = usePathname();
   const { user, isAuthenticated } = useAuthStore();
 
+  // Fetch zone name when on a zone page so AI can use domain (e.g., arrakis.com) instead of ID
+  useEffect(() => {
+    if (!pathname) return;
+    const zoneMatch = pathname.match(/\/zone\/([^\/]+)/);
+    if (!zoneMatch) {
+      setZoneContext(null);
+      return;
+    }
+    const zoneId = zoneMatch[1];
+    zonesApi
+      .get(zoneId)
+      .then((zone: { id: string; name: string }) => {
+        setZoneContext({ zoneId: zone.id, zoneName: zone.name });
+      })
+      .catch(() => setZoneContext({ zoneId, zoneName: zoneId })); // Fallback to ID if fetch fails
+  }, [pathname]);
+
   const captureSnapshot = (): AppSnapshot => {
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    const searchParams = typeof window !== 'undefined' ? 
+    const route = typeof window !== 'undefined' ? window.location.pathname : '';
+    const searchParams = typeof window !== 'undefined' ?
       new URLSearchParams(window.location.search) : new URLSearchParams();
+
+    // Derive view from route so AI accurately describes the page
+    let view = 'ChatWindow';
+    if (route.match(/^\/(?:org|organization)\/[^/]+$/)) view = 'OrgDashboard';
+    else if (route.match(/^\/zone\/[^/]+/)) view = 'ZoneDetail';
+    else if (route.startsWith('/settings')) view = 'Settings';
+    else if (route.startsWith('/profile')) view = 'Profile';
+    else if (route.startsWith('/admin')) view = 'Admin';
 
     // Detect theme correctly - check for theme-dark class or localStorage
     let theme: 'light' | 'dark' = 'light';
@@ -81,7 +109,6 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       } else if (document.documentElement.classList.contains('theme-light')) {
         theme = 'light';
       } else {
-        // Fallback to localStorage if class not found
         try {
           const stored = localStorage.getItem('javelina:theme');
           if (stored === 'dark' || stored === 'light') {
@@ -94,15 +121,17 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     }
 
     return {
-      route: pathname,
-      view: 'ChatWindow',
+      route,
+      view,
       ui_state: {
         theme,
         tab: searchParams.get('tab') || undefined,
         filter: searchParams.get('filter') || undefined,
       },
       entities_on_screen: {
-        org_id: orgId,
+        org_id: orgId ?? undefined,
+        zone_id: zoneContext?.zoneId ?? null,
+        zone_name: zoneContext?.zoneName ?? null,
         user_id: user?.id,
       },
     };
