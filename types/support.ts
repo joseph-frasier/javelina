@@ -36,7 +36,8 @@ export interface AppSnapshot {
   };
   entities_on_screen: {
     org_id?: string;
-    zone_id?: string;
+    zone_id?: string | null;   // Zone UUID on zone pages; null on org/settings/profile
+    zone_name?: string | null;  // Human-readable zone domain (e.g., arrakis.com); null on non-zone pages
     record_id?: string;
     user_id?: string;
     invoice_id?: string;
