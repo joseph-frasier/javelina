@@ -240,8 +240,8 @@ export async function submitFeedback(params: {
     name: 'Feedback User',
   };
   
-  // Map category to priority
-  const priorityMap = {
+  // Map category to priority (1=low, 2=medium, 3=high, 4=urgent)
+  const priorityMap: Record<string, 1 | 2 | 3 | 4> = {
     bug: 3, // High
     'feature-request': 2, // Medium
     question: 2, // Medium
@@ -258,7 +258,7 @@ ${params.description}
 ${params.userAgent ? `**User Agent:** ${params.userAgent}` : ''}
     `.trim(),
     email: user.email,
-    priority: priorityMap[params.category],
+    priority: priorityMap[params.category] ?? 2,
     tags: [params.category, 'feedback-form'],
     custom_fields: {
       cf_javelina_user_id: user.id,

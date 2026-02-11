@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/lib/auth-store';
 import { supportApi, zonesApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
+import type { AppSnapshot } from '@/types/support';
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -27,31 +28,6 @@ interface Message {
   citations?: SupportCitation[];
   nextAction?: SupportChatResponse['nextAction'];
   resolutionNeeded?: boolean;
-}
-
-interface AppSnapshot {
-  route: string;
-  view: string;
-  ui_state: {
-    theme?: 'light' | 'dark';
-    modal_open?: boolean;
-    tab?: string;
-    filter?: string;
-    sort?: string;
-    search_query?: string;
-  };
-  entities_on_screen: {
-    org_id?: string;
-    zone_id?: string;
-    record_id?: string;
-    user_id?: string;
-  };
-  user_action?: string;
-  errors?: Array<{
-    code: string;
-    field?: string;
-    message: string;
-  }>;
 }
 
 export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
