@@ -266,54 +266,6 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     }
   };
 
-  const handleResolutionResponse = async (resolved: boolean) => {
-    if (!conversationId) return;
-    if (!user) return;
-
-    try {
-      await supportApi.submitFeedback({
-        conversationId,
-        resolved,
-        userId: user.id,
-        orgId,
-        tier,
-      });
-
-      if (resolved) {
-        const thankYouMessage: Message = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: "Great! I'm glad I could help. Is there anything else you need assistance with?",
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, thankYouMessage]);
-      } else {
-        setAttemptCount(prev => prev + 1);
-        if (attemptCount >= 1) {
-          // After 2 attempts, escalate
-          setShowEscalation(true);
-          const escalationMessage: Message = {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: "I understand this hasn't fully resolved your issue. Would you like me to create a support ticket so our team can help you directly?",
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, escalationMessage]);
-        } else {
-          const clarifyMessage: Message = {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: "I understand. Can you provide more details about what you're trying to do?",
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, clarifyMessage]);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to submit feedback:', error);
-    }
-  };
-
   const handleCreateTicket = () => {
     if (!user) return;
 
@@ -363,6 +315,9 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     textarea.style.height = 'auto';
     textarea.style.height = `${Math.min(textarea.scrollHeight, 176)}px`;
   }, [inputValue]);
+
+  const lastUserMessage = messages.filter((m) => m.role === 'user').pop()?.content;
+  const initialSubject = lastUserMessage?.substring(0, 60).trim() || 'Support Request from Chat';
 
   if (!shouldRender) return null;
 
@@ -443,25 +398,15 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                     )}
                   </div>
 
-                  {/* Resolution & Escalation Buttons - side by side */}
-                  {(message.resolutionNeeded || (showEscalation && message.nextAction?.type === 'offer_ticket')) && (
+                  {/* Create Ticket button only - feedback buttons removed for now */}
+                  {showEscalation && message.nextAction?.type === 'offer_ticket' && (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {message.resolutionNeeded && (
-                        <button
-                          onClick={() => handleResolutionResponse(true)}
-                          className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-                        >
-                          Yes, resolved
-                        </button>
-                      )}
-                      {showEscalation && message.nextAction?.type === 'offer_ticket' && (
-                        <button
-                          onClick={handleCreateTicket}
-                          className="px-3 py-1.5 text-xs font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
-                        >
-                          Create Ticket
-                        </button>
-                      )}
+                      <button
+                        onClick={handleCreateTicket}
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
+                      >
+                        Create Ticket
+                      </button>
                     </div>
                   )}
 
@@ -551,6 +496,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
           onClose={handleTicketModalClose}
           onSuccess={handleTicketSuccess}
           conversationSummary={conversationSummary}
+          initialSubject={initialSubject}
           snapshot={captureSnapshot()}
           sessionId={conversationId}
           userId={user.id}
