@@ -848,6 +848,7 @@ export const supportApi = {
     page_url: string;
     user_id: string;
     org_id?: string;
+    session_id?: string;
   }): Promise<{ success: boolean; ticket_id?: string }> => {
     return apiClient.post('/support/log-bug', data);
   },

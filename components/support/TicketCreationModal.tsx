@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { supportApi, ApiError } from '@/lib/api-client';
 
@@ -9,10 +9,17 @@ interface TicketCreationModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   conversationSummary: string;
+  initialSubject?: string;
   snapshot?: any;
   sessionId?: string;
   userId: string;
   orgId?: string;
+}
+
+const DEFAULT_SUBJECT = 'Support Request from Chat';
+
+function formatDescription(conversationSummary: string) {
+  return `Conversation Summary:\n\n${conversationSummary}\n\n---\n\nPlease provide additional details about your issue below:`;
 }
 
 export function TicketCreationModal({
@@ -20,15 +27,22 @@ export function TicketCreationModal({
   onClose,
   onSuccess,
   conversationSummary,
+  initialSubject,
   snapshot,
   sessionId,
   userId,
   orgId,
 }: TicketCreationModalProps) {
-  const [subject, setSubject] = useState('Support Request from Chat');
-  const [description, setDescription] = useState(
-    `Conversation Summary:\n\n${conversationSummary}\n\n---\n\nPlease provide additional details about your issue below:`
-  );
+  const [subject, setSubject] = useState(DEFAULT_SUBJECT);
+  const [description, setDescription] = useState(formatDescription(conversationSummary));
+
+  // Pre-populate form when modal opens with chat context
+  useEffect(() => {
+    if (isOpen) {
+      setSubject(initialSubject?.trim() || DEFAULT_SUBJECT);
+      setDescription(formatDescription(conversationSummary));
+    }
+  }, [isOpen, conversationSummary, initialSubject]);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +79,7 @@ export function TicketCreationModal({
         page_url: typeof window !== 'undefined' ? window.location.href : '',
         user_id: userId,
         org_id: orgId,
+        session_id: sessionId,
       });
 
       setSuccess(true);
@@ -78,8 +93,8 @@ export function TicketCreationModal({
         }
         // Reset form state after close animation completes
         setTimeout(() => {
-          setSubject('Support Request from Chat');
-          setDescription(`Conversation Summary:\n\n${conversationSummary}\n\n---\n\nPlease provide additional details about your issue below:`);
+          setSubject(DEFAULT_SUBJECT);
+          setDescription(formatDescription(conversationSummary));
           setSuccess(false);
           setError(null);
         }, 300);
@@ -108,8 +123,8 @@ export function TicketCreationModal({
     onClose();
     // Reset form state after close animation completes
     setTimeout(() => {
-      setSubject('Support Request from Chat');
-      setDescription(`Conversation Summary:\n\n${conversationSummary}\n\n---\n\nPlease provide additional details about your issue below:`);
+      setSubject(DEFAULT_SUBJECT);
+      setDescription(formatDescription(conversationSummary));
       setError(null);
       setSuccess(false);
     }, 300);
