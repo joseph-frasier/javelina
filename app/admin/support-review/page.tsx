@@ -311,7 +311,7 @@ export default function SupportReviewPage() {
               <>
                 {/* Mobile Card View */}
                 <div className="sm:hidden space-y-3">
-                  {conversations.map((conv) => {
+                  {conversations.map((conv: SupportConversation) => {
                     const createdDate = formatDateWithRelative(conv.created_at);
                     return (
                       <Card key={conv.id} className="p-4">
@@ -388,7 +388,7 @@ export default function SupportReviewPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {conversations.map((conv) => {
+                      {conversations.map((conv: SupportConversation) => {
                         const createdDate = formatDateWithRelative(conv.created_at);
                         return (
                           <tr key={conv.id} className="border-b border-gray-light dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">

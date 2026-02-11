@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
-import { supportApi } from '@/lib/api-client';
+import { supportApi, type SupportMessage } from '@/lib/api-client';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -255,7 +255,7 @@ export default function ConversationDetailPage() {
               Conversation Messages
             </h2>
             <div className="space-y-4">
-              {messages.map((message, index) => {
+              {messages.map((message: SupportMessage, index: number) => {
                 const messageDate = formatDateWithRelative(message.created_at);
                 const isUser = message.sender === 'user';
                 
