@@ -12,9 +12,17 @@ import { Logo } from '@/components/ui/Logo';
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, login } = useAuthStore();
+  const { user, isAuthenticated, isLoading, login, signup } = useAuthStore();
   const organizations = user?.organizations || [];
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Force light mode on landing page
+  useEffect(() => {
+    if (!isAuthenticated && !user) {
+      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.add('theme-light');
+    }
+  }, [isAuthenticated, user]);
 
   // Redirect authenticated users with orgs to their most recent org page
   useEffect(() => {
@@ -73,7 +81,7 @@ export default function HomePage() {
               <Button
                 variant="primary"
                 size="lg"
-                onClick={login}
+                onClick={signup}
                 className="w-full sm:w-auto px-8 py-4 text-lg font-semibold"
               >
                 Get Started
@@ -146,7 +154,7 @@ export default function HomePage() {
             <Button
               variant="secondary"
               size="lg"
-              onClick={login}
+              onClick={signup}
               className="bg-white text-orange hover:bg-gray-50 px-8 py-4 text-lg font-semibold"
             >
               Get Started Now

@@ -1,10 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIdleLogout } from '@/lib/hooks/useIdleLogout';
-import { createClient } from '@/lib/supabase/client';
 import { getIdleSync } from '@/lib/idle/idleSync';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { IDLE_CONFIG } from '@/lib/idle/config';
@@ -13,17 +12,19 @@ import { IDLE_CONFIG } from '@/lib/idle/config';
  * IdleLogoutGuard - Monitors user activity and logs out after inactivity
  * 
  * Behavior:
- * - Normal routes: Shows warning at 58 minutes, logs out at 60 minutes
+ * - Normal routes: Auto-logs out at 60 minutes (no warning modal)
  * - Admin routes (/admin/*): Logs out at 15 minutes with no warning
  * - Auth pages (/login, /signup, etc.): Completely disabled
  * 
  * Note: Admin routes use separate cookie-based auth (not useAuthStore), 
  * so we enable the guard based on route protection rather than auth state.
+ * 
+ * Warning modal UI is preserved below for future repurposing but is not currently shown.
  */
 export function IdleLogoutGuard() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, logout: authStoreLogout } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [showWarningModal, setShowWarningModal] = useState(false);
 
   // Determine if we should enable idle monitoring and which mode
@@ -47,7 +48,8 @@ export function IdleLogoutGuard() {
   
   // Configure timeout based on route type
   const idleTimeout = isAdminRoute ? IDLE_CONFIG.ADMIN_IDLE_TIMEOUT_MS : IDLE_CONFIG.IDLE_TIMEOUT_MS;
-  const warningTimeout = isAdminRoute ? undefined : IDLE_CONFIG.WARNING_MS;
+  // Warning modal disabled - preserved for future use
+  // const warningTimeout = isAdminRoute ? undefined : IDLE_CONFIG.WARNING_MS;
 
   /**
    * Handle warning (58 minutes idle for normal routes, no warning for admin)
@@ -79,55 +81,31 @@ export function IdleLogoutGuard() {
       return;
     }
 
-    // Normal routes: Attempt to sign out of Supabase
+    // Normal routes: Use Auth0 logout flow
     try {
-      // Check if we're in placeholder mode
-      const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co';
+      // Broadcast logout to other tabs
+      const sync = getIdleSync();
+      sync.publishLogout();
       
-      if (isPlaceholderMode) {
-        // Use auth store logout for placeholder mode
-        await authStoreLogout();
-      } else {
-        // Real Supabase sign out
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        
-        // Also clear auth store
-        await authStoreLogout();
-      }
-    } catch (error) {
-      console.error('[IdleLogoutGuard] Sign out error:', error);
-      // Continue with redirect even on error
-    }
-
-    // Broadcast logout to other tabs and clear stale timestamp
-    const sync = getIdleSync();
-    sync.publishLogout();
-    
-    // Clear the stale lastActivityAt timestamp to prevent login loops
-    try {
+      // Clear activity timestamp
       localStorage.removeItem('javelina-last-activity');
     } catch (error) {
-      console.error('[IdleLogoutGuard] Failed to clear last activity:', error);
+      console.error('[IdleLogoutGuard] Failed to clear activity:', error);
     }
 
-    // Small delay to ensure session is fully cleared before redirect
-    // This prevents middleware from seeing stale authenticated session
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Redirect to login
-    router.replace('/login');
-  }, [isAdminRoute, authStoreLogout, router]);
+    // Redirect to /api/logout which handles Auth0 logout
+    // This route calls Express /auth/logout and redirects to Auth0 logout URL
+    window.location.href = '/api/logout';
+  }, [isAdminRoute, router]);
 
   /**
    * Use idle logout hook
+   * Note: warningMs and onWarning not passed - warning modal disabled but preserved for future use
    */
   const { reset, triggerLogout } = useIdleLogout({
     enabled,
     mode,
     idleTimeoutMs: idleTimeout,
-    warningMs: warningTimeout,
-    onWarning: handleWarning,
     onLogout: handleLogout,
   });
 

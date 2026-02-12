@@ -89,6 +89,8 @@ router.get('/login', (req, res) => {
   });
   
   // Construct Auth0 authorization URL
+  // ⚠️ CRITICAL: audience parameter is REQUIRED if using Auth0 API
+  // Without it, users may see consent screens or authentication fails
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: process.env.AUTH0_CLIENT_ID,
@@ -97,7 +99,7 @@ router.get('/login', (req, res) => {
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
-    audience: process.env.AUTH0_AUDIENCE
+    audience: process.env.AUTH0_AUDIENCE  // ⚠️ REQUIRED - DO NOT OMIT!
   });
   
   const authUrl = `https://${process.env.AUTH0_DOMAIN}/authorize?${params.toString()}`;
