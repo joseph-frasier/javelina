@@ -146,6 +146,18 @@ export default function AnalyticsPage() {
         }
       `}</style>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
+        {/* Coming Soon Banner */}
+        <div className="mb-6 w-fit mx-auto p-4 sm:p-6 rounded-lg bg-orange/10 dark:bg-orange/20 border border-orange/30 dark:border-orange/40 text-center">
+          <p className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
+            Coming soon
+          </p>
+          <p className="mt-1 text-sm text-gray-slate dark:text-gray-400">
+            Analytics is under development. Check back later for DNS activity and performance insights.
+          </p>
+        </div>
+
+        {/* Grayed-out content - non-interactive */}
+        <div className="pointer-events-none select-none opacity-60">
         {/* Page Header */}
         <div className="mb-4 sm:mb-6">
           <h1 className="font-black text-2xl sm:text-3xl md:text-4xl text-orange-dark dark:text-orange mb-2">
@@ -345,6 +357,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </Card>
+        </div>
       </div>
       </>
     </ProtectedRoute>

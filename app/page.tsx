@@ -5,22 +5,70 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/auth-store';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import { Logo } from '@/components/ui/Logo';
+import Image from 'next/image';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function HomePage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, login, signup } = useAuthStore();
   const organizations = user?.organizations || [];
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const landingRef = useRef<HTMLDivElement>(null);
 
-  // Force light mode on landing page
+  // Scroll listener for navbar glassmorphism effect
+  useEffect(() => {
+    if (isAuthenticated || user) return;
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isAuthenticated, user]);
+
+  // GSAP scroll-triggered animations for the landing page
+  useGSAP(() => {
+    if (!landingRef.current) return;
+
+    // Hero entrance
+    gsap.from('.hero-content > *', {
+      opacity: 0, y: 40, duration: 0.9, stagger: 0.12, ease: 'power3.out',
+    });
+    gsap.from('.hero-visual', {
+      opacity: 0, x: 60, duration: 1.2, delay: 0.3, ease: 'power3.out',
+    });
+
+    // Float the dashboard mockup
+    gsap.to('.floating-dashboard', {
+      y: -12, duration: 3, ease: 'power1.inOut', repeat: -1, yoyo: true,
+    });
+
+    // Scroll-triggered reveals using ScrollTrigger batch
+    const revealElements = landingRef.current.querySelectorAll('.feature-card, .step-item, .social-proof-inner, .cta-content');
+    revealElements.forEach((el) => {
+      gsap.set(el, { opacity: 0, y: 30 });
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+        onEnter: () => {
+          gsap.to(el, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' });
+        },
+      });
+    });
+  }, { scope: landingRef });
+
+  // Force dark mode on landing page
   useEffect(() => {
     if (!isAuthenticated && !user) {
-      document.documentElement.classList.remove('theme-dark');
-      document.documentElement.classList.add('theme-light');
+      document.documentElement.classList.remove('theme-light');
+      document.documentElement.classList.add('theme-dark');
     }
   }, [isAuthenticated, user]);
 
@@ -45,135 +93,370 @@ export default function HomePage() {
     );
   }
 
-  // Show sign-in page for unauthenticated users (after logout or first visit)
+  // Show landing page for unauthenticated users (after logout or first visit)
   if (!isAuthenticated && !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Navigation */}
-        <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+      <div ref={landingRef} className="min-h-screen bg-[#0B0C0D] overflow-x-hidden">
+        {/* Marquee keyframes for social proof scroll */}
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
+
+        {/* ====== 1. NAVBAR ====== */}
+        <nav
+          className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+            scrolled
+              ? 'bg-[#0B0C0D]/90 backdrop-blur-md border-b border-white/10 shadow-sm shadow-black/20'
+              : 'bg-transparent'
+          }`}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <Logo width={120} height={32} />
-              <Button
-                variant="outline"
-                size="md"
-                onClick={login}
-              >
-                Login
-              </Button>
+            <div className="flex items-center justify-between h-16 sm:h-20">
+              <Image
+                src="/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png"
+                alt="Javelina"
+                width={130}
+                height={35}
+                priority
+              />
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={login}
+                  className="text-sm font-medium text-gray-400 hover:text-orange transition-colors hidden sm:inline-block"
+                >
+                  Sign in
+                </button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={signup}
+                  className="rounded-full px-5"
+                >
+                  Get Started
+                </Button>
+              </div>
             </div>
           </div>
         </nav>
 
-        {/* Hero Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 sm:pt-24 sm:pb-20">
-          <div className="text-center">
-            <h1 className="font-black text-5xl sm:text-6xl lg:text-7xl text-gray-900 mb-6 tracking-tight">
-              DNS Management
-              <br />
-              <span className="text-orange">Made Simple</span>
-            </h1>
-            <p className="text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto mb-10 font-light leading-relaxed">
-              Powerful DNS infrastructure management for modern teams.
-              Secure, fast, and built for scale.
+        {/* ====== 2. HERO ====== */}
+        <section className="relative pt-28 sm:pt-36 pb-16 sm:pb-24 overflow-hidden">
+          {/* Subtle background decoration */}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <div className="absolute top-20 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-orange/10 to-transparent rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-orange/[0.06] to-transparent rounded-full blur-3xl" />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              {/* Left: Text content */}
+              <div className="hero-content">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange/15 rounded-full mb-6">
+                  <span className="w-2 h-2 rounded-full bg-orange animate-pulse" />
+                  <span className="text-sm font-medium text-orange">Now in Beta</span>
+                </div>
+
+                <h1 className="font-condensed font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05]">
+                  DNS that
+                  <br />
+                  <span className="text-orange">just works.</span>
+                </h1>
+
+                <p className="mt-6 text-lg sm:text-xl text-gray-400 max-w-lg leading-relaxed font-light">
+                  The modern platform for managing DNS infrastructure.
+                  Built for teams that need speed, security, and total control.
+                </p>
+
+                <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
+                  <button
+                    onClick={signup}
+                    className="inline-flex items-center bg-orange text-white hover:brightness-110 rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
+                  >
+                    Get started
+                    <svg className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => document.querySelector('.features-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-gray-500 hover:text-orange font-medium text-base transition-colors flex items-center gap-2 px-2 py-4"
+                  >
+                    Learn more
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right: Floating dashboard mockup */}
+              <div className="hero-visual hidden lg:flex justify-end">
+                <div className="floating-dashboard relative">
+                  {/* Main dashboard card */}
+                  <div className="bg-[#1a1b1e] rounded-2xl shadow-2xl border border-white/10 p-6 w-[420px]">
+                    {/* Window chrome */}
+                    <div className="flex items-center gap-2 mb-5">
+                      <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                      <div className="w-3 h-3 rounded-full bg-green-400/80" />
+                      <span className="ml-3 text-xs text-gray-500 font-mono">javelina.app/zones</span>
+                    </div>
+                    {/* Zone rows */}
+                    <div className="space-y-3">
+                      {[
+                        { name: 'example.com', records: 12, status: 'bg-green-500' },
+                        { name: 'api.startup.io', records: 8, status: 'bg-green-500' },
+                        { name: 'cdn.enterprise.co', records: 24, status: 'bg-yellow-500' },
+                        { name: 'mail.brand.dev', records: 6, status: 'bg-green-500' },
+                      ].map((zone, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${zone.status}`} />
+                            <span className="text-sm font-medium text-gray-300">{zone.name}</span>
+                          </div>
+                          <span className="text-xs bg-orange/15 text-orange px-2 py-1 rounded-md font-medium">
+                            {zone.records} records
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Floating accent card - bottom left */}
+                  <div className="absolute -bottom-6 -left-6 bg-gradient-to-br from-orange to-[#c45a0d] text-white rounded-xl p-4 shadow-xl shadow-orange/20">
+                    <div className="text-2xl font-black">99.99%</div>
+                    <div className="text-xs text-white/70">Uptime SLA</div>
+                  </div>
+
+                  {/* Floating badge - top right */}
+                  <div className="absolute -top-3 -right-3 bg-[#1a1b1e] border border-white/10 rounded-lg px-3 py-2 shadow-lg">
+                    <div className="text-xs text-gray-500">Propagation</div>
+                    <div className="text-sm font-bold text-green-400">&lt;50ms</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ====== 3. SOCIAL PROOF BAR ====== */}
+        <section className="social-proof py-10 border-y border-white/5">
+          <div className="social-proof-inner">
+            <p className="text-center text-sm text-gray-600 font-medium uppercase tracking-widest mb-6">
+              Trusted by teams managing critical infrastructure
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={signup}
-                className="w-full sm:w-auto px-8 py-4 text-lg font-semibold"
+            <div className="relative overflow-hidden">
+              <div
+                className="flex gap-16 items-center"
+                style={{ animation: 'marquee 30s linear infinite', width: 'max-content' }}
               >
-                Get Started
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={login}
-                className="w-full sm:w-auto px-8 py-4 text-lg"
-              >
-                Login
-              </Button>
+                {/* Duplicate set for seamless infinite loop */}
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex gap-16 items-center px-8">
+                    {['Irongrove', 'DataVault', 'BlueHaven', 'CloudPeak', 'NetForge', 'Sentinel'].map((name) => (
+                      <span
+                        key={`${setIdx}-${name}`}
+                        className="text-xl font-bold text-white/15 whitespace-nowrap tracking-tight select-none"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Features Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Lightning Fast</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Instant DNS propagation and real-time updates across your entire infrastructure.
+        {/* ====== 4. FEATURES ====== */}
+        <section className="features-section py-20 sm:py-28">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
+                Everything you need to
+                <br />
+                <span className="text-orange">manage DNS at scale</span>
+              </h2>
+              <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-light">
+                From single zones to complex multi-domain infrastructure,
+                Javelina gives your team full control.
               </p>
             </div>
 
-            {/* Feature 2 */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Feature 1 */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange to-orange/80 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Lightning Fast</h3>
+                <p className="text-gray-400 leading-relaxed">
+                  Sub-50ms propagation with real-time updates. Your DNS changes go live instantly across global infrastructure.
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Enterprise Security</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Multi-factor authentication, audit logs, and granular access controls.
-              </p>
-            </div>
 
-            {/* Feature 3 */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              {/* Feature 2 */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange to-orange/80 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Enterprise Security</h3>
+                <p className="text-gray-400 leading-relaxed">
+                  256-bit encryption, comprehensive audit trails, and granular role-based access controls for every team member.
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Team Collaboration</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Built for teams with role-based permissions and seamless collaboration.
-              </p>
+
+              {/* Feature 3 */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange to-orange/80 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Team Collaboration</h3>
+                <p className="text-gray-400 leading-relaxed">
+                  Manage zones across organizations with role-based permissions, team workspaces, and real-time collaboration.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Social Proof / Stats */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="bg-gradient-to-r from-orange to-orange-dark rounded-3xl p-12 text-center text-white shadow-xl">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Ready to simplify your DNS management?
+        {/* ====== 5. HOW IT WORKS ====== */}
+        <section className="how-it-works py-20 sm:py-28 bg-white/[0.02]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
+                Get started in <span className="text-orange">minutes</span>
+              </h2>
+              <p className="mt-4 text-lg text-gray-500 font-light">
+                Three simple steps to take control of your DNS.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+              {/* Connecting line (desktop only) */}
+              <div className="hidden md:block absolute top-16 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-orange/20 via-orange/40 to-orange/20" aria-hidden="true" />
+
+              {[
+                { num: '1', title: 'Create your account', desc: 'Sign up in seconds and start managing your DNS right away.' },
+                { num: '2', title: 'Add your zones', desc: 'Import existing DNS zones or create new ones. We support all standard record types.' },
+                { num: '3', title: 'Manage with ease', desc: 'Use our intuitive dashboard to manage records, monitor health, and collaborate with your team.' },
+              ].map((step, i) => (
+                <div key={i} className="step-item text-center relative">
+                  <div className="w-14 h-14 bg-orange text-white rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-black shadow-lg shadow-orange/25 relative z-10">
+                    {step.num}
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+                  <p className="text-gray-500 leading-relaxed max-w-xs mx-auto">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ====== 6. CTA ====== */}
+        <section className="cta-section py-20 sm:py-28 relative overflow-hidden">
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-[#c45a0d]" />
+          {/* Radial glow */}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl" />
+          </div>
+
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative cta-content">
+            <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight mb-4">
+              Ready to take control of your DNS?
             </h2>
-            <p className="text-xl mb-8 text-orange-50">
+            <p className="text-lg sm:text-xl text-white/80 mb-10 font-light max-w-2xl mx-auto">
               Join teams already using Javelina to manage their infrastructure.
+              Get started in minutes, no credit card required.
             </p>
-            <Button
-              variant="secondary"
-              size="lg"
+            <button
               onClick={signup}
-              className="bg-white text-orange hover:bg-gray-50 px-8 py-4 text-lg font-semibold"
+              className="inline-flex items-center bg-[#0B0C0D] text-white hover:bg-[#1a1b1e] rounded-full px-10 py-4 text-lg font-bold shadow-xl shadow-black/20 hover:shadow-2xl transition-all group"
             >
-              Get Started Now
-            </Button>
+              Get started
+              <svg className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </button>
           </div>
-        </div>
+        </section>
 
-        {/* Footer */}
-        <footer className="border-t border-gray-200 bg-white mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="flex items-center space-x-2 mb-4 md:mb-0">
-                <Logo width={100} height={27} />
-                <span className="text-gray-600">© 2026 Javelina DNS</span>
+        {/* ====== 7. FOOTER ====== */}
+        <footer className="bg-[#0B0C0D] border-t border-white/10 py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+              {/* Brand */}
+              <div className="col-span-2 md:col-span-1">
+                <Image
+                  src="/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png"
+                  alt="Javelina"
+                  width={110}
+                  height={30}
+                />
+                <p className="mt-4 text-sm text-gray-500 leading-relaxed">
+                  The modern platform for DNS infrastructure management.
+                </p>
               </div>
-              <div className="flex space-x-6 text-gray-600">
-                <a href="#" className="hover:text-orange transition-colors">Documentation</a>
-                <a href="#" className="hover:text-orange transition-colors">Support</a>
-                <a href="#" className="hover:text-orange transition-colors">Privacy</a>
+
+              {/* Product */}
+              <div>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Product</h4>
+                <ul className="space-y-3">
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Features</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Pricing</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Documentation</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Changelog</a></li>
+                </ul>
+              </div>
+
+              {/* Company */}
+              <div>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h4>
+                <ul className="space-y-3">
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">About</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Blog</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Careers</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Contact</a></li>
+                </ul>
+              </div>
+
+              {/* Legal */}
+              <div>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Legal</h4>
+                <ul className="space-y-3">
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Privacy</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Terms</a></li>
+                  <li><a href="#" className="text-sm text-gray-500 hover:text-orange transition-colors">Security</a></li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom bar */}
+            <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-gray-600">&copy; 2026 Javelina DNS. All rights reserved.</p>
+              <div className="flex items-center gap-4">
+                {/* Twitter / X */}
+                <a href="#" className="text-gray-600 hover:text-orange transition-colors" aria-label="Twitter">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                </a>
+                {/* GitHub */}
+                <a href="#" className="text-gray-600 hover:text-orange transition-colors" aria-label="GitHub">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" /></svg>
+                </a>
+                {/* LinkedIn */}
+                <a href="#" className="text-gray-600 hover:text-orange transition-colors" aria-label="LinkedIn">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+                </a>
               </div>
             </div>
           </div>
