@@ -32,6 +32,7 @@ yarn-error.log*
 .env.dev
 .env.production
 .env.staging
+.env.local.example
 
 # vercel
 .vercel
@@ -44,4 +45,7 @@ next-env.d.ts
 .cursor/
 .agents/
 .claude/
+
+# next.js docs
+.next-docs/
 
