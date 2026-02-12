@@ -122,10 +122,10 @@ export default function HomePage() {
                 height={35}
                 priority
               />
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={login}
-                  className="text-sm font-medium text-gray-400 hover:text-orange transition-colors hidden sm:inline-block"
+                  className="text-sm font-medium text-gray-400 hover:text-orange transition-colors"
                 >
                   Sign in
                 </button>
@@ -133,7 +133,7 @@ export default function HomePage() {
                   variant="primary"
                   size="sm"
                   onClick={signup}
-                  className="rounded-full px-5"
+                  className="rounded-full px-4 sm:px-5"
                 >
                   Get Started
                 </Button>
@@ -153,27 +153,27 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               {/* Left: Text content */}
-              <div className="hero-content">
+              <div className="hero-content text-center lg:text-left">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange/15 rounded-full mb-6">
                   <span className="w-2 h-2 rounded-full bg-orange animate-pulse" />
                   <span className="text-sm font-medium text-orange">Now in Beta</span>
                 </div>
 
-                <h1 className="font-condensed font-black text-5xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05]">
+                <h1 className="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05]">
                   DNS that
                   <br />
                   <span className="text-orange">just works.</span>
                 </h1>
 
-                <p className="mt-6 text-lg sm:text-xl text-gray-400 max-w-lg leading-relaxed font-light">
+                <p className="mt-6 text-base sm:text-xl text-gray-400 max-w-lg mx-auto lg:mx-0 leading-relaxed font-light">
                   The modern platform for managing DNS infrastructure.
                   Built for teams that need speed, security, and total control.
                 </p>
 
-                <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
+                <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
                   <button
                     onClick={signup}
-                    className="inline-flex items-center bg-orange text-white hover:brightness-110 rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
+                    className="inline-flex items-center bg-orange text-white hover:brightness-110 rounded-full px-7 sm:px-8 py-3.5 sm:py-4 text-base font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
                   >
                     Get started
                     <svg className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,26 +242,37 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ====== 3. SOCIAL PROOF BAR ====== */}
-        <section className="social-proof py-10 border-y border-white/5">
+        {/* ====== 3. FEATURE TICKER ====== */}
+        <section className="social-proof py-8 sm:py-10 border-y border-white/5">
           <div className="social-proof-inner">
-            <p className="text-center text-sm text-gray-600 font-medium uppercase tracking-widest mb-6">
-              Trusted by teams managing critical infrastructure
+            <p className="text-center text-[11px] sm:text-xs text-gray-600 font-medium uppercase tracking-[0.2em] mb-5 sm:mb-6">
+              Built for modern DNS management
             </p>
             <div className="relative overflow-hidden">
               <div
-                className="flex gap-16 items-center"
-                style={{ animation: 'marquee 30s linear infinite', width: 'max-content' }}
+                className="flex gap-2 sm:gap-3 items-center"
+                style={{ animation: 'marquee 40s linear infinite', width: 'max-content' }}
               >
-                {/* Duplicate set for seamless infinite loop */}
                 {[...Array(2)].map((_, setIdx) => (
-                  <div key={setIdx} className="flex gap-16 items-center px-8">
-                    {['Irongrove', 'DataVault', 'BlueHaven', 'CloudPeak', 'NetForge', 'Sentinel'].map((name) => (
+                  <div key={setIdx} className="flex gap-2 sm:gap-3 items-center">
+                    {[
+                      'Real-time propagation',
+                      'Role-based access control',
+                      'Multi-org management',
+                      'Full audit logging',
+                      'DNSSEC ready',
+                      'Bulk record operations',
+                      'Zone health monitoring',
+                      'API-first architecture',
+                      '12+ record types',
+                      'Team workspaces',
+                    ].map((feature) => (
                       <span
-                        key={`${setIdx}-${name}`}
-                        className="text-xl font-bold text-white/15 whitespace-nowrap tracking-tight select-none"
+                        key={`${setIdx}-${feature}`}
+                        className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 whitespace-nowrap select-none"
                       >
-                        {name}
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-400">{feature}</span>
                       </span>
                     ))}
                   </div>
@@ -272,7 +283,7 @@ export default function HomePage() {
         </section>
 
         {/* ====== 4. FEATURES ====== */}
-        <section className="features-section py-20 sm:py-28">
+        <section className="features-section py-14 sm:py-20 lg:py-28">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
@@ -288,40 +299,40 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Feature 1 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange to-orange/80 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Lightning Fast</h3>
-                <p className="text-gray-400 leading-relaxed">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Lightning Fast</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
                   Sub-50ms propagation with real-time updates. Your DNS changes go live instantly across global infrastructure.
                 </p>
               </div>
 
               {/* Feature 2 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange to-orange/80 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Enterprise Security</h3>
-                <p className="text-gray-400 leading-relaxed">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Enterprise Security</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
                   256-bit encryption, comprehensive audit trails, and granular role-based access controls for every team member.
                 </p>
               </div>
 
               {/* Feature 3 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange to-orange/80 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Team Collaboration</h3>
-                <p className="text-gray-400 leading-relaxed">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Team Collaboration</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
                   Manage zones across organizations with role-based permissions, team workspaces, and real-time collaboration.
                 </p>
               </div>
@@ -330,7 +341,7 @@ export default function HomePage() {
         </section>
 
         {/* ====== 5. HOW IT WORKS ====== */}
-        <section className="how-it-works py-20 sm:py-28 bg-white/[0.02]">
+        <section className="how-it-works py-14 sm:py-20 lg:py-28 bg-white/[0.02]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
@@ -363,7 +374,7 @@ export default function HomePage() {
         </section>
 
         {/* ====== 6. CTA ====== */}
-        <section className="cta-section py-20 sm:py-28 relative overflow-hidden">
+        <section className="cta-section py-14 sm:py-20 lg:py-28 relative overflow-hidden">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-[#c45a0d]" />
           {/* Radial glow */}
@@ -381,7 +392,7 @@ export default function HomePage() {
             </p>
             <button
               onClick={signup}
-              className="inline-flex items-center bg-[#0B0C0D] text-white hover:bg-[#1a1b1e] rounded-full px-10 py-4 text-lg font-bold shadow-xl shadow-black/20 hover:shadow-2xl transition-all group"
+              className="inline-flex items-center bg-[#0B0C0D] text-white hover:bg-[#1a1b1e] rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-xl shadow-black/20 hover:shadow-2xl transition-all group"
             >
               Get started
               <svg className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -392,7 +403,7 @@ export default function HomePage() {
         </section>
 
         {/* ====== 7. FOOTER ====== */}
-        <footer className="bg-[#0B0C0D] border-t border-white/10 py-16">
+        <footer className="bg-[#0B0C0D] border-t border-white/10 py-10 sm:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
               {/* Brand */}
