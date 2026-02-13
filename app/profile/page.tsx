@@ -144,10 +144,10 @@ export default function ProfilePage() {
           {/* Left Sidebar - Full width on mobile, 320px on desktop */}
           <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
             {/* Profile Card */}
-            <Card className="p-6">
+            <Card className="p-4">
               <div className="flex flex-col">
                 {/* Avatar centered at top, name below */}
-                <div className="flex flex-col items-center text-center mb-6">
+                <div className="flex flex-col items-center text-center mb-3">
                   <div className="flex-shrink-0">
                     <AvatarUpload
                       currentAvatarUrl={user.avatar_url}
@@ -182,10 +182,10 @@ export default function ProfilePage() {
                 )}
 
                 {/* Action buttons - no separator bar */}
-                <div className="flex flex-col gap-2 mt-6">
+                <div className="flex flex-col gap-2 mt-3">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="md"
                     onClick={() => setShowEditModal(true)}
                     className="w-full justify-center"
                   >
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                   </Button>
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="md"
                     onClick={() => setShowManageAccountModal(true)}
                     className="w-full justify-center"
                   >
@@ -231,12 +231,12 @@ export default function ProfilePage() {
                 </div>
                 <Button
                   variant="primary"
-                  size="sm"
+                  size="md"
                   onClick={handleManageBilling}
                   className="w-full justify-center"
                 >
                   <svg
-                    className="w-4 h-4 mr-2"
+                    className="w-5 h-5 mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
