@@ -185,7 +185,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col gap-2 mt-3">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="md"
                     onClick={() => setShowEditModal(true)}
                     className="w-full justify-center"
                   >
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                   </Button>
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="md"
                     onClick={() => setShowManageAccountModal(true)}
                     className="w-full justify-center"
                   >
@@ -231,12 +231,12 @@ export default function ProfilePage() {
                 </div>
                 <Button
                   variant="primary"
-                  size="sm"
+                  size="md"
                   onClick={handleManageBilling}
                   className="w-full justify-center"
                 >
                   <svg
-                    className="w-4 h-4 mr-2"
+                    className="w-5 h-5 mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
