@@ -262,7 +262,7 @@ export default function HomePage() {
                       'DNSSEC roadmap',
                       'Bulk record operations',
                       'Zone health monitoring',
-                      'API-first architecture',
+                      'Programmatic access',
                       '10 record types',
                       'Team workspaces',
                     ].map((feature) => (
