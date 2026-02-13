@@ -144,10 +144,10 @@ export default function ProfilePage() {
           {/* Left Sidebar - Full width on mobile, 320px on desktop */}
           <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
             {/* Profile Card */}
-            <Card className="p-6">
+            <Card className="p-4">
               <div className="flex flex-col">
                 {/* Avatar centered at top, name below */}
-                <div className="flex flex-col items-center text-center mb-6">
+                <div className="flex flex-col items-center text-center mb-3">
                   <div className="flex-shrink-0">
                     <AvatarUpload
                       currentAvatarUrl={user.avatar_url}
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                 )}
 
                 {/* Action buttons - no separator bar */}
-                <div className="flex flex-col gap-2 mt-6">
+                <div className="flex flex-col gap-2 mt-3">
                   <Button
                     variant="outline"
                     size="sm"
