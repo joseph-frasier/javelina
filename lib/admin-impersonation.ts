@@ -1,9 +1,13 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 /**
  * Admin Impersonation Store
  * Allows admins to view the app as a specific user for support purposes
+ * 
+ * SECURITY: This store is intentionally NOT persisted to localStorage.
+ * Storing admin session tokens in localStorage exposes them to XSS attacks
+ * and malicious browser extensions. The in-memory store is cleared on
+ * page refresh, which is the safer default for sensitive admin state.
  */
 
 interface ImpersonatedUser {
@@ -15,54 +19,41 @@ interface ImpersonatedUser {
 interface ImpersonationState {
   isImpersonating: boolean;
   impersonatedUser: ImpersonatedUser | null;
-  adminSessionToken: string | null;
-  startImpersonation: (user: ImpersonatedUser, adminToken: string) => void;
+  startImpersonation: (user: ImpersonatedUser) => void;
   endImpersonation: () => void;
 }
 
 export const useImpersonationStore = create<ImpersonationState>()(
-  persist(
-    (set) => ({
-      isImpersonating: false,
-      impersonatedUser: null,
-      adminSessionToken: null,
+  (set) => ({
+    isImpersonating: false,
+    impersonatedUser: null,
 
-      startImpersonation: (user: ImpersonatedUser, adminToken: string) => {
-        set({
-          isImpersonating: true,
-          impersonatedUser: user,
-          adminSessionToken: adminToken,
-        });
-      },
+    startImpersonation: (user: ImpersonatedUser) => {
+      set({
+        isImpersonating: true,
+        impersonatedUser: user,
+      });
+    },
 
-      endImpersonation: () => {
-        set({
-          isImpersonating: false,
-          impersonatedUser: null,
-          adminSessionToken: null,
-        });
-      },
-    }),
-    {
-      name: 'admin-impersonation-storage',
-    }
-  )
+    endImpersonation: () => {
+      set({
+        isImpersonating: false,
+        impersonatedUser: null,
+      });
+    },
+  })
 );
 
 /**
  * Start impersonating a user
+ * Admin context is validated server-side via the admin session cookie.
  */
 export function startImpersonation(userId: string, userName: string, userEmail: string): void {
-  const adminToken = localStorage.getItem('admin_session_token') || 'mock-admin-token';
-  
-  useImpersonationStore.getState().startImpersonation(
-    {
-      id: userId,
-      name: userName,
-      email: userEmail,
-    },
-    adminToken
-  );
+  useImpersonationStore.getState().startImpersonation({
+    id: userId,
+    name: userName,
+    email: userEmail,
+  });
 }
 
 /**
@@ -85,4 +76,3 @@ export function isImpersonating(): boolean {
 export function getImpersonatedUser(): ImpersonatedUser | null {
   return useImpersonationStore.getState().impersonatedUser;
 }
-

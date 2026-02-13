@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { supportApi, type SupportMessage } from '@/lib/api-client';
+import { isJavelinaDomainUrl } from '@/lib/support/citation-mapper';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -311,14 +312,20 @@ export default function ConversationDetailPage() {
                                   key={idx}
                                   className="text-xs pl-3 border-l-2 border-gray-300 dark:border-gray-600"
                                 >
-                                  <a
-                                    href={citation.javelinaUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange hover:underline"
-                                  >
-                                    {citation.title}
-                                  </a>
+                                  {isJavelinaDomainUrl(citation.javelinaUrl) ? (
+                                    <a
+                                      href={citation.javelinaUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange hover:underline"
+                                    >
+                                      {citation.title}
+                                    </a>
+                                  ) : (
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                      {citation.title}
+                                    </span>
+                                  )}
                                   <span className="text-gray-500 dark:text-gray-500 ml-2">
                                     (confidence: {(citation.confidence * 100).toFixed(0)}%)
                                   </span>

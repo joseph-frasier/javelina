@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/lib/auth-store';
 import { supportApi, zonesApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
+import { isJavelinaDomainUrl } from '@/lib/support/citation-mapper';
 import type { AppSnapshot } from '@/types/support';
 
 const MAX_MESSAGE_LENGTH = 2000;
@@ -383,14 +384,20 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                         <div className="space-y-2">
                           {message.citations.map((citation, idx) => (
                             <div key={idx} className="flex flex-col gap-0.5">
-                              <a
-                                href={citation.javelinaUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange underline"
-                              >
-                                {citation.title}
-                              </a>
+                              {isJavelinaDomainUrl(citation.javelinaUrl) ? (
+                                <a
+                                  href={citation.javelinaUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange underline"
+                                >
+                                  {citation.title}
+                                </a>
+                              ) : (
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {citation.title}
+                                </span>
+                              )}
                               {citation.lastUpdated && (
                                 <span className="text-[10px] text-gray-500 dark:text-gray-500">
                                   Updated {formatDistanceToNow(new Date(citation.lastUpdated), { addSuffix: true })}

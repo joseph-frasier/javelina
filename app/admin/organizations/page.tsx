@@ -226,20 +226,9 @@ export default function AdminOrganizationsPage() {
     return orgs.filter(o => selectedIds.has(o.id));
   };
 
-  // Bulk actions
+  // Bulk actions (not yet wired to backend endpoints)
   const handleBulkDelete = () => {
-    const count = selectedIds.size;
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Organizations',
-      message: `Are you sure you want to delete ${count} organization${count > 1 ? 's' : ''}? All members will lose access. This action can be undone by an administrator.`,
-      variant: 'danger',
-      onConfirm: () => {
-        addToast('success', `${count} organization${count > 1 ? 's' : ''} deleted`);
-        clearSelection();
-        setConfirmModal({ ...confirmModal, isOpen: false });
-      },
-    });
+    addToast('error', 'Bulk delete is not yet implemented. Use individual organization actions instead.');
   };
 
 
