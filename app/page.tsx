@@ -166,7 +166,6 @@ export default function HomePage() {
                 </h1>
 
                 <p className="mt-6 text-base sm:text-xl text-gray-400 max-w-lg mx-auto lg:mx-0 leading-relaxed font-light">
-                  The modern platform for managing DNS infrastructure.
                   Built for teams that need speed, security, and total control.
                 </p>
 
@@ -260,11 +259,11 @@ export default function HomePage() {
                       'Role-based access control',
                       'Multi-org management',
                       'Full audit logging',
-                      'DNSSEC ready',
+                      'DNSSEC roadmap',
                       'Bulk record operations',
                       'Zone health monitoring',
                       'API-first architecture',
-                      '12+ record types',
+                      '10 record types',
                       'Team workspaces',
                     ].map((feature) => (
                       <span
@@ -414,9 +413,6 @@ export default function HomePage() {
                   width={110}
                   height={30}
                 />
-                <p className="mt-4 text-sm text-gray-500 leading-relaxed">
-                  The modern platform for DNS infrastructure management.
-                </p>
               </div>
 
               {/* Product */}
@@ -453,7 +449,7 @@ export default function HomePage() {
             </div>
 
             {/* Bottom bar */}
-            <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-600">&copy; 2026 Javelina DNS. All rights reserved.</p>
               <div className="flex items-center gap-4">
                 {/* Twitter / X */}
