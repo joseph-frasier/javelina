@@ -154,11 +154,6 @@ export default function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               {/* Left: Text content */}
               <div className="hero-content text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange/15 rounded-full mb-6">
-                  <span className="w-2 h-2 rounded-full bg-orange animate-pulse" />
-                  <span className="text-sm font-medium text-orange">Now in Beta</span>
-                </div>
-
                 <h1 className="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05]">
                   DNS that
                   <br />
