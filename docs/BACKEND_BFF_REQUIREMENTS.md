@@ -134,6 +134,11 @@ router.get('/auth/login', (req, res) => {
 - Login button: Calls `/auth/login` (default login screen)
 - Sign Up / Get Started button: Calls `/auth/login?screen_hint=signup` (sign-up screen)
 
+**Frontend Implementation Status**: ✅ Implemented
+- Login button → `/auth/login` (default login screen)
+- Get Started button → `/auth/login?screen_hint=signup` (signup screen)
+- See `BACKEND_SCREEN_HINT_IMPLEMENTATION.md` for backend implementation guide
+
 ## Required New Endpoints
 
 ### 1. GET `/api/organizations/:id/role`

@@ -12,6 +12,7 @@ interface FeedbackModalProps {
 export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const { general } = useSettingsStore();
   const isDarkMode = general.theme === 'dark';
+  const freshdeskDomain = process.env.NEXT_PUBLIC_FRESHDESK_DOMAIN || 'javelina-help';
 
   // Load Freshdesk widget script when modal opens
   useEffect(() => {
@@ -88,7 +89,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           title="Feedback Form"
           className="freshwidget-embedded-form w-full rounded-md"
           id="freshwidget-embedded-form"
-          src="https://irongrove-help.freshdesk.com/widgets/feedback_widget/new?&widgetType=embedded&searchArea=no"
+          src={`https://${freshdeskDomain}.freshdesk.com/widgets/feedback_widget/new?&widgetType=embedded&searchArea=no`}
           scrolling="no"
           height="600px"
           width="100%"

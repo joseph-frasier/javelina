@@ -805,6 +805,157 @@ export interface ZoneTagAssignment {
   tag_ids: string[];
 }
 
+// Support API (AI KB Assistant)
+export const supportApi = {
+  /**
+   * Send a chat message to the support assistant
+   */
+  chat: (data: {
+    message: string;
+    conversationId?: string;
+    entryPoint?: string;
+    pageUrl?: string;
+    userId: string;
+    orgId?: string;
+    tier?: string;
+    attemptCount?: number;
+    snapshot?: any;
+  }): Promise<SupportChatResponse> => {
+    return apiClient.post('/support/chat', data);
+  },
+
+  /**
+   * Submit feedback for a support conversation
+   */
+  submitFeedback: (data: {
+    conversationId: string;
+    resolved: boolean;
+    rating?: number;
+    comment?: string;
+    userId: string;
+    orgId?: string;
+    tier?: string;
+  }): Promise<{ success: boolean }> => {
+    return apiClient.post('/support/feedback', data);
+  },
+
+  /**
+   * Log a bug (escalation path)
+   */
+  logBug: (data: {
+    subject: string;
+    description: string;
+    page_url: string;
+    user_id: string;
+    org_id?: string;
+    session_id?: string;
+  }): Promise<{ success: boolean; ticket_id?: string }> => {
+    return apiClient.post('/support/log-bug', data);
+  },
+
+  // Admin methods
+  getConversations: (params?: {
+    days?: number;
+    status?: string;
+    orgId?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const query = new URLSearchParams(params as any);
+    return apiClient.get(`/support/admin/conversations?${query}`);
+  },
+
+  getMetrics: (params?: {
+    start_date?: string;
+    end_date?: string;
+    orgId?: string;
+  }) => {
+    const query = new URLSearchParams(params as any);
+    return apiClient.get(`/support/admin/metrics?${query}`);
+  },
+
+  getConversation: (id: string) => {
+    return apiClient.get(`/support/admin/conversation/${id}`);
+  },
+};
+
+// Types for support API
+export interface SupportCitation {
+  title: string;
+  articleId: string;
+  javelinaUrl: string;
+  confidence: number;
+  lastUpdated: string;
+}
+
+export interface SupportChatResponse {
+  reply: string;
+  citations: SupportCitation[];
+  intent: string;
+  resolution: {
+    needsConfirmation: boolean;
+  };
+  nextAction: {
+    type: 'none' | 'ask_clarifying' | 'offer_ticket' | 'log_bug';
+    reason: string;
+  };
+  conversationId?: string;
+}
+
+// Admin support interfaces
+export interface SupportConversation {
+  id: string;
+  user_id: string;
+  org_id: string;
+  entry_point: string;
+  page_url: string;
+  tier: string;
+  status: 'open' | 'resolved' | 'escalated';
+  resolved: boolean;
+  rating: number | null;
+  feedback_comment: string | null;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+  user_email?: string;
+  org_name?: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  conversation_id: string;
+  sender: 'user' | 'assistant';
+  message: string;
+  intent: string | null;
+  citations: SupportCitation[] | null;
+  attempt_count: number;
+  created_at: string;
+}
+
+export interface SupportConversationsResponse {
+  conversations: SupportConversation[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface SupportMetrics {
+  total_conversations: number;
+  resolved_conversations: number;
+  escalated_conversations: number;
+  avg_rating: number;
+  avg_messages_per_conversation: number;
+  resolution_rate: number;
+  conversations_by_tier: Record<string, number>;
+  conversations_by_entry_point: Record<string, number>;
+  top_intents: Array<{ intent: string; count: number }>;
+}
+
+export interface SupportConversationDetail {
+  conversation: SupportConversation;
+  messages: SupportMessage[];
+}
+
 // Export everything
 export default apiClient;
 

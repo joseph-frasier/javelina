@@ -56,7 +56,17 @@ export async function middleware(request: NextRequest) {
     // Check if user just completed payment (allow dashboard access)
     const paymentComplete = request.nextUrl.searchParams.get('payment_complete') === 'true'
 
-    // If user is not authenticated and trying to access a protected route (but allow /admin/* routes and payment completion)
+    // Protect /admin/* routes: require admin session cookie (except /admin/login which is public)
+    if (request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/admin/login')) {
+      const adminCookie = request.cookies.get(
+        process.env.NODE_ENV === 'production' ? '__Host-admin_session' : 'admin_session'
+      )
+      if (!adminCookie) {
+        return NextResponse.redirect(new URL('/admin/login', request.url))
+      }
+    }
+
+    // If user is not authenticated and trying to access a protected route (payment completion allowed)
     if (!isAuthenticated && !isPublicRoute && !request.nextUrl.pathname.startsWith('/admin') && !paymentComplete) {
       // Redirect to root (which shows login UI)
       return NextResponse.redirect(new URL('/', request.url))

@@ -5,6 +5,21 @@ import { getIdleSync } from '@/lib/idle/idleSync'
 // API configuration for auth endpoints
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
+// Production-safe logger: suppress auth debug logs in production to prevent PII/session data exposure
+const authLog = {
+  log: (...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') console.log(...args)
+  },
+  error: (...args: any[]) => {
+    // Always log errors, but strip potential PII in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(...args)
+    } else {
+      console.error(args[0]) // Only log the message prefix in production
+    }
+  },
+}
+
 // CRITICAL: Clean up old persisted auth storage IMMEDIATELY on module load
 // This must happen before any Zustand store is created to prevent
 // "Cannot create property 'user' on string" errors from old persist data
@@ -60,6 +75,7 @@ interface AuthState {
   profileReady: boolean
   profileError: string | null
   login: () => void
+  signup: () => void
   loginWithOAuth: (provider: 'google' | 'github') => void
   logout: () => Promise<void>
   signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: string }>
@@ -141,7 +157,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         try {
           const justLoggedOut = sessionStorage.getItem('just-logged-out') === 'true'
           if (justLoggedOut) {
-            console.log('[AUTH] Just logged out, skipping session check')
+            authLog.log('[AUTH] Just logged out, skipping session check')
             sessionStorage.removeItem('just-logged-out')
             set({ 
               user: null, 
@@ -173,26 +189,26 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
         // Check session with Express backend
         try {
-          console.log('[AUTH] Checking session with backend')
+          authLog.log('[AUTH] Checking session with backend')
           const response = await fetch(`${API_URL}/auth/me`, {
             credentials: 'include', // Send session cookie
           })
 
-          console.log('[AUTH] Session check response:', response.status)
+          authLog.log('[AUTH] Session check response:', response.status)
 
           if (response.ok) {
             // Session is valid, fetch full profile
             await get().fetchProfile()
           } else {
             // No valid session
-            console.log('[AUTH] No valid session, setting unauthenticated state')
+            authLog.log('[AUTH] No valid session, setting unauthenticated state')
             set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
           }
         } catch (error) {
-          console.error('[AUTH] Error initializing auth:', error)
+          authLog.error('[AUTH] Error initializing auth:', error)
           set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
         } finally {
-          console.log('[AUTH] Setting isLoading to false')
+          authLog.log('[AUTH] Setting isLoading to false')
           set({ isLoading: false })
         }
       },
@@ -200,18 +216,18 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // Fetch user profile via Express API (uses session cookie)
       fetchProfile: async () => {
         try {
-          console.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
+          authLog.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
           
           // Call backend API directly with credentials to send session cookie
           const response = await fetch(`${API_URL}/api/users/profile`, {
             credentials: 'include', // Send session cookie
           })
 
-          console.log('[AUTH] Profile response status:', response.status)
+          authLog.log('[AUTH] Profile response status:', response.status)
 
           if (!response.ok) {
             const errorText = await response.text()
-            console.error('[AUTH] Error fetching profile:', response.status, errorText)
+            authLog.error('[AUTH] Error fetching profile:', response.status, errorText)
             
             set({
               user: null,
@@ -223,13 +239,13 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           }
 
           const result = await response.json()
-          console.log('[AUTH] Profile data received:', result)
+          authLog.log('[AUTH] Profile data received:', result)
 
           // Handle different response formats from backend
           // Backend might return { data: {...} } or just {...}
           const profileData = result.data || result
 
-          console.log('[AUTH] Profile data after unwrapping:', profileData)
+          authLog.log('[AUTH] Profile data after unwrapping:', profileData)
 
           // Map organizations to Organization interface
           const organizations: Organization[] = (profileData.organizations || []).map((org: any) => ({
@@ -247,7 +263,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             organizations,
           }
 
-          console.log('[AUTH] Setting user profile:', userProfile)
+          authLog.log('[AUTH] Setting user profile:', userProfile)
 
           set({
             user: userProfile,
@@ -256,7 +272,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             profileError: null,
           })
         } catch (error) {
-          console.error('[AUTH] Error fetching profile:', error)
+          authLog.error('[AUTH] Error fetching profile:', error)
           set({
             user: null,
             isAuthenticated: false,
@@ -279,6 +295,22 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         
         // Redirect to Express auth endpoint which will redirect to Auth0
         window.location.href = `${API_URL}/auth/login`
+      },
+
+      // Signup - redirect to Auth0 via Express with screen_hint=signup
+      signup: () => {
+        // Check if we're using placeholder Supabase credentials (development mode with mock data)
+        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        if (isPlaceholderMode) {
+          // Mock mode - no-op for now (would need custom mock signup flow)
+          console.warn('Mock mode signup not implemented for Auth0 migration')
+          return
+        }
+        
+        // Redirect to Express auth endpoint with screen_hint=signup parameter
+        // This tells Auth0 to show the signup screen instead of login screen
+        window.location.href = `${API_URL}/auth/login?screen_hint=signup`
       },
 
       // OAuth login - redirect to Auth0 (handles all OAuth providers)
@@ -334,7 +366,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       // Logout - navigate to Next.js API route for smooth transition
       logout: async () => {
-        console.log('[AUTH] Logout initiated')
+        authLog.log('[AUTH] Logout initiated')
         
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
@@ -344,7 +376,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         try {
           sessionStorage.setItem('just-logged-out', 'true')
         } catch (error) {
-          console.error('[AUTH] Could not set logout flag:', error)
+          authLog.error('[AUTH] Could not set logout flag:', error)
         }
         
         if (isPlaceholderMode) {
@@ -383,7 +415,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         // Flow: /api/logout → Express → Auth0 logout → Auth0 redirects to /
         // When page loads at /, AuthProvider sees 'just-logged-out' flag and skips auth check
         // Result: One clean transition, no flicker, no intermediate states
-        console.log('[AUTH] Navigating to /api/logout')
+        authLog.log('[AUTH] Navigating to /api/logout')
         window.location.href = '/api/logout'
       },
 }))

@@ -208,32 +208,17 @@ export default function AdminUsersPage() {
     return users.filter(u => selectedIds.has(u.id));
   };
 
-  // Bulk actions
+  // Bulk actions (not yet wired to backend endpoints)
   const handleBulkDelete = () => {
-    const count = selectedIds.size;
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Users',
-      message: `Are you sure you want to delete ${count} user${count > 1 ? 's' : ''}? This action cannot be undone.`,
-      variant: 'danger',
-      onConfirm: () => {
-        addToast('success', `${count} user${count > 1 ? 's' : ''} deleted`);
-        clearSelection();
-        setConfirmModal({ ...confirmModal, isOpen: false });
-      },
-    });
+    addToast('error', 'Bulk delete is not yet implemented. Use individual user actions instead.');
   };
 
   const handleBulkSuspend = () => {
-    const count = selectedIds.size;
-    addToast('success', `${count} user${count > 1 ? 's' : ''} suspended`);
-    clearSelection();
+    addToast('error', 'Bulk suspend is not yet implemented. Use individual user actions instead.');
   };
 
   const handleBulkEnable = () => {
-    const count = selectedIds.size;
-    addToast('success', `${count} user${count > 1 ? 's' : ''} enabled`);
-    clearSelection();
+    addToast('error', 'Bulk enable is not yet implemented. Use individual user actions instead.');
   };
 
   // Single user actions

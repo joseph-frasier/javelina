@@ -144,31 +144,29 @@ export default function ProfilePage() {
           {/* Left Sidebar - Full width on mobile, 320px on desktop */}
           <div className="w-full lg:w-80 flex-shrink-0 space-y-4 sm:space-y-6">
             {/* Profile Card */}
-            <Card className="p-6">
+            <Card className="p-4">
               <div className="flex flex-col">
-                {/* Avatar and primary info */}
-                <div className="flex items-start gap-4 mb-6">
+                {/* Avatar centered at top, name below */}
+                <div className="flex flex-col items-center text-center mb-3">
                   <div className="flex-shrink-0">
-                  <AvatarUpload
-                    currentAvatarUrl={user.avatar_url}
+                    <AvatarUpload
+                      currentAvatarUrl={user.avatar_url}
                       userInitial={displayName.charAt(0).toUpperCase()}
-                    userId={user.id}
-                    onAvatarUpdate={handleAvatarUpdate}
-                  />
-                </div>
-                  <div className="flex-1 min-w-0 pt-2">
-                    <h2 className="text-xl font-bold text-orange-dark dark:text-orange mb-1 truncate">
-                      {displayName}
-                </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-2">
-                      {user.email}
-                  </p>
-                    {user.role === 'superuser' && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange/10 text-orange border border-orange/20">
-                        SuperUser
-                      </span>
-                )}
+                      userId={user.id}
+                      onAvatarUpdate={handleAvatarUpdate}
+                    />
                   </div>
+                  <h2 className="text-xl font-bold text-orange-dark dark:text-orange mt-3 mb-1 truncate w-full">
+                    {displayName}
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 truncate w-full mb-2">
+                    {user.email}
+                  </p>
+                  {user.role === 'superuser' && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange/10 text-orange border border-orange/20">
+                      SuperUser
+                    </span>
+                  )}
                 </div>
 
                 {/* Metadata section - only show if there's additional info beyond email */}
@@ -178,16 +176,16 @@ export default function ProfilePage() {
                       Title
                     </p>
                     <p className="text-sm text-gray-900 dark:text-gray-100">
-                    {user.title}
-                  </p>
+                      {user.title}
+                    </p>
                   </div>
                 )}
 
-                {/* Action buttons */}
-                <div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                {/* Action buttons - no separator bar */}
+                <div className="flex flex-col gap-2 mt-3">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="md"
                     onClick={() => setShowEditModal(true)}
                     className="w-full justify-center"
                   >
@@ -195,7 +193,7 @@ export default function ProfilePage() {
                   </Button>
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="md"
                     onClick={() => setShowManageAccountModal(true)}
                     className="w-full justify-center"
                   >
@@ -233,12 +231,12 @@ export default function ProfilePage() {
                 </div>
                 <Button
                   variant="primary"
-                  size="sm"
+                  size="md"
                   onClick={handleManageBilling}
                   className="w-full justify-center"
                 >
                   <svg
-                    className="w-4 h-4 mr-2"
+                    className="w-5 h-5 mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
