@@ -364,7 +364,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return { success: true }
       },
 
-      // Logout - navigate to Next.js API route for smooth transition
+      // Logout - navigate directly to Express backend (same pattern as login)
       logout: async () => {
         authLog.log('[AUTH] Logout initiated')
         
@@ -411,11 +411,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           // Ignore broadcast errors to avoid delaying logout
         }
         
-        // Navigate to Next.js API route - single smooth transition
-        // Flow: /api/logout → Express → Auth0 logout → Auth0 redirects to /
+        // Navigate directly to Express backend logout endpoint
+        // Flow: Express /auth/logout → Auth0 logout → Auth0 redirects to /
         // When page loads at /, AuthProvider sees 'just-logged-out' flag and skips auth check
         // Result: One clean transition, no flicker, no intermediate states
-        authLog.log('[AUTH] Navigating to /api/logout')
-        window.location.href = '/api/logout'
+        authLog.log('[AUTH] Navigating directly to backend logout:', `${API_URL}/auth/logout`)
+        window.location.href = `${API_URL}/auth/logout`
       },
 }))
