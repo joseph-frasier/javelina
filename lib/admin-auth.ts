@@ -29,16 +29,26 @@ const validAdminSessions = global.__adminSessions;
 export async function loginAdmin(
   email: string,
   password: string,
+  captchaToken?: string | null,
   ip?: string,
   userAgent?: string
 ) {
   const supabase = await createClient();
 
-  // Authenticate with Supabase
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+  // Authenticate with Supabase (including captcha token if provided)
+  const authOptions: any = {
     email,
     password,
-  });
+  };
+
+  // Add captcha token if provided
+  if (captchaToken) {
+    authOptions.options = {
+      captchaToken,
+    };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword(authOptions);
 
   if (authError || !authData.user) {
     return { error: 'Invalid credentials' };

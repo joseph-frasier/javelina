@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { InviteUsersModal } from '@/components/modals/InviteUsersModal';
@@ -29,7 +29,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
   const [planCode, setPlanCode] = useState<string | null>(null);
   const addToast = useToastStore((state) => state.addToast);
 
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await organizationsApi.getMembers(organizationId);
@@ -47,9 +47,9 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [organizationId, addToast]);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     try {
       const response = await subscriptionsApi.getCurrent(organizationId);
       
@@ -66,12 +66,12 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
       // That's OK - the usage API provides max limits that work for all roles
       setPlanCode(null);
     }
-  };
+  }, [organizationId]);
 
   useEffect(() => {
     fetchMembers();
     fetchSubscription();
-  }, [organizationId]);
+  }, [organizationId, fetchMembers, fetchSubscription]);
 
   const getRoleColor = (role: string) => {
     switch (role) {

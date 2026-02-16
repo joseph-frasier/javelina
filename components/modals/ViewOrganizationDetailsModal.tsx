@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -31,6 +31,7 @@ interface ViewOrganizationDetailsModalProps {
   onClose: () => void;
   organizationId: string;
   organizationName?: string;
+  organizationData?: OrganizationDetails | null;
 }
 
 export function ViewOrganizationDetailsModal({
@@ -38,18 +39,13 @@ export function ViewOrganizationDetailsModal({
   onClose,
   organizationId,
   organizationName,
+  organizationData,
 }: ViewOrganizationDetailsModalProps) {
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<OrganizationDetails | null>(null);
 
-  useEffect(() => {
-    if (isOpen && organizationId) {
-      fetchOrganizationDetails();
-    }
-  }, [isOpen, organizationId]);
-
-  const fetchOrganizationDetails = async () => {
+  const fetchOrganizationDetails = useCallback(async () => {
     setLoading(true);
     try {
       const data = await adminApi.getOrganization(organizationId);
@@ -60,7 +56,20 @@ export function ViewOrganizationDetailsModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId, addToast]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (organizationData) {
+        // Use pre-fetched data
+        setOrganization(organizationData);
+        setLoading(false);
+      } else if (organizationId) {
+        // Fetch if no data provided
+        fetchOrganizationDetails();
+      }
+    }
+  }, [isOpen, organizationId, organizationData, fetchOrganizationDetails]);
 
   const InfoRow = ({ label, value }: { label: string; value: string | number | undefined | null }) => {
     if (value === undefined || value === null || value === '') {

@@ -143,27 +143,6 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
           </div>
 
           <div className="flex items-center space-x-6">
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link
-                href="/admin"
-                className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/admin/users"
-                className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
-              >
-                Users
-              </Link>
-              <Link
-                href="/admin/organizations"
-                className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
-              >
-                Organizations
-              </Link>
-            </nav>
-
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button 

@@ -13,6 +13,7 @@ import { subscriptionsApi } from '@/lib/api-client';
 import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
 import { ZonesList } from '@/components/organization/ZonesList';
 import { useAuthStore } from '@/lib/auth-store';
+import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 // Tagging System Imports
 import { TagsManagerCard } from '@/components/tags/TagsManagerCard';
 import { FavoriteTagsCard } from '@/components/tags/FavoriteTagsCard';
@@ -278,6 +279,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         {/* Disabled Organization Banner */}
         {isOrgDisabled && (
           <DisabledOrganizationBanner className="mb-6" />
+        )}
+
+        {/* Email Verification Banner */}
+        {user && !user.email_verified && (
+          <EmailVerificationBanner email={user.email} />
         )}
 
         {/* Hero Section - Custom Greeting */}

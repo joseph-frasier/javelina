@@ -1,64 +1,70 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 /**
- * Get user's role for a specific organization
+ * Get user's role for a specific organization via Express API
  */
 export async function getUserRoleInOrganization(organizationId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  try {
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
+    
+    if (!sessionCookie) {
+      return null
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations/${organizationId}/role`, {
+      method: 'GET',
+      headers: {
+        'Cookie': `javelina_session=${sessionCookie.value}`,
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const result = await response.json()
+    return result.role || result.data?.role || null
+  } catch (error) {
+    console.error('Error fetching user role:', error)
     return null
   }
-  
-  const { data, error } = await supabase
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', organizationId)
-    .eq('user_id', user.id)
-    .single()
-  
-  if (error) {
-    return null
-  }
-  
-  return data?.role || null
 }
 
 /**
- * Get all organizations with user's role
+ * Get all organizations with user's role via Express API
  */
 export async function getUserOrganizationsWithRoles() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  try {
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
+    
+    if (!sessionCookie) {
+      return []
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations`, {
+      method: 'GET',
+      headers: {
+        'Cookie': `javelina_session=${sessionCookie.value}`,
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return []
+    }
+
+    const result = await response.json()
+    return result.data || result || []
+  } catch (error) {
+    console.error('Error fetching organizations with roles:', error)
     return []
   }
-  
-  const { data, error } = await supabase
-    .from('organizations')
-    .select(`
-      id,
-      name,
-      description,
-      created_at,
-      updated_at,
-      organization_members!inner(role)
-    `)
-    .eq('organization_members.user_id', user.id)
-    .order('name')
-  
-  if (error) {
-    return []
-  }
-  
-  // Flatten the role from nested structure
-  return data.map(org => ({
-    ...org,
-    role: org.organization_members?.[0]?.role || 'Viewer'
-  }))
 }
 

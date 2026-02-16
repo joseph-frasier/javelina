@@ -56,3 +56,39 @@ export function formatDateWithRelative(dateString?: string): {
   };
 }
 
+/**
+ * Formats an expiration date for display
+ * Returns date only for display, and date + time for tooltip
+ */
+export function formatExpirationDate(dateString?: string): {
+  date: string;
+  dateTime: string;
+} {
+  if (!dateString) {
+    return { date: 'Never', dateTime: 'Never' };
+  }
+
+  const date = new Date(dateString);
+  
+  // Date only format for display (e.g., "Jan 22, 2026")
+  const dateOnly = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  // Date + time format for tooltip (e.g., "Jan 22, 2026 at 02:05 PM")
+  const dateTime = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  return {
+    date: dateOnly,
+    dateTime,
+  };
+}

@@ -1,10 +1,12 @@
 /**
  * Idle logout configuration
  * Defaults to 60 minutes idle timeout with 58 minute warning
+ * Admin panel uses 15 minutes with no warning
  */
 
 const DEFAULT_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 const DEFAULT_WARNING_MS = 58 * 60 * 1000; // 58 minutes
+const DEFAULT_ADMIN_IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
  * Parse integer from env with fallback
@@ -23,6 +25,10 @@ export const IDLE_CONFIG = {
   WARNING_MS: parseEnvInt(
     process.env.NEXT_PUBLIC_IDLE_WARNING_MS,
     DEFAULT_WARNING_MS
+  ),
+  ADMIN_IDLE_TIMEOUT_MS: parseEnvInt(
+    process.env.NEXT_PUBLIC_ADMIN_IDLE_TIMEOUT_MS,
+    DEFAULT_ADMIN_IDLE_TIMEOUT_MS
   ),
 } as const;
 

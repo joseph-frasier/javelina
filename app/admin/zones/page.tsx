@@ -137,7 +137,7 @@ export default function AdminZonesPage() {
           {/* Header */}
           <div>
             <h1 className="text-3xl font-bold text-orange-dark">Flagged Zones</h1>
-            <p className="text-gray-slate mt-2">
+            <p className="text-gray-slate dark:text-gray-300 mt-2">
               Review and manage zones that have been flagged for duplicate names
             </p>
           </div>
@@ -146,8 +146,8 @@ export default function AdminZonesPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Total Flagged Zones</h2>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Total Flagged Zones</h2>
+                <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-500 mt-2">
                   {loading ? '...' : zones.length}
                 </p>
               </div>
@@ -171,17 +171,17 @@ export default function AdminZonesPage() {
 
           {/* Zones List */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Zones Needing Review</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Zones Needing Review</h2>
 
             {loading ? (
               <div className="text-center py-12">
-                <p className="text-gray-slate">Loading flagged zones...</p>
+                <p className="text-gray-slate dark:text-gray-300">Loading flagged zones...</p>
               </div>
             ) : zones.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-green-50 mx-auto flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-green-50 dark:bg-green-900/30 mx-auto flex items-center justify-center mb-4">
                   <svg
-                    className="w-8 h-8 text-green-600"
+                    className="w-8 h-8 text-green-600 dark:text-green-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -194,8 +194,8 @@ export default function AdminZonesPage() {
                     />
                   </svg>
                 </div>
-                <p className="text-gray-slate text-lg font-medium">All zones are approved!</p>
-                <p className="text-gray-500 text-sm mt-2">
+                <p className="text-gray-slate dark:text-gray-200 text-lg font-medium">All zones are approved!</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
                   No flagged zones found. All zones have unique names.
                 </p>
               </div>
@@ -209,20 +209,20 @@ export default function AdminZonesPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                             {zone.name}
                           </h3>
-                          <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
+                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium rounded">
                             Flagged
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
                           <strong>Organization:</strong> {zone.organizations?.name || 'Unknown'}
                         </p>
-                        <p className="text-sm text-gray-600 mb-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
                           <strong>Created by:</strong> {zone.created_by || 'Unknown'}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Created: {formatDate(zone.created_at)}
                         </p>
                       </div>

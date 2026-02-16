@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -18,20 +18,20 @@ export async function createOrganization(formData: {
   admin_contact_phone?: string
 }) {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/organizations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
       body: JSON.stringify({
         name: formData.name,
@@ -45,6 +45,7 @@ export async function createOrganization(formData: {
         admin_contact_email: formData.admin_contact_email,
         admin_contact_phone: formData.admin_contact_phone,
       }),
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -78,20 +79,20 @@ export async function updateOrganization(
   }
 ) {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/organizations/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
       body: JSON.stringify({
         name: formData.name,
@@ -105,6 +106,7 @@ export async function updateOrganization(
         admin_contact_email: formData.admin_contact_email,
         admin_contact_phone: formData.admin_contact_phone,
       }),
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -125,20 +127,21 @@ export async function updateOrganization(
 
 export async function deleteOrganization(id: string) {
   try {
-    // Get session from server-side Supabase client (uses cookies)
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get session cookie
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('javelina_session')
     
-    if (!session?.access_token) {
-      throw new Error('Not authenticated');
+    if (!sessionCookie) {
+      throw new Error('Not authenticated')
     }
 
-    // Make API call with auth token
+    // Make API call with session cookie
     const response = await fetch(`${API_BASE_URL}/api/organizations/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Cookie': `javelina_session=${sessionCookie.value}`,
       },
+      cache: 'no-store',
     });
 
     if (!response.ok) {

@@ -5,8 +5,6 @@
  * automatically attaching JWT tokens from Supabase auth and handling errors.
  */
 
-import { createClient } from '@/lib/supabase/client';
-
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -23,38 +21,24 @@ export class ApiError extends Error {
   }
 }
 
-// Get JWT token from Supabase auth
-async function getAuthToken(): Promise<string | null> {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || null;
-}
-
 // Generic API request function
 async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
   try {
-    // Get auth token
-    const token = await getAuthToken();
-
     // Build headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
 
-    // Add auth token if available
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Make request
+    // Make request with credentials for session cookies
     const url = `${API_BASE_URL}/api${endpoint}`;
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include', // Send/receive session cookies
     });
 
     // Parse response
@@ -72,6 +56,15 @@ async function apiRequest<T = any>(
       if (response.status === 403 && data?.error === 'Organization is disabled') {
         const errorMessage = data?.message || 'This organization is currently disabled. Contact support for assistance.';
         throw new ApiError(errorMessage, response.status, data);
+      }
+      
+      // Special handling for email verification errors
+      if (response.status === 403 && data?.code === 'EMAIL_NOT_VERIFIED') {
+        const errorMessage = data?.message || 'Please verify your email to continue';
+        const error = new ApiError(errorMessage, response.status, data);
+        // Add code to error details for frontend handling
+        (error as any).code = 'EMAIL_NOT_VERIFIED';
+        throw error;
       }
       
       const errorMessage = data?.error || data?.message || `Request failed with status ${response.status}`;
@@ -671,6 +664,9 @@ export interface PromotionCode {
   expires_at: string | null;
   is_active: boolean;
   metadata: Record<string, any>;
+  created_by: string | null;
+  creator_name: string | null;
+  creator_email: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -690,6 +686,41 @@ export interface DiscountRedemption {
   promotion_code?: PromotionCode;
   organization_name?: string;
 }
+
+// Auth API
+export const authApi = {
+  /**
+   * Resend email verification email
+   */
+  resendVerification: (): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    return apiClient.post('/auth/resend-verification');
+  },
+
+  /**
+   * Get current user's email verification status
+   */
+  getVerificationStatus: (): Promise<{
+    email_verified: boolean;
+    email: string;
+  }> => {
+    return apiClient.get('/auth/me/verification-status');
+  },
+
+  /**
+   * Refresh email verification status from Auth0 and sync to session/database
+   * Call this after user clicks verification link to ensure session is updated
+   */
+  refreshVerificationStatus: (): Promise<{
+    success: boolean;
+    email_verified: boolean;
+    message: string;
+  }> => {
+    return apiClient.post('/auth/refresh-verification-status');
+  },
+};
 
 // Tags API
 export const tagsApi = {
@@ -772,6 +803,157 @@ export interface Tag {
 export interface ZoneTagAssignment {
   zone_id: string;
   tag_ids: string[];
+}
+
+// Support API (AI KB Assistant)
+export const supportApi = {
+  /**
+   * Send a chat message to the support assistant
+   */
+  chat: (data: {
+    message: string;
+    conversationId?: string;
+    entryPoint?: string;
+    pageUrl?: string;
+    userId: string;
+    orgId?: string;
+    tier?: string;
+    attemptCount?: number;
+    snapshot?: any;
+  }): Promise<SupportChatResponse> => {
+    return apiClient.post('/support/chat', data);
+  },
+
+  /**
+   * Submit feedback for a support conversation
+   */
+  submitFeedback: (data: {
+    conversationId: string;
+    resolved: boolean;
+    rating?: number;
+    comment?: string;
+    userId: string;
+    orgId?: string;
+    tier?: string;
+  }): Promise<{ success: boolean }> => {
+    return apiClient.post('/support/feedback', data);
+  },
+
+  /**
+   * Log a bug (escalation path)
+   */
+  logBug: (data: {
+    subject: string;
+    description: string;
+    page_url: string;
+    user_id: string;
+    org_id?: string;
+    session_id?: string;
+  }): Promise<{ success: boolean; ticket_id?: string }> => {
+    return apiClient.post('/support/log-bug', data);
+  },
+
+  // Admin methods
+  getConversations: (params?: {
+    days?: number;
+    status?: string;
+    orgId?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const query = new URLSearchParams(params as any);
+    return apiClient.get(`/support/admin/conversations?${query}`);
+  },
+
+  getMetrics: (params?: {
+    start_date?: string;
+    end_date?: string;
+    orgId?: string;
+  }) => {
+    const query = new URLSearchParams(params as any);
+    return apiClient.get(`/support/admin/metrics?${query}`);
+  },
+
+  getConversation: (id: string) => {
+    return apiClient.get(`/support/admin/conversation/${id}`);
+  },
+};
+
+// Types for support API
+export interface SupportCitation {
+  title: string;
+  articleId: string;
+  javelinaUrl: string;
+  confidence: number;
+  lastUpdated: string;
+}
+
+export interface SupportChatResponse {
+  reply: string;
+  citations: SupportCitation[];
+  intent: string;
+  resolution: {
+    needsConfirmation: boolean;
+  };
+  nextAction: {
+    type: 'none' | 'ask_clarifying' | 'offer_ticket' | 'log_bug';
+    reason: string;
+  };
+  conversationId?: string;
+}
+
+// Admin support interfaces
+export interface SupportConversation {
+  id: string;
+  user_id: string;
+  org_id: string;
+  entry_point: string;
+  page_url: string;
+  tier: string;
+  status: 'open' | 'resolved' | 'escalated';
+  resolved: boolean;
+  rating: number | null;
+  feedback_comment: string | null;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+  user_email?: string;
+  org_name?: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  conversation_id: string;
+  sender: 'user' | 'assistant';
+  message: string;
+  intent: string | null;
+  citations: SupportCitation[] | null;
+  attempt_count: number;
+  created_at: string;
+}
+
+export interface SupportConversationsResponse {
+  conversations: SupportConversation[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface SupportMetrics {
+  total_conversations: number;
+  resolved_conversations: number;
+  escalated_conversations: number;
+  avg_rating: number;
+  avg_messages_per_conversation: number;
+  resolution_rate: number;
+  conversations_by_tier: Record<string, number>;
+  conversations_by_entry_point: Record<string, number>;
+  top_intents: Array<{ intent: string; count: number }>;
+}
+
+export interface SupportConversationDetail {
+  conversation: SupportConversation;
+  messages: SupportMessage[];
 }
 
 // Export everything

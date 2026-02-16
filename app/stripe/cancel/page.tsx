@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Logo } from '@/components/ui/Logo';
 import Button from '@/components/ui/Button';
 
 export default function CancelPage() {
@@ -9,15 +8,8 @@ export default function CancelPage() {
 
   return (
     <div className="min-h-screen bg-orange-light">
-      {/* Header */}
-      <div className="border-b border-gray-light bg-white">
-        <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1">
-          <Logo width={150} height={60} />
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+      <div className="flex items-center justify-center min-h-screen p-4">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-xl border border-gray-light shadow-lg p-8 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

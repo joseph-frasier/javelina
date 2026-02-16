@@ -1,10 +1,24 @@
 import { create } from 'zustand'
-import { createClient } from '@/lib/supabase/client'
-import { getAuthCallbackURL } from '@/lib/utils/get-url'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
-import { classifySignupResult, type SignupOutcome } from '@/lib/utils/signup-classifier'
 import { getIdleSync } from '@/lib/idle/idleSync'
+
+// API configuration for auth endpoints
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+
+// Production-safe logger: suppress auth debug logs in production to prevent PII/session data exposure
+const authLog = {
+  log: (...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') console.log(...args)
+  },
+  error: (...args: any[]) => {
+    // Always log errors, but strip potential PII in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(...args)
+    } else {
+      console.error(args[0]) // Only log the message prefix in production
+    }
+  },
+}
 
 // CRITICAL: Clean up old persisted auth storage IMMEDIATELY on module load
 // This must happen before any Zustand store is created to prevent
@@ -60,13 +74,14 @@ interface AuthState {
   isLoading: boolean
   profileReady: boolean
   profileError: string | null
-  login: (email: string, password: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
-  loginWithOAuth: (provider: 'google' | 'github') => Promise<void>
+  login: () => void
+  signup: () => void
+  loginWithOAuth: (provider: 'google' | 'github') => void
   logout: () => Promise<void>
-  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: SignupOutcome }>
+  signUp: (email: string, password: string, name: string, captchaToken?: string) => Promise<{ success: boolean; error?: string; outcome?: string }>
   resetPassword: (email: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
-  fetchProfile: (accessToken?: string) => Promise<void>
+  fetchProfile: () => Promise<void>
   initializeAuth: () => Promise<void>
 }
 
@@ -136,8 +151,27 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   profileReady: false,
   profileError: null,
 
-      // Initialize auth - check for existing session
+      // Initialize auth - check for existing session via Express /auth/me
       initializeAuth: async () => {
+        // Check if we just logged out (flag set by logout function)
+        try {
+          const justLoggedOut = sessionStorage.getItem('just-logged-out') === 'true'
+          if (justLoggedOut) {
+            authLog.log('[AUTH] Just logged out, skipping session check')
+            sessionStorage.removeItem('just-logged-out')
+            set({ 
+              user: null, 
+              isAuthenticated: false, 
+              profileReady: false, 
+              profileError: null,
+              isLoading: false 
+            })
+            return
+          }
+        } catch (error) {
+          // Ignore sessionStorage errors
+        }
+        
         set({ isLoading: true, profileReady: false, profileError: null })
         
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
@@ -153,299 +187,159 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           return
         }
 
-        // Real Supabase authentication
-        const supabase = createClient()
-
+        // Check session with Express backend
         try {
-          const {
-            data: { user: supabaseUser },
-          } = await supabase.auth.getUser()
+          authLog.log('[AUTH] Checking session with backend')
+          const response = await fetch(`${API_URL}/auth/me`, {
+            credentials: 'include', // Send session cookie
+          })
 
-          if (supabaseUser) {
+          authLog.log('[AUTH] Session check response:', response.status)
+
+          if (response.ok) {
+            // Session is valid, fetch full profile
             await get().fetchProfile()
           } else {
+            // No valid session
+            authLog.log('[AUTH] No valid session, setting unauthenticated state')
             set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
           }
         } catch (error) {
-          console.error('Error initializing auth:', error)
+          authLog.error('[AUTH] Error initializing auth:', error)
           set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
         } finally {
+          authLog.log('[AUTH] Setting isLoading to false')
           set({ isLoading: false })
         }
       },
 
-      // Fetch user profile via Express API
-      fetchProfile: async (accessToken?: string) => {
-        const supabase = createClient()
-
+      // Fetch user profile via Express API (uses session cookie)
+      fetchProfile: async () => {
         try {
-          // Get the session first to ensure user is authenticated
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
+          authLog.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
+          
+          // Call backend API directly with credentials to send session cookie
+          const response = await fetch(`${API_URL}/api/users/profile`, {
+            credentials: 'include', // Send session cookie
+          })
 
-          if (!session?.user) {
-            set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
-            return
-          }
+          authLog.log('[AUTH] Profile response status:', response.status)
 
-          const supabaseUser = session.user
-
-          // Fetch profile with organizations from Express API via server action
-          // Use provided access token (from fresh login) or session token
-          const result = await getProfile(accessToken || session.access_token)
-
-          if (result.error || !result.data) {
-            console.error('Error fetching profile:', result.error)
+          if (!response.ok) {
+            const errorText = await response.text()
+            authLog.error('[AUTH] Error fetching profile:', response.status, errorText)
             
             set({
               user: null,
               isAuthenticated: false,
               profileReady: false,
-              profileError: result.error || 'We could not load your profile. Please sign out and try again.',
+              profileError: 'We could not load your profile. Please sign out and try again.',
             })
             return
           }
 
-          // Disabled users are blocked by Supabase ban - they can't authenticate
-          // No need to check status here
+          const result = await response.json()
+          authLog.log('[AUTH] Profile data received:', result)
+
+          // Handle different response formats from backend
+          // Backend might return { data: {...} } or just {...}
+          const profileData = result.data || result
+
+          authLog.log('[AUTH] Profile data after unwrapping:', profileData)
 
           // Map organizations to Organization interface
-          const organizations: Organization[] = (result.data.organizations || []).map((org) => ({
+          const organizations: Organization[] = (profileData.organizations || []).map((org: any) => ({
             id: org.id,
             name: org.name,
             role: org.role,
           }))
 
+          const userProfile = {
+            ...profileData,
+            // Ensure required fields have non-null values
+            name: profileData.name || '',
+            email: profileData.email || '',
+            role: (profileData.role as UserRole) || 'user',
+            organizations,
+          }
+
+          authLog.log('[AUTH] Setting user profile:', userProfile)
+
           set({
-            user: {
-              ...result.data,
-              // Ensure required fields have non-null values
-              name: result.data.name || '',
-              email: result.data.email || '',
-              role: (result.data.role as UserRole) || 'user',
-              organizations,
-            },
+            user: userProfile,
             isAuthenticated: true,
             profileReady: true,
             profileError: null,
           })
         } catch (error) {
-          console.error('Error fetching profile:', error)
+          authLog.error('[AUTH] Error fetching profile:', error)
           set({
             user: null,
-            isAuthenticated: true,
+            isAuthenticated: false,
             profileReady: false,
             profileError: 'An error occurred while loading your profile. Please sign out and try again.',
           })
         }
       },
 
-      // Email/password login
-      login: async (email: string, password: string, captchaToken?: string) => {
-        set({ isLoading: true })
-        
+      // Login - redirect to Auth0 via Express
+      login: () => {
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
         
         if (isPlaceholderMode) {
-          // Use mock authentication
-          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
-          
-          const user = mockUsers.find(u => u.email === email)
-          const correctPassword = mockPasswords[email]
-          
-          if (!user || password !== correctPassword) {
-            set({ isLoading: false })
-            return { success: false, error: 'Invalid email or password' }
-          }
-          
-          set({ 
-            user, 
-            isAuthenticated: true, 
-            isLoading: false 
-          })
-          
-          return { success: true }
+          // Mock mode - no-op for now (would need custom mock login flow)
+          console.warn('Mock mode login not implemented for Auth0 migration')
+          return
         }
         
-        // Real Supabase authentication
-        const supabase = createClient()
+        // Redirect to Express auth endpoint which will redirect to Auth0
+        window.location.href = `${API_URL}/auth/login`
+      },
 
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-            options: {
-              captchaToken,
-            },
-          })
-
-          if (error) {
-            // Check if it's a ban/disabled account error
-            const isBannedError = error.message.toLowerCase().includes('ban') || 
-                                  error.message.toLowerCase().includes('disabled')
-            
-            if (isBannedError) {
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: 'Your account has been disabled. Please contact support for assistance.' 
-              }
-            }
-            
-            set({ isLoading: false })
-            return { success: false, error: error.message }
-          }
-
-          if (data.user && data.session) {
-            // Pass the fresh access token to fetchProfile
-            await get().fetchProfile(data.session.access_token)
-            
-            // Check if profile loaded successfully
-            const { profileReady, user, profileError } = get()
-            
-            if (!profileReady || !user) {
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: profileError || 'We could not load your profile. Please try again.' 
-              }
-            }
-          }
-
-          set({ isLoading: false })
-          return { success: true }
-        } catch (error: any) {
-          set({ isLoading: false })
-          return { success: false, error: error.message || 'An error occurred' }
+      // Signup - redirect to Auth0 via Express with screen_hint=signup
+      signup: () => {
+        // Check if we're using placeholder Supabase credentials (development mode with mock data)
+        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+        
+        if (isPlaceholderMode) {
+          // Mock mode - no-op for now (would need custom mock signup flow)
+          console.warn('Mock mode signup not implemented for Auth0 migration')
+          return
         }
+        
+        // Redirect to Express auth endpoint with screen_hint=signup parameter
+        // This tells Auth0 to show the signup screen instead of login screen
+        window.location.href = `${API_URL}/auth/login?screen_hint=signup`
       },
 
-      // OAuth login (Google, GitHub, etc.)
-      loginWithOAuth: async (provider: 'google' | 'github') => {
-        const supabase = createClient()
-        const redirectUrl = getAuthCallbackURL()
-
-        await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: redirectUrl,
-          },
-        })
-        // Note: This will redirect the user, so no return value
+      // OAuth login - redirect to Auth0 (handles all OAuth providers)
+      loginWithOAuth: (provider: 'google' | 'github') => {
+        // Auth0 Universal Login handles all OAuth providers
+        // Just redirect to the same login endpoint
+        window.location.href = `${API_URL}/auth/login`
       },
 
-      // Sign up new user
+      // Sign up new user - Auth0 handles this via Universal Login
       signUp: async (email: string, password: string, name: string, captchaToken?: string) => {
-        const supabase = createClient()
-        set({ isLoading: true })
-
-        try {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                name, // This will be stored in user_metadata
-              },
-              captchaToken,
-            },
-          })
-
-          // Classify the signup result to distinguish new user, existing email, or error
-          const outcome = classifySignupResult(data.user, error)
-
-          switch (outcome) {
-            case 'new_user':
-              // Real successful signup - fetch profile
-              if (data.user) {
-                // Profile should be auto-created by database trigger
-                await get().fetchProfile()
-              }
-              set({ isLoading: false })
-              return { success: true, outcome: 'new_user' }
-
-            case 'existing_email':
-              // Email already exists - Supabase returned obfuscated user or explicit error
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: 'A user with this email address already exists.',
-                outcome: 'existing_email'
-              }
-
-            case 'error':
-            default:
-              // Actual error (network, validation, etc.)
-              set({ isLoading: false })
-              return { 
-                success: false, 
-                error: error?.message || 'An error occurred during signup. Please try again.',
-                outcome: 'error'
-              }
-          }
-        } catch (error: any) {
-          set({ isLoading: false })
-          return { 
-            success: false, 
-            error: error.message || 'An error occurred',
-            outcome: 'error'
-          }
+        // With Auth0 migration, signup happens through Auth0's Universal Login UI
+        // This function is kept for backwards compatibility but should not be used
+        console.warn('Direct signup not supported with Auth0 - use Universal Login instead');
+        return { 
+          success: false, 
+          error: 'Please use the login page to sign up',
+          outcome: 'error'
         }
       },
 
-      // Reset password
+      // Reset password - Auth0 handles this via Universal Login
       resetPassword: async (email: string, captchaToken?: string) => {
-        // Check if we're using placeholder Supabase credentials (development mode with mock data)
-        const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
-        
-        if (isPlaceholderMode) {
-          // Mock mode - simulate sending email
-          await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
-          
-          // Check if email exists in mock users
-          const userExists = mockUsers.some(u => u.email === email)
-          
-          if (!userExists) {
-            // Still return success to prevent email enumeration
-            return { success: true }
-          }
-          
-          return { success: true }
-        }
-        
-        // Real Supabase authentication
-        const supabase = createClient()
-
-        try {
-          // Use auth callback route which will handle the code exchange and redirect to reset-password
-          const resetUrl = `${window.location.origin}/auth/callback?type=recovery`
-
-          const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: resetUrl,
-            captchaToken,
-          })
-
-          if (error) {
-            console.error('Password reset error:', error)
-            // Return more specific error messages
-            if (error.message.includes('rate limit')) {
-              return { success: false, error: 'Too many requests. Please try again later.' }
-            }
-            if (error.message.includes('email')) {
-              return { success: false, error: 'Unable to send email. Please check your email address.' }
-            }
-            return { success: false, error: error.message }
-          }
-
-          return { success: true }
-        } catch (error: any) {
-          console.error('Password reset exception:', error)
-          return { 
-            success: false, 
-            error: error.message || 'Failed to send reset email. Please try again.' 
-          }
+        // With Auth0 migration, password resets happen through Auth0's password reset flow
+        // Users should use the "Forgot Password" link on the Auth0 login page
+        console.warn('Direct password reset not supported with Auth0 - use Universal Login forgot password flow');
+        return { 
+          success: false, 
+          error: 'Please use the forgot password link on the login page'
         }
       },
 
@@ -470,13 +364,23 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return { success: true }
       },
 
-      // Logout
+      // Logout - navigate directly to Express backend (same pattern as login)
       logout: async () => {
+        authLog.log('[AUTH] Logout initiated')
+        
         // Check if we're using placeholder Supabase credentials (development mode with mock data)
         const isPlaceholderMode = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
         
+        // CRITICAL: Set flag to prevent re-initialization after logout
+        // This allows AuthProvider to skip session check when page reloads after logout
+        try {
+          sessionStorage.setItem('just-logged-out', 'true')
+        } catch (error) {
+          authLog.error('[AUTH] Could not set logout flag:', error)
+        }
+        
         if (isPlaceholderMode) {
-          // Mock mode - just clear the state
+          // Mock mode - clear state and redirect
           set({
             user: null,
             isAuthenticated: false,
@@ -488,48 +392,30 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           try {
             const sync = getIdleSync()
             sync.publishLogout()
-            // Clear stale timestamp to prevent login loops
             localStorage.removeItem('javelina-last-activity')
           } catch (error) {
             console.error('Error broadcasting logout:', error)
           }
           
+          // Redirect to root
+          window.location.href = '/'
           return
         }
         
-        // Real Supabase logout
-        const supabase = createClient()
-
+        // Broadcast logout to other tabs (non-blocking, fires before navigation)
         try {
-          await supabase.auth.signOut()
-          set({
-            user: null,
-            isAuthenticated: false,
-            profileReady: false,
-            profileError: null,
-          })
-          
-          // Broadcast logout to other tabs
-          try {
-            const sync = getIdleSync()
-            sync.publishLogout()
-            // Clear stale timestamp to prevent login loops
-            localStorage.removeItem('javelina-last-activity')
-          } catch (error) {
-            console.error('Error broadcasting logout:', error)
-          }
+          const sync = getIdleSync()
+          sync.publishLogout()
+          localStorage.removeItem('javelina-last-activity')
         } catch (error) {
-          console.error('Error logging out:', error)
-          
-          // Still broadcast logout even on error
-          try {
-            const sync = getIdleSync()
-            sync.publishLogout()
-            // Clear stale timestamp to prevent login loops
-            localStorage.removeItem('javelina-last-activity')
-          } catch (broadcastError) {
-            console.error('Error broadcasting logout:', broadcastError)
-          }
+          // Ignore broadcast errors to avoid delaying logout
         }
+        
+        // Navigate directly to Express backend logout endpoint
+        // Flow: Express /auth/logout → Auth0 logout → Auth0 redirects to /
+        // When page loads at /, AuthProvider sees 'just-logged-out' flag and skips auth check
+        // Result: One clean transition, no flicker, no intermediate states
+        authLog.log('[AUTH] Navigating directly to backend logout:', `${API_URL}/auth/logout`)
+        window.location.href = `${API_URL}/auth/logout`
       },
 }))
