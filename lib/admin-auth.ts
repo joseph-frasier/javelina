@@ -140,7 +140,8 @@ export async function loginAdmin(
 
   return {
     success: true,
-    admin: { id: profile.id, email: profile.email, name: profile.name || 'Admin User' }
+    admin: { id: profile.id, email: profile.email, name: profile.name || 'Admin User' },
+    token, // Returned so the client can store it for Authorization header (cross-domain)
   };
 }
 
