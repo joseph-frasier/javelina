@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { loginAdmin } from '@/lib/admin-auth';
+import { setAdminSessionToken } from '@/lib/admin-session-token';
 import { checkRateLimit, getRateLimitReset } from '@/lib/rate-limit';
 import { useToastStore } from '@/lib/toast-store';
 import HCaptchaField, { HCaptchaFieldHandle } from '@/components/auth/HCaptchaField';
@@ -91,6 +92,10 @@ export default function AdminLoginPage() {
       const result = await loginAdmin(email, password, captchaToken);
       
       if (result.success) {
+        // Store JWT in localStorage for cross-domain Authorization header
+        if (result.token) {
+          setAdminSessionToken(result.token);
+        }
         // Clear inactivity flag on successful login
         localStorage.removeItem('admin-logout-reason');
         addToast('success', 'Admin login successful!');

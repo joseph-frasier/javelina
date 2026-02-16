@@ -3,10 +3,22 @@
  * 
  * This client handles all communication with the Express API backend,
  * automatically attaching JWT tokens from Supabase auth and handling errors.
+ * 
+ * Admin requests include an Authorization header with the admin JWT so that
+ * cross-domain calls to the Express backend work in production.
  */
+
+import { getAdminSessionToken } from '@/lib/admin-session-token';
 
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// Endpoints that require the admin JWT (called from the admin panel)
+const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
+
+function isAdminEndpoint(endpoint: string): boolean {
+  return ADMIN_ENDPOINT_PREFIXES.some((prefix) => endpoint.startsWith(prefix));
+}
 
 // Error class for API errors
 export class ApiError extends Error {
@@ -32,6 +44,16 @@ async function apiRequest<T = any>(
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
+
+    // Attach admin JWT as Authorization header for admin-panel endpoints only.
+    // This enables cross-domain requests to the Express backend in production.
+    // The cookie-based flow still works for same-domain / local development.
+    if (!headers['Authorization'] && isAdminEndpoint(endpoint)) {
+      const adminToken = getAdminSessionToken();
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+    }
 
     // Make request with credentials for session cookies
     const url = `${API_BASE_URL}/api${endpoint}`;

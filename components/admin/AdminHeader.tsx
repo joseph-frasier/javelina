@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getAdminUser, logoutAdmin } from '@/lib/admin-auth';
+import { clearAdminSessionToken } from '@/lib/admin-session-token';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
 
@@ -46,6 +47,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   }, []);
 
   const handleLogout = async () => {
+    clearAdminSessionToken();
     await logoutAdmin();
     router.push('/admin/login');
     setIsDropdownOpen(false);
