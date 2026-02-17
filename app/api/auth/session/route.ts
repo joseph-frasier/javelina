@@ -28,7 +28,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
  *   - Token is a signed JWT (verified by Express on every API call)
  *   - HTTPS encrypts the token in transit
  *   - Redirect is immediate (token URL is transient)
- *   - Cookie is httpOnly + secure + sameSite=lax
+ *   - Cookie is httpOnly + secure + sameSite=none (production) / sameSite=lax (development)
  */
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token');
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
   response.cookies.set('javelina_session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
     maxAge: 86400, // 24 hours in seconds
     path: '/',
   });

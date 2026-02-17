@@ -58,7 +58,7 @@ export async function GET(request: Request) {
         response.cookies.set('password_reset_required', 'true', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
+          sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
           maxAge: 3600 // 1 hour
         })
         return response
