@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       fallbackResponse.cookies.set('javelina_session', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
         path: '/',
         maxAge: 0,
       });
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       fallbackResponse.cookies.set('javelina_session', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
         path: '/',
         maxAge: 0,
       });
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       redirectResponse.cookies.set('javelina_session', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
         path: '/',
         maxAge: 0,
       });
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
     errorResponse.cookies.set('javelina_session', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
       path: '/',
       maxAge: 0,
     });
