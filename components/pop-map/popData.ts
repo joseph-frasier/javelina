@@ -11,12 +11,13 @@ export interface PoP {
 
 export const POPS: PoP[] = [
   // North America
-  { id: 'nyc', city: 'New York', country: 'United States', region: 'NA', lat: 40.7128, lon: -74.006 },
+  { id: 'nyc', city: 'New York (NJ)', country: 'United States', region: 'NA', lat: 40.7128, lon: -74.006 },
   { id: 'atl', city: 'Atlanta', country: 'United States', region: 'NA', lat: 33.749, lon: -84.388 },
   { id: 'mia', city: 'Miami', country: 'United States', region: 'NA', lat: 25.7617, lon: -80.1918 },
   { id: 'ord', city: 'Chicago', country: 'United States', region: 'NA', lat: 41.8781, lon: -87.6298 },
   { id: 'dfw', city: 'Dallas', country: 'United States', region: 'NA', lat: 32.7767, lon: -96.797 },
   { id: 'lax', city: 'Los Angeles', country: 'United States', region: 'NA', lat: 34.0522, lon: -118.2437 },
+  { id: 'sfo', city: 'Silicon Valley', country: 'United States', region: 'NA', lat: 37.3861, lon: -122.0839 },
   { id: 'sea', city: 'Seattle', country: 'United States', region: 'NA', lat: 47.6062, lon: -122.3321 },
   { id: 'yyz', city: 'Toronto', country: 'Canada', region: 'NA', lat: 43.6532, lon: -79.3832 },
   { id: 'mex', city: 'Mexico City', country: 'Mexico', region: 'NA', lat: 19.4326, lon: -99.1332 },
@@ -46,7 +47,6 @@ export const POPS: PoP[] = [
   { id: 'icn', city: 'Seoul', country: 'South Korea', region: 'APAC', lat: 37.5665, lon: 126.978 },
   { id: 'nrt', city: 'Tokyo', country: 'Japan', region: 'APAC', lat: 35.6762, lon: 139.6503 },
   { id: 'kix', city: 'Osaka', country: 'Japan', region: 'APAC', lat: 34.6937, lon: 135.5023 },
-  { id: 'hkg', city: 'Hong Kong', country: 'Hong Kong', region: 'APAC', lat: 22.3193, lon: 114.1694 },
   { id: 'syd', city: 'Sydney', country: 'Australia', region: 'APAC', lat: -33.8688, lon: 151.2093 },
   { id: 'mel', city: 'Melbourne', country: 'Australia', region: 'APAC', lat: -37.8136, lon: 144.9631 },
 ];
