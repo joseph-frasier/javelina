@@ -144,14 +144,12 @@ export default function HomePage() {
                 >
                   Sign in
                 </button>
-                <Button
-                  variant="primary"
-                  size="sm"
+                <button
                   onClick={signup}
-                  className="rounded-full px-4 sm:px-5"
+                  className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-4 sm:px-5 py-2 text-sm font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all"
                 >
                   Get Started
-                </Button>
+                </button>
               </div>
             </div>
           </div>
@@ -375,11 +373,8 @@ export default function HomePage() {
               <div className="relative flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10">
                 {/* Left: text + chips + CTA */}
                 <div className="flex-1 text-center lg:text-left max-w-xl">
-                  <p className="text-xs font-semibold text-orange-400 uppercase tracking-widest mb-3">
-                    Global Infrastructure
-                  </p>
                   <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight mb-4">
-                    Global Anycast Network
+                    Global Anycast <span className="text-orange-400">Network</span>
                   </h2>
                   <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
                     30 strategically placed Points of Presence across 6 regions, sub-5ms
@@ -429,9 +424,16 @@ export default function HomePage() {
                   <div className="rounded-2xl overflow-hidden bg-[#0d0f18] border border-white/10 p-4">
                     {/* Faux map header */}
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-mono text-white/30 uppercase tracking-widest">
-                        Live Network Status
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {/* Orange glowing dot */}
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+                        </span>
+                        <span className="text-xs font-mono text-white/30 uppercase tracking-widest">
+                          Live Network Status
+                        </span>
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="relative flex h-1.5 w-1.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
