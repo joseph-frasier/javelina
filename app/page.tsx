@@ -503,11 +503,11 @@ export default function HomePage() {
 
         {/* ====== 6. CTA ====== */}
         <section className="cta-section py-14 sm:py-20 lg:py-28 relative overflow-hidden">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-[#c45a0d]" />
-          {/* Radial glow */}
+          {/* Hero-section dark background */}
+          <div className="absolute inset-0 bg-[#0B0C0D]" />
+          {/* Orange glow in the middle */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/[0.12] rounded-full blur-3xl" />
           </div>
 
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative cta-content">
@@ -520,7 +520,7 @@ export default function HomePage() {
             </p>
             <button
               onClick={signup}
-              className="inline-flex items-center bg-[#0B0C0D] text-white hover:bg-[#1a1b1e] rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-xl shadow-black/20 hover:shadow-2xl transition-all group"
+              className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group"
             >
               Get started
               <svg className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
