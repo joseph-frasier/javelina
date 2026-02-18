@@ -50,7 +50,7 @@ export default function HomePage() {
     });
 
     // Scroll-triggered reveals using ScrollTrigger batch
-    const revealElements = landingRef.current.querySelectorAll('.feature-card, .step-item, .social-proof-inner, .cta-content');
+    const revealElements = landingRef.current.querySelectorAll('.feature-card, .step-item, .social-proof-inner, .cta-content, .infrastructure-teaser');
     revealElements.forEach((el) => {
       gsap.set(el, { opacity: 0, y: 30 });
       ScrollTrigger.create({
@@ -334,6 +334,123 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ====== 4b. INFRASTRUCTURE TEASER ====== */}
+        <section className="infrastructure-teaser py-14 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-[#131521] p-8 sm:p-12 lg:p-16">
+              {/* Orange gradient border glow */}
+              <div
+                className="absolute inset-0 rounded-3xl pointer-events-none"
+                aria-hidden="true"
+                style={{
+                  background:
+                    'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)',
+                }}
+              />
+              {/* Grid texture */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-30"
+                aria-hidden="true"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px)',
+                }}
+              />
+
+              <div className="relative flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10">
+                {/* Left: text + chips + CTA */}
+                <div className="flex-1 text-center lg:text-left max-w-xl">
+                  <p className="text-xs font-semibold text-orange-400 uppercase tracking-widest mb-3">
+                    Global Infrastructure
+                  </p>
+                  <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight mb-4">
+                    Global Anycast Network
+                  </h2>
+                  <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
+                    30 strategically placed Points of Presence across 6 regions — sub-5ms
+                    resolution for 95% of the internet.
+                  </p>
+
+                  {/* Inline stat chips */}
+                  <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
+                    {[
+                      { label: '30 PoPs', sub: 'worldwide' },
+                      { label: '<5ms', sub: 'avg latency' },
+                      { label: '99.99%', sub: 'uptime SLA' },
+                    ].map((chip) => (
+                      <div
+                        key={chip.label}
+                        className="flex flex-col items-center px-5 py-3 rounded-xl bg-white/5 border border-white/10"
+                      >
+                        <span className="text-lg font-bold text-white">{chip.label}</span>
+                        <span className="text-xs text-white/40">{chip.sub}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Link
+                    href="/infrastructure"
+                    className="inline-flex items-center gap-2 bg-orange text-white hover:brightness-110 rounded-full px-7 py-3.5 text-sm font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
+                  >
+                    View Infrastructure
+                    <svg
+                      className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </Link>
+                </div>
+
+                {/* Right: decorative mini-map preview */}
+                <div className="shrink-0 w-full lg:w-[420px] relative">
+                  <div className="rounded-2xl overflow-hidden bg-[#0d0f18] border border-white/10 p-4">
+                    {/* Faux map header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-mono text-white/30 uppercase tracking-widest">
+                        Live Network Status
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                        </span>
+                        <span className="text-xs text-green-400 font-medium">30 active</span>
+                      </div>
+                    </div>
+                    {/* PoP region rows */}
+                    {[
+                      { region: 'North America', count: 10 },
+                      { region: 'Europe', count: 7 },
+                      { region: 'Asia Pacific', count: 9 },
+                      { region: 'South America', count: 2 },
+                      { region: 'Middle East & Africa', count: 2 },
+                    ].map((r) => (
+                      <div
+                        key={r.region}
+                        className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                          <span className="text-sm text-gray-400">{r.region}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-white/60">{r.count} PoPs</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ====== 5. HOW IT WORKS ====== */}
         <section className="how-it-works py-14 sm:py-20 lg:py-28 bg-white/[0.02]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -382,7 +499,7 @@ export default function HomePage() {
             </h2>
             <p className="text-lg sm:text-xl text-white/80 mb-10 font-light max-w-2xl mx-auto">
               Join teams already using Javelina to manage their infrastructure.
-              Get started in minutes, no credit card required.
+              Get started in minutes.
             </p>
             <button
               onClick={signup}
