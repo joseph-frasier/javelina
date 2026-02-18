@@ -444,9 +444,9 @@ export default function HomePage() {
                     </div>
                     {/* PoP region rows */}
                     {[
-                      { region: 'North America', count: 10 },
+                      { region: 'North America', count: 11 },
                       { region: 'Europe', count: 7 },
-                      { region: 'Asia Pacific', count: 9 },
+                      { region: 'Asia Pacific', count: 8 },
                       { region: 'South America', count: 2 },
                       { region: 'Middle East & Africa', count: 2 },
                     ].map((r) => (
