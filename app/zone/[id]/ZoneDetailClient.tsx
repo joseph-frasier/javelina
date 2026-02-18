@@ -38,6 +38,7 @@ import {
 import { AuditLog } from '@/lib/mock-dns-data';
 import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
 import { DNSRecordsTable } from '@/components/dns/DNSRecordsTable';
+import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
 import { ManageDNSRecordModal } from '@/components/modals/ManageDNSRecordModal';
 import { DNSRecordDetailModal } from '@/components/modals/DNSRecordDetailModal';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
@@ -487,6 +488,13 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
         />
       </Card>
 
+      {/* Verification Checklist */}
+      <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        <VerificationChecklist
+          nameservers={zone.nameservers || ['ns1.javelina.cc', 'ns2.javelina.me', 'ns3.javelina.cc', 'ns4.javelina.me']}
+        />
+      </Card>
+
       {/* Audit Timeline */}
       <CollapsibleCard 
         title="Change History" 
@@ -498,16 +506,6 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
           onDiffClick={setSelectedLog}
         />
       </CollapsibleCard>
-
-      {/* Verification Checklist */}
-      {/* TODO: Re-enable when nameserver verification feature is ready */}
-      {/* <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <VerificationChecklist
-          nameservers={zone.nameservers || ['ns1.example.com', 'ns2.example.com']}
-          verificationStatus={zoneSummary.verificationStatus}
-          lastVerifiedAt={zoneSummary.lastVerifiedAt}
-        />
-      </Card> */}
 
       {/* Record Distribution */}
       <div className="mb-6 sm:mb-8">

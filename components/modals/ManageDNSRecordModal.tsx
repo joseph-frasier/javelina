@@ -467,18 +467,29 @@ export function ManageDNSRecordModal({
 
           {/* Value - Dynamic Label Based on Type */}
           <div className="md:col-span-2">
+            {formData.type === 'NS' ? (
+              <div className="mb-2 flex flex-wrap items-start gap-2">
+                <label className="text-sm font-medium text-orange-dark dark:text-orange shrink-0">
+                  Name Server
+                </label>
+                <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-700/50">
+                  To use Javelina for DNS: Update your nameservers at your domain registrar to ns1.javelina.cc, ns2.javelina.me, ns3.javelina.cc, and ns4.javelina.me. Editing NS records here does not update your registrar.
+                </span>
+              </div>
+            ) : null}
             <Input
               label={
-                formData.type === 'A' ? 'IPv4 Address' :
-                formData.type === 'AAAA' ? 'IPv6 Address' :
-                formData.type === 'CNAME' ? 'Target Domain' :
-                formData.type === 'MX' ? 'Mail Server' :
-                formData.type === 'NS' ? 'Name Server' :
-                formData.type === 'TXT' ? 'Text Value' :
-                formData.type === 'SRV' ? 'Target' :
-                formData.type === 'CAA' ? 'CAA Value' :
-                formData.type === 'PTR' ? 'Target Domain' :
-                'Value'
+                formData.type !== 'NS'
+                  ? (formData.type === 'A' ? 'IPv4 Address' :
+                    formData.type === 'AAAA' ? 'IPv6 Address' :
+                    formData.type === 'CNAME' ? 'Target Domain' :
+                    formData.type === 'MX' ? 'Mail Server' :
+                    formData.type === 'TXT' ? 'Text Value' :
+                    formData.type === 'SRV' ? 'Target' :
+                    formData.type === 'CAA' ? 'CAA Value' :
+                    formData.type === 'PTR' ? 'Target Domain' :
+                    'Value')
+                  : undefined
               }
               type="text"
               value={formData.value}
