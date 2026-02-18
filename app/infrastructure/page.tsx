@@ -4,10 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PopMapSection } from '@/components/pop-map/PopMapSection';
-import Button from '@/components/ui/Button';
+import { useAuthStore } from '@/lib/auth-store';
 
 export default function InfrastructurePage() {
   const [scrolled, setScrolled] = useState(false);
+  const { signup } = useAuthStore();
 
   // Force dark mode
   useEffect(() => {
@@ -50,11 +51,22 @@ export default function InfrastructurePage() {
               >
                 ← Back to Home
               </Link>
-              <Link href="/signup">
-                <Button variant="primary" size="sm" className="rounded-full px-5">
-                  Get Started
-                </Button>
-              </Link>
+              <button onClick={signup} className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-6 py-2.5 text-sm font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group">
+                Get started
+                <svg
+                  className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -102,30 +114,28 @@ export default function InfrastructurePage() {
         />
         <div className="max-w-3xl mx-auto text-center relative">
           <h2 className="font-condensed font-black text-3xl sm:text-4xl text-white tracking-tight mb-4">
-            Ready to use the network?
+            Ready to use the <span className="text-orange-400">network</span>?
           </h2>
           <p className="text-gray-400 mb-8 font-light">
             Sign up and your DNS zones are automatically served from all 30 PoPs, no configuration
             required.
           </p>
-          <Link href="/signup">
-            <button className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group">
-              Get started
-              <svg
-                className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                />
-              </svg>
-            </button>
-          </Link>
+          <button onClick={signup} className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group">
+            Get started
+            <svg
+              className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
+            </svg>
+          </button>
         </div>
       </section>
 
