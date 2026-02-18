@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
 
     // Public routes that don't require authentication
     // Root path '/' is accessible to all (shows login to unauthenticated, dashboard to authenticated)
-    const publicRoutes = ['/', '/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
+    const publicRoutes = ['/', '/login', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout', '/infrastructure']
     const isPublicRoute = publicRoutes.some((route) => {
       // Exact match for root path
       if (route === '/' && request.nextUrl.pathname === '/') {
@@ -72,9 +72,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    // If user IS authenticated and trying to access login/signup pages, redirect to dashboard
+    // If user IS authenticated and trying to access the login page, redirect to dashboard
     // Note: Don't redirect from '/' since it handles both auth states
-    if (isAuthenticated && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+    if (isAuthenticated && request.nextUrl.pathname === '/login') {
       return NextResponse.redirect(new URL('/', request.url))
     }
   } catch (error) {

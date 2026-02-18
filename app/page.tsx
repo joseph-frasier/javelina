@@ -62,6 +62,21 @@ export default function HomePage() {
         },
       });
     });
+
+    // Infrastructure teaser — dedicated, more dramatic reveal
+    // Targets the inner card so the outer section padding doesn't dilute the movement
+    const teaserCard = landingRef.current.querySelector('.infrastructure-teaser-card');
+    if (teaserCard) {
+      gsap.set(teaserCard, { opacity: 0, y: 60, scale: 0.97 });
+      ScrollTrigger.create({
+        trigger: teaserCard,
+        start: 'top 82%',
+        once: true,
+        onEnter: () => {
+          gsap.to(teaserCard, { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power3.out' });
+        },
+      });
+    }
   }, { scope: landingRef });
 
   // Force dark mode on landing page
@@ -129,14 +144,12 @@ export default function HomePage() {
                 >
                   Sign in
                 </button>
-                <Button
-                  variant="primary"
-                  size="sm"
+                <button
                   onClick={signup}
-                  className="rounded-full px-4 sm:px-5"
+                  className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-4 sm:px-5 py-2 text-sm font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all"
                 >
                   Get Started
-                </Button>
+                </button>
               </div>
             </div>
           </div>
@@ -334,6 +347,127 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ====== 4b. INFRASTRUCTURE TEASER ====== */}
+        <section className="infrastructure-teaser py-14 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="infrastructure-teaser-card relative rounded-3xl overflow-hidden border border-white/10 bg-[#131521] p-8 sm:p-12 lg:p-16">
+              {/* Orange gradient border glow */}
+              <div
+                className="absolute inset-0 rounded-3xl pointer-events-none"
+                aria-hidden="true"
+                style={{
+                  background:
+                    'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)',
+                }}
+              />
+              {/* Grid texture */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-30"
+                aria-hidden="true"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px)',
+                }}
+              />
+
+              <div className="relative flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10">
+                {/* Left: text + chips + CTA */}
+                <div className="flex-1 text-center lg:text-left max-w-xl">
+                  <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight mb-4">
+                    Global Anycast <span className="text-orange-400">Network</span>
+                  </h2>
+                  <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
+                    30 strategically placed Points of Presence across 6 regions, sub-5ms
+                    resolution for 95% of the internet.
+                  </p>
+
+                  {/* Inline stat chips */}
+                  <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
+                    {[
+                      { label: '30 PoPs', sub: 'worldwide' },
+                      { label: '<5ms', sub: 'avg latency' },
+                      { label: '99.99%', sub: 'uptime SLA' },
+                    ].map((chip) => (
+                      <div
+                        key={chip.label}
+                        className="flex flex-col items-center px-5 py-3 rounded-xl bg-white/5 border border-white/10"
+                      >
+                        <span className="text-lg font-bold text-white">{chip.label}</span>
+                        <span className="text-xs text-white/40">{chip.sub}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Link
+                    href="/infrastructure"
+                    className="inline-flex items-center gap-2 bg-orange text-white hover:brightness-110 rounded-full px-7 py-3.5 text-sm font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
+                  >
+                    View Infrastructure
+                    <svg
+                      className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </Link>
+                </div>
+
+                {/* Right: decorative mini-map preview */}
+                <div className="shrink-0 w-full lg:w-[420px] relative">
+                  <div className="rounded-2xl overflow-hidden bg-[#0d0f18] border border-white/10 p-4">
+                    {/* Faux map header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        {/* Orange glowing dot */}
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+                        </span>
+                        <span className="text-xs font-mono text-white/30 uppercase tracking-widest">
+                          Live Network Status
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                        </span>
+                        <span className="text-xs text-green-400 font-medium">30 active</span>
+                      </div>
+                    </div>
+                    {/* PoP region rows */}
+                    {[
+                      { region: 'North America', count: 10 },
+                      { region: 'Europe', count: 7 },
+                      { region: 'Asia Pacific', count: 9 },
+                      { region: 'South America', count: 2 },
+                      { region: 'Middle East & Africa', count: 2 },
+                    ].map((r) => (
+                      <div
+                        key={r.region}
+                        className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                          <span className="text-sm text-gray-400">{r.region}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-white/60">{r.count} PoPs</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ====== 5. HOW IT WORKS ====== */}
         <section className="how-it-works py-14 sm:py-20 lg:py-28 bg-white/[0.02]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -369,11 +503,11 @@ export default function HomePage() {
 
         {/* ====== 6. CTA ====== */}
         <section className="cta-section py-14 sm:py-20 lg:py-28 relative overflow-hidden">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-orange via-orange to-[#c45a0d]" />
-          {/* Radial glow */}
+          {/* Hero-section dark background */}
+          <div className="absolute inset-0 bg-[#0B0C0D]" />
+          {/* Orange glow in the middle */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/[0.12] rounded-full blur-3xl" />
           </div>
 
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative cta-content">
@@ -382,11 +516,11 @@ export default function HomePage() {
             </h2>
             <p className="text-lg sm:text-xl text-white/80 mb-10 font-light max-w-2xl mx-auto">
               Join teams already using Javelina to manage their infrastructure.
-              Get started in minutes, no credit card required.
+              Get started in minutes.
             </p>
             <button
               onClick={signup}
-              className="inline-flex items-center bg-[#0B0C0D] text-white hover:bg-[#1a1b1e] rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-xl shadow-black/20 hover:shadow-2xl transition-all group"
+              className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group"
             >
               Get started
               <svg className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
