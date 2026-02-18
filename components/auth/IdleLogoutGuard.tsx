@@ -33,7 +33,6 @@ export function IdleLogoutGuard() {
   const isAdminLoginPage = pathname === '/admin/login';
   const isAuthPage = [
     '/login',
-    '/signup',
     '/forgot-password',
     '/reset-password',
     '/email-verified',

@@ -35,6 +35,18 @@ export function LocationDrawer({ isOpen, selectedId, onClose, onSelect }: Locati
     return () => document.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
 
+  // Lock page body scroll while drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const normalised = query.toLowerCase().trim();
   const filtered = normalised
     ? POPS.filter(
@@ -110,7 +122,7 @@ export function LocationDrawer({ isOpen, selectedId, onClose, onSelect }: Locati
         </div>
 
         {/* Location list */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {REGION_ORDER.map((region) => {
             const pops = grouped[region];
             if (pops.length === 0) return null;

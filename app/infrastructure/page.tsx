@@ -84,13 +84,18 @@ export default function InfrastructurePage() {
           }}
         />
         <div className="max-w-7xl mx-auto text-center relative">
-          <p className="text-xs font-semibold text-orange-400 uppercase tracking-widest mb-4">
-            Network Infrastructure
-          </p>
+          {/* Infrastructure pill */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-500/50 bg-white/5 mb-6">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+            </span>
+            <span className="text-xs font-semibold text-white uppercase tracking-widest">
+              Infrastructure
+            </span>
+          </div>
           <h1 className="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-tight mb-6">
-            Global Anycast
-            <br />
-            <span className="text-orange-400">DNS Network</span>
+            Global Anycast <span className="text-orange-400">DNS Network</span>
           </h1>
           <p className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-light">
             30 Points of Presence across 6 continents. Every query resolved at the edge, closer to
