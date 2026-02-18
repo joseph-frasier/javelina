@@ -75,11 +75,38 @@ export default async function ZonePage({
     }
   }
 
+  // Fetch subscription status for the zone's organization
+  const orgIdForSub = organization?.id || zoneData.organization_id;
+  let subscriptionStatus: string | null = null;
+  let pendingPlanCode: string | null = null;
+  let pendingPriceId: string | null = null;
+
+  if (orgIdForSub) {
+    const subResponse = await fetch(`${API_BASE_URL}/api/subscriptions/current?org_id=${orgIdForSub}`, {
+      method: 'GET',
+      headers: {
+        'Cookie': `javelina_session=${sessionCookie.value}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (subResponse.ok) {
+      const subResult = await subResponse.json();
+      subscriptionStatus = subResult?.subscription?.status ?? null;
+    }
+
+    pendingPlanCode = organization?.pending_plan_code ?? null;
+    pendingPriceId = organization?.pending_price_id ?? null;
+  }
+
   return (
     <ZoneDetailClient 
       zone={zoneData} 
       zoneId={id}
       organization={organization}
+      subscriptionStatus={subscriptionStatus}
+      pendingPlanCode={pendingPlanCode}
+      pendingPriceId={pendingPriceId}
     />
   );
 }

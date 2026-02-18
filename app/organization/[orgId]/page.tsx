@@ -120,6 +120,21 @@ export default async function OrganizationPage({
     }));
   }
 
+  // Fetch subscription status for this organization
+  const subResponse = await fetch(`${API_BASE_URL}/api/subscriptions/current?org_id=${orgId}`, {
+    method: 'GET',
+    headers: {
+      'Cookie': `javelina_session=${sessionCookie.value}`,
+    },
+    cache: 'no-store',
+  });
+
+  let subscriptionStatus: string | null = null;
+  if (subResponse.ok) {
+    const subResult = await subResponse.json();
+    subscriptionStatus = subResult?.subscription?.status ?? null;
+  }
+
   // Fetch recent activity from audit logs
   const auditLogs = await getOrganizationAuditLogs(orgId, 10);
   const recentActivity = await Promise.all(auditLogs.map(log => formatAuditLog(log)));
@@ -136,6 +151,9 @@ export default async function OrganizationPage({
     recentActivity: recentActivity,
     created_at: org.created_at,
     updated_at: org.updated_at,
+    subscriptionStatus,
+    pendingPlanCode: org.pending_plan_code as string | null ?? null,
+    pendingPriceId: org.pending_price_id as string | null ?? null,
   };
 
   return <OrganizationClient org={orgData} />;

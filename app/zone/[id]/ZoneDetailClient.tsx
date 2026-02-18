@@ -29,6 +29,7 @@ import { updateZone, deleteZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
+import { IncompletePaymentBanner } from '@/components/ui/IncompletePaymentBanner';
 import { 
   getZoneSummary, 
   getZoneAuditLogs, 
@@ -56,9 +57,12 @@ interface ZoneDetailClientProps {
   zone: any;
   zoneId: string;
   organization?: OrganizationDetail | null;
+  subscriptionStatus?: string | null;
+  pendingPlanCode?: string | null;
+  pendingPriceId?: string | null;
 }
 
-export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClientProps) {
+export function ZoneDetailClient({ zone, zoneId, organization, subscriptionStatus, pendingPlanCode, pendingPriceId }: ZoneDetailClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
@@ -83,8 +87,10 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [recordToDelete, setRecordToDelete] = useState<DNSRecord | null>(null);
   const [isRecordLoading, setIsRecordLoading] = useState(false);
 
+  const ACTIVE_SUBSCRIPTION_STATUSES = ['active', 'trialing', 'lifetime'];
+  const hasActiveSubscription = subscriptionStatus != null && ACTIVE_SUBSCRIPTION_STATUSES.includes(subscriptionStatus);
+  const isPaymentIncomplete = !hasActiveSubscription;
 
-  
   // Edit form state
   const [editFormData, setEditFormData] = useState({
     name: zone.name || '',
@@ -335,6 +341,17 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
 
   return (
     <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
+      {/* Payment Incomplete Banner */}
+      {isPaymentIncomplete && organization && (
+        <IncompletePaymentBanner
+          orgId={organization.id}
+          orgName={organization.name}
+          pendingPlanCode={pendingPlanCode}
+          pendingPriceId={pendingPriceId}
+          className="mb-4"
+        />
+      )}
+
       {/* Email Verification Banner */}
       {user && !user.email_verified && (
         <EmailVerificationBanner email={user.email} />
@@ -361,7 +378,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
-            <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)} className="justify-center">
+            <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)} className="justify-center" disabled={isPaymentIncomplete}>
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
@@ -379,7 +396,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
               </svg>
               Export
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center">
+            <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center" disabled={isPaymentIncomplete}>
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -467,6 +484,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
           <Button
             size="sm"
             onClick={() => setShowAddRecordModal(true)}
+            disabled={isPaymentIncomplete}
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

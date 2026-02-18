@@ -42,6 +42,7 @@ export interface Organization {
   id: string;
   name: string;
   role: RBACRole;
+  subscription_status?: string | null;
 }
 
 export interface User {
@@ -256,6 +257,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             id: org.id,
             name: org.name,
             role: org.role,
+            subscription_status: org.subscription_status ?? null,
           }))
 
           const userProfile = {

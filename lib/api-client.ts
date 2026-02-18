@@ -318,6 +318,8 @@ export const organizationsApi = {
     billing_zip?: string;
     admin_contact_email?: string;
     admin_contact_phone?: string;
+    pending_plan_code?: string;
+    pending_price_id?: string;
   }) => {
     return apiClient.post('/organizations', data);
   },
