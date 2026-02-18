@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
 import { getIdleSync } from '@/lib/idle/idleSync'
+import { getSessionToken } from './session-token'
 
 // API configuration for auth endpoints
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
@@ -190,8 +191,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         // Check session with Express backend
         try {
           authLog.log('[AUTH] Checking session with backend')
+          const token = getSessionToken();
           const response = await fetch(`${API_URL}/auth/me`, {
-            credentials: 'include', // Send session cookie
+            credentials: 'include',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           })
 
           authLog.log('[AUTH] Session check response:', response.status)
@@ -218,9 +221,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         try {
           authLog.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
           
-          // Call backend API directly with credentials to send session cookie
+          const token = getSessionToken();
           const response = await fetch(`${API_URL}/api/users/profile`, {
-            credentials: 'include', // Send session cookie
+            credentials: 'include',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           })
 
           authLog.log('[AUTH] Profile response status:', response.status)

@@ -65,11 +65,22 @@ export async function GET(request: NextRequest) {
 
   // Set the cookie on the frontend domain and redirect to dashboard
   const response = NextResponse.redirect(new URL(redirectTo, request.url));
+
+  // httpOnly cookie — sent automatically by the browser when cookies work (Chrome, Firefox)
   response.cookies.set('javelina_session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
-    maxAge: 86400, // 24 hours in seconds
+    maxAge: 86400,
+    path: '/',
+  });
+
+  // Non-httpOnly cookie — readable by client-side JS for Bearer token auth (Safari)
+  response.cookies.set('javelina_session_token', token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 86400,
     path: '/',
   });
 
