@@ -50,7 +50,7 @@ export default function HomePage() {
     });
 
     // Scroll-triggered reveals using ScrollTrigger batch
-    const revealElements = landingRef.current.querySelectorAll('.feature-card, .step-item, .social-proof-inner, .cta-content, .infrastructure-teaser');
+    const revealElements = landingRef.current.querySelectorAll('.feature-card, .step-item, .social-proof-inner, .cta-content');
     revealElements.forEach((el) => {
       gsap.set(el, { opacity: 0, y: 30 });
       ScrollTrigger.create({
@@ -62,6 +62,21 @@ export default function HomePage() {
         },
       });
     });
+
+    // Infrastructure teaser — dedicated, more dramatic reveal
+    // Targets the inner card so the outer section padding doesn't dilute the movement
+    const teaserCard = landingRef.current.querySelector('.infrastructure-teaser-card');
+    if (teaserCard) {
+      gsap.set(teaserCard, { opacity: 0, y: 60, scale: 0.97 });
+      ScrollTrigger.create({
+        trigger: teaserCard,
+        start: 'top 82%',
+        once: true,
+        onEnter: () => {
+          gsap.to(teaserCard, { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power3.out' });
+        },
+      });
+    }
   }, { scope: landingRef });
 
   // Force dark mode on landing page
@@ -337,7 +352,7 @@ export default function HomePage() {
         {/* ====== 4b. INFRASTRUCTURE TEASER ====== */}
         <section className="infrastructure-teaser py-14 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-[#131521] p-8 sm:p-12 lg:p-16">
+            <div className="infrastructure-teaser-card relative rounded-3xl overflow-hidden border border-white/10 bg-[#131521] p-8 sm:p-12 lg:p-16">
               {/* Orange gradient border glow */}
               <div
                 className="absolute inset-0 rounded-3xl pointer-events-none"
@@ -367,7 +382,7 @@ export default function HomePage() {
                     Global Anycast Network
                   </h2>
                   <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
-                    30 strategically placed Points of Presence across 6 regions — sub-5ms
+                    30 strategically placed Points of Presence across 6 regions, sub-5ms
                     resolution for 95% of the internet.
                   </p>
 
