@@ -527,6 +527,61 @@ export default function LandingPageClient() {
           </div>
         </section>
 
+        {/* ====== 4c. BUILT WITH ZIG ====== */}
+        <section className="zig-section py-14 sm:py-20 lg:py-24 bg-white/[0.02]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
+                Built with <span className="text-orange">Zig</span>
+              </h2>
+              <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-light">
+                Engineered for deterministic performance and reliability where it matters most.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Card 1 */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Deterministic Latency</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  Explicit memory management with no hidden allocations or garbage collection pauses. We know exactly what our code is doing at every cycle.
+                </p>
+              </div>
+
+              {/* Card 2 */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Production Reliability</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  Compile-time safety checks and explicit error handling catch issues before deployment. Bugs surface during build, not in production.
+                </p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Modern Systems Foundation</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  Native C ABI compatibility allows us to leverage battle-tested libraries without overhead, while maintaining a modern, auditable codebase.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ====== 5. HOW IT WORKS ====== */}
         <section className="how-it-works py-14 sm:py-20 lg:py-28 bg-white/[0.02]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -571,7 +626,7 @@ export default function LandingPageClient() {
 
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative cta-content">
             <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight mb-4">
-              Ready to take control of your DNS?
+              Ready to take control of your <span className="text-orange">DNS</span>?
             </h2>
             <p className="text-lg sm:text-xl text-white/80 mb-10 font-light max-w-2xl mx-auto">
               Join teams already using Javelina to manage their infrastructure.
