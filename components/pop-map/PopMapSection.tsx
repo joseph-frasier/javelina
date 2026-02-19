@@ -61,6 +61,9 @@ export function PopMapSection() {
                 <MapPin className="w-4 h-4 text-orange-400 shrink-0" />
                 <span className="text-sm text-white font-medium">{selectedPop.city}</span>
                 <span className="text-sm text-white/40">{selectedPop.country}</span>
+                {selectedPop.comingSoon && (
+                  <span className="text-xs text-amber-400/90 font-medium">(Coming soon)</span>
+                )}
                 <button
                   onClick={() => setSelectedId(null)}
                   className="ml-2 text-xs text-white/30 hover:text-white/60 transition-colors"
