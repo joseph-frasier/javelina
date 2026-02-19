@@ -168,14 +168,29 @@ export default function LandingPageClient() {
               {/* Left: Text content */}
               <div className="hero-content text-center lg:text-left">
                 <h1 className="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05]">
-                  DNS that
+                  Premium DNS,
                   <br />
-                  <span className="text-orange">just works.</span>
+                  <span className="text-orange">built on Anycast.</span>
                 </h1>
 
                 <p className="mt-6 text-base sm:text-xl text-gray-400 max-w-lg mx-auto lg:mx-0 leading-relaxed font-light">
-                  Built for teams that need speed, security, and total control.
+                  Anycast directs each DNS query to the nearest available node via BGP for local resolution, distributed resilience, and failover typically within seconds.
                 </p>
+
+                <ul className="mt-6 space-y-2 text-sm sm:text-base text-gray-300 max-w-lg mx-auto lg:mx-0">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                    Sub-40ms DNS resolution worldwide
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                    30 PoPs across 6 continents and 19 countries
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                    Zero-downtime failover with no TTL-dependent delay
+                  </li>
+                </ul>
 
                 <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
                   <button
@@ -253,7 +268,7 @@ export default function LandingPageClient() {
         <section className="social-proof py-8 sm:py-10 border-y border-white/5">
           <div className="social-proof-inner">
             <p className="text-center text-[11px] sm:text-xs text-gray-600 font-medium uppercase tracking-[0.2em] mb-5 sm:mb-6">
-              Built for modern DNS management
+              Premium Anycast DNS Infrastructure
             </p>
             <div className="relative overflow-hidden">
               <div
@@ -263,16 +278,16 @@ export default function LandingPageClient() {
                 {[...Array(2)].map((_, setIdx) => (
                   <div key={setIdx} className="flex gap-2 sm:gap-3 items-center">
                     {[
-                      'Real-time propagation',
-                      'Role-based access control',
-                      'Multi-org management',
-                      'Full audit logging',
-                      'DNSSEC roadmap',
-                      'Bulk record operations',
-                      'Zone health monitoring',
-                      'Programmatic access',
-                      '10 record types',
-                      'Team workspaces',
+                      'Anycast routing',
+                      '30 global PoPs',
+                      'Sub-40ms resolution',
+                      'BGP path selection',
+                      'Zero-downtime failover',
+                      'DDoS resilience',
+                      '6 continents',
+                      'Single IP, 30 nodes',
+                      'Local DNS resolution',
+                      'No TTL-dependent delays',
                     ].map((feature) => (
                       <span
                         key={`${setIdx}-${feature}`}
@@ -289,58 +304,94 @@ export default function LandingPageClient() {
           </div>
         </section>
 
-        {/* ====== 4. FEATURES ====== */}
+        {/* ====== 4. WHY JAVELINA DNS ====== */}
         <section className="features-section py-14 sm:py-20 lg:py-28">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
-                Everything you need to
-                <br />
-                <span className="text-orange">manage DNS at scale</span>
+                Why <span className="text-orange">Javelina DNS</span>
               </h2>
               <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-light">
-                From single zones to complex multi-domain infrastructure,
-                Javelina gives your team full control.
+                Anycast architecture delivers measurable advantages over traditional DNS providers.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Feature 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Feature 1 — Sub-40ms Resolution */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Lightning Fast</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Sub-40ms Global Resolution</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  Sub-50ms propagation with real-time updates. Your DNS changes go live instantly across global infrastructure.
+                  Every DNS query is answered by the nearest node. With 30 PoPs across 6 continents, most users resolve in under 40ms — no backhauling, no cross-continent round trips.
                 </p>
               </div>
 
-              {/* Feature 2 */}
+              {/* Feature 2 — Zero-Downtime Failover */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Enterprise Security</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Zero-Downtime Failover</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  256-bit encryption, comprehensive audit trails, and granular role-based access controls for every team member.
+                  When a node goes down, BGP reroutes traffic to the next-closest node automatically — typically within seconds. No TTL expiration waits, no DNS-level failover scripts.
                 </p>
               </div>
 
-              {/* Feature 3 */}
+              {/* Feature 3 — DDoS Resilience */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Team Collaboration</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Architectural DDoS Resilience</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  Manage zones across organizations with role-based permissions, team workspaces, and real-time collaboration.
+                  Attack traffic is distributed across 30 nodes by default. There is no single point of concentration to overwhelm — resilience is built into the network topology, not bolted on.
+                </p>
+              </div>
+
+              {/* Feature 4 — Single IP, Global Reach */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Single IP, Global Reach</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  One IP address announced from 30 locations. BGP handles routing to the optimal node automatically. Simplified configuration with no geographic load-balancing complexity on your end.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ====== 4a. UNICAST VS ANYCAST ====== */}
+        <section className="py-14 sm:py-20 lg:py-24 bg-white/[0.02]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
+                Unicast vs <span className="text-orange">Anycast</span>
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="feature-card rounded-2xl p-6 sm:p-8 border border-white/10 bg-white/[0.03]">
+                <h3 className="text-lg font-bold text-gray-500 mb-3">Traditional Unicast</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  One IP address maps to one physical server. The farther your users are from that server, the more latency and risk you inherit before any content loads.
+                </p>
+              </div>
+              <div className="feature-card rounded-2xl p-6 sm:p-8 border border-orange/30 bg-orange/[0.04] shadow-lg shadow-orange-500/25">
+                <h3 className="text-lg font-bold text-orange mb-3">Anycast (Javelina DNS)</h3>
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
+                  The same IP address is announced from many locations, and BGP routes queries to the nearest available node in real time. Local resolution, failover at the routing layer typically within seconds, and distributed resilience under load.
                 </p>
               </div>
             </div>
@@ -377,16 +428,15 @@ export default function LandingPageClient() {
                     Global Anycast <span className="text-orange-400">Network</span>
                   </h2>
                   <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
-                    30 strategically placed Points of Presence across 6 regions, sub-5ms
-                    resolution for 95% of the internet.
+                    A single IP address announced from 30 PoPs across 6 continents. BGP routes every query to the nearest node for sub-40ms resolution and automatic failover.
                   </p>
 
                   {/* Inline stat chips */}
                   <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
                     {[
-                      { label: '30 PoPs', sub: 'worldwide' },
-                      { label: '<5ms', sub: 'avg latency' },
-                      { label: '99.99%', sub: 'uptime SLA' },
+                      { label: '30 PoPs', sub: '6 continents' },
+                      { label: '<40ms', sub: 'resolution' },
+                      { label: '0s', sub: 'failover delay' },
                     ].map((chip) => (
                       <div
                         key={chip.label}

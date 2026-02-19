@@ -4,12 +4,12 @@ import LandingPageClient from '@/components/landing/LandingPageClient';
 import { getURL } from '@/lib/utils/get-url';
 
 export const metadata: Metadata = {
-  title: 'Javelina — DNS that just works',
+  title: 'Javelina — Premium DNS, built on Anycast',
   description:
-    'Manage DNS zones, records, and organizations with speed and security. 30 global PoPs, sub-50ms propagation, 99.99% SLA.',
+    'Premium DNS infrastructure powered by Anycast routing. 30 PoPs across 6 continents and 19 countries. Sub-40ms DNS resolution worldwide with zero-downtime failover.',
   openGraph: {
-    title: 'Javelina — DNS that just works',
-    description: 'Built for teams that need speed, security, and total control.',
+    title: 'Javelina — Premium DNS, built on Anycast',
+    description: 'Anycast routing across 30 global PoPs. Sub-40ms resolution, zero-downtime failover, DDoS resilience through architecture.',
     url: '/',
     siteName: 'Javelina DNS',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Javelina — DNS that just works',
-    description: 'Built for teams that need speed, security, and total control.',
+    title: 'Javelina — Premium DNS, built on Anycast',
+    description: 'Anycast routing across 30 global PoPs. Sub-40ms resolution, zero-downtime failover, DDoS resilience through architecture.',
     images: ['/og-image.png'],
   },
   alternates: { canonical: '/' },
@@ -30,27 +30,28 @@ export default function HomePage() {
   const softwareAppSchema = generateSoftwareApplicationSchema({
     name: 'Javelina DNS',
     description:
-      'A modern DNS management platform for teams. Manage zones, records, and infrastructure with sub-50ms propagation and 99.99% uptime SLA.',
+      'Premium DNS infrastructure powered by Anycast routing. 30 PoPs across 6 continents and 19 countries with sub-40ms resolution and zero-downtime failover.',
     applicationCategory: 'NetworkingApplication',
     features: [
-      'Real-time DNS propagation',
+      'Anycast DNS routing via BGP',
+      '30 global Points of Presence',
+      '6 continents, 19 countries',
+      'Sub-40ms DNS resolution worldwide',
+      'Zero-downtime BGP-level failover',
+      'Architectural DDoS resilience',
+      'Single IP, 30 global nodes',
+      'Local DNS resolution at every PoP',
+      'No TTL-dependent failover delays',
       'Role-based access control',
       'Multi-organization management',
       'Full audit logging',
-      'Bulk record operations',
-      'Zone health monitoring',
-      '10 DNS record types supported',
-      'Team workspaces',
-      '30 global Points of Presence',
-      'Sub-50ms propagation',
-      '99.99% uptime SLA',
     ],
   });
 
   const webPageSchema = generateWebPageSchema({
-    name: 'Javelina — DNS that just works',
+    name: 'Javelina — Premium DNS, built on Anycast',
     description:
-      'Manage DNS zones, records, and organizations with speed and security. 30 global PoPs, sub-50ms propagation, 99.99% SLA.',
+      'Premium DNS infrastructure powered by Anycast routing. 30 PoPs across 6 continents and 19 countries. Sub-40ms DNS resolution worldwide with zero-downtime failover.',
     url: baseUrl,
   });
 
