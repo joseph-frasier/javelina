@@ -541,7 +541,7 @@ export default function LandingPageClient() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Card 1 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -554,7 +554,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 2 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -567,7 +567,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 3 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -576,6 +576,45 @@ export default function LandingPageClient() {
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Modern Systems Foundation</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
                   Native C ABI compatibility allows us to leverage battle-tested libraries without overhead, while maintaining a modern, auditable codebase.
+                </p>
+              </div>
+
+              {/* Card 4 - Faster Build Cycles */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Faster Build Cycles</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  Incremental compile times measured in seconds allow engineers to iterate faster and stay in flow, accelerating feature delivery and bug fixes.
+                </p>
+              </div>
+
+              {/* Card 5 - Simplified Toolchain */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Simplified Toolchain</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  Built-in cross-compilation targets multiple platforms from a single environment, replacing complex toolchains with a single build command.
+                </p>
+              </div>
+
+              {/* Card 6 - Transparent Codebase */}
+              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Transparent Codebase</h3>
+                <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                  No hidden control flow or preprocessor macros means code is readable and auditable. What you read is exactly what executes in production.
                 </p>
               </div>
             </div>

@@ -113,8 +113,8 @@ export default function InfrastructurePage() {
             How Anycast <span className="text-orange-400">routing works</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4">
+            <div className="group rounded-2xl p-6 bg-white/5 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
@@ -124,8 +124,8 @@ export default function InfrastructurePage() {
                 A single IP address is announced from all 30 locations via BGP. The internet&apos;s routing infrastructure automatically selects the shortest network path.
               </p>
             </div>
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4">
+            <div className="group rounded-2xl p-6 bg-white/5 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -136,8 +136,8 @@ export default function InfrastructurePage() {
                 DNS queries are answered by the geographically nearest node. No cross-continent round trips, no backhauling. Just local resolution with sub-40ms latency.
               </p>
             </div>
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4">
+            <div className="group rounded-2xl p-6 bg-white/5 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
