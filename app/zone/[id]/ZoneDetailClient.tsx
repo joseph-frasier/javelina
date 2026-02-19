@@ -460,7 +460,14 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
         ) : null;
       })()}
 
-      {/* DNS Records Table - Moved to top as primary action */}
+      {/* Verification Checklist */}
+      <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
+        <VerificationChecklist
+          nameservers={zone.nameservers || ['ns1.javelina.cc', 'ns2.javelina.me', 'ns3.javelina.cc', 'ns4.javelina.me']}
+        />
+      </Card>
+
+      {/* DNS Records Table */}
       <Card 
         title="DNS Records" 
         className="p-4 sm:p-6 mb-6 sm:mb-8"
@@ -485,13 +492,6 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
           nameservers={zone.nameservers}
           soaSerial={zone.soa_serial}
           defaultTTL={zone.ttl}
-        />
-      </Card>
-
-      {/* Verification Checklist */}
-      <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <VerificationChecklist
-          nameservers={zone.nameservers || ['ns1.javelina.cc', 'ns2.javelina.me', 'ns3.javelina.cc', 'ns4.javelina.me']}
         />
       </Card>
 
