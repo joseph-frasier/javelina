@@ -19,12 +19,12 @@ const chips: Chip[] = [
   {
     icon: <Zap className="w-4 h-4 text-orange-400" />,
     label: 'Latency',
-    value: '<5ms Avg',
+    value: 'Low',
   },
   {
     icon: <Shield className="w-4 h-4 text-orange-400" />,
     label: 'Uptime',
-    value: '99.99% SLA',
+    value: 'Enterprise SLA',
   },
 ];
 

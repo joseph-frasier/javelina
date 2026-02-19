@@ -174,13 +174,13 @@ export default function LandingPageClient() {
                 </h1>
 
                 <p className="mt-6 text-base sm:text-xl text-gray-400 max-w-lg mx-auto lg:mx-0 leading-relaxed font-light">
-                  Anycast directs each DNS query to the nearest available node via BGP for local resolution, distributed resilience, and failover typically within seconds.
+                  Anycast directs each DNS query to the nearest available node via BGP for local resolution, distributed resilience, and automatic failover.
                 </p>
 
                 <ul className="mt-6 space-y-2 text-sm sm:text-base text-gray-300 max-w-lg mx-auto lg:mx-0">
                   <li className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
-                    Sub-40ms DNS resolution worldwide
+                    Low-latency DNS resolution worldwide
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
@@ -249,14 +249,14 @@ export default function LandingPageClient() {
 
                   {/* Floating accent card - bottom left */}
                   <div className="absolute -bottom-6 -left-6 bg-gradient-to-br from-orange to-[#c45a0d] text-white rounded-xl p-4 shadow-xl shadow-orange/20">
-                    <div className="text-2xl font-black">99.99%</div>
-                    <div className="text-xs text-white/70">Uptime SLA</div>
+                    <div className="text-2xl font-black">Enterprise SLA</div>
+                    <div className="text-xs text-white/70">Uptime</div>
                   </div>
 
                   {/* Floating badge - top right */}
                   <div className="absolute -top-3 -right-3 bg-[#1a1b1e] border border-white/10 rounded-lg px-3 py-2 shadow-lg">
                     <div className="text-xs text-gray-500">Propagation</div>
-                    <div className="text-sm font-bold text-green-400">&lt;50ms</div>
+                    <div className="text-sm font-bold text-green-400">Fast</div>
                   </div>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export default function LandingPageClient() {
                     {[
                       'Anycast routing',
                       '30 global PoPs',
-                      'Sub-40ms resolution',
+                      'Low-latency resolution',
                       'BGP path selection',
                       'Zero-downtime failover',
                       'DDoS resilience',
@@ -317,16 +317,16 @@ export default function LandingPageClient() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Feature 1 - Sub-40ms Resolution */}
+              {/* Feature 1 - Low-Latency Resolution */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Sub-40ms Global Resolution</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Low-Latency Global Resolution</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  Every DNS query is answered by the nearest node. With 30 PoPs across 6 continents, most users resolve in under 40ms with no backhauling or cross-continent round trips.
+                  Every DNS query is answered by the nearest node. With 30 PoPs across 6 continents, most users resolve from the nearest node with no backhauling or cross-continent round trips.
                 </p>
               </div>
 
@@ -339,7 +339,7 @@ export default function LandingPageClient() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Zero-Downtime Failover</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  When a node goes down, BGP reroutes traffic to the next-closest node automatically, typically within seconds. No TTL expiration waits, no DNS-level failover scripts.
+                  When a node goes down, BGP reroutes traffic to the next-closest node automatically. No TTL expiration waits, no DNS-level failover scripts.
                 </p>
               </div>
 
@@ -400,7 +400,7 @@ export default function LandingPageClient() {
               <div className="feature-card rounded-2xl p-6 sm:p-8 border border-orange/30 bg-orange/[0.04] shadow-lg shadow-orange-500/25">
                 <h3 className="text-lg font-bold text-orange mb-3">Anycast (Javelina DNS)</h3>
                 <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
-                  The same IP address is announced from many locations, and BGP routes queries to the nearest available node in real time. Local resolution, failover at the routing layer typically within seconds, and distributed resilience under load.
+                  The same IP address is announced from many locations, and BGP routes queries to the nearest available node in real time. Local resolution, failover at the routing layer automatically, and distributed resilience under load.
                 </p>
               </div>
             </div>
@@ -437,15 +437,15 @@ export default function LandingPageClient() {
                     Global Anycast <span className="text-orange-400">Network</span>
                   </h2>
                   <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
-                    A single IP address announced from 30 PoPs across 6 continents and 19 countries. BGP routes every query to the nearest node for sub-40ms resolution and automatic failover.
+                    A single IP address announced from 30 PoPs across 6 continents and 19 countries. BGP routes every query to the nearest node for low-latency resolution and automatic failover.
                   </p>
 
                   {/* Inline stat chips */}
                   <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
                     {[
                       { label: '30 PoPs', sub: '6 continents' },
-                      { label: '<40ms', sub: 'resolution' },
-                      { label: '0s', sub: 'failover delay' },
+                      { label: 'Low latency', sub: 'resolution' },
+                      { label: 'Automatic', sub: 'failover' },
                     ].map((chip) => (
                       <div
                         key={chip.label}
