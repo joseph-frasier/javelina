@@ -45,6 +45,7 @@ export default function HomePage() {
       'Role-based access control',
       'Multi-organization management',
       'Full audit logging',
+      'Built with Zig for predictable performance',
     ],
   });
 
