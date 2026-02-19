@@ -80,6 +80,9 @@ export default async function ZonePage({
   let subscriptionStatus: string | null = null;
   let pendingPlanCode: string | null = null;
   let pendingPriceId: string | null = null;
+  let pendingPlanName: string | null = null;
+  let pendingPlanPrice: number | null = null;
+  let pendingBillingInterval: string | null = null;
 
   if (orgIdForSub) {
     const subResponse = await fetch(`${API_BASE_URL}/api/subscriptions/current?org_id=${orgIdForSub}`, {
@@ -97,6 +100,11 @@ export default async function ZonePage({
 
     pendingPlanCode = organization?.pending_plan_code ?? null;
     pendingPriceId = organization?.pending_price_id ?? null;
+    pendingPlanName = organization?.pending_plan_name ?? null;
+    pendingPlanPrice = organization?.pending_plan_price != null
+      ? Number(organization.pending_plan_price)
+      : null;
+    pendingBillingInterval = organization?.pending_billing_interval ?? null;
   }
 
   return (
@@ -107,6 +115,9 @@ export default async function ZonePage({
       subscriptionStatus={subscriptionStatus}
       pendingPlanCode={pendingPlanCode}
       pendingPriceId={pendingPriceId}
+      pendingPlanName={pendingPlanName}
+      pendingPlanPrice={pendingPlanPrice}
+      pendingBillingInterval={pendingBillingInterval}
     />
   );
 }

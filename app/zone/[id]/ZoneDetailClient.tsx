@@ -60,9 +60,12 @@ interface ZoneDetailClientProps {
   subscriptionStatus?: string | null;
   pendingPlanCode?: string | null;
   pendingPriceId?: string | null;
+  pendingPlanName?: string | null;
+  pendingPlanPrice?: number | null;
+  pendingBillingInterval?: string | null;
 }
 
-export function ZoneDetailClient({ zone, zoneId, organization, subscriptionStatus, pendingPlanCode, pendingPriceId }: ZoneDetailClientProps) {
+export function ZoneDetailClient({ zone, zoneId, organization, subscriptionStatus, pendingPlanCode, pendingPriceId, pendingPlanName, pendingPlanPrice, pendingBillingInterval }: ZoneDetailClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
@@ -348,6 +351,9 @@ export function ZoneDetailClient({ zone, zoneId, organization, subscriptionStatu
           orgName={organization.name}
           pendingPlanCode={pendingPlanCode}
           pendingPriceId={pendingPriceId}
+          pendingPlanName={pendingPlanName}
+          pendingPlanPrice={pendingPlanPrice}
+          pendingBillingInterval={pendingBillingInterval}
           className="mb-4"
         />
       )}

@@ -154,6 +154,9 @@ export default async function OrganizationPage({
     subscriptionStatus,
     pendingPlanCode: org.pending_plan_code as string | null ?? null,
     pendingPriceId: org.pending_price_id as string | null ?? null,
+    pendingPlanName: org.pending_plan_name as string | null ?? null,
+    pendingPlanPrice: org.pending_plan_price != null ? Number(org.pending_plan_price) : null,
+    pendingBillingInterval: org.pending_billing_interval as string | null ?? null,
   };
 
   return <OrganizationClient org={orgData} />;

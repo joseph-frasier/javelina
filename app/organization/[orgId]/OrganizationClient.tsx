@@ -61,6 +61,9 @@ interface OrganizationData {
   subscriptionStatus: string | null;
   pendingPlanCode: string | null;
   pendingPriceId: string | null;
+  pendingPlanName: string | null;
+  pendingPlanPrice: number | null;
+  pendingBillingInterval: string | null;
 }
 
 interface OrganizationClientProps {
@@ -291,6 +294,9 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
             orgName={org.name}
             pendingPlanCode={org.pendingPlanCode}
             pendingPriceId={org.pendingPriceId}
+            pendingPlanName={org.pendingPlanName}
+            pendingPlanPrice={org.pendingPlanPrice}
+            pendingBillingInterval={org.pendingBillingInterval}
             className="mb-6"
           />
         )}

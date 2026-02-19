@@ -2,13 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { PLANS_CONFIG, getPlanByCode } from '@/lib/plans-config';
 
 interface IncompletePaymentBannerProps {
   orgId: string;
   orgName: string;
   pendingPlanCode?: string | null;
   pendingPriceId?: string | null;
+  pendingPlanName?: string | null;
+  pendingPlanPrice?: number | null;
+  pendingBillingInterval?: string | null;
   className?: string;
 }
 
@@ -17,17 +19,20 @@ export function IncompletePaymentBanner({
   orgName,
   pendingPlanCode,
   pendingPriceId,
+  pendingPlanName,
+  pendingPlanPrice,
+  pendingBillingInterval,
   className = '',
 }: IncompletePaymentBannerProps) {
   const router = useRouter();
 
   const handleResumeCheckout = () => {
     if (pendingPlanCode && pendingPriceId) {
-      const plan = getPlanByCode(PLANS_CONFIG, pendingPlanCode);
       const isLifetime = pendingPlanCode.includes('_lifetime');
-      const billingInterval = isLifetime ? 'lifetime' : (plan?.monthly?.interval || 'month');
-      const planName = plan?.name || pendingPlanCode;
-      const planPrice = plan?.monthly?.amount || 0;
+      const billingInterval = pendingBillingInterval
+        || (isLifetime ? 'lifetime' : 'month');
+      const planName = pendingPlanName || pendingPlanCode;
+      const planPrice = pendingPlanPrice ?? 0;
 
       const params = new URLSearchParams({
         org_id: orgId,
