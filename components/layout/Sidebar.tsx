@@ -74,7 +74,11 @@ export function Sidebar({
   const renderOrganizations = () => {
     return (
       <div className="space-y-1">
-        {userOrganizations.map((org) => (
+        {userOrganizations.map((org) => {
+          const ACTIVE_STATUSES = ['active', 'trialing', 'lifetime'];
+          const needsPayment = !org.subscription_status || !ACTIVE_STATUSES.includes(org.subscription_status);
+
+          return (
           <div key={org.id}>
             {/* Organization */}
             <div className="flex items-center group">
@@ -102,10 +106,10 @@ export function Sidebar({
               <Link
                 href={`/organization/${org.id}`}
                 className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
-                title={org.name}
+                title={needsPayment ? `${org.name} (Payment Required)` : org.name}
               >
                 <svg
-                  className="w-4 h-4 text-orange"
+                  className={`w-4 h-4 ${needsPayment ? 'text-amber-500' : 'text-orange'}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -117,9 +121,27 @@ export function Sidebar({
                     d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-orange-dark dark:text-white">
+                <span className="text-sm font-medium text-orange-dark dark:text-white truncate">
                   {truncateName(org.name)}
                 </span>
+                {needsPayment && (
+                  <svg
+                    className="w-3.5 h-3.5 text-amber-500 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    role="img"
+                    aria-label="Payment required"
+                  >
+                    <title>Payment required</title>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                )}
               </Link>
             </div>
 
@@ -131,7 +153,8 @@ export function Sidebar({
               />
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
