@@ -72,7 +72,7 @@ interface OrganizationClientProps {
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, fetchProfile } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   
   // Feature flags for starter-only launch
@@ -89,6 +89,15 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   useEffect(() => {
     selectAndExpand(org.id);
   }, [org.id, selectAndExpand]);
+
+  // Sync auth store when server-side subscription status differs from cached value
+  // (e.g. after completing payment, the sidebar still shows stale data)
+  useEffect(() => {
+    const storeOrg = user?.organizations?.find((o) => o.id === org.id);
+    if (storeOrg && storeOrg.subscription_status !== org.subscriptionStatus) {
+      fetchProfile();
+    }
+  }, [org.id, org.subscriptionStatus, user?.organizations, fetchProfile]);
   
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
