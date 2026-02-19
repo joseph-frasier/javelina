@@ -130,8 +130,10 @@ export function Sidebar({
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    title="Payment required"
+                    role="img"
+                    aria-label="Payment required"
                   >
+                    <title>Payment required</title>
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
