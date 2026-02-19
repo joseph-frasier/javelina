@@ -63,7 +63,7 @@ export default function LandingPageClient() {
       });
     });
 
-    // Infrastructure teaser — dedicated, more dramatic reveal
+    // Infrastructure teaser - dedicated, more dramatic reveal
     // Targets the inner card so the outer section padding doesn't dilute the movement
     const teaserCard = landingRef.current.querySelector('.infrastructure-teaser-card');
     if (teaserCard) {
@@ -317,7 +317,7 @@ export default function LandingPageClient() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Feature 1 — Sub-40ms Resolution */}
+              {/* Feature 1 - Sub-40ms Resolution */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,11 +326,11 @@ export default function LandingPageClient() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Sub-40ms Global Resolution</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  Every DNS query is answered by the nearest node. With 30 PoPs across 6 continents, most users resolve in under 40ms — no backhauling, no cross-continent round trips.
+                  Every DNS query is answered by the nearest node. With 30 PoPs across 6 continents, most users resolve in under 40ms with no backhauling or cross-continent round trips.
                 </p>
               </div>
 
-              {/* Feature 2 — Zero-Downtime Failover */}
+              {/* Feature 2 - Zero-Downtime Failover */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,11 +339,11 @@ export default function LandingPageClient() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Zero-Downtime Failover</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  When a node goes down, BGP reroutes traffic to the next-closest node automatically — typically within seconds. No TTL expiration waits, no DNS-level failover scripts.
+                  When a node goes down, BGP reroutes traffic to the next-closest node automatically, typically within seconds. No TTL expiration waits, no DNS-level failover scripts.
                 </p>
               </div>
 
-              {/* Feature 3 — DDoS Resilience */}
+              {/* Feature 3 - DDoS Resilience */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -352,11 +352,11 @@ export default function LandingPageClient() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Architectural DDoS Resilience</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  Attack traffic is distributed across 30 nodes by default. There is no single point of concentration to overwhelm — resilience is built into the network topology, not bolted on.
+                  Attack traffic is distributed across 30 nodes by default. There is no single point of concentration to overwhelm. Resilience is built into the network topology, not bolted on.
                 </p>
               </div>
 
-              {/* Feature 4 — Single IP, Global Reach */}
+              {/* Feature 4 - Single IP, Global Reach */}
               <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,8 +373,17 @@ export default function LandingPageClient() {
         </section>
 
         {/* ====== 4a. UNICAST VS ANYCAST ====== */}
-        <section className="py-14 sm:py-20 lg:py-24 bg-white/[0.02]">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-14 sm:py-20 lg:py-24 bg-white/[0.02] relative overflow-hidden">
+          {/* Orange glow on the right side behind Anycast card */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+            style={{
+              background:
+                'radial-gradient(ellipse 40% 80% at 75% 50%, rgba(249,115,22,0.12) 0%, transparent 70%)',
+            }}
+          />
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center mb-12">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
                 Unicast vs <span className="text-orange">Anycast</span>

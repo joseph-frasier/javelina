@@ -4,11 +4,11 @@ import LandingPageClient from '@/components/landing/LandingPageClient';
 import { getURL } from '@/lib/utils/get-url';
 
 export const metadata: Metadata = {
-  title: 'Javelina — Premium DNS, built on Anycast',
+  title: 'Javelina Premium DNS, built on Anycast',
   description:
     'Premium DNS infrastructure powered by Anycast routing. 30 PoPs across 6 continents and 19 countries. Sub-40ms DNS resolution worldwide with zero-downtime failover.',
   openGraph: {
-    title: 'Javelina — Premium DNS, built on Anycast',
+    title: 'Javelina Premium DNS, built on Anycast',
     description: 'Anycast routing across 30 global PoPs. Sub-40ms resolution, zero-downtime failover, DDoS resilience through architecture.',
     url: '/',
     siteName: 'Javelina DNS',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Javelina — Premium DNS, built on Anycast',
+    title: 'Javelina Premium DNS, built on Anycast',
     description: 'Anycast routing across 30 global PoPs. Sub-40ms resolution, zero-downtime failover, DDoS resilience through architecture.',
     images: ['/og-image.png'],
   },
@@ -49,7 +49,7 @@ export default function HomePage() {
   });
 
   const webPageSchema = generateWebPageSchema({
-    name: 'Javelina — Premium DNS, built on Anycast',
+    name: 'Javelina Premium DNS, built on Anycast',
     description:
       'Premium DNS infrastructure powered by Anycast routing. 30 PoPs across 6 continents and 19 countries. Sub-40ms DNS resolution worldwide with zero-downtime failover.',
     url: baseUrl,

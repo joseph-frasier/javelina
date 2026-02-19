@@ -56,19 +56,6 @@ export function ManageDNSRecordModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [nsCopiedIndex, setNsCopiedIndex] = useState<number | null>(null);
-
-  const JAVELINA_NAMESERVERS = ['ns1.javelina.cc', 'ns2.javelina.me', 'ns3.javelina.cc', 'ns4.javelina.me'];
-
-  const handleNsCopy = async (ns: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(ns);
-      setNsCopiedIndex(index);
-      setTimeout(() => setNsCopiedIndex(null), 2000);
-    } catch {
-      // fallback ignored
-    }
-  };
 
   const [customTTL, setCustomTTL] = useState(false);
   const [realtimeErrors, setRealtimeErrors] = useState<Record<string, string>>({});
@@ -102,7 +89,6 @@ export function ManageDNSRecordModal({
       }
       setErrors({});
       setWarnings([]);
-      setNsCopiedIndex(null);
     }
   }, [isOpen, mode, record]);
 
@@ -482,51 +468,18 @@ export function ManageDNSRecordModal({
 
           {/* Value - Dynamic Label Based on Type */}
           <div className="md:col-span-2">
-            {formData.type === 'NS' ? (
-              <div className="mb-2 flex flex-wrap items-start gap-2">
-                <label className="text-sm font-medium text-orange-dark dark:text-orange shrink-0">
-                  Name Server
-                </label>
-                <div className="inline-flex flex-wrap items-center gap-1.5 px-2 py-1.5 rounded text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-700/50">
-                  <span>To use Javelina for DNS: Update your nameservers at your domain registrar to</span>
-                  {JAVELINA_NAMESERVERS.map((ns, index) => (
-                    <span key={ns} className="inline-flex items-center gap-1 w-fit px-1.5 py-0.5 rounded bg-amber-200/50 dark:bg-amber-800/30">
-                      <span className="font-mono">{ns}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleNsCopy(ns, index)}
-                        className="p-0.5 rounded text-amber-700 hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100 hover:bg-amber-200/50 dark:hover:bg-amber-700/30 transition-colors"
-                        aria-label={`Copy ${ns}`}
-                      >
-                        {nsCopiedIndex === index ? (
-                          <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </button>
-                    </span>
-                  ))}
-                  <span>. Editing NS records here does not update your registrar.</span>
-                </div>
-              </div>
-            ) : null}
             <Input
               label={
-                formData.type !== 'NS'
-                  ? (formData.type === 'A' ? 'IPv4 Address' :
-                    formData.type === 'AAAA' ? 'IPv6 Address' :
-                    formData.type === 'CNAME' ? 'Target Domain' :
-                    formData.type === 'MX' ? 'Mail Server' :
-                    formData.type === 'TXT' ? 'Text Value' :
-                    formData.type === 'SRV' ? 'Target' :
-                    formData.type === 'CAA' ? 'CAA Value' :
-                    formData.type === 'PTR' ? 'Target Domain' :
-                    'Value')
-                  : undefined
+                formData.type === 'A' ? 'IPv4 Address' :
+                formData.type === 'AAAA' ? 'IPv6 Address' :
+                formData.type === 'CNAME' ? 'Target Domain' :
+                formData.type === 'MX' ? 'Mail Server' :
+                formData.type === 'NS' ? 'Name Server' :
+                formData.type === 'TXT' ? 'Text Value' :
+                formData.type === 'SRV' ? 'Target' :
+                formData.type === 'CAA' ? 'CAA Value' :
+                formData.type === 'PTR' ? 'Target Domain' :
+                'Value'
               }
               type="text"
               value={formData.value}
