@@ -437,7 +437,7 @@ export default function LandingPageClient() {
                     Global Anycast <span className="text-orange-400">Network</span>
                   </h2>
                   <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
-                    A single IP address announced from 30 PoPs across 6 continents. BGP routes every query to the nearest node for sub-40ms resolution and automatic failover.
+                    A single IP address announced from 30 PoPs across 6 continents and 19 countries. BGP routes every query to the nearest node for sub-40ms resolution and automatic failover.
                   </p>
 
                   {/* Inline stat chips */}
