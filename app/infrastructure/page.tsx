@@ -133,7 +133,7 @@ export default function InfrastructurePage() {
               </div>
               <h3 className="text-base font-bold text-white mb-2">Local Resolution</h3>
               <p className="text-sm text-gray-400 leading-relaxed">
-                DNS queries are answered by the geographically nearest node. No cross-continent round trips, no backhauling — just local resolution with sub-40ms latency.
+                DNS queries are answered by the geographically nearest node. No cross-continent round trips, no backhauling. Just local resolution with sub-40ms latency.
               </p>
             </div>
             <div className="rounded-2xl p-6 bg-white/5 border border-white/10">
@@ -166,7 +166,7 @@ export default function InfrastructurePage() {
             Ready to use the <span className="text-orange-400">network</span>?
           </h2>
           <p className="text-gray-400 mb-8 font-light">
-            Every zone is served from all 30 PoPs with Anycast routing, automatic failover, and sub-40ms resolution — no configuration required.
+            Every zone is served from all 30 PoPs with Anycast routing, automatic failover, and sub-40ms resolution with no configuration required.
           </p>
           <button onClick={signup} className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group">
             Get started
