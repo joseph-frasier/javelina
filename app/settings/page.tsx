@@ -9,7 +9,6 @@ import Button from '@/components/ui/Button';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
-import { createClient } from '@/lib/supabase/client';
 import { subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
@@ -82,59 +81,14 @@ function SettingsContent() {
   };
 
   const handleOAuthConnect = async (provider: 'google' | 'github') => {
-    // Check if another social provider is already connected
-    const hasOtherProvider = (provider === 'google' && isGithubConnected) || 
-                            (provider === 'github' && isGoogleConnected);
-    
-    if (hasOtherProvider) {
-      addToast('error', 'You can only connect one social provider at a time. Please disconnect the other provider first.');
-      return;
-    }
-
-    setIsLoadingOAuth(true);
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/settings?section=password`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('OAuth connection error:', error);
-      addToast('error', error.message || `Failed to connect ${provider}`);
-      setIsLoadingOAuth(false);
-    }
+    // TODO: Implement via Auth0 account linking API through Express backend
+    addToast('error', 'OAuth account linking is not yet available. This feature requires Auth0 implementation.');
   };
 
   const handleOAuthDisconnect = async (provider: 'google' | 'github') => {
-    setIsLoadingOAuth(true);
-
+    // TODO: Implement via Auth0 account linking API through Express backend
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('No user found');
-
-      const identity = user.identities?.find(id => id.provider === provider);
-      
-      if (!identity) throw new Error('Identity not found');
-
-      const { error } = await supabase.auth.unlinkIdentity(identity);
-
-      if (error) throw error;
-
-      // Update state
-      if (provider === 'google') {
-        setIsGoogleConnected(false);
-      } else {
-        setIsGithubConnected(false);
-      }
-
-      addToast('success', `${provider === 'google' ? 'Google' : 'GitHub'} account disconnected`);
+      addToast('error', 'OAuth account unlinking is not yet available. This feature requires Auth0 implementation.');
     } catch (error: any) {
       console.error('OAuth disconnection error:', error);
       addToast('error', error.message || `Failed to disconnect ${provider}`);

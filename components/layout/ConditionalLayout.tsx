@@ -36,8 +36,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   
   // Hide sidebar and header on authentication pages, pricing/checkout/stripe pages, and admin routes
   const isAuthPage = pathname === '/login' || 
-                     pathname === '/forgot-password' || 
-                     pathname === '/reset-password';
+                     pathname === '/forgot-password';
 
   const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout';
 
