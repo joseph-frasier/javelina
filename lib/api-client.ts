@@ -543,6 +543,13 @@ export const adminApi = {
   },
 
   /**
+   * Send password reset email via Auth0 Management API
+   */
+  sendPasswordReset: (email: string) => {
+    return apiClient.post('/admin/users/password-reset', { email });
+  },
+
+  /**
    * List all organizations (admin only)
    */
   listOrganizations: (params?: { page?: number; limit?: number; search?: string }) => {

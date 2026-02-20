@@ -26,12 +26,8 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
         return;
       }
 
-      // TODO: Backend endpoint required: POST /api/auth/password-reset
-      // For now, use apiClient which will use session cookies
-      // Backend should handle both Supabase Auth and Auth0 users
       await apiClient.post('/auth/password-reset', {
         email: user.email,
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
       });
 
       addToast('success', 'Password reset email sent. Check your inbox.');

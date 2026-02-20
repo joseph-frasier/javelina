@@ -34,7 +34,6 @@ export function IdleLogoutGuard() {
   const isAuthPage = [
     '/login',
     '/forgot-password',
-    '/reset-password',
     '/email-verified',
   ].includes(pathname) || pathname.startsWith('/auth/');
 
