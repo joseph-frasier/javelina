@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { DisabledOrganizationBanner } from '@/components/ui/DisabledOrganizationBanner';
+import { IncompletePaymentBanner } from '@/components/ui/IncompletePaymentBanner';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
@@ -57,6 +58,12 @@ interface OrganizationData {
   recentActivity: ActivityLog[];
   created_at: string;
   updated_at: string;
+  subscriptionStatus: string | null;
+  pendingPlanCode: string | null;
+  pendingPriceId: string | null;
+  pendingPlanName: string | null;
+  pendingPlanPrice: number | null;
+  pendingBillingInterval: string | null;
 }
 
 interface OrganizationClientProps {
@@ -65,19 +72,32 @@ interface OrganizationClientProps {
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, fetchProfile } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   
   // Feature flags for starter-only launch
   const { hideTeamInvites } = useFeatureFlags();
   
-  // Check if organization is disabled
-  const isOrgDisabled = !org.is_active;
+  const ACTIVE_SUBSCRIPTION_STATUSES = ['active', 'trialing', 'lifetime'];
+  const hasActiveSubscription = org.subscriptionStatus != null && ACTIVE_SUBSCRIPTION_STATUSES.includes(org.subscriptionStatus);
+  const isPaymentIncomplete = !hasActiveSubscription;
+
+  // Org is disabled if admin-disabled OR payment is incomplete
+  const isOrgDisabled = !org.is_active || isPaymentIncomplete;
   
   // Sync hierarchy store with current organization
   useEffect(() => {
     selectAndExpand(org.id);
   }, [org.id, selectAndExpand]);
+
+  // Sync auth store when server-side subscription status differs from cached value
+  // (e.g. after completing payment, the sidebar still shows stale data)
+  useEffect(() => {
+    const storeOrg = user?.organizations?.find((o) => o.id === org.id);
+    if (storeOrg && storeOrg.subscription_status !== org.subscriptionStatus) {
+      fetchProfile();
+    }
+  }, [org.id, org.subscriptionStatus, user?.organizations, fetchProfile]);
   
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -276,8 +296,22 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   return (
     <>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
-        {/* Disabled Organization Banner */}
-        {isOrgDisabled && (
+        {/* Incomplete Payment Banner */}
+        {isPaymentIncomplete && org.is_active && (
+          <IncompletePaymentBanner
+            orgId={org.id}
+            orgName={org.name}
+            pendingPlanCode={org.pendingPlanCode}
+            pendingPriceId={org.pendingPriceId}
+            pendingPlanName={org.pendingPlanName}
+            pendingPlanPrice={org.pendingPlanPrice}
+            pendingBillingInterval={org.pendingBillingInterval}
+            className="mb-6"
+          />
+        )}
+
+        {/* Disabled Organization Banner (admin-disabled) */}
+        {!org.is_active && (
           <DisabledOrganizationBanner className="mb-6" />
         )}
 

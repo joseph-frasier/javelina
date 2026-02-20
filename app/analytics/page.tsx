@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react';
 import { StatCard, Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-// No longer need Supabase client - using Express API with session cookies
-// Recharts is imported but not currently used (shows placeholder messages)
-// When analytics are implemented, consider dynamic imports to reduce bundle size
+import { getSessionToken } from '@/lib/session-token';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -42,9 +40,10 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        // apiClient handles session cookies automatically
+        const token = getSessionToken();
         const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
-          credentials: 'include', // Send session cookie
+          credentials: 'include',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
 
         if (!response.ok) return;
@@ -74,9 +73,11 @@ export default function AnalyticsPage() {
           // Fetch zones from all user's orgs
           const allZones: Zone[] = [];
           
+          const token = getSessionToken();
           for (const org of organizations) {
             const response = await fetch(`${API_BASE_URL}/api/zones/organization/${org.id}`, {
-              credentials: 'include', // Send session cookie
+              credentials: 'include',
+              headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             });
 
             if (response.ok) {
@@ -92,9 +93,10 @@ export default function AnalyticsPage() {
 
           setZones(allZones);
         } else {
-          // Fetch zones for selected org
+          const token = getSessionToken();
           const response = await fetch(`${API_BASE_URL}/api/zones/organization/${selectedOrg}`, {
-            credentials: 'include', // Send session cookie
+            credentials: 'include',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           });
 
           if (response.ok) {
