@@ -34,6 +34,7 @@ interface Message {
 export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [shouldRender, setShouldRender] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -130,9 +131,19 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     }
   }, [isOpen, messages.length]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (only if user is already near bottom)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Check if user is at bottom before auto-scrolling
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    const isNearBottom = distanceFromBottom < 100; // 100px threshold
+
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
   }, [messages]);
 
   // Handle click outside (but NOT when ticket modal is open)
@@ -189,6 +200,8 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     }
   }, [isOpen, shouldRender]);
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const handleSend = async () => {
     if (!inputValue.trim()) return;
     if (!user) return;
@@ -200,75 +213,114 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       timestamp: new Date(),
     };
 
+    const assistantMsgId = (Date.now() + 1).toString();
+
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setLoading(true);
+
+    // Prepare a placeholder assistant message for progressive streaming
+    // Note: We don't set loading=true here because the placeholder itself
+    // indicates Javi is responding. The loading state would show a duplicate bubble.
+    const placeholderMsg: Message = {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, placeholderMsg]);
+
+    const abortController = new AbortController();
+    abortRef.current = abortController;
 
     try {
-      // Capture current app state snapshot
       const snapshot = captureSnapshot();
 
-      const response = await supportApi.chat({
-        message: inputValue,
-        conversationId,
-        entryPoint: entryPoint || 'chat_widget',
-        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
-        userId: user.id,
-        orgId,
-        tier,
-        attemptCount,
-        snapshot,
-      });
+      await supportApi.chatStream(
+        {
+          message: inputValue,
+          conversationId,
+          entryPoint: entryPoint || 'chat_widget',
+          pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+          userId: user.id,
+          orgId,
+          tier,
+          attemptCount,
+          snapshot,
+        },
+        // onDelta: progressively append text to the placeholder message
+        (text) => {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMsgId ? { ...m, content: m.content + text } : m
+            )
+          );
+        },
+        // onMetadata: attach citations, intent, nextAction to the message
+        (metadata) => {
+          console.log('[ChatWindow] Received metadata:', metadata);
+          
+          const nextAction = {
+            type: (metadata.nextAction || 'none') as SupportChatResponse['nextAction']['type'],
+            reason: '',
+          };
 
-      // Update conversation ID if provided
-      if (response.conversationId) {
-        setConversationId(response.conversationId);
-      }
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMsgId
+                ? {
+                    ...m,
+                    citations: metadata.citations,
+                    nextAction,
+                    resolutionNeeded: metadata.confidence < 0.9,
+                  }
+                : m
+            )
+          );
 
-      // Create assistant message
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response.reply,
-        timestamp: new Date(),
-        citations: response.citations,
-        nextAction: response.nextAction,
-        resolutionNeeded: response.resolution.needsConfirmation,
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Handle escalation scenarios
-      if (response.nextAction.type === 'log_bug' || response.nextAction.type === 'offer_ticket') {
-        setShowEscalation(true);
-      }
-
-      // Increment attempt count if clarifying
-      if (response.nextAction.type === 'ask_clarifying') {
-        setAttemptCount(prev => prev + 1);
-      } else {
-        setAttemptCount(0); // Reset on successful resolution path
-      }
+          if (nextAction.type === 'log_bug' || nextAction.type === 'offer_ticket') {
+            setShowEscalation(true);
+          }
+          if (nextAction.type === 'ask_clarifying') {
+            setAttemptCount(prev => prev + 1);
+          } else {
+            setAttemptCount(0);
+          }
+        },
+        // onDone: update conversationId
+        (info) => {
+          if (info.conversationId) {
+            setConversationId(info.conversationId);
+          }
+        },
+        // onError
+        (err) => {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMsgId
+                ? { ...m, content: err.message || "I'm sorry, something went wrong." }
+                : m
+            )
+          );
+        },
+        abortController.signal,
+      );
     } catch (error) {
-      // Handle rate limit errors specially
       let errorContent = "I'm sorry, I encountered an error. Please try again or contact support directly.";
-      
+
       if (error instanceof ApiError && error.statusCode === 429) {
         const resetInSeconds = error.details?.resetInSeconds || error.details?.retryAfter || 60;
         const minutes = Math.ceil(resetInSeconds / 60);
         errorContent = `You've reached the rate limit for chat messages. Please try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
       }
-      
-      // Show error message
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: errorContent,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+
+      // Update the placeholder message with the error
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantMsgId ? { ...m, content: m.content || errorContent } : m
+        )
+      );
     } finally {
-      setLoading(false);
+      abortRef.current = null;
     }
   };
 
@@ -365,7 +417,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div key={message.id}>
             {message.role === 'assistant' ? (
