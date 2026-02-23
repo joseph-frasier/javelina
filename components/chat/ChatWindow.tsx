@@ -257,8 +257,6 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
         },
         // onMetadata: attach citations, intent, nextAction to the message
         (metadata) => {
-          console.log('[ChatWindow] Received metadata:', metadata);
-          
           const nextAction = {
             type: (metadata.nextAction || 'none') as SupportChatResponse['nextAction']['type'],
             reason: '',
