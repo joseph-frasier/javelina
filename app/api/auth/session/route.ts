@@ -63,13 +63,28 @@ export async function GET(request: NextRequest) {
     // Proceed anyway - Express will reject invalid tokens on subsequent API calls
   }
 
-  // Set the cookie on the frontend domain and redirect to dashboard
-  const response = NextResponse.redirect(new URL(redirectTo, request.url));
+  // Return an HTML page (200) that sets the cookie, then redirects client-side.
+  // Safari may reject Set-Cookie on 302 redirect responses during cross-site
+  // redirect chains. A 200 response reliably processes Set-Cookie in all browsers.
+  const destination = new URL(redirectTo, request.url).toString();
+
+  const html = `<!DOCTYPE html>
+<html><head>
+<meta http-equiv="refresh" content="0;url=${destination}">
+</head><body>
+<script>window.location.href=${JSON.stringify(destination)}</script>
+</body></html>`;
+
+  const response = new NextResponse(html, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html' },
+  });
+
   response.cookies.set('javelina_session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
-    maxAge: 86400, // 24 hours in seconds
+    maxAge: 86400,
     path: '/',
   });
 

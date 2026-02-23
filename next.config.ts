@@ -49,6 +49,21 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Proxy API calls through same origin to avoid Safari ITP third-party cookie blocking.
+  // Login/signup full-page navigations still go directly to Express.
+  async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    return [
+      {
+        source: '/api/backend/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+      {
+        source: '/api/backend-auth/:path*',
+        destination: `${backendUrl}/auth/:path*`,
+      },
+    ];
+  },
   // Exclude backend folder from Next.js build
   webpack: (config, { isServer }) => {
     config.watchOptions = {

@@ -190,8 +190,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         // Check session with Express backend
         try {
           authLog.log('[AUTH] Checking session with backend')
-          const response = await fetch(`${API_URL}/auth/me`, {
-            credentials: 'include', // Send session cookie
+          const response = await fetch('/api/backend-auth/me', {
+            credentials: 'include',
           })
 
           authLog.log('[AUTH] Session check response:', response.status)
@@ -216,11 +216,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // Fetch user profile via Express API (uses session cookie)
       fetchProfile: async () => {
         try {
-          authLog.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
+          authLog.log('[AUTH] Fetching profile from: /api/backend/users/profile')
           
-          // Call backend API directly with credentials to send session cookie
-          const response = await fetch(`${API_URL}/api/users/profile`, {
-            credentials: 'include', // Send session cookie
+          const response = await fetch('/api/backend/users/profile', {
+            credentials: 'include',
           })
 
           authLog.log('[AUTH] Profile response status:', response.status)
