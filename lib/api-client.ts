@@ -9,6 +9,7 @@
  */
 
 import { getAdminSessionToken } from '@/lib/admin-session-token';
+import { getIdleSync } from '@/lib/idle/idleSync';
 
 // Endpoints that require the admin JWT (called from the admin panel)
 const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
@@ -72,6 +73,20 @@ async function apiRequest<T = any>(
 
     // Handle errors
     if (!response.ok) {
+      // Session expired due to inactivity -- trigger clean logout identical to
+      // the frontend idle timer. This catches edge cases where the backend's
+      // safety-net timeout fires before the frontend timer (e.g., laptop
+      // sleep/wake, background tab throttling).
+      if (response.status === 401 && data?.reason === 'inactivity') {
+        try {
+          const sync = getIdleSync();
+          sync.publishLogout();
+          localStorage.removeItem('javelina-last-activity');
+        } catch (e) { /* ignore broadcast errors */ }
+        window.location.href = '/api/logout';
+        throw new ApiError('Session expired due to inactivity', 401, data);
+      }
+
       // Special handling for disabled organization errors
       if (response.status === 403 && data?.error === 'Organization is disabled') {
         const errorMessage = data?.message || 'This organization is currently disabled. Contact support for assistance.';

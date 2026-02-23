@@ -1,24 +1,29 @@
 /**
  * User activity status helpers
- * Determines activity status based on last login timestamp
+ * Determines activity status based on the most recent activity or login timestamp.
+ * Prefers `lastActivity` (updated on every authenticated request) over `lastLogin`
+ * (only set at sign-in time) when available.
  */
 
 /**
- * Calculate activity status based on last login time
- * @param lastLogin - ISO timestamp of user's last login
+ * Calculate activity status from the best available timestamp.
+ * @param lastLogin    - ISO timestamp of user's last login
+ * @param lastActivity - ISO timestamp of user's last authenticated action (preferred)
  * @returns Activity status: 'online' | 'active' | 'recent' | 'inactive'
  */
-export function getActivityStatus(lastLogin: string | undefined): string {
-  if (!lastLogin) return 'inactive';
-  
-  const now = Date.now();
-  const loginTime = new Date(lastLogin).getTime();
-  const diffMinutes = (now - loginTime) / (1000 * 60);
-  
-  if (diffMinutes < 5) return 'online';          // < 5 minutes
-  if (diffMinutes < 24 * 60) return 'active';    // < 1 day
-  if (diffMinutes < 30 * 24 * 60) return 'recent'; // < 30 days
-  return 'inactive';                               // > 30 days
+export function getActivityStatus(
+  lastLogin: string | undefined,
+  lastActivity?: string | undefined,
+): string {
+  const timestamp = lastActivity || lastLogin;
+  if (!timestamp) return 'inactive';
+
+  const diffMinutes = (Date.now() - new Date(timestamp).getTime()) / (1000 * 60);
+
+  if (diffMinutes < 5) return 'online';             // < 5 minutes
+  if (diffMinutes < 24 * 60) return 'active';       // < 1 day
+  if (diffMinutes < 30 * 24 * 60) return 'recent';  // < 30 days
+  return 'inactive';                                  // > 30 days
 }
 
 /**
