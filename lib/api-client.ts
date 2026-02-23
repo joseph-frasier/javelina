@@ -10,9 +10,6 @@
 
 import { getAdminSessionToken } from '@/lib/admin-session-token';
 
-// API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 // Endpoints that require the admin JWT (called from the admin panel)
 const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
 
@@ -55,12 +52,13 @@ async function apiRequest<T = any>(
       }
     }
 
-    // Make request with credentials for session cookies
-    const url = `${API_BASE_URL}/api${endpoint}`;
+    // Route through same-origin proxy to avoid Safari ITP third-party cookie blocking.
+    // Next.js rewrites in next.config.ts forward /api/backend/* to the Express backend.
+    const url = `/api/backend${endpoint}`;
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'include', // Send/receive session cookies
+      credentials: 'include',
     });
 
     // Parse response
