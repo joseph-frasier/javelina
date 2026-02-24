@@ -41,6 +41,7 @@ export interface Organization {
   id: string;
   name: string;
   role: RBACRole;
+  pending_plan_code?: string | null;
 }
 
 export interface User {
@@ -251,6 +252,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             id: org.id,
             name: org.name,
             role: org.role,
+            pending_plan_code: org.pending_plan_code ?? null,
           }))
 
           const userProfile = {

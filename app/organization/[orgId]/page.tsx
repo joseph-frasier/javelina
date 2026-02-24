@@ -136,6 +136,8 @@ export default async function OrganizationPage({
     recentActivity: recentActivity,
     created_at: org.created_at,
     updated_at: org.updated_at,
+    pending_plan_code: org.pending_plan_code || null,
+    pending_price_id: org.pending_price_id || null,
   };
 
   return <OrganizationClient org={orgData} />;

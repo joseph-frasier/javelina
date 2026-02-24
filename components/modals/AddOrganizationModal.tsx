@@ -111,6 +111,8 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
             billing_zip: billingZip.trim(),
             admin_contact_email: adminContactEmail.trim(),
             admin_contact_phone: formatUSPhone(adminContactPhone),
+            pending_plan_code: selectedPlan.code,
+            pending_price_id: selectedPlan.monthly?.priceId,
           });
 
           organizationId = data.id;
