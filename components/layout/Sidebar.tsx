@@ -11,6 +11,7 @@ import { useZones } from '@/lib/hooks/useZones';
 import { useTags } from '@/lib/hooks/useTags';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { organizationsApi } from '@/lib/api-client';
 import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
 
 interface SidebarProps {
@@ -39,6 +40,40 @@ export function Sidebar({
   const userOrganizations = user?.organizations || [];
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
+  // Pending checkout: org IDs that have pending_plan_code set.
+  // Profile and list() often don't include pending_plan_code; GET /organizations/:id does, so we fetch each org.
+  const [pendingCheckoutOrgIds, setPendingCheckoutOrgIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user?.organizations?.length) {
+      setPendingCheckoutOrgIds(new Set());
+      return;
+    }
+    const fromProfile = new Set(
+      user.organizations
+        .filter((org) => org.pending_plan_code)
+        .map((org) => org.id)
+    );
+    if (fromProfile.size > 0) {
+      setPendingCheckoutOrgIds(fromProfile);
+      return;
+    }
+    // Backend GET /organizations/:id returns pending_plan_code; list/profile may not. Fetch each org to get it.
+    Promise.all(
+      user.organizations.map((org) =>
+        organizationsApi.get(org.id).catch(() => null)
+      )
+    )
+      .then((results) => {
+        const pending = new Set(
+          results
+            .filter((o: any) => o?.pending_plan_code)
+            .map((o: any) => o.id)
+        );
+        setPendingCheckoutOrgIds(pending);
+      })
+      .catch(() => setPendingCheckoutOrgIds(new Set()));
+  }, [user?.organizations]);
 
   // Animate mobile menu
   useEffect(() => {
@@ -74,7 +109,9 @@ export function Sidebar({
   const renderOrganizations = () => {
     return (
       <div className="space-y-1">
-        {userOrganizations.map((org) => (
+        {userOrganizations.map((org) => {
+          const hasPendingCheckout = !!org.pending_plan_code || pendingCheckoutOrgIds.has(org.id);
+          return (
           <div key={org.id}>
             {/* Organization */}
             <div className="flex items-center group">
@@ -101,11 +138,11 @@ export function Sidebar({
               </button>
               <Link
                 href={`/organization/${org.id}`}
-                className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange"
+                className="flex items-center space-x-2 px-2 py-1 rounded flex-1 transition-colors group-hover:text-orange min-w-0"
                 title={org.name}
               >
                 <svg
-                  className="w-4 h-4 text-orange"
+                  className={`w-4 h-4 flex-shrink-0 ${hasPendingCheckout ? 'text-amber-500' : 'text-orange'}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -117,9 +154,27 @@ export function Sidebar({
                     d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-orange-dark dark:text-white">
+                <span className="text-sm font-medium text-orange-dark dark:text-white truncate">
                   {truncateName(org.name)}
                 </span>
+                {hasPendingCheckout && (
+                  <svg
+                    className="w-4 h-4 flex-shrink-0 text-amber-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-label="Payment incomplete"
+                    role="img"
+                    title="Payment incomplete"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                )}
               </Link>
             </div>
 
@@ -131,7 +186,8 @@ export function Sidebar({
               />
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
