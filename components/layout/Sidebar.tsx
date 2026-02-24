@@ -165,8 +165,8 @@ export function Sidebar({
                     viewBox="0 0 24 24"
                     aria-label="Payment incomplete"
                     role="img"
-                    title="Payment incomplete"
                   >
+                    <title>Payment incomplete</title>
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
