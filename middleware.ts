@@ -21,29 +21,9 @@ export async function middleware(request: NextRequest) {
     const sessionCookie = request.cookies.get('javelina_session')
     const isAuthenticated = !!sessionCookie
 
-    // Check if user is in password reset flow (must complete password reset before accessing anything else)
-    // BUT allow navigation to login page (user can abandon reset and login normally)
-    const passwordResetRequired = request.cookies.get('password_reset_required')?.value === 'true'
-    const isLoginPage = request.nextUrl.pathname === '/login'
-    
-    if (passwordResetRequired && !isLoginPage && request.nextUrl.pathname !== '/reset-password') {
-      return NextResponse.redirect(new URL('/reset-password?recovery=true', request.url))
-    }
-    
-    // If user navigates to login during password reset, clear the reset cookie
-    if (passwordResetRequired && isLoginPage) {
-      response.cookies.set('password_reset_required', '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 0,
-        path: '/'
-      })
-    }
-
     // Public routes that don't require authentication
     // Root path '/' is accessible to all (shows login to unauthenticated, dashboard to authenticated)
-    const publicRoutes = ['/', '/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
+    const publicRoutes = ['/', '/login', '/forgot-password', '/email-verified', '/admin/login', '/pricing', '/checkout', '/infrastructure']
     const isPublicRoute = publicRoutes.some((route) => {
       // Exact match for root path
       if (route === '/' && request.nextUrl.pathname === '/') {
@@ -72,9 +52,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    // If user IS authenticated and trying to access login/signup pages, redirect to dashboard
+    // If user IS authenticated and trying to access the login page, redirect to dashboard
     // Note: Don't redirect from '/' since it handles both auth states
-    if (isAuthenticated && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+    if (isAuthenticated && request.nextUrl.pathname === '/login') {
       return NextResponse.redirect(new URL('/', request.url))
     }
   } catch (error) {

@@ -36,18 +36,18 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   
   // Hide sidebar and header on authentication pages, pricing/checkout/stripe pages, and admin routes
   const isAuthPage = pathname === '/login' || 
-                     pathname === '/signup' || 
-                     pathname === '/forgot-password' || 
-                     pathname === '/reset-password';
+                     pathname === '/forgot-password';
 
   const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout';
+
+  const isPublicMarketingPage = pathname === '/infrastructure';
   
   const isStripeFlow = pathname.startsWith('/stripe/');
 
   const isAdminRoute = pathname.startsWith('/admin');
 
-  // For pages without Header/Sidebar (auth, pricing, admin), render immediately
-  if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute) {
+  // For pages without Header/Sidebar (auth, pricing, admin, public marketing), render immediately
+  if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute || isPublicMarketingPage) {
     return (
       <>
         <IdleLogoutGuard />

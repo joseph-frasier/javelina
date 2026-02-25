@@ -543,6 +543,13 @@ export const adminApi = {
   },
 
   /**
+   * Send password reset email via Auth0 Management API
+   */
+  sendPasswordReset: (email: string) => {
+    return apiClient.post('/admin/users/password-reset', { email });
+  },
+
+  /**
    * List all organizations (admin only)
    */
   listOrganizations: (params?: { page?: number; limit?: number; search?: string }) => {
@@ -862,6 +869,98 @@ export const supportApi = {
   },
 
   /**
+   * Stream a chat response via SSE (fetch-based).
+   * Returns a ReadableStream of SSE events.
+   */
+  chatStream: async (
+    data: {
+      message: string;
+      conversationId?: string;
+      entryPoint?: string;
+      pageUrl?: string;
+      userId: string;
+      orgId?: string;
+      tier?: string;
+      attemptCount?: number;
+      snapshot?: any;
+    },
+    onDelta: (text: string) => void,
+    onMetadata: (metadata: { intent: string; confidence: number; citations: SupportCitation[]; nextAction: string }) => void,
+    onDone: (info: { conversationId: string; responseTimeMs: number }) => void,
+    onError: (error: { message: string }) => void,
+    signal?: AbortSignal,
+  ): Promise<void> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (isAdminEndpoint('/support/chat/stream')) {
+      const adminToken = getAdminSessionToken();
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+    }
+
+    // Use dedicated streaming proxy so response is streamed (rewrite can buffer).
+    const url = '/api/support/chat/stream';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+      credentials: 'include',
+      signal,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      let msg = `Request failed with status ${response.status}`;
+      try { msg = JSON.parse(errorBody)?.error || msg; } catch {}
+      throw new ApiError(msg, response.status);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new ApiError('No response body', 500);
+
+    const decoder = new TextDecoder();
+    let partial = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      partial += decoder.decode(value, { stream: true });
+      const lines = partial.split('\n');
+      partial = lines.pop() || '';
+
+      let currentEvent = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith('data: ')) {
+          const payload = line.slice(6);
+          try {
+            const parsed = JSON.parse(payload);
+            switch (currentEvent) {
+              case 'delta':
+                onDelta(parsed.text);
+                break;
+              case 'metadata':
+                onMetadata(parsed);
+                break;
+              case 'done':
+                onDone(parsed);
+                break;
+              case 'error':
+                onError(parsed);
+                break;
+            }
+          } catch {}
+          currentEvent = '';
+        }
+      }
+    }
+  },
+
+  /**
    * Submit feedback for a support conversation
    */
   submitFeedback: (data: {
@@ -995,4 +1094,3 @@ export interface SupportConversationDetail {
 
 // Export everything
 export default apiClient;
-
