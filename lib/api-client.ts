@@ -893,10 +893,10 @@ export const supportApi = {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (!isAdminEndpoint('/support/chat/stream')) {
-      const sessionToken = getSessionToken();
-      if (sessionToken) {
-        headers['Authorization'] = `Bearer ${sessionToken}`;
+    if (isAdminEndpoint('/support/chat/stream')) {
+      const adminToken = getAdminSessionToken();
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
       }
     }
 
