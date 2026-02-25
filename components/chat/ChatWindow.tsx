@@ -305,10 +305,18 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     } catch (error) {
       let errorContent = "I'm sorry, I encountered an error. Please try again or contact support directly.";
 
-      if (error instanceof ApiError && error.statusCode === 429) {
-        const resetInSeconds = error.details?.resetInSeconds || error.details?.retryAfter || 60;
-        const minutes = Math.ceil(resetInSeconds / 60);
-        errorContent = `You've reached the rate limit for chat messages. Please try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
+      if (error instanceof ApiError) {
+        if (error.statusCode === 429) {
+          const resetInSeconds = error.details?.resetInSeconds || error.details?.retryAfter || 60;
+          const minutes = Math.ceil(resetInSeconds / 60);
+          errorContent = `You've reached the rate limit for chat messages. Please try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
+        } else {
+          // Surface backend/auth errors so we can debug (e.g. 401, 500)
+          errorContent = error.message || errorContent;
+        }
+      }
+      if (process.env.NODE_ENV === 'development' && error) {
+        console.error('[ChatWindow] support chat stream error:', error);
       }
 
       // Update the placeholder message with the error

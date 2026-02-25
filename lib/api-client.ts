@@ -900,7 +900,8 @@ export const supportApi = {
       }
     }
 
-    const url = `${API_BASE_URL}/api/support/chat/stream`;
+    // Use dedicated streaming proxy so response is streamed (rewrite can buffer).
+    const url = '/api/support/chat/stream';
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -1093,4 +1094,3 @@ export interface SupportConversationDetail {
 
 // Export everything
 export default apiClient;
-
