@@ -84,14 +84,14 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     selectAndExpand(org.id);
   }, [org.id, selectAndExpand]);
 
-  // Sync auth store when server-side subscription status differs from cached value
-  // (e.g. after completing payment, the sidebar still shows stale data)
+  // Sync auth store when server-side pending-plan state differs from cached value
+  // (e.g. after checkout completion, sidebar can show stale org state until profile refresh)
   useEffect(() => {
     const storeOrg = user?.organizations?.find((o) => o.id === org.id);
-    if (storeOrg && storeOrg.subscription_status !== org.subscriptionStatus) {
+    if (storeOrg && (storeOrg.pending_plan_code ?? null) !== (org.pending_plan_code ?? null)) {
       fetchProfile();
     }
-  }, [org.id, org.subscriptionStatus, user?.organizations, fetchProfile]);
+  }, [org.id, org.pending_plan_code, user?.organizations, fetchProfile]);
   
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
