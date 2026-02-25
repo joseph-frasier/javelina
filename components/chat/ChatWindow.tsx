@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -29,6 +29,116 @@ interface Message {
   citations?: SupportCitation[];
   nextAction?: SupportChatResponse['nextAction'];
   resolutionNeeded?: boolean;
+}
+
+const INLINE_MARKDOWN_REGEX = /(`[^`\n]+`|\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_)/g;
+const CODE_BLOCK_REGEX = /```([\w-]+)?\n?([\s\S]*?)```/g;
+
+function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+  const parts = text.split(INLINE_MARKDOWN_REGEX);
+  return parts.map((part, idx) => {
+    const key = `${keyPrefix}-${idx}`;
+    if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+      return (
+        <code key={key} className="px-1 py-0.5 rounded bg-gray-200 dark:bg-gray-800 text-xs font-mono">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    if (
+      ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) &&
+      part.length >= 4
+    ) {
+      return <strong key={key}>{part.slice(2, -2)}</strong>;
+    }
+    if (
+      ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) &&
+      part.length >= 2
+    ) {
+      return <em key={key}>{part.slice(1, -1)}</em>;
+    }
+    return <span key={key}>{part}</span>;
+  });
+}
+
+function renderMarkdownText(text: string, keyPrefix: string): ReactNode[] {
+  return text.split('\n').map((line, idx) => {
+    const key = `${keyPrefix}-line-${idx}`;
+    if (!line.trim()) return <div key={key} className="h-2" />;
+
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      return (
+        <p key={key} className="font-semibold">
+          {renderInlineMarkdown(headingMatch[2], `${key}-heading`)}
+        </p>
+      );
+    }
+
+    const unorderedMatch = line.match(/^[-*]\s+(.+)$/);
+    if (unorderedMatch) {
+      return (
+        <p key={key} className="pl-4">
+          <span aria-hidden="true">• </span>
+          {renderInlineMarkdown(unorderedMatch[1], `${key}-ul`)}
+        </p>
+      );
+    }
+
+    const orderedMatch = line.match(/^(\d+)\.\s+(.+)$/);
+    if (orderedMatch) {
+      return (
+        <p key={key} className="pl-4">
+          <span>{orderedMatch[1]}. </span>
+          {renderInlineMarkdown(orderedMatch[2], `${key}-ol`)}
+        </p>
+      );
+    }
+
+    return <p key={key}>{renderInlineMarkdown(line, `${key}-p`)}</p>;
+  });
+}
+
+function renderAssistantMessage(content: string): ReactNode {
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let blockIndex = 0;
+  CODE_BLOCK_REGEX.lastIndex = 0;
+
+  while ((match = CODE_BLOCK_REGEX.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      const text = content.slice(lastIndex, match.index);
+      nodes.push(
+        <div key={`text-${blockIndex}`} className="space-y-1">
+          {renderMarkdownText(text, `text-${blockIndex}`)}
+        </div>
+      );
+    }
+
+    const code = match[2] || '';
+    nodes.push(
+      <pre
+        key={`code-${blockIndex}`}
+        className="overflow-x-auto rounded-lg bg-gray-900 text-gray-100 p-3 text-xs font-mono"
+      >
+        <code>{code}</code>
+      </pre>
+    );
+
+    lastIndex = CODE_BLOCK_REGEX.lastIndex;
+    blockIndex += 1;
+  }
+
+  if (lastIndex < content.length) {
+    nodes.push(
+      <div key={`text-tail-${blockIndex}`} className="space-y-1">
+        {renderMarkdownText(content.slice(lastIndex), `text-tail-${blockIndex}`)}
+      </div>
+    );
+  }
+
+  return <div className="text-sm text-gray-900 dark:text-white">{nodes}</div>;
 }
 
 export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
@@ -433,7 +543,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                 </div>
                 <div className="flex-1">
                   <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3">
-                    <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{message.content}</p>
+                    {renderAssistantMessage(message.content)}
                     
                     {/* Citations */}
                     {message.citations && message.citations.length > 0 && (
@@ -576,4 +686,3 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     </div>
   );
 }
-
