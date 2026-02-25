@@ -3,9 +3,14 @@
 import { cookies } from 'next/headers';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
+import { SignJWT, jwtVerify } from 'jose';
 
 // Admin authentication using Supabase with superadmin flag verification
 // Only users with profiles.superadmin = true can access the admin panel
+//
+// The admin session is stored as a JWT in a cookie so that BOTH the Next.js
+// frontend and the Express backend can independently verify it using the
+// shared ADMIN_JWT_SECRET. This is a bandaid until admin is migrated to Auth0.
 
 // Use __Host- prefix only in production (requires HTTPS)
 // In development, use regular cookie name
@@ -14,17 +19,58 @@ const ADMIN_COOKIE_NAME = process.env.NODE_ENV === 'production'
   : 'admin_session';
 const SESSION_DURATION = 3600; // 1 hour
 
-// In-memory store for valid admin sessions with user data
-// Use global to persist across module reloads in development
-declare global {
-  var __adminSessions: Map<string, { id: string; email: string; name: string | null }> | undefined;
+// Shared secret for signing/verifying admin JWTs
+// Must be the same value in both Next.js and Express backend
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret) {
+    throw new Error('ADMIN_JWT_SECRET environment variable is required');
+  }
+  return new TextEncoder().encode(secret);
 }
 
-// Ensure we always have a Map (not a Set from old code)
-if (!global.__adminSessions || !(global.__adminSessions instanceof Map)) {
-  global.__adminSessions = new Map<string, { id: string; email: string; name: string | null }>();
+async function signAdminJwt(payload: {
+  userId: string;
+  email: string;
+  name: string | null;
+}): Promise<string> {
+  return new SignJWT({
+    userId: payload.userId,
+    email: payload.email,
+    name: payload.name,
+    isSuperAdmin: true,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(`${SESSION_DURATION}s`)
+    .setIssuer('javelina-admin')
+    .sign(getJwtSecret());
 }
-const validAdminSessions = global.__adminSessions;
+
+async function verifyAdminJwt(token: string): Promise<{
+  userId: string;
+  email: string;
+  name: string | null;
+} | null> {
+  try {
+    const { payload } = await jwtVerify(token, getJwtSecret(), {
+      issuer: 'javelina-admin',
+    });
+    
+    if (!payload.userId || !payload.email || payload.isSuperAdmin !== true) {
+      return null;
+    }
+
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      name: (payload.name as string) || null,
+    };
+  } catch {
+    // Token expired, invalid signature, etc.
+    return null;
+  }
+}
 
 export async function loginAdmin(
   email: string,
@@ -73,30 +119,29 @@ export async function loginAdmin(
     return { error: 'Access denied: SuperAdmin privileges required' };
   }
 
-  // Create session token
-  const token = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + SESSION_DURATION * 1000);
-
-  // Store token with user data in memory
-  validAdminSessions.set(token, {
-    id: profile.id,
+  // Create signed JWT session token
+  const token = await signAdminJwt({
+    userId: profile.id,
     email: profile.email,
     name: profile.name,
   });
+
+  const expiresAt = new Date(Date.now() + SESSION_DURATION * 1000);
 
   // Set cookie
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     expires: expiresAt,
     path: '/' // Allow cookie to be sent to all routes including /api
   });
 
   return {
     success: true,
-    admin: { id: profile.id, email: profile.email, name: profile.name || 'Admin User' }
+    admin: { id: profile.id, email: profile.email, name: profile.name || 'Admin User' },
+    token, // Returned so the client can store it for Authorization header (cross-domain)
   };
 }
 
@@ -105,31 +150,22 @@ export async function getAdminSession() {
   const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
   if (!token) return null;
 
-  // Check if token exists in memory and get user data
-  const userData = validAdminSessions.get(token);
-  if (userData) {
-    return {
-      token,
-      admin_users: {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name || 'Admin User'
-      }
-    };
-  }
+  // Verify JWT and extract user data
+  const userData = await verifyAdminJwt(token);
+  if (!userData) return null;
 
-  return null;
+  return {
+    token,
+    admin_users: {
+      id: userData.userId,
+      email: userData.email,
+      name: userData.name || 'Admin User'
+    }
+  };
 }
 
 export async function logoutAdmin() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
-  
-  if (token) {
-    // Remove token from memory
-    validAdminSessions.delete(token);
-  }
-  
   cookieStore.delete(ADMIN_COOKIE_NAME);
 }
 
@@ -155,7 +191,8 @@ export async function getAdminUser() {
 
 // Helper function to check if a token is valid (for API routes)
 export async function isValidAdminToken(token: string): Promise<boolean> {
-  return validAdminSessions.has(token);
+  const result = await verifyAdminJwt(token);
+  return result !== null;
 }
 
 // Log admin action to audit_logs table

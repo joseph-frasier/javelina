@@ -81,8 +81,17 @@ export default function AdminUsersPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const data = await adminApi.listUsers();
-      setUsers((data || []) as User[]);
+      // Fetch all pages (backend caps at 100 per request)
+      const pageSize = 100;
+      let allUsers: User[] = [];
+      let page = 1;
+      let batch: User[];
+      do {
+        batch = ((await adminApi.listUsers({ page, limit: pageSize })) || []) as User[];
+        allUsers = allUsers.concat(batch);
+        page++;
+      } while (batch.length === pageSize);
+      setUsers(allUsers);
     } catch (error) {
       console.error('Failed to fetch users:', error);
       addToast('error', 'Failed to load users from API');

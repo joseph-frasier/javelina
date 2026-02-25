@@ -41,6 +41,7 @@ export interface Organization {
   id: string;
   name: string;
   role: RBACRole;
+  pending_plan_code?: string | null;
 }
 
 export interface User {
@@ -190,8 +191,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         // Check session with Express backend
         try {
           authLog.log('[AUTH] Checking session with backend')
-          const response = await fetch(`${API_URL}/auth/me`, {
-            credentials: 'include', // Send session cookie
+          const response = await fetch('/api/backend-auth/me', {
+            credentials: 'include',
           })
 
           authLog.log('[AUTH] Session check response:', response.status)
@@ -216,11 +217,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // Fetch user profile via Express API (uses session cookie)
       fetchProfile: async () => {
         try {
-          authLog.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
+          authLog.log('[AUTH] Fetching profile from: /api/backend/users/profile')
           
-          // Call backend API directly with credentials to send session cookie
-          const response = await fetch(`${API_URL}/api/users/profile`, {
-            credentials: 'include', // Send session cookie
+          const response = await fetch('/api/backend/users/profile', {
+            credentials: 'include',
           })
 
           authLog.log('[AUTH] Profile response status:', response.status)
@@ -252,6 +252,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             id: org.id,
             name: org.name,
             role: org.role,
+            pending_plan_code: org.pending_plan_code ?? null,
           }))
 
           const userProfile = {
@@ -364,7 +365,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         return { success: true }
       },
 
-      // Logout - navigate to Next.js API route for smooth transition
+      // Logout - navigate directly to Express backend (same pattern as login)
       logout: async () => {
         authLog.log('[AUTH] Logout initiated')
         
@@ -411,11 +412,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           // Ignore broadcast errors to avoid delaying logout
         }
         
-        // Navigate to Next.js API route - single smooth transition
-        // Flow: /api/logout → Express → Auth0 logout → Auth0 redirects to /
+        // Navigate to Next.js logout API route (NOT directly to Express)
+        // This ensures the frontend-domain cookie is cleared before Auth0 logout
+        // Flow: /api/logout → clears frontend cookie → Express /auth/logout → Auth0 → /
         // When page loads at /, AuthProvider sees 'just-logged-out' flag and skips auth check
-        // Result: One clean transition, no flicker, no intermediate states
-        authLog.log('[AUTH] Navigating to /api/logout')
+        authLog.log('[AUTH] Navigating to frontend logout route: /api/logout')
         window.location.href = '/api/logout'
       },
 }))

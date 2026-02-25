@@ -92,8 +92,17 @@ export default function AdminOrganizationsPage() {
 
   const fetchOrganizations = useCallback(async () => {
     try {
-      const data = await adminApi.listOrganizations();
-      setOrgs((data || []) as Organization[]);
+      // Fetch all pages (backend caps at 100 per request)
+      const pageSize = 100;
+      let allOrgs: Organization[] = [];
+      let page = 1;
+      let batch: Organization[];
+      do {
+        batch = ((await adminApi.listOrganizations({ page, limit: pageSize })) || []) as Organization[];
+        allOrgs = allOrgs.concat(batch);
+        page++;
+      } while (batch.length === pageSize);
+      setOrgs(allOrgs);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
       addToast('error', 'Failed to load organizations from API');
