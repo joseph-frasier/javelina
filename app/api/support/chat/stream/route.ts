@@ -9,6 +9,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+function copySetCookieHeaders(source: Headers, target: Headers) {
+  const getSetCookie = (source as unknown as { getSetCookie?: () => string[] }).getSetCookie;
+  if (typeof getSetCookie === 'function') {
+    for (const cookie of getSetCookie.call(source)) {
+      target.append('Set-Cookie', cookie);
+    }
+    return;
+  }
+
+  const fallbackCookie = source.get('set-cookie');
+  if (fallbackCookie) {
+    target.append('Set-Cookie', fallbackCookie);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const backendUrl = `${API_BASE_URL}/api/support/chat/stream`;
@@ -30,23 +45,27 @@ export async function POST(request: NextRequest) {
 
     if (!backendResponse.ok) {
       const errorBody = await backendResponse.text();
+      const responseHeaders = new Headers();
+      const contentType = backendResponse.headers.get('Content-Type') || 'application/json';
+      responseHeaders.set('Content-Type', contentType);
+      copySetCookieHeaders(backendResponse.headers, responseHeaders);
       return new NextResponse(errorBody, {
         status: backendResponse.status,
-        headers: {
-          'Content-Type': backendResponse.headers.get('Content-Type') || 'application/json',
-        },
+        headers: responseHeaders,
       });
     }
 
+    const responseHeaders = new Headers();
     const contentType = backendResponse.headers.get('Content-Type') || 'text/event-stream';
+    responseHeaders.set('Content-Type', contentType);
+    responseHeaders.set('Cache-Control', 'no-cache');
+    responseHeaders.set('Connection', 'keep-alive');
+    responseHeaders.set('X-Accel-Buffering', 'no');
+    copySetCookieHeaders(backendResponse.headers, responseHeaders);
+
     return new NextResponse(backendResponse.body ?? null, {
       status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no',
-      },
+      headers: responseHeaders,
     });
   } catch (error: unknown) {
     console.error('[support/chat/stream] Proxy error:', error);

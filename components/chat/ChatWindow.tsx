@@ -141,6 +141,13 @@ function renderAssistantMessage(content: string): ReactNode {
   return <div className="text-sm text-gray-900 dark:text-white">{nodes}</div>;
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    ((error as { name?: string } | null)?.name === 'AbortError')
+  );
+}
+
 export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -312,9 +319,25 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
 
   const abortRef = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    if (!isOpen && abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+      setLoading(false);
+    }
+
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+    };
+  }, [isOpen]);
+
   const handleSend = async () => {
     if (!inputValue.trim()) return;
     if (!user) return;
+    if (loading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -338,6 +361,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       timestamp: new Date(),
     };
     setMessages(prev => [...prev, placeholderMsg]);
+    setLoading(true);
 
     const abortController = new AbortController();
     abortRef.current = abortController;
@@ -413,6 +437,13 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
         abortController.signal,
       );
     } catch (error) {
+      if (isAbortError(error)) {
+        setMessages(prev =>
+          prev.filter(m => !(m.id === assistantMsgId && !m.content))
+        );
+        return;
+      }
+
       let errorContent = "I'm sorry, I encountered an error. Please try again or contact support directly.";
 
       if (error instanceof ApiError) {
@@ -436,6 +467,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
         )
       );
     } finally {
+      setLoading(false);
       abortRef.current = null;
     }
   };
@@ -609,21 +641,6 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             )}
           </div>
         ))}
-
-        {loading && (
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-orange rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">J</span>
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
-          </div>
-        )}
 
         <div ref={messagesEndRef} />
       </div>
