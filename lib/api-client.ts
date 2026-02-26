@@ -9,9 +9,7 @@
  */
 
 import { getAdminSessionToken } from '@/lib/admin-session-token';
-
-// API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { getIdleSync } from '@/lib/idle/idleSync';
 
 // Endpoints that require the admin JWT (called from the admin panel)
 const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
@@ -55,12 +53,13 @@ async function apiRequest<T = any>(
       }
     }
 
-    // Make request with credentials for session cookies
-    const url = `${API_BASE_URL}/api${endpoint}`;
+    // Route through same-origin proxy to avoid Safari ITP third-party cookie blocking.
+    // Next.js rewrites in next.config.ts forward /api/backend/* to the Express backend.
+    const url = `/api/backend${endpoint}`;
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'include', // Send/receive session cookies
+      credentials: 'include',
     });
 
     // Parse response
@@ -74,6 +73,20 @@ async function apiRequest<T = any>(
 
     // Handle errors
     if (!response.ok) {
+      // Session expired due to inactivity -- trigger clean logout identical to
+      // the frontend idle timer. This catches edge cases where the backend's
+      // safety-net timeout fires before the frontend timer (e.g., laptop
+      // sleep/wake, background tab throttling).
+      if (response.status === 401 && data?.reason === 'inactivity') {
+        try {
+          const sync = getIdleSync();
+          sync.publishLogout();
+          localStorage.removeItem('javelina-last-activity');
+        } catch (e) { /* ignore broadcast errors */ }
+        window.location.href = '/api/logout';
+        throw new ApiError('Session expired due to inactivity', 401, data);
+      }
+
       // Special handling for disabled organization errors
       if (response.status === 403 && data?.error === 'Organization is disabled') {
         const errorMessage = data?.message || 'This organization is currently disabled. Contact support for assistance.';
@@ -309,6 +322,8 @@ export const organizationsApi = {
     billing_zip?: string;
     admin_contact_email?: string;
     admin_contact_phone?: string;
+    pending_plan_code?: string;
+    pending_price_id?: string;
   }) => {
     return apiClient.post('/organizations', data);
   },
@@ -525,6 +540,13 @@ export const adminApi = {
    */
   updateUserRole: (userId: string, role: string) => {
     return apiClient.put(`/admin/users/${userId}/role`, { role });
+  },
+
+  /**
+   * Send password reset email via Auth0 Management API
+   */
+  sendPasswordReset: (email: string) => {
+    return apiClient.post('/admin/users/password-reset', { email });
   },
 
   /**
@@ -847,6 +869,98 @@ export const supportApi = {
   },
 
   /**
+   * Stream a chat response via SSE (fetch-based).
+   * Returns a ReadableStream of SSE events.
+   */
+  chatStream: async (
+    data: {
+      message: string;
+      conversationId?: string;
+      entryPoint?: string;
+      pageUrl?: string;
+      userId: string;
+      orgId?: string;
+      tier?: string;
+      attemptCount?: number;
+      snapshot?: any;
+    },
+    onDelta: (text: string) => void,
+    onMetadata: (metadata: { intent: string; confidence: number; citations: SupportCitation[]; nextAction: string }) => void,
+    onDone: (info: { conversationId: string; responseTimeMs: number }) => void,
+    onError: (error: { message: string }) => void,
+    signal?: AbortSignal,
+  ): Promise<void> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (isAdminEndpoint('/support/chat/stream')) {
+      const adminToken = getAdminSessionToken();
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+    }
+
+    // Use dedicated streaming proxy so response is streamed (rewrite can buffer).
+    const url = '/api/support/chat/stream';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+      credentials: 'include',
+      signal,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      let msg = `Request failed with status ${response.status}`;
+      try { msg = JSON.parse(errorBody)?.error || msg; } catch {}
+      throw new ApiError(msg, response.status);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new ApiError('No response body', 500);
+
+    const decoder = new TextDecoder();
+    let partial = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      partial += decoder.decode(value, { stream: true });
+      const lines = partial.split('\n');
+      partial = lines.pop() || '';
+
+      let currentEvent = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith('data: ')) {
+          const payload = line.slice(6);
+          try {
+            const parsed = JSON.parse(payload);
+            switch (currentEvent) {
+              case 'delta':
+                onDelta(parsed.text);
+                break;
+              case 'metadata':
+                onMetadata(parsed);
+                break;
+              case 'done':
+                onDone(parsed);
+                break;
+              case 'error':
+                onError(parsed);
+                break;
+            }
+          } catch {}
+          currentEvent = '';
+        }
+      }
+    }
+  },
+
+  /**
    * Submit feedback for a support conversation
    */
   submitFeedback: (data: {
@@ -980,4 +1094,3 @@ export interface SupportConversationDetail {
 
 // Export everything
 export default apiClient;
-

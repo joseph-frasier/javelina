@@ -49,3 +49,5 @@ next-env.d.ts
 # next.js docs
 .next-docs/
 
+# serena
+.serena/

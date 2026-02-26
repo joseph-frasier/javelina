@@ -145,8 +145,8 @@ export function SubscriptionManager({
         {/* Billing Dates */}
         {subscription?.subscription?.current_period_end && (
           <div className="mb-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-slate">Next billing date</span>
+            <div className="text-sm">
+              <span className="text-gray-slate">Next billing date: </span>
               <span className="font-medium text-orange-dark">
                 {new Date(subscription.subscription.current_period_end).toLocaleDateString()}
               </span>
@@ -292,4 +292,3 @@ export function SubscriptionManager({
     </div>
   );
 }
-

@@ -8,7 +8,8 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 // Recharts is imported but not currently used (shows placeholder messages)
 // When analytics are implemented, consider dynamic imports to reduce bundle size
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// All API calls routed through same-origin proxy (see next.config.ts rewrites)
+const API_PROXY_BASE = '/api/backend';
 
 interface Organization {
   id: string;
@@ -43,8 +44,8 @@ export default function AnalyticsPage() {
     const fetchOrganizations = async () => {
       try {
         // apiClient handles session cookies automatically
-        const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
-          credentials: 'include', // Send session cookie
+        const response = await fetch(`${API_PROXY_BASE}/users/profile`, {
+          credentials: 'include',
         });
 
         if (!response.ok) return;
@@ -75,8 +76,8 @@ export default function AnalyticsPage() {
           const allZones: Zone[] = [];
           
           for (const org of organizations) {
-            const response = await fetch(`${API_BASE_URL}/api/zones/organization/${org.id}`, {
-              credentials: 'include', // Send session cookie
+            const response = await fetch(`${API_PROXY_BASE}/zones/organization/${org.id}`, {
+              credentials: 'include',
             });
 
             if (response.ok) {
@@ -93,8 +94,8 @@ export default function AnalyticsPage() {
           setZones(allZones);
         } else {
           // Fetch zones for selected org
-          const response = await fetch(`${API_BASE_URL}/api/zones/organization/${selectedOrg}`, {
-            credentials: 'include', // Send session cookie
+          const response = await fetch(`${API_PROXY_BASE}/zones/organization/${selectedOrg}`, {
+            credentials: 'include',
           });
 
           if (response.ok) {

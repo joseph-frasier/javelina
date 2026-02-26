@@ -34,8 +34,12 @@ export function isJavelinaDomainUrl(url: string): boolean {
       return true;
     }
     
-    // Allow explicit Javelina help domain if you have one
-    const allowedDomains = ['help.javelina.com', 'docs.javelina.com'];
+    // Allow explicit Javelina help domain and Freshdesk knowledge base
+    const allowedDomains = [
+      'help.javelina.com', 
+      'docs.javelina.com',
+      'javelina-help.freshdesk.com'
+    ];
     return allowedDomains.some(domain => urlObj.hostname === domain);
   } catch {
     return false;
