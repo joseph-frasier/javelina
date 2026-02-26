@@ -31,10 +31,4 @@ export function getBaseURL() {
   return getURL()
 }
 
-/**
- * Get the full callback URL for OAuth
- */
-export function getAuthCallbackURL() {
-  return `${getURL()}/auth/callback`
-}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -31,9 +31,127 @@ interface Message {
   resolutionNeeded?: boolean;
 }
 
+const INLINE_MARKDOWN_REGEX = /(`[^`\n]+`|\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_)/g;
+const CODE_BLOCK_REGEX = /```([\w-]+)?\n?([\s\S]*?)```/g;
+
+function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+  const parts = text.split(INLINE_MARKDOWN_REGEX);
+  return parts.map((part, idx) => {
+    const key = `${keyPrefix}-${idx}`;
+    if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+      return (
+        <code key={key} className="px-1 py-0.5 rounded bg-gray-200 dark:bg-gray-800 text-xs font-mono">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    if (
+      ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) &&
+      part.length >= 4
+    ) {
+      return <strong key={key}>{part.slice(2, -2)}</strong>;
+    }
+    if (
+      ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) &&
+      part.length >= 2
+    ) {
+      return <em key={key}>{part.slice(1, -1)}</em>;
+    }
+    return <span key={key}>{part}</span>;
+  });
+}
+
+function renderMarkdownText(text: string, keyPrefix: string): ReactNode[] {
+  return text.split('\n').map((line, idx) => {
+    const key = `${keyPrefix}-line-${idx}`;
+    if (!line.trim()) return <div key={key} className="h-2" />;
+
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      return (
+        <p key={key} className="font-semibold">
+          {renderInlineMarkdown(headingMatch[2], `${key}-heading`)}
+        </p>
+      );
+    }
+
+    const unorderedMatch = line.match(/^[-*]\s+(.+)$/);
+    if (unorderedMatch) {
+      return (
+        <p key={key} className="pl-4">
+          <span aria-hidden="true">• </span>
+          {renderInlineMarkdown(unorderedMatch[1], `${key}-ul`)}
+        </p>
+      );
+    }
+
+    const orderedMatch = line.match(/^(\d+)\.\s+(.+)$/);
+    if (orderedMatch) {
+      return (
+        <p key={key} className="pl-4">
+          <span>{orderedMatch[1]}. </span>
+          {renderInlineMarkdown(orderedMatch[2], `${key}-ol`)}
+        </p>
+      );
+    }
+
+    return <p key={key}>{renderInlineMarkdown(line, `${key}-p`)}</p>;
+  });
+}
+
+function renderAssistantMessage(content: string): ReactNode {
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let blockIndex = 0;
+  CODE_BLOCK_REGEX.lastIndex = 0;
+
+  while ((match = CODE_BLOCK_REGEX.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      const text = content.slice(lastIndex, match.index);
+      nodes.push(
+        <div key={`text-${blockIndex}`} className="space-y-1">
+          {renderMarkdownText(text, `text-${blockIndex}`)}
+        </div>
+      );
+    }
+
+    const code = match[2] || '';
+    nodes.push(
+      <pre
+        key={`code-${blockIndex}`}
+        className="overflow-x-auto rounded-lg bg-gray-900 text-gray-100 p-3 text-xs font-mono"
+      >
+        <code>{code}</code>
+      </pre>
+    );
+
+    lastIndex = CODE_BLOCK_REGEX.lastIndex;
+    blockIndex += 1;
+  }
+
+  if (lastIndex < content.length) {
+    nodes.push(
+      <div key={`text-tail-${blockIndex}`} className="space-y-1">
+        {renderMarkdownText(content.slice(lastIndex), `text-tail-${blockIndex}`)}
+      </div>
+    );
+  }
+
+  return <div className="text-sm text-gray-900 dark:text-white">{nodes}</div>;
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    ((error as { name?: string } | null)?.name === 'AbortError')
+  );
+}
+
 export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [shouldRender, setShouldRender] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -130,9 +248,19 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     }
   }, [isOpen, messages.length]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (only if user is already near bottom)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Check if user is at bottom before auto-scrolling
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    const isNearBottom = distanceFromBottom < 100; // 100px threshold
+
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
   }, [messages]);
 
   // Handle click outside (but NOT when ticket modal is open)
@@ -189,9 +317,27 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     }
   }, [isOpen, shouldRender]);
 
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!isOpen && abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+      setLoading(false);
+    }
+
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+    };
+  }, [isOpen]);
+
   const handleSend = async () => {
     if (!inputValue.trim()) return;
     if (!user) return;
+    if (loading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -200,75 +346,129 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       timestamp: new Date(),
     };
 
+    const assistantMsgId = (Date.now() + 1).toString();
+
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
+
+    // Prepare a placeholder assistant message for progressive streaming
+    // Note: We don't set loading=true here because the placeholder itself
+    // indicates Javi is responding. The loading state would show a duplicate bubble.
+    const placeholderMsg: Message = {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, placeholderMsg]);
     setLoading(true);
 
+    const abortController = new AbortController();
+    abortRef.current = abortController;
+
     try {
-      // Capture current app state snapshot
       const snapshot = captureSnapshot();
 
-      const response = await supportApi.chat({
-        message: inputValue,
-        conversationId,
-        entryPoint: entryPoint || 'chat_widget',
-        pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
-        userId: user.id,
-        orgId,
-        tier,
-        attemptCount,
-        snapshot,
-      });
+      await supportApi.chatStream(
+        {
+          message: inputValue,
+          conversationId,
+          entryPoint: entryPoint || 'chat_widget',
+          pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+          userId: user.id,
+          orgId,
+          tier,
+          attemptCount,
+          snapshot,
+        },
+        // onDelta: progressively append text to the placeholder message
+        (text) => {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMsgId ? { ...m, content: m.content + text } : m
+            )
+          );
+        },
+        // onMetadata: attach citations, intent, nextAction to the message
+        (metadata) => {
+          const nextAction = {
+            type: (metadata.nextAction || 'none') as SupportChatResponse['nextAction']['type'],
+            reason: '',
+          };
 
-      // Update conversation ID if provided
-      if (response.conversationId) {
-        setConversationId(response.conversationId);
-      }
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMsgId
+                ? {
+                    ...m,
+                    citations: metadata.citations,
+                    nextAction,
+                    resolutionNeeded: metadata.confidence < 0.9,
+                  }
+                : m
+            )
+          );
 
-      // Create assistant message
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response.reply,
-        timestamp: new Date(),
-        citations: response.citations,
-        nextAction: response.nextAction,
-        resolutionNeeded: response.resolution.needsConfirmation,
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Handle escalation scenarios
-      if (response.nextAction.type === 'log_bug' || response.nextAction.type === 'offer_ticket') {
-        setShowEscalation(true);
-      }
-
-      // Increment attempt count if clarifying
-      if (response.nextAction.type === 'ask_clarifying') {
-        setAttemptCount(prev => prev + 1);
-      } else {
-        setAttemptCount(0); // Reset on successful resolution path
-      }
+          if (nextAction.type === 'log_bug' || nextAction.type === 'offer_ticket') {
+            setShowEscalation(true);
+          }
+          if (nextAction.type === 'ask_clarifying') {
+            setAttemptCount(prev => prev + 1);
+          } else {
+            setAttemptCount(0);
+          }
+        },
+        // onDone: update conversationId
+        (info) => {
+          if (info.conversationId) {
+            setConversationId(info.conversationId);
+          }
+        },
+        // onError
+        (err) => {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMsgId
+                ? { ...m, content: err.message || "I'm sorry, something went wrong." }
+                : m
+            )
+          );
+        },
+        abortController.signal,
+      );
     } catch (error) {
-      // Handle rate limit errors specially
-      let errorContent = "I'm sorry, I encountered an error. Please try again or contact support directly.";
-      
-      if (error instanceof ApiError && error.statusCode === 429) {
-        const resetInSeconds = error.details?.resetInSeconds || error.details?.retryAfter || 60;
-        const minutes = Math.ceil(resetInSeconds / 60);
-        errorContent = `You've reached the rate limit for chat messages. Please try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
+      if (isAbortError(error)) {
+        setMessages(prev =>
+          prev.filter(m => !(m.id === assistantMsgId && !m.content))
+        );
+        return;
       }
-      
-      // Show error message
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: errorContent,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+
+      let errorContent = "I'm sorry, I encountered an error. Please try again or contact support directly.";
+
+      if (error instanceof ApiError) {
+        if (error.statusCode === 429) {
+          const resetInSeconds = error.details?.resetInSeconds || error.details?.retryAfter || 60;
+          const minutes = Math.ceil(resetInSeconds / 60);
+          errorContent = `You've reached the rate limit for chat messages. Please try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
+        } else {
+          // Surface backend/auth errors so we can debug (e.g. 401, 500)
+          errorContent = error.message || errorContent;
+        }
+      }
+      if (process.env.NODE_ENV === 'development' && error) {
+        console.error('[ChatWindow] support chat stream error:', error);
+      }
+
+      // Update the placeholder message with the error
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantMsgId ? { ...m, content: m.content || errorContent } : m
+        )
+      );
     } finally {
       setLoading(false);
+      abortRef.current = null;
     }
   };
 
@@ -365,7 +565,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div key={message.id}>
             {message.role === 'assistant' ? (
@@ -375,7 +575,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                 </div>
                 <div className="flex-1">
                   <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3">
-                    <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{message.content}</p>
+                    {renderAssistantMessage(message.content)}
                     
                     {/* Citations */}
                     {message.citations && message.citations.length > 0 && (
@@ -442,21 +642,6 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
           </div>
         ))}
 
-        {loading && (
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-orange rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">J</span>
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
-          </div>
-        )}
-
         <div ref={messagesEndRef} />
       </div>
 
@@ -518,4 +703,3 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
     </div>
   );
 }
-

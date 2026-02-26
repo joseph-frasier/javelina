@@ -68,7 +68,7 @@ interface OrganizationClientProps {
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, fetchProfile } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   
   // Feature flags for starter-only launch
@@ -83,6 +83,15 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   useEffect(() => {
     selectAndExpand(org.id);
   }, [org.id, selectAndExpand]);
+
+  // Sync auth store when server-side pending-plan state differs from cached value
+  // (e.g. after checkout completion, sidebar can show stale org state until profile refresh)
+  useEffect(() => {
+    const storeOrg = user?.organizations?.find((o) => o.id === org.id);
+    if (storeOrg && (storeOrg.pending_plan_code ?? null) !== (org.pending_plan_code ?? null)) {
+      fetchProfile();
+    }
+  }, [org.id, org.pending_plan_code, user?.organizations, fetchProfile]);
   
   const [isAddZoneModalOpen, setIsAddZoneModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
