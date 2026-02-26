@@ -100,7 +100,6 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
       // If a plan is selected, create organization with plan through Express API
       if (selectedPlan) {
         try {
-          const isLifetime = selectedPlan.code.includes('_lifetime');
           const data = await organizationsApi.create({
             name: name.trim(),
             description: description.trim() || undefined,
@@ -112,10 +111,6 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
             billing_zip: billingZip.trim(),
             admin_contact_email: adminContactEmail.trim(),
             admin_contact_phone: formatUSPhone(adminContactPhone),
-            pending_plan_code: selectedPlan.code,
-            pending_price_id: isLifetime
-              ? selectedPlan.monthly?.priceId
-              : selectedPlan.monthly?.priceId,
           });
 
           organizationId = data.id;

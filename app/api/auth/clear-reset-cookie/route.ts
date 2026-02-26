@@ -11,7 +11,7 @@ export async function POST() {
   response.cookies.set('password_reset_required', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
+    sameSite: 'lax',
     maxAge: 0,
     path: '/'
   })

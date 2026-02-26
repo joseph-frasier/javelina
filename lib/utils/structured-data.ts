@@ -137,41 +137,6 @@ export function generateWebSiteSchema() {
 }
 
 /**
- * Generate WebPage structured data (LEO signal for AI crawlers)
- */
-export function generateWebPageSchema(params: {
-  name: string;
-  description: string;
-  url: string;
-}) {
-  const baseUrl = getURL();
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: params.name,
-    description: params.description,
-    url: params.url || baseUrl,
-    isPartOf: {
-      '@type': 'WebSite',
-      name: 'Javelina DNS Management',
-      url: baseUrl,
-    },
-    breadcrumb: {
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        {
-          '@type': 'ListItem',
-          position: 1,
-          name: 'Home',
-          item: baseUrl,
-        },
-      ],
-    },
-  };
-}
-
-/**
  * Generate Article structured data for blog posts or documentation
  */
 export function generateArticleSchema(params: {

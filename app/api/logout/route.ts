@@ -50,18 +50,11 @@ export async function GET(request: NextRequest) {
       fallbackResponse.cookies.set('javelina_session', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
-        path: '/',
-        maxAge: 0,
-      });
-      fallbackResponse.cookies.set('javelina_session_token', '', {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge: 0,
       });
-      console.log('[Logout API] Fallback: Cleared session cookies via Next.js');
+      console.log('[Logout API] Fallback: Cleared session cookie via Next.js');
       return fallbackResponse;
     }
     
@@ -74,17 +67,10 @@ export async function GET(request: NextRequest) {
     
     if (!auth0LogoutUrl) {
       console.warn('[Logout API] No Auth0 logout URL provided by backend, redirecting to root');
-      // Fallback - clear cookies and redirect
+      // Fallback - clear cookie and redirect
       const fallbackResponse = NextResponse.redirect(new URL('/', request.url));
       fallbackResponse.cookies.set('javelina_session', '', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
-        path: '/',
-        maxAge: 0,
-      });
-      fallbackResponse.cookies.set('javelina_session_token', '', {
-        httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
@@ -104,46 +90,31 @@ export async function GET(request: NextRequest) {
       console.log('[Logout API] Forwarding Set-Cookie headers to clear session');
       redirectResponse.headers.set('Set-Cookie', setCookieHeaders);
     } else {
-      console.warn('[Logout API] No Set-Cookie headers from backend, clearing cookies via Next.js');
+      console.warn('[Logout API] No Set-Cookie headers from backend, clearing cookie via Next.js');
+      // Fallback: Clear the cookie ourselves
       redirectResponse.cookies.set('javelina_session', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
+        sameSite: 'lax',
         path: '/',
         maxAge: 0,
       });
     }
-
-    // Always clear the client-readable session token cookie
-    redirectResponse.cookies.set('javelina_session_token', '', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 0,
-    });
     
     console.log('[Logout API] Redirecting to Auth0 logout');
     return redirectResponse;
   } catch (error) {
     console.error('[Logout API] Logout API route error:', error);
-    // Even on error, forcibly clear cookies and redirect
+    // Even on error, forcibly clear cookie and redirect
     const errorResponse = NextResponse.redirect(new URL('/', request.url));
     errorResponse.cookies.set('javelina_session', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
-      path: '/',
-      maxAge: 0,
-    });
-    errorResponse.cookies.set('javelina_session_token', '', {
-      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 0,
     });
-    console.log('[Logout API] Error fallback: Cleared session cookies');
+    console.log('[Logout API] Error fallback: Cleared session cookie');
     return errorResponse;
   }
 }

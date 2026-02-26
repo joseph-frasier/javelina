@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
 import { getIdleSync } from '@/lib/idle/idleSync'
-import { getSessionToken } from './session-token'
 
 // API configuration for auth endpoints
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
@@ -42,7 +41,6 @@ export interface Organization {
   id: string;
   name: string;
   role: RBACRole;
-  subscription_status?: string | null;
 }
 
 export interface User {
@@ -192,10 +190,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         // Check session with Express backend
         try {
           authLog.log('[AUTH] Checking session with backend')
-          const token = getSessionToken();
           const response = await fetch(`${API_URL}/auth/me`, {
-            credentials: 'include',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            credentials: 'include', // Send session cookie
           })
 
           authLog.log('[AUTH] Session check response:', response.status)
@@ -222,10 +218,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         try {
           authLog.log('[AUTH] Fetching profile from:', `${API_URL}/api/users/profile`)
           
-          const token = getSessionToken();
+          // Call backend API directly with credentials to send session cookie
           const response = await fetch(`${API_URL}/api/users/profile`, {
-            credentials: 'include',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            credentials: 'include', // Send session cookie
           })
 
           authLog.log('[AUTH] Profile response status:', response.status)
@@ -257,7 +252,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             id: org.id,
             name: org.name,
             role: org.role,
-            subscription_status: org.subscription_status ?? null,
           }))
 
           const userProfile = {
