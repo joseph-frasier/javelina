@@ -56,6 +56,23 @@ export default function EmailVerifiedPage() {
           setHasProcessed(true);
           
           if (result.email_verified) {
+            // If user arrived via invitation flow, attempt membership finalization.
+            // Non-invitation users can safely ignore this response.
+            try {
+              await authApi.finalizeInvitation();
+            } catch (finalizeError: any) {
+              const code = finalizeError?.code || finalizeError?.details?.code;
+              const statusCode = finalizeError?.statusCode;
+              // Ignore expected non-fatal states so normal email verification flow continues.
+              if (
+                code !== 'NO_PENDING_INVITATION' &&
+                code !== 'INVITATION_NOT_READY' &&
+                statusCode !== 404
+              ) {
+                console.warn('[EMAIL-VERIFIED] Invitation finalization issue:', finalizeError);
+              }
+            }
+
             // Fetch fresh profile to update the UI
             await fetchProfile();
             
@@ -199,4 +216,3 @@ export default function EmailVerifiedPage() {
     </div>
   );
 }
-

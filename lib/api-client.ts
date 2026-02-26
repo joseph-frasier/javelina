@@ -361,9 +361,18 @@ export const organizationsApi = {
   },
 
   /**
-   * Add a member to an organization
+   * Send a team invitation for an organization member
    */
-  addMember: (id: string, data: { email: string; role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer' }) => {
+  addMember: (
+    id: string,
+    data: { email: string; role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer' }
+  ): Promise<{
+    success: boolean;
+    invitation_id?: string;
+    status?: 'pending' | 'awaiting_verification' | 'accepted' | 'expired' | 'revoked' | 'failed';
+    email?: string;
+    message?: string;
+  }> => {
     return apiClient.post(`/organizations/${id}/members`, data);
   },
 
@@ -763,6 +772,18 @@ export const authApi = {
     message: string;
   }> => {
     return apiClient.post('/auth/refresh-verification-status');
+  },
+
+  /**
+   * Finalize any pending organization invitation after verification/login
+   */
+  finalizeInvitation: (): Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    organization_id?: string;
+  }> => {
+    return apiClient.post('/auth/finalize-invitation');
   },
 };
 

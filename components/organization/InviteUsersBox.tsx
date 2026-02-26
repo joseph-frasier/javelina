@@ -172,7 +172,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Add Member
+              Send Invite
             </Button>
           </div>
 
