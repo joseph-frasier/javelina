@@ -463,7 +463,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       {/* Verification Checklist */}
       <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
         <VerificationChecklist
-          nameservers={zone.nameservers || ['ns1.javelina.cc', 'ns2.javelina.me', 'ns3.javelina.cc', 'ns4.javelina.me']}
+          nameservers={zone.nameservers || ['ns1.javelina.cc', 'ns2.javelina.me']}
         />
       </Card>
 
