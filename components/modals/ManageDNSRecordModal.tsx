@@ -56,7 +56,6 @@ export function ManageDNSRecordModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
-
   const [customTTL, setCustomTTL] = useState(false);
   const [realtimeErrors, setRealtimeErrors] = useState<Record<string, string>>({});
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);

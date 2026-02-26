@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
       response.cookies.set('password_reset_required', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
+        sameSite: 'lax',
         maxAge: 0,
         path: '/'
       })
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
 
     // Public routes that don't require authentication
     // Root path '/' is accessible to all (shows login to unauthenticated, dashboard to authenticated)
-    const publicRoutes = ['/', '/login', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout', '/infrastructure']
+    const publicRoutes = ['/', '/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/email-verified', '/admin/login', '/pricing', '/checkout']
     const isPublicRoute = publicRoutes.some((route) => {
       // Exact match for root path
       if (route === '/' && request.nextUrl.pathname === '/') {
@@ -72,9 +72,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    // If user IS authenticated and trying to access the login page, redirect to dashboard
+    // If user IS authenticated and trying to access login/signup pages, redirect to dashboard
     // Note: Don't redirect from '/' since it handles both auth states
-    if (isAuthenticated && request.nextUrl.pathname === '/login') {
+    if (isAuthenticated && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
       return NextResponse.redirect(new URL('/', request.url))
     }
   } catch (error) {

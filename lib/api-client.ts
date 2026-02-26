@@ -9,7 +9,6 @@
  */
 
 import { getAdminSessionToken } from '@/lib/admin-session-token';
-import { getSessionToken } from './session-token';
 
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -46,21 +45,13 @@ async function apiRequest<T = any>(
       ...(options.headers as Record<string, string> || {}),
     };
 
-    // Attach admin JWT for admin-panel endpoints
+    // Attach admin JWT as Authorization header for admin-panel endpoints only.
+    // This enables cross-domain requests to the Express backend in production.
+    // The cookie-based flow still works for same-domain / local development.
     if (!headers['Authorization'] && isAdminEndpoint(endpoint)) {
       const adminToken = getAdminSessionToken();
       if (adminToken) {
         headers['Authorization'] = `Bearer ${adminToken}`;
-      }
-    }
-
-    // Attach session JWT as Bearer token for regular endpoints.
-    // This is the primary auth method on Safari (where cross-site cookies are blocked).
-    // On Chrome/Firefox the cookie also works; the backend accepts either.
-    if (!headers['Authorization']) {
-      const sessionToken = getSessionToken();
-      if (sessionToken) {
-        headers['Authorization'] = `Bearer ${sessionToken}`;
       }
     }
 
@@ -318,8 +309,6 @@ export const organizationsApi = {
     billing_zip?: string;
     admin_contact_email?: string;
     admin_contact_phone?: string;
-    pending_plan_code?: string;
-    pending_price_id?: string;
   }) => {
     return apiClient.post('/organizations', data);
   },

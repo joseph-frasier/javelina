@@ -54,15 +54,10 @@ const config: Config = {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.4' },
         },
-        popPulse: {
-          '0%': { transform: 'scale(1)', opacity: '0.8' },
-          '100%': { transform: 'scale(2.8)', opacity: '0' },
-        },
       },
       animation: {
         fadeIn: 'fadeIn 0.2s ease-in',
         pulse: 'pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        popPulse: 'popPulse 1.8s ease-out infinite',
       },
     },
   },
