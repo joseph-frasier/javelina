@@ -99,7 +99,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
         )}
 
         <div className="flex items-center justify-between pt-3 text-xs text-gray-slate dark:text-gray-400">
-          <span>Shortcut: Cmd/Ctrl + K</span>
+          <span>Shortcut: {search.shortcutHint}</span>
           <span>Close: Esc</span>
         </div>
       </div>

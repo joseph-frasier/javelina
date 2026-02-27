@@ -101,6 +101,8 @@ export function useGlobalSearch({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [shortcutHint, setShortcutHint] = useState('Cmd/Ctrl + K');
+  const [shortcutBadge, setShortcutBadge] = useState('⌘/Ctrl K');
   const requestIdRef = useRef(0);
 
   const effectiveScope: GlobalSearchScope =
@@ -180,6 +182,19 @@ export function useGlobalSearch({
   }, [enabled]);
 
   useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+    const platform =
+      nav.userAgentData?.platform ||
+      navigator.platform ||
+      navigator.userAgent ||
+      '';
+    const isMac = /mac/i.test(platform);
+    setShortcutHint(isMac ? 'Cmd + K' : 'Ctrl + K');
+    setShortcutBadge(isMac ? '⌘K' : 'Ctrl K');
+  }, []);
+
+  useEffect(() => {
     setSelectedIndex(0);
   }, [query, effectiveScope, context]);
 
@@ -241,6 +256,8 @@ export function useGlobalSearch({
     loading,
     error,
     mergedResults,
+    shortcutHint,
+    shortcutBadge,
     selectedIndex,
     setSelectedIndex,
     onKeyDown,
