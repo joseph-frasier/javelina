@@ -12,7 +12,7 @@ import { getAdminSessionToken } from '@/lib/admin-session-token';
 import { getIdleSync } from '@/lib/idle/idleSync';
 
 // Endpoints that require the admin JWT (called from the admin panel)
-const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
+const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin', '/search/global'];
 
 function isAdminEndpoint(endpoint: string): boolean {
   return ADMIN_ENDPOINT_PREFIXES.some((prefix) => endpoint.startsWith(prefix));
@@ -1091,6 +1091,60 @@ export interface SupportConversationDetail {
   conversation: SupportConversation;
   messages: SupportMessage[];
 }
+
+// Global search interfaces
+export type GlobalSearchContext = 'member' | 'admin';
+export type GlobalSearchScope = 'current' | 'all';
+export type GlobalSearchResultType =
+  | 'organization'
+  | 'zone'
+  | 'dns_record'
+  | 'tag'
+  | 'user'
+  | 'discount_code'
+  | 'audit_event'
+  | 'support_conversation';
+
+export interface GlobalSearchResult {
+  id: string;
+  type: GlobalSearchResultType;
+  title: string;
+  subtitle: string;
+  route: string;
+  score: number;
+  org_id?: string;
+  zone_id?: string;
+  record_id?: string;
+  updated_at?: string;
+  badge?: string;
+}
+
+export interface GlobalSearchResponse {
+  query: string;
+  scope: GlobalSearchScope;
+  context: GlobalSearchContext;
+  results: GlobalSearchResult[];
+  counts: Record<string, number>;
+  took_ms: number;
+}
+
+export const searchApi = {
+  global: (params: {
+    q: string;
+    context: GlobalSearchContext;
+    scope: GlobalSearchScope;
+    org_id?: string;
+    limit?: number;
+  }): Promise<GlobalSearchResponse> => {
+    const query = new URLSearchParams();
+    query.set('q', params.q);
+    query.set('context', params.context);
+    query.set('scope', params.scope);
+    if (params.org_id) query.set('org_id', params.org_id);
+    if (params.limit) query.set('limit', String(params.limit));
+    return apiClient.get(`/search/global?${query.toString()}`);
+  },
+};
 
 // Export everything
 export default apiClient;

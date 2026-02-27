@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -68,6 +68,7 @@ interface OrganizationClientProps {
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, fetchProfile } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   
@@ -198,6 +199,16 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         : [...prev, tagId]                  // Add if not selected
     );
   }, []);
+
+  // Support deep-linking from global search: /organization/:orgId?tag=<tagId>
+  useEffect(() => {
+    const deepLinkedTagId = searchParams.get('tag');
+    if (!deepLinkedTagId) return;
+    if (!tags.length) return;
+    const exists = tags.some((tag) => tag.id === deepLinkedTagId);
+    if (!exists) return;
+    setActiveTagIds((prev) => (prev.length === 1 && prev[0] === deepLinkedTagId ? prev : [deepLinkedTagId]));
+  }, [searchParams, tags]);
 
   // Clear all tag filters
   const handleClearTagFilters = useCallback(() => {

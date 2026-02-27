@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/Card';
@@ -61,6 +61,7 @@ interface ZoneDetailClientProps {
 
 export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
   const { user } = useAuthStore();
@@ -83,6 +84,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [showDeleteRecordConfirm, setShowDeleteRecordConfirm] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<DNSRecord | null>(null);
   const [isRecordLoading, setIsRecordLoading] = useState(false);
+  const hasOpenedDeepLinkedRecordRef = useRef(false);
 
 
   
@@ -110,6 +112,21 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
     };
     loadData();
   }, [zoneId, zone.name, zone.records_count]);
+
+  // If the page is opened with ?record=<id>, auto-open that DNS record in the details modal.
+  useEffect(() => {
+    const deepLinkedRecordId = searchParams.get('record');
+    if (!deepLinkedRecordId) return;
+    if (hasOpenedDeepLinkedRecordRef.current) return;
+    if (!dnsRecords.length) return;
+
+    const targetRecord = dnsRecords.find((record) => record.id === deepLinkedRecordId);
+    if (!targetRecord) return;
+
+    hasOpenedDeepLinkedRecordRef.current = true;
+    setSelectedRecord(targetRecord);
+    setShowRecordDetailModal(true);
+  }, [dnsRecords, searchParams]);
 
   // DNS Record handlers
   const refreshDNSRecords = async () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -33,6 +33,7 @@ interface User {
 
 export default function AdminUsersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -152,6 +153,13 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    const search = searchParams.get('search');
+    if (search !== null) {
+      setSearchQuery(search);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     filterUsers();

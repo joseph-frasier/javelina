@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -43,6 +44,7 @@ interface Organization {
 }
 
 export default function AdminOrganizationsPage() {
+  const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [filteredOrgs, setFilteredOrgs] = useState<Organization[]>([]);
@@ -172,6 +174,13 @@ export default function AdminOrganizationsPage() {
   useEffect(() => {
     fetchOrganizations();
   }, [fetchOrganizations]);
+
+  useEffect(() => {
+    const search = searchParams.get('search');
+    if (search !== null) {
+      setSearchQuery(search);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     filterOrganizations();
