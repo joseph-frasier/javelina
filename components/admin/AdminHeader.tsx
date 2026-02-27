@@ -282,7 +282,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                   Search everything...
                 </span>
                 <span className="rounded bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                  ⌘K
+                  {search.shortcutBadge}
                 </span>
               </button>
             )}
