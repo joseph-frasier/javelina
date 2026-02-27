@@ -94,6 +94,37 @@ describe('useGlobalSearch', () => {
     });
   });
 
+  it('forces admin searches to use all scope without org_id', async () => {
+    vi.mocked(searchApi.global).mockResolvedValue({
+      query: 'user',
+      scope: 'all',
+      context: 'admin',
+      results: [],
+      counts: {},
+      took_ms: 2,
+    });
+
+    const { result } = renderHook(() => useGlobalSearch({ context: 'admin', enabled: true }));
+
+    act(() => {
+      result.current.openSearch();
+      result.current.setQuery('user');
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    expect(searchApi.global).toHaveBeenCalledWith({
+      q: 'user',
+      context: 'admin',
+      scope: 'all',
+      org_id: undefined,
+      limit: 50,
+    });
+  });
+
   it('selectResult navigates and closes the modal', () => {
     const { result } = renderHook(() =>
       useGlobalSearch({ context: 'admin', enabled: true })

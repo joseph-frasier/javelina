@@ -96,7 +96,7 @@ export function useGlobalSearch({
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [scope, setScope] = useState<GlobalSearchScope>('current');
+  const [scope, setScope] = useState<GlobalSearchScope>(context === 'admin' ? 'all' : 'current');
   const [results, setResults] = useState<GlobalSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +104,11 @@ export function useGlobalSearch({
   const requestIdRef = useRef(0);
 
   const effectiveScope: GlobalSearchScope =
-    context === 'member' && scope === 'current' && !currentOrgId ? 'all' : scope;
+    context === 'admin'
+      ? 'all'
+      : scope === 'current' && !currentOrgId
+        ? 'all'
+        : scope;
 
   const actionResults = useMemo<GlobalSearchActionResult[]>(() => {
     const base = ACTIONS[context];
