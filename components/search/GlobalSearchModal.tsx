@@ -28,7 +28,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
     <Modal
       isOpen={search.isOpen}
       onClose={search.closeSearch}
-      title="Search"
+      title="Global Search"
       subtitle="Use arrow keys to navigate and Enter to open"
       size="xlarge"
     >

@@ -48,9 +48,19 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
 
   // Get user details - safe fallbacks for logout transition
   // ConditionalLayout gates initial render, but logout causes brief null state
-  const userName = user?.name || user?.email?.split('@')[0] || 'Unknown';
+  const userName = (() => {
+    if (!user) return 'Unknown';
+    if (user.display_name && user.display_name !== user.email) return user.display_name;
+    if (user.name && user.name !== user.email) return user.name;
+
+    const emailUsername = (user.email || '').split('@')[0];
+    return emailUsername
+      .split(/[._-]/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ') || 'Unknown';
+  })();
   const userEmail = user?.email || '';
-  const userDisplayName = user?.display_name || user?.title || '';
   const userRole = user?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatar_url;
@@ -339,7 +349,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                           {userName}
                         </p>
                         <p className="text-xs text-gray-slate truncate">
-                          {userDisplayName || userEmail}
+                          {userEmail}
                         </p>
                         {userRole === 'superuser' && (
                           <p className="text-xs font-semibold text-orange truncate">

@@ -102,6 +102,17 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const [isLifetimePlan, setIsLifetimePlan] = useState(false);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
+  const greetingName = useMemo(() => {
+    if (!user) return 'User';
+    if (user.display_name && user.display_name !== user.email) return user.display_name;
+    if (user.name && user.name !== user.email) return user.name;
+
+    const emailUsername = user.email.split('@')[0];
+    return emailUsername
+      .split(/[._-]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }, [user]);
 
   // ============================================
   // TAGGING SYSTEM
@@ -325,7 +336,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
-              Welcome back, {user?.name || 'User'}
+              Welcome back, {greetingName}!
             </h1>
             <div className="flex items-center gap-3">
               <p className="font-light text-gray-slate text-lg">{org.name}</p>
