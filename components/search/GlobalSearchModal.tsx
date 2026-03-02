@@ -13,6 +13,10 @@ interface GlobalSearchModalProps {
 
 export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const placeholderText =
+    context === 'admin'
+      ? 'Search users, organizations, zones, records, and more...'
+      : 'Search organizations, zones, records, tags, and more...';
 
   useEffect(() => {
     if (!search.isOpen) return;
@@ -36,7 +40,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
             value={search.query}
             onChange={(e) => search.setQuery(e.target.value)}
             onKeyDown={search.onKeyDown}
-            placeholder="Search organizations, zones, records, users, and more..."
+            placeholder={placeholderText}
             className="w-full rounded-md border border-gray-light bg-white px-4 py-3 pl-11 text-sm text-gray-900 outline-none transition-colors focus:border-orange focus:ring-2 focus:ring-orange/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
           />
           <svg

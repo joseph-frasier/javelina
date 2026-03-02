@@ -91,6 +91,7 @@ describe('useGlobalSearch', () => {
       scope: 'current',
       org_id: 'org-1',
       limit: 50,
+      useAdminAuth: false,
     });
   });
 
@@ -122,6 +123,7 @@ describe('useGlobalSearch', () => {
       scope: 'all',
       org_id: undefined,
       limit: 50,
+      useAdminAuth: true,
     });
   });
 
