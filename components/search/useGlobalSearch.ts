@@ -226,6 +226,7 @@ export function useGlobalSearch({
           scope: effectiveScope,
           org_id: context === 'member' && effectiveScope === 'current' ? currentOrgId || undefined : undefined,
           limit: 50,
+          useAdminAuth: context === 'admin',
         });
 
         if (requestIdRef.current !== requestId) return;

@@ -12,7 +12,7 @@ import { getAdminSessionToken } from '@/lib/admin-session-token';
 import { getIdleSync } from '@/lib/idle/idleSync';
 
 // Endpoints that require the admin JWT (called from the admin panel)
-const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin', '/search/global'];
+const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
 
 function isAdminEndpoint(endpoint: string): boolean {
   return ADMIN_ENDPOINT_PREFIXES.some((prefix) => endpoint.startsWith(prefix));
@@ -1135,6 +1135,7 @@ export const searchApi = {
     scope: GlobalSearchScope;
     org_id?: string;
     limit?: number;
+    useAdminAuth?: boolean;
   }): Promise<GlobalSearchResponse> => {
     const query = new URLSearchParams();
     query.set('q', params.q);
@@ -1142,7 +1143,11 @@ export const searchApi = {
     query.set('scope', params.scope);
     if (params.org_id) query.set('org_id', params.org_id);
     if (params.limit) query.set('limit', String(params.limit));
-    return apiClient.get(`/search/global?${query.toString()}`);
+    const adminToken = params.useAdminAuth ? getAdminSessionToken() : null;
+    const options = adminToken
+      ? { headers: { Authorization: `Bearer ${adminToken}` } }
+      : undefined;
+    return apiClient.get(`/search/global?${query.toString()}`, options);
   },
 };
 
