@@ -65,10 +65,17 @@ const nextConfig: NextConfig = {
     ];
   },
   // Exclude backend folder from Next.js build
-  webpack: (config, { isServer }) => {
+  webpack: (config, { dev }) => {
+    const disableFsCache = process.env.NEXT_DISABLE_WEBPACK_FS_CACHE === "1";
+    if (dev || disableFsCache) {
+      // Work around intermittent webpack filesystem cache snapshot failures
+      // ("Unable to snapshot resolve dependencies") seen in this repo.
+      config.cache = { type: "memory" };
+    }
+
     config.watchOptions = {
       ...config.watchOptions,
-      ignored: ["**/node_modules", "**/backend/**"],
+      ignored: ["**/node_modules/**", "**/backend/**"],
     };
     return config;
   },
