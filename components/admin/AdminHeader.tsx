@@ -7,7 +7,6 @@ import { getAdminUser, logoutAdmin } from '@/lib/admin-auth';
 import { clearAdminSessionToken } from '@/lib/admin-session-token';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
-import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { useGlobalSearch } from '@/components/search/useGlobalSearch';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 
@@ -18,7 +17,6 @@ interface AdminHeaderProps {
 export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   const router = useRouter();
   const { general, setTheme } = useSettingsStore();
-  const { globalSearchEnabled } = useFeatureFlags();
   const [admin, setAdmin] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -123,7 +121,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   const adminInitial = adminName.charAt(0).toUpperCase();
   const search = useGlobalSearch({
     context: 'admin',
-    enabled: globalSearchEnabled,
+    enabled: true,
   });
 
   return (
@@ -257,35 +255,33 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
               {getThemeIcon()}
             </button>
 
-            {globalSearchEnabled && (
-              <button
-                type="button"
-                onClick={search.openSearch}
-                className="hidden md:flex w-72 items-center justify-between rounded-md border border-gray-light bg-gray-50 px-4 py-2 text-left text-sm text-gray-slate transition-colors hover:border-orange hover:bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                aria-label="Open global search"
-              >
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="h-4 w-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  Search everything...
-                </span>
-                <span className="rounded bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                  {search.shortcutBadge}
-                </span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={search.openSearch}
+              className="hidden md:flex w-72 items-center justify-between rounded-md border border-gray-light bg-gray-50 px-4 py-2 text-left text-sm text-gray-slate transition-colors hover:border-orange hover:bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              aria-label="Open global search"
+            >
+              <span className="flex items-center gap-2">
+                <svg
+                  className="h-4 w-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                Global Search
+              </span>
+              <span className="rounded bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                {search.shortcutBadge}
+              </span>
+            </button>
 
             {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
@@ -334,7 +330,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
           </div>
         </div>
       </div>
-      {globalSearchEnabled && <GlobalSearchModal context="admin" search={search} />}
+      <GlobalSearchModal context="admin" search={search} />
     </header>
   );
 }
