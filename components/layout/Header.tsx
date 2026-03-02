@@ -50,9 +50,19 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
 
   // Get user details - safe fallbacks for logout transition
   // ConditionalLayout gates initial render, but logout causes brief null state
-  const userName = user?.name || user?.email?.split('@')[0] || 'Unknown';
+  const userName = (() => {
+    if (!user) return 'Unknown';
+    if (user.display_name && user.display_name !== user.email) return user.display_name;
+    if (user.name && user.name !== user.email) return user.name;
+
+    const emailUsername = (user.email || '').split('@')[0];
+    return emailUsername
+      .split(/[._-]/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ') || 'Unknown';
+  })();
   const userEmail = user?.email || '';
-  const userDisplayName = user?.display_name || user?.title || '';
   const userRole = user?.role || 'user';
   const userInitial = userName.charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatar_url;
@@ -292,7 +302,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                  Search everything...
+                  Global Search
                 </span>
                 <span className="rounded bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                   {search.shortcutBadge}
@@ -343,7 +353,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                           {userName}
                         </p>
                         <p className="text-xs text-gray-slate truncate">
-                          {userDisplayName || userEmail}
+                          {userEmail}
                         </p>
                         {userRole === 'superuser' && (
                           <p className="text-xs font-semibold text-orange truncate">

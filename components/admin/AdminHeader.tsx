@@ -279,7 +279,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                  Search everything...
+                  Global Search
                 </span>
                 <span className="rounded bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                   {search.shortcutBadge}
