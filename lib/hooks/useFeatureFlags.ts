@@ -15,8 +15,6 @@ export interface FeatureFlags {
   hideUpgradeLimitCta: boolean;
   /** Hide team member invite/management UI for all orgs */
   hideTeamInvites: boolean;
-  /** Enable global search modal/shortcut across app headers */
-  globalSearchEnabled: boolean;
 }
 
 /**
@@ -28,8 +26,6 @@ const DEFAULT_FLAGS: FeatureFlags = {
   hideBusinessPlans: false,
   hideUpgradeLimitCta: false,
   hideTeamInvites: false,
-  // Default ON so global search is visible unless LaunchDarkly explicitly disables it.
-  globalSearchEnabled: true,
 };
 
 /**
@@ -41,7 +37,6 @@ export const LD_FLAG_KEYS = {
   HIDE_BUSINESS_PLANS: 'pricing-hide-business-plans',
   HIDE_UPGRADE_LIMIT_CTA: 'billing-hide-limit-upgrade-button',
   HIDE_TEAM_INVITES: 'orgs-hide-team-invites',
-  GLOBAL_SEARCH_ENABLED: 'global-search-v1',
 } as const;
 
 /**
@@ -73,8 +68,6 @@ export function useFeatureFlags(): FeatureFlags {
           hideBusinessPlans: allFlags[LD_FLAG_KEYS.HIDE_BUSINESS_PLANS] ?? DEFAULT_FLAGS.hideBusinessPlans,
           hideUpgradeLimitCta: allFlags[LD_FLAG_KEYS.HIDE_UPGRADE_LIMIT_CTA] ?? DEFAULT_FLAGS.hideUpgradeLimitCta,
           hideTeamInvites: allFlags[LD_FLAG_KEYS.HIDE_TEAM_INVITES] ?? DEFAULT_FLAGS.hideTeamInvites,
-          globalSearchEnabled:
-            allFlags[LD_FLAG_KEYS.GLOBAL_SEARCH_ENABLED] ?? DEFAULT_FLAGS.globalSearchEnabled,
         };
         setFlags(newFlags);
       } catch (err) {
@@ -117,7 +110,5 @@ export function getFeatureFlags(ldFlags: Record<string, any> = {}): FeatureFlags
     hideBusinessPlans: ldFlags[LD_FLAG_KEYS.HIDE_BUSINESS_PLANS] ?? DEFAULT_FLAGS.hideBusinessPlans,
     hideUpgradeLimitCta: ldFlags[LD_FLAG_KEYS.HIDE_UPGRADE_LIMIT_CTA] ?? DEFAULT_FLAGS.hideUpgradeLimitCta,
     hideTeamInvites: ldFlags[LD_FLAG_KEYS.HIDE_TEAM_INVITES] ?? DEFAULT_FLAGS.hideTeamInvites,
-    globalSearchEnabled:
-      ldFlags[LD_FLAG_KEYS.GLOBAL_SEARCH_ENABLED] ?? DEFAULT_FLAGS.globalSearchEnabled,
   };
 }
