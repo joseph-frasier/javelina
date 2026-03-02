@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
@@ -123,7 +123,7 @@ function getActionDescription(log: AuditLog): {
   };
 }
 
-export default function AdminAuditPage() {
+function AdminAuditPageContent() {
   const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -531,5 +531,13 @@ export default function AdminAuditPage() {
         </div>
       </AdminLayout>
     </AdminProtectedRoute>
+  );
+}
+
+export default function AdminAuditPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminAuditPageContent />
+    </Suspense>
   );
 }

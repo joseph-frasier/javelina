@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
@@ -334,7 +334,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
   return createPortal(modalContent, document.body);
 }
 
-export default function AdminDiscountsPage() {
+function AdminDiscountsPageContent() {
   const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [promotionCodes, setPromotionCodes] = useState<PromotionCode[]>([]);
@@ -891,5 +891,13 @@ export default function AdminDiscountsPage() {
         />
       </AdminLayout>
     </AdminProtectedRoute>
+  );
+}
+
+export default function AdminDiscountsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminDiscountsPageContent />
+    </Suspense>
   );
 }

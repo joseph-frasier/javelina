@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
@@ -31,7 +31,7 @@ interface User {
   organization_members?: Array<{ organization_id: string }>;
 }
 
-export default function AdminUsersPage() {
+function AdminUsersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useToastStore();
@@ -885,5 +885,13 @@ export default function AdminUsersPage() {
         )}
       </AdminLayout>
     </AdminProtectedRoute>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminUsersPageContent />
+    </Suspense>
   );
 }
