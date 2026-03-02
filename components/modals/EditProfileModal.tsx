@@ -65,9 +65,9 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
       // Update profile via auth store (which routes through Express API)
       const result = await updateProfile({
         name: formData.name.trim(),
-        display_name: formData.display_name.trim() || undefined,
-        title: formData.title.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
+        display_name: formData.display_name.trim() || null,
+        title: formData.title.trim() || null,
+        phone: formData.phone.trim() || null,
       });
 
       if (!result.success) {
