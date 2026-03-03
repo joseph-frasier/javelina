@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { generateSoftwareApplicationSchema, generateWebPageSchema } from '@/lib/utils/structured-data';
 import LandingPageClient from '@/components/landing/LandingPageClient';
@@ -24,7 +25,19 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
 };
 
-export default function HomePage() {
+interface HomePageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+
+  // Auth0 org invitation emails link to the Application Login URI (the app root).
+  // Forward to the dedicated invite handoff route.
+  if (typeof params.invitation === 'string' && typeof params.organization === 'string') {
+    redirect(`/invite/accept?invitation=${encodeURIComponent(params.invitation)}&organization=${encodeURIComponent(params.organization)}`);
+  }
+
   const baseUrl = getURL();
 
   const softwareAppSchema = generateSoftwareApplicationSchema({
