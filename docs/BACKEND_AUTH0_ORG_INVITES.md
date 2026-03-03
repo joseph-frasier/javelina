@@ -19,7 +19,11 @@ Important: Javelina org authorization remains in `public.organization_members`. 
 ## Required Auth0 Dashboard Configuration (Manual)
 1. Universal Login: New Universal Login active, Classic custom pages disabled.
 2. Application org behavior enabled (`Type of Users` compatible with org flows).
-3. Application Login URI set to frontend invite handoff route (example: `https://app.javelina.cloud/invite/accept`).
+3. **Application Login URI: keep as the app root** (e.g. `https://app.javelina.cloud/`).
+   Auth0 requires HTTPS and uses this URI for all login initiations — not just invitations.
+   Changing it to `/invite/accept` would break regular login redirects from Auth0.
+   The root page (`app/page.tsx`) detects `invitation` + `organization` query params
+   and forwards to `/invite/accept` automatically, so no URI change is needed.
 4. Connection enabled for org invitation flow.
 5. Branding -> Email Templates -> `User Invitation` customized.
 6. SMTP provider configured (already confirmed).
@@ -27,6 +31,22 @@ Important: Javelina org authorization remains in `public.organization_members`. 
    - create/read organizations
    - create organization connections
    - create/read/revoke invitations
+
+## Local Testing (No Auth0 Dashboard Changes Required)
+Auth0 requires HTTPS for the Application Login URI, so you cannot point it at
+`http://localhost:3000`. Instead, bypass the email link:
+
+1. Call the invite API (`POST /api/organizations/:id/members`) to create an invitation.
+2. Retrieve the `invitation` ticket and `organization` ID from the API response
+   (or from the `organization_invitations` table / Auth0 dashboard).
+3. Open `http://localhost:3000/invite/accept?invitation={ticket}&organization={org_id}`
+   in your browser.
+
+This exercises the full flow (invite handoff -> backend `/auth/login` -> Auth0 `/authorize`
+-> callback -> membership write) without needing the email link.
+
+For end-to-end email-click testing, use a tunneling tool like **ngrok** to get an HTTPS
+URL and temporarily set it as the Application Login URI on a dev Auth0 application.
 
 ## Database Migration
 Apply migration file manually:
