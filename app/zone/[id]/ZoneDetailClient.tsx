@@ -481,6 +481,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
         <VerificationChecklist
           nameservers={zone.nameservers || ['ns1.javelina.cc', 'ns2.javelina.me']}
+          storageKey={`zone-${zoneId}-nameserver-verification-minimized`}
         />
       </Card>
 
