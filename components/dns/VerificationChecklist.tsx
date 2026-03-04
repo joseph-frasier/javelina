@@ -328,6 +328,7 @@ export function VerificationChecklist({
             <div className="pt-1">
               <p className="mb-1">To move your live DNS service to Javelina, you must update your domain&apos;s nameservers at your registrar.</p>
               <p>Log in to your domain registrar (e.g., GoDaddy, Namecheap) and replace your current nameservers with Javelina&apos;s Nameservers below:</p>
+              <p className="mt-1">If you have already updated your registrar to these nameservers, no further action is required.</p>
 
               <div className="mt-4">
                 <h5 className="text-sm font-medium text-gray-slate dark:text-gray-400 mb-2">Nameservers for Javelina</h5>
