@@ -97,18 +97,18 @@ export function EditZoneModal({
           <section className="rounded-lg border border-gray-light/70 bg-transparent p-4 dark:border-gray-slate/70">
             <button
               type="button"
-              className="flex w-full items-start justify-between gap-4 text-left"
+              className="flex w-full items-start justify-between gap-3 text-left"
               aria-expanded={isSOAExpanded}
               aria-controls={detailsId}
               onClick={() => setIsSOAExpanded((prev) => !prev)}
             >
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-orange-dark dark:text-white">SOA Configuration</h3>
                 <p className="mt-1 text-xs text-gray-slate">
                   Advanced zone metadata settings.
                 </p>
               </div>
-              <span className="inline-flex items-center gap-2 text-xs font-medium text-blue-electric">
+              <span className="ml-2 inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-medium text-blue-electric">
                 {isSOAExpanded ? 'Hide advanced' : 'Show advanced'}
                 <svg
                   className={`h-4 w-4 transition-transform ${isSOAExpanded ? 'rotate-180' : ''}`}
