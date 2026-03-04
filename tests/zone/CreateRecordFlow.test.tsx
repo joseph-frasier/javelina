@@ -28,6 +28,13 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
 
+// Mock request cookies used by server actions
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(async () => ({
+    get: vi.fn(() => ({ value: 'fake-session-cookie' })),
+  })),
+}));
+
 // Mock toast store
 vi.mock('@/lib/toast-store', () => ({
   useToastStore: () => ({
