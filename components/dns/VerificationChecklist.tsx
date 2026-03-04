@@ -287,6 +287,12 @@ export function VerificationChecklist({
     isCompact && !isMobileLayout
       ? 'text-sm text-blue-800 dark:text-blue-200'
       : 'flex-1 min-w-0 text-sm text-blue-800 dark:text-blue-200';
+  const headerRowClassName = isMobileLayout
+    ? 'flex items-start justify-between gap-2'
+    : 'flex flex-wrap items-center gap-2';
+  const headerTextClassName = isMobileLayout
+    ? 'font-medium min-w-0 flex-1 leading-tight'
+    : 'font-medium';
 
   return (
     <div
@@ -300,12 +306,12 @@ export function VerificationChecklist({
         </svg>
 
         <div className={contentClassName}>
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-medium">Next Step: Configure Nameservers</p>
+          <div className={headerRowClassName}>
+            <p className={headerTextClassName}>Next Step: Configure Nameservers</p>
             <button
               type="button"
               onClick={handleToggleMinimized}
-              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+              className="inline-flex items-center flex-shrink-0 px-2 py-1 text-xs font-medium rounded border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
               aria-expanded={!isMinimized}
               aria-controls={detailsId}
             >
