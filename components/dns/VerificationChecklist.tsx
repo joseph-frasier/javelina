@@ -32,9 +32,14 @@ export function VerificationChecklist({
 }: VerificationChecklistProps) {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isMinimized, setIsMinimized] = useState(defaultMinimized);
+  const [shouldRenderDetails, setShouldRenderDetails] = useState(!defaultMinimized);
+  const [isCompact, setIsCompact] = useState(defaultMinimized);
   const [isInitialized, setIsInitialized] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
+  const pendingExpandWidthRef = useRef<{ start: number } | null>(null);
   const hasHydratedStateRef = useRef(false);
   const detailsId = useId();
 
@@ -51,25 +56,47 @@ export function VerificationChecklist({
       // localStorage unavailable - use defaults
     }
 
-    setIsMinimized(persistedMinimized);
-    setIsInitialized(true);
-
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       setPrefersReducedMotion(false);
+      setIsMobileLayout(false);
+      setIsMinimized(persistedMinimized);
+      setShouldRenderDetails(!persistedMinimized);
+      setIsCompact(persistedMinimized);
+      setIsInitialized(true);
       return;
     }
 
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
-    updateMotionPreference();
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mobileQuery = window.matchMedia('(max-width: 639px)');
+    const addListener = (
+      query: MediaQueryList,
+      listener: (event: MediaQueryListEvent) => void
+    ) => {
+      if (typeof query.addEventListener === 'function') {
+        query.addEventListener('change', listener);
+        return () => query.removeEventListener('change', listener);
+      }
+      query.addListener(listener);
+      return () => query.removeListener(listener);
+    };
 
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', updateMotionPreference);
-      return () => mediaQuery.removeEventListener('change', updateMotionPreference);
-    }
+    const updateReducedMotion = () => setPrefersReducedMotion(reducedMotionQuery.matches);
+    const updateMobileLayout = () => setIsMobileLayout(mobileQuery.matches);
 
-    mediaQuery.addListener(updateMotionPreference);
-    return () => mediaQuery.removeListener(updateMotionPreference);
+    updateReducedMotion();
+    updateMobileLayout();
+    setIsMinimized(persistedMinimized);
+    setShouldRenderDetails(!persistedMinimized);
+    setIsCompact(!mobileQuery.matches && persistedMinimized);
+    setIsInitialized(true);
+
+    const cleanupReducedMotion = addListener(reducedMotionQuery, updateReducedMotion);
+    const cleanupMobileLayout = addListener(mobileQuery, updateMobileLayout);
+
+    return () => {
+      cleanupReducedMotion();
+      cleanupMobileLayout();
+    };
   }, [storageKey, defaultMinimized]);
 
   useEffect(() => {
@@ -85,11 +112,33 @@ export function VerificationChecklist({
   }, [isInitialized, isMinimized, storageKey]);
 
   useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+
+    if (isMobileLayout) {
+      setIsCompact(false);
+      return;
+    }
+
+    if (isMinimized && !shouldRenderDetails) {
+      setIsCompact(true);
+      return;
+    }
+
+    setIsCompact(false);
+  }, [isInitialized, isMobileLayout, isMinimized, shouldRenderDetails]);
+
+  useEffect(() => {
+    const containerEl = containerRef.current;
     const detailsEl = detailsRef.current;
     if (!detailsEl || !isInitialized) {
       return;
     }
 
+    if (containerEl) {
+      gsap.killTweensOf(containerEl);
+    }
     gsap.killTweensOf(detailsEl);
 
     if (!hasHydratedStateRef.current) {
@@ -98,28 +147,79 @@ export function VerificationChecklist({
         opacity: isMinimized ? 0 : 1,
         y: isMinimized ? -6 : 0,
       });
+      if (containerEl && !isMobileLayout) {
+        gsap.set(containerEl, { clearProps: 'maxWidth' });
+      }
       hasHydratedStateRef.current = true;
       return;
     }
 
+    const pendingExpandWidth = pendingExpandWidthRef.current;
+
     if (prefersReducedMotion) {
-      gsap.set(detailsEl, {
-        height: isMinimized ? 0 : 'auto',
-        opacity: isMinimized ? 0 : 1,
-        y: isMinimized ? -6 : 0,
-      });
+      if (pendingExpandWidthRef.current) {
+        pendingExpandWidthRef.current = null;
+      }
+      if (isMinimized) {
+        gsap.set(detailsEl, { height: 0, opacity: 0, y: -6 });
+        if (shouldRenderDetails) {
+          setShouldRenderDetails(false);
+        }
+      } else {
+        gsap.set(detailsEl, { height: 'auto', opacity: 1, y: 0 });
+      }
+      if (containerEl) {
+        gsap.set(containerEl, { clearProps: 'maxWidth' });
+      }
+      if (isMinimized && !isMobileLayout) {
+        setIsCompact(true);
+      }
       return;
     }
 
     if (isMinimized) {
+      pendingExpandWidthRef.current = null;
+      if (!shouldRenderDetails) {
+        if (containerEl) {
+          gsap.set(containerEl, { clearProps: 'maxWidth' });
+        }
+        if (!isMobileLayout) {
+          setIsCompact(true);
+        }
+        return;
+      }
+
       gsap.to(detailsEl, {
         height: 0,
         opacity: 0,
         y: -6,
         duration: 0.24,
         ease: 'power2.inOut',
+        onComplete: () => {
+          setShouldRenderDetails(false);
+          if (containerEl) {
+            gsap.set(containerEl, { clearProps: 'maxWidth' });
+          }
+          if (!isMobileLayout) {
+            setIsCompact(true);
+          }
+        },
       });
       return;
+    }
+
+    if (pendingExpandWidth && containerEl && !isMobileLayout) {
+      pendingExpandWidthRef.current = null;
+      gsap.to(containerEl, {
+        maxWidth: '100%',
+        duration: 0.28,
+        ease: 'power2.out',
+        onComplete: () => {
+          gsap.set(containerEl, { clearProps: 'maxWidth' });
+        },
+      });
+    } else if (containerEl) {
+      gsap.set(containerEl, { clearProps: 'maxWidth' });
     }
 
     gsap.set(detailsEl, { height: 'auto' });
@@ -141,9 +241,12 @@ export function VerificationChecklist({
     );
 
     return () => {
+      if (containerEl) {
+        gsap.killTweensOf(containerEl);
+      }
       gsap.killTweensOf(detailsEl);
     };
-  }, [isInitialized, isMinimized, prefersReducedMotion]);
+  }, [isInitialized, isMinimized, isMobileLayout, prefersReducedMotion, shouldRenderDetails]);
 
   const handleCopy = async (ns: string, index: number) => {
     try {
@@ -155,19 +258,53 @@ export function VerificationChecklist({
     }
   };
 
+  const handleToggleMinimized = () => {
+    const nextMinimized = !isMinimized;
+    const containerEl = containerRef.current;
+
+    if (!nextMinimized) {
+      setIsCompact(false);
+      setShouldRenderDetails(true);
+      if (containerEl && !prefersReducedMotion && !isMobileLayout) {
+        const startWidth = containerEl.offsetWidth;
+        pendingExpandWidthRef.current = { start: startWidth };
+        gsap.set(containerEl, { maxWidth: startWidth });
+      } else {
+        pendingExpandWidthRef.current = null;
+      }
+    } else {
+      pendingExpandWidthRef.current = null;
+    }
+
+    setIsMinimized(nextMinimized);
+  };
+
+  const containerClassName = [
+    'max-w-full px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md',
+    isMobileLayout ? 'w-full' : isCompact ? 'inline-block w-fit' : 'w-full',
+  ].join(' ');
+  const contentClassName =
+    isCompact && !isMobileLayout
+      ? 'text-sm text-blue-800 dark:text-blue-200'
+      : 'flex-1 min-w-0 text-sm text-blue-800 dark:text-blue-200';
+
   return (
-    <div className="w-full max-w-full px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+    <div
+      ref={containerRef}
+      data-testid="verification-alert-container"
+      className={containerClassName}
+    >
       <div className="flex items-start gap-2">
         <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
         </svg>
 
-        <div className="flex-1 min-w-0 text-sm text-blue-800 dark:text-blue-200">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className={contentClassName}>
+          <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium">Next Step: Configure Nameservers</p>
             <button
               type="button"
-              onClick={() => setIsMinimized((prev) => !prev)}
+              onClick={handleToggleMinimized}
               className="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
               aria-expanded={!isMinimized}
               aria-controls={detailsId}
@@ -179,7 +316,7 @@ export function VerificationChecklist({
           <div
             id={detailsId}
             ref={detailsRef}
-            className="overflow-hidden"
+            className={shouldRenderDetails ? 'overflow-hidden' : 'hidden'}
             aria-hidden={isMinimized}
           >
             <div className="pt-1">
