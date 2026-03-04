@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
-import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
 import { organizationsApi } from '@/lib/api-client';
@@ -26,14 +25,6 @@ interface ManageTeamMembersModalProps {
   onMemberRemoved?: () => void;
 }
 
-type EditableRole = 'Admin' | 'Editor' | 'BillingContact' | 'Viewer';
-
-function formatRoleName(role: string): string {
-  if (role === 'BillingContact') return 'Billing Contact';
-  if (role === 'SuperAdmin') return 'Super Admin';
-  return role;
-}
-
 export function ManageTeamMembersModal({
   isOpen,
   onClose,
@@ -46,7 +37,6 @@ export function ManageTeamMembersModal({
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [pendingRemovalUser, setPendingRemovalUser] = useState<{ userId: string; name: string } | null>(null);
   const addToast = useToastStore((state) => state.addToast);
 
   // Reset editing state when modal closes
@@ -54,7 +44,6 @@ export function ManageTeamMembersModal({
     if (!isOpen) {
       setEditingUserId(null);
       setEditingRole('');
-      setPendingRemovalUser(null);
     }
   }, [isOpen]);
 
@@ -91,19 +80,19 @@ export function ManageTeamMembersModal({
 
   const handleSaveRole = async () => {
     if (!editingUserId || !editingRole) return;
-
+    
     setIsLoading(true);
     try {
       await organizationsApi.updateMemberRole(
         organizationId,
         editingUserId,
-        editingRole as EditableRole
+        editingRole as 'Admin' | 'Editor' | 'BillingContact' | 'Viewer'
       );
-
+      
       addToast('success', 'Member role updated successfully');
       setEditingUserId(null);
       setEditingRole('');
-
+      
       // Trigger callback to refresh member list
       if (onMemberUpdated) {
         onMemberUpdated();
@@ -117,15 +106,18 @@ export function ManageTeamMembersModal({
     }
   };
 
-  const handleConfirmRemove = async () => {
-    if (!pendingRemovalUser) return;
-
+  const handleRemoveUser = async (userId: string, userName: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to remove ${userName} from ${organizationName}?`
+    );
+    if (!confirmed) return;
+    
     setIsLoading(true);
     try {
-      await organizationsApi.removeMember(organizationId, pendingRemovalUser.userId);
-
-      addToast('success', `${pendingRemovalUser.name} has been removed from ${organizationName}`);
-
+      await organizationsApi.removeMember(organizationId, userId);
+      
+      addToast('success', `${userName} has been removed from ${organizationName}`);
+      
       // Trigger callback to refresh member list
       if (onMemberRemoved) {
         onMemberRemoved();
@@ -136,7 +128,6 @@ export function ManageTeamMembersModal({
       addToast('error', errorMessage);
     } finally {
       setIsLoading(false);
-      setPendingRemovalUser(null);
     }
   };
 
@@ -148,22 +139,21 @@ export function ManageTeamMembersModal({
   ];
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title={`Manage Team Members - ${organizationName}`}
-        size="large"
-      >
-        <div className="space-y-4">
-          {/* Summary */}
-          <div className="inline-flex max-w-full items-center gap-2 rounded-lg border border-blue-electric/20 bg-blue-electric/5 px-4 py-3 dark:bg-blue-electric/10">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Manage Team Members - ${organizationName}`}
+      size="large"
+    >
+      <div className="space-y-4">
+        {/* Header Info */}
+        <div className="bg-blue-electric/5 dark:bg-blue-electric/10 border border-blue-electric/20 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
             <svg
-              className="h-5 w-5 text-blue-electric"
+              className="w-5 h-5 text-blue-electric"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -176,59 +166,52 @@ export function ManageTeamMembersModal({
               {users.length} {users.length === 1 ? 'member' : 'members'}
             </span>
           </div>
+        </div>
 
-          {/* Users List */}
-          <div className="space-y-3">
-            {users.length === 0 ? (
-              <div className="rounded-xl border border-gray-light dark:border-gray-slate bg-white/40 dark:bg-gray-800/40 p-6 text-center text-sm text-gray-slate dark:text-gray-light">
-                No team members found.
-              </div>
-            ) : null}
-
-            {users.map((user) => (
-              <div
-                key={user.user_id}
-                className="rounded-xl border border-gray-light dark:border-gray-slate bg-white dark:bg-gray-800/70 p-4"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="min-w-0 flex items-center gap-3">
-                    {/* Avatar */}
-                    <div className="flex-shrink-0">
-                      {user.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-12 h-12 rounded-full"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center">
-                          <span className="text-base font-bold text-orange">
-                            {getInitials(user.name)}
-                          </span>
-                        </div>
-                      )}
+        {/* Users List */}
+        <div className="space-y-3">
+          {users.map((user) => (
+            <div
+              key={user.user_id}
+              className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate"
+            >
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                {/* Avatar */}
+                <div className="flex-shrink-0">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-12 h-12 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center">
+                      <span className="text-base font-bold text-orange">
+                        {getInitials(user.name)}
+                      </span>
                     </div>
+                  )}
+                </div>
 
-                    {/* User Info */}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-base font-semibold text-gray-slate dark:text-white truncate">
-                        {user.name}
-                      </p>
-                      <p className="text-sm text-gray-slate dark:text-gray-light truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
+                {/* User Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-slate dark:text-white truncate">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-gray-slate dark:text-gray-light truncate">
+                    {user.email}
+                  </p>
+                </div>
 
-                  {/* Role Management */}
+                {/* Role Management */}
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   {editingUserId === user.user_id ? (
-                    <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center lg:justify-end">
-                      <div className="relative z-[100] w-full lg:w-64">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-48 relative z-[100]">
                         <Dropdown
                           value={editingRole}
                           onChange={setEditingRole}
                           options={roleOptions}
-                          disabled={isLoading}
                         />
                       </div>
                       <Button
@@ -237,46 +220,42 @@ export function ManageTeamMembersModal({
                         onClick={handleSaveRole}
                         loading={isLoading}
                         disabled={isLoading}
-                        className="h-9 w-full lg:w-auto"
                       >
                         Save
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-9 w-full lg:w-auto"
                         onClick={() => {
                           setEditingUserId(null);
                           setEditingRole('');
                         }}
                         disabled={isLoading}
                       >
-                        Cancel
+                        ✕
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
+                    <>
                       <span
                         className={`text-xs px-3 py-1 rounded-full border font-medium ${getRoleColor(
                           user.role
                         )}`}
                       >
-                        {formatRoleName(user.role)}
+                        {user.role}
                       </span>
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => handleEditRole(user.user_id, user.role)}
-                        className="h-9 min-w-[104px] !bg-orange hover:!bg-orange-dark !text-white"
+                        className="!bg-orange hover:!bg-orange-dark !text-white"
                         disabled={isLoading}
-                        aria-label={`Edit role for ${user.name}`}
                       >
                         <svg
                           className="w-4 h-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
-                          aria-hidden="true"
                         >
                           <path
                             strokeLinecap="round"
@@ -285,22 +264,19 @@ export function ManageTeamMembersModal({
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                           />
                         </svg>
-                        <span className="ml-1.5">Edit Role</span>
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
-                        onClick={() => setPendingRemovalUser({ userId: user.user_id, name: user.name })}
-                        className="h-9 min-w-[104px] !border-red-600 !text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/20"
+                        onClick={() => handleRemoveUser(user.user_id, user.name)}
+                        className="!bg-red-600 hover:!bg-red-700 !text-white"
                         disabled={isLoading}
-                        aria-label={`Remove ${user.name}`}
                       >
                         <svg
                           className="w-4 h-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
-                          aria-hidden="true"
                         >
                           <path
                             strokeLinecap="round"
@@ -309,35 +285,23 @@ export function ManageTeamMembersModal({
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
-                        <span className="ml-1.5">Remove</span>
                       </Button>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      </Modal>
 
-      <ConfirmationModal
-        isOpen={Boolean(pendingRemovalUser)}
-        onClose={() => {
-          if (isLoading) return;
-          setPendingRemovalUser(null);
-        }}
-        onConfirm={handleConfirmRemove}
-        title="Remove Team Member"
-        message={
-          pendingRemovalUser
-            ? `Are you sure you want to remove ${pendingRemovalUser.name} from ${organizationName}?`
-            : ''
-        }
-        confirmText="Remove"
-        cancelText="Cancel"
-        variant="danger"
-        isLoading={isLoading}
-      />
-    </>
+        {/* Footer */}
+        <div className="flex justify-end pt-4">
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
+
