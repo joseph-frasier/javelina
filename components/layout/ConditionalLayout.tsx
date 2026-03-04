@@ -46,8 +46,10 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
 
   const isAdminRoute = pathname.startsWith('/admin');
 
-  // For pages without Header/Sidebar (auth, pricing, admin, public marketing), render immediately
-  if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute || isPublicMarketingPage) {
+  const isInviteFlow = pathname.startsWith('/invite/') || pathname === '/email-verified';
+
+  // For pages without Header/Sidebar (auth, pricing, admin, public marketing, invite), render immediately
+  if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute || isPublicMarketingPage || isInviteFlow) {
     return (
       <>
         <IdleLogoutGuard />
