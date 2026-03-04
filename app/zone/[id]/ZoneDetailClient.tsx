@@ -41,6 +41,7 @@ import { DNSRecordsTable } from '@/components/dns/DNSRecordsTable';
 import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
 import { ManageDNSRecordModal } from '@/components/modals/ManageDNSRecordModal';
 import { DNSRecordDetailModal } from '@/components/modals/DNSRecordDetailModal';
+import { EditZoneModal, type EditZoneFormData } from '@/components/modals/EditZoneModal';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { 
@@ -89,7 +90,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
 
   
   // Edit form state
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<EditZoneFormData>({
     name: zone.name || '',
     description: zone.description || '',
     admin_email: zone.admin_email || 'admin@example.com',
@@ -546,105 +547,16 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       />
 
       {/* Edit Zone Modal */}
-      <Modal 
-        isOpen={showEditModal} 
-        onClose={() => setShowEditModal(false)} 
-        title={`Edit Zone: ${zone.name}`}
-        size="large"
-      >
-        <div className="space-y-6">
-          {/* Zone Name */}
-          <div>
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Zone Name <span className="text-red-600">*</span></label>
-            <Input
-              type="text"
-              value={editFormData.name}
-              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-              placeholder="e.g., example.com"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Description</label>
-            <textarea
-              value={editFormData.description}
-              onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-              placeholder="Zone description (optional)"
-              rows={3}
-              maxLength={500}
-              className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
-            />
-            <p className="mt-1 text-xs text-gray-slate">
-              {editFormData.description.length}/500 characters
-            </p>
-          </div>
-
-          {/* SOA Configuration Section */}
-          <div className="pt-4 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">SOA Configuration</h3>
-            <p className="text-xs text-gray-slate mb-4">
-              Root NS records are system-managed by the DNS service. SOA settings control zone metadata.
-            </p>
-            
-            <div className="space-y-4">
-
-              {/* Admin Email */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Admin Email</label>
-                <Input
-                  type="email"
-                  value={editFormData.admin_email}
-                  onChange={(e) => setEditFormData({ ...editFormData, admin_email: e.target.value })}
-                  placeholder="admin@example.com"
-                />
-                <p className="mt-1 text-xs text-gray-slate">Administrative contact email for this zone</p>
-              </div>
-
-              {/* Negative Caching TTL */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Negative Caching TTL (seconds)</label>
-                <Input
-                  type="number"
-                  value={editFormData.negative_caching_ttl}
-                  onChange={(e) => setEditFormData({ ...editFormData, negative_caching_ttl: parseInt(e.target.value, 10) || 0 })}
-                  placeholder="3600"
-                  min={0}
-                  max={86400}
-                />
-                <p className="mt-1 text-xs text-gray-slate">How long to cache negative DNS responses (0-86400 seconds)</p>
-              </div>
-
-              {/* SOA Serial (Read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                  SOA Serial <span className="text-gray-400">(read-only)</span>
-                </label>
-                <Input
-                  type="text"
-                  value={zone.soa_serial}
-                  disabled
-                  className="bg-gray-100 dark:bg-gray-700"
-                />
-                <p className="mt-1 text-xs text-gray-slate">Auto-increments on any zone or record change</p>
-              </div>
-            </div>
-          </div>
-
-        </div>
-        <div className="flex justify-end space-x-3 pt-6 mt-6">
-          <Button 
-            variant="secondary"
-            onClick={() => setShowEditModal(false)} 
-            disabled={isEditSaving}
-          >
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSaveZone} disabled={isEditSaving}>
-            {isEditSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      </Modal>
+      <EditZoneModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        zoneName={zone.name}
+        formData={editFormData}
+        onFormDataChange={setEditFormData}
+        soaSerial={zone.soa_serial}
+        isSaving={isEditSaving}
+        onSave={handleSaveZone}
+      />
 
       {/* Delete Zone Modal */}
       <Modal 
