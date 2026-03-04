@@ -171,6 +171,16 @@ describe('AddZoneModal', () => {
     expect(screen.getByRole('button', { name: 'Save Zone' })).toBeDisabled();
   });
 
+  it('uses lifetime plan name in limit copy when on a lifetime plan', async () => {
+    mocks.usage = { zones: 10 };
+    renderModal({ planCode: 'starter_lifetime' });
+
+    expect(await screen.findByText('Zone Limit Reached')).toBeInTheDocument();
+    expect(
+      screen.getByText("You've reached the zone limit for Starter Lifetime. Upgrade to add more zones.")
+    ).toBeInTheDocument();
+  });
+
   it('routes to billing when clicking Upgrade Plan with org id', async () => {
     const user = userEvent.setup();
     mocks.usage = { zones: 10 };

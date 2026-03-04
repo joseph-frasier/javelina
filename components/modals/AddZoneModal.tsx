@@ -98,7 +98,21 @@ export function AddZoneModal({
   const showLimitCallout = hasFiniteZoneLimit && usage !== null && roundedPercentUsed >= 80;
   const remainingZones = Math.max(0, maxZones - currentZoneCount);
   const shouldShowUpgradeCta = !hideUpgradeLimitCta;
-  const planTierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+  const planTierLabel = (() => {
+    if (planCode) {
+      const normalizedPlanCode = planCode.toLowerCase();
+      const baseLabel = normalizedPlanCode.includes('enterprise')
+        ? 'Enterprise'
+        : normalizedPlanCode.includes('business') || normalizedPlanCode.includes('premium')
+          ? 'Business'
+          : normalizedPlanCode.includes('pro')
+            ? 'Pro'
+            : 'Starter';
+      return normalizedPlanCode.includes('_lifetime') ? `${baseLabel} Lifetime` : baseLabel;
+    }
+
+    return tier.charAt(0).toUpperCase() + tier.slice(1);
+  })();
 
   const handleUpgradeClick = () => {
     if (organizationId) {
