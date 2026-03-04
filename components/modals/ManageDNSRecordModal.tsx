@@ -64,6 +64,7 @@ const ALL_RECORD_TYPE_OPTIONS: RecordTypeOption[] = [
 ];
 
 const COMMON_RECORD_TYPES: DNSRecordType[] = ['A', 'AAAA', 'CNAME', 'MX', 'TXT'];
+const MOBILE_EXTRA_COMMON_RECORD_TYPE: DNSRecordType = 'NS';
 const STRUCTURED_RECORD_TYPES: StructuredRecordType[] = ['MX', 'SRV', 'CAA'];
 
 const getDefaultStructuredFields = (): StructuredFields => ({
@@ -515,16 +516,8 @@ export function ManageDNSRecordModal({
       const searchable = `${option.value} ${option.label} ${info.description}`.toLowerCase();
       return searchable.includes(query);
     });
-
-    if (!matches.some((option) => option.value === formData.type)) {
-      const selected = recordTypeOptions.find((option) => option.value === formData.type);
-      if (selected) {
-        return [selected, ...matches];
-      }
-    }
-
     return matches;
-  }, [formData.type, recordTypeOptions, typeSearchQuery]);
+  }, [recordTypeOptions, typeSearchQuery]);
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -636,7 +629,7 @@ export function ManageDNSRecordModal({
     return '@ (root) or subdomain (e.g., www, blog, mail)';
   };
 
-  const renderRecordTypeButton = (option: RecordTypeOption) => {
+  const renderRecordTypeButton = (option: RecordTypeOption, wrapperClassName?: string, keySuffix = '') => {
     const isSelected = formData.type === option.value;
     const info =
       option.value in RECORD_TYPE_INFO
@@ -681,11 +674,15 @@ export function ManageDNSRecordModal({
     );
 
     if (!isDisabled) {
-      return <div key={option.value}>{button}</div>;
+      return (
+        <div key={`${option.value}${keySuffix}`} className={wrapperClassName}>
+          {button}
+        </div>
+      );
     }
 
     return (
-      <div key={option.value} className="relative group">
+      <div key={`${option.value}${keySuffix}`} className={clsx('relative group', wrapperClassName)}>
         {button}
         <div className="pointer-events-none absolute bottom-full left-1/2 invisible mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:bg-gray-700 z-50">
           Under Development
@@ -920,6 +917,7 @@ export function ManageDNSRecordModal({
   const typeInfo = RECORD_TYPE_INFO[formData.type];
   const fqdn = getFQDN(formData.name, zoneName);
   const shouldUseRawValueInput = !isStructuredRecordType(formData.type) || valueMode === 'raw';
+  const mobileExtraCommonOption = recordTypeOptions.find((option) => option.value === MOBILE_EXTRA_COMMON_RECORD_TYPE);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={mode === 'add' ? 'Add DNS Record' : 'Edit DNS Record'} size="xlarge">
@@ -951,7 +949,10 @@ export function ManageDNSRecordModal({
 
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-slate">Common Types</p>
             <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-              {recordTypeOptions.filter((option) => COMMON_RECORD_TYPES.includes(option.value as DNSRecordType)).map(renderRecordTypeButton)}
+              {recordTypeOptions
+                .filter((option) => COMMON_RECORD_TYPES.includes(option.value as DNSRecordType))
+                .map((option) => renderRecordTypeButton(option))}
+              {mobileExtraCommonOption ? renderRecordTypeButton(mobileExtraCommonOption, 'sm:hidden', '-mobile-extra') : null}
             </div>
 
             <button
@@ -976,8 +977,8 @@ export function ManageDNSRecordModal({
                     onChange={(e) => setTypeSearchQuery(e.target.value)}
                     placeholder="Search record types..."
                   />
-                  <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                    {searchedRecordTypes.map(renderRecordTypeButton)}
+                  <div data-testid="all-record-types-grid" className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+                    {searchedRecordTypes.map((option) => renderRecordTypeButton(option))}
                   </div>
                   {searchedRecordTypes.length === 0 && (
                     <p className="mt-3 text-xs text-gray-slate">No record types match your search.</p>

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ManageDNSRecordModal } from '@/components/modals/ManageDNSRecordModal';
 import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
@@ -44,18 +44,19 @@ describe('ManageDNSRecordModal', () => {
     onSubmit.mockResolvedValue(undefined as never);
   });
 
-  it('renders common type row and keeps selected type visible while searching all types', async () => {
+  it('filters all-types results strictly by search and does not pin the selected type', async () => {
     const user = userEvent.setup();
     renderModal();
 
     expect(await screen.findByText('Common Types')).toBeInTheDocument();
-    expect(screen.getByTestId('record-type-A')).toHaveAttribute('aria-pressed', 'true');
 
     await user.click(screen.getByRole('button', { name: 'Show all record types' }));
-    await user.type(screen.getByLabelText('Search Types'), 'mail');
+    const allTypesGrid = screen.getByTestId('all-record-types-grid');
+    await user.click(within(allTypesGrid).getByTestId('record-type-NS'));
+    await user.type(screen.getByLabelText('Search Types'), 'txt');
 
-    expect(screen.getAllByTestId('record-type-MX').length).toBeGreaterThan(0);
-    expect(screen.getAllByTestId('record-type-A').length).toBeGreaterThan(0);
+    expect(within(allTypesGrid).getByTestId('record-type-TXT')).toBeInTheDocument();
+    expect(within(allTypesGrid).queryByTestId('record-type-NS')).not.toBeInTheDocument();
   });
 
   it('keeps RFC3597 disabled in all-types list', async () => {
