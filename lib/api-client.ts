@@ -272,6 +272,13 @@ export const subscriptionsApi = {
   getAllWithSubscriptions: () => {
     return apiClient.get('/subscriptions/all');
   },
+
+  /**
+   * Get plan name and code for an organization (accessible to all members)
+   */
+  getOrgPlan: (org_id: string) => {
+    return apiClient.get(`/subscriptions/plan?org_id=${org_id}`);
+  },
 };
 
 
