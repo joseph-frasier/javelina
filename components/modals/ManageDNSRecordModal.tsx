@@ -464,31 +464,33 @@ export function ManageDNSRecordModal({
 
     if (showAllTypes) {
       setRenderAllTypesSection(true);
-      gsap.set(panel, { height: 'auto' });
-      const targetHeight = panel.offsetHeight;
+      gsap.set(panel, { height: 'auto', overflow: 'hidden' });
+      const targetHeight = panel.scrollHeight;
       gsap.fromTo(
         panel,
-        { height: 0, opacity: 0, y: -6 },
+        { height: 0, opacity: 0 },
         {
           height: targetHeight,
           opacity: 1,
-          y: 0,
-          duration: 0.28,
+          duration: 0.26,
           ease: 'power2.out',
-          onComplete: () => gsap.set(panel, { height: 'auto' }),
+          onComplete: () => gsap.set(panel, { height: 'auto', overflow: 'visible' }),
         }
       );
       return;
     }
 
     if (renderAllTypesSection) {
+      const currentHeight = panel.offsetHeight;
+      gsap.set(panel, { height: currentHeight, overflow: 'hidden' });
       gsap.to(panel, {
         height: 0,
         opacity: 0,
-        y: -6,
-        duration: 0.22,
-        ease: 'power2.inOut',
-        onComplete: () => setRenderAllTypesSection(false),
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => {
+          setRenderAllTypesSection(false);
+        },
       });
     }
   }, [showAllTypes, renderAllTypesSection]);
@@ -963,22 +965,24 @@ export function ManageDNSRecordModal({
             {renderAllTypesSection && (
               <div
                 ref={allTypesSectionRef}
-                className="overflow-hidden rounded-lg border border-gray-light/60 p-3 dark:border-gray-700/60"
+                className="overflow-hidden will-change-[height,opacity]"
               >
-                <Input
-                  id="record-type-search"
-                  label="Search Types"
-                  type="text"
-                  value={typeSearchQuery}
-                  onChange={(e) => setTypeSearchQuery(e.target.value)}
-                  placeholder="Search record types..."
-                />
-                <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                  {searchedRecordTypes.map(renderRecordTypeButton)}
+                <div className="rounded-lg border border-gray-light/60 p-3 dark:border-gray-700/60">
+                  <Input
+                    id="record-type-search"
+                    label="Search Types"
+                    type="text"
+                    value={typeSearchQuery}
+                    onChange={(e) => setTypeSearchQuery(e.target.value)}
+                    placeholder="Search record types..."
+                  />
+                  <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+                    {searchedRecordTypes.map(renderRecordTypeButton)}
+                  </div>
+                  {searchedRecordTypes.length === 0 && (
+                    <p className="mt-3 text-xs text-gray-slate">No record types match your search.</p>
+                  )}
                 </div>
-                {searchedRecordTypes.length === 0 && (
-                  <p className="mt-3 text-xs text-gray-slate">No record types match your search.</p>
-                )}
               </div>
             )}
           </div>
@@ -1079,10 +1083,10 @@ export function ManageDNSRecordModal({
         </div>
 
         <div className="-mx-6 flex items-center justify-end gap-3 border-t border-gray-light px-6 pt-4 dark:border-gray-700">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <Button type="button" variant="outline" className="h-10" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || !validation.valid} loading={isSubmitting}>
+          <Button type="submit" className="h-10" disabled={isSubmitting || !validation.valid} loading={isSubmitting}>
             {mode === 'add' ? 'Create Record' : 'Save Changes'}
           </Button>
         </div>
