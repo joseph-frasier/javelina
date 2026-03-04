@@ -10,7 +10,7 @@ import { createZone } from '@/lib/actions/zones';
 import { useToastStore } from '@/lib/toast-store';
 import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
 import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
-import { UpgradeLimitBanner } from '@/components/ui/UpgradeLimitBanner';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { detectZoneOverlap } from '@/lib/utils/dns-validation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -43,10 +43,11 @@ export function AddZoneModal({
   const [allZoneNames, setAllZoneNames] = useState<string[]>([]);
 
   const { addToast } = useToastStore();
+  const { hideUpgradeLimitCta } = useFeatureFlags();
   
   // Plan limits and usage tracking
   const { limits, tier, wouldExceedLimit } = usePlanLimits(planCode);
-  const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsageCounts(organizationId);
+  const { usage, refetch: refetchUsage } = useUsageCounts(organizationId);
   
   // Fetch all zone names globally for overlap detection
   useEffect(() => {
@@ -82,8 +83,31 @@ export function AddZoneModal({
   }, [isOpen, refetchUsage]);
   
   // Check if at zone limit
+  const maxZones = limits.zones;
   const currentZoneCount = usage?.zones ?? 0;
   const isAtZoneLimit = wouldExceedLimit('zones', currentZoneCount);
+  const hasFiniteZoneLimit = maxZones !== -1;
+  const percentUsed = hasFiniteZoneLimit
+    ? maxZones > 0
+      ? (currentZoneCount / maxZones) * 100
+      : 100
+    : 0;
+  const roundedPercentUsed = Math.round(Math.max(0, percentUsed));
+  const progressWidthPercent = Math.min(100, Math.max(0, percentUsed));
+  const isNearLimit = !isAtZoneLimit && roundedPercentUsed >= 80;
+  const showLimitCallout = hasFiniteZoneLimit && usage !== null && roundedPercentUsed >= 80;
+  const remainingZones = Math.max(0, maxZones - currentZoneCount);
+  const shouldShowUpgradeCta = !hideUpgradeLimitCta;
+  const planTierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+
+  const handleUpgradeClick = () => {
+    if (organizationId) {
+      router.push(`/settings/billing/${organizationId}?openModal=true`);
+      return;
+    }
+
+    router.push('/pricing');
+  };
 
   const validateForm = (): boolean => {
     const newErrors: { name?: string; admin_email?: string; negative_caching_ttl?: string } = {};
@@ -200,27 +224,87 @@ export function AddZoneModal({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Zone" size="medium">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Plan limit warning/block */}
-        {!isLoadingUsage && (
-          <UpgradeLimitBanner
-            resourceType="zones"
-            currentCount={currentZoneCount}
-            maxCount={limits.zones}
-            planTier={tier.charAt(0).toUpperCase() + tier.slice(1)}
-            isAtLimit={isAtZoneLimit}
-            organizationId={organizationId}
-          />
-        )}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {showLimitCallout ? (
+          <div
+            data-testid="zone-limit-callout"
+            className={`rounded-lg border px-4 py-3 ${
+              isAtZoneLimit
+                ? 'border-red-500/35 bg-red-500/10'
+                : 'border-amber-500/35 bg-amber-500/10'
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p
+                  className={`text-sm font-semibold ${
+                    isAtZoneLimit ? 'text-red-200' : 'text-amber-200'
+                  }`}
+                >
+                  {isAtZoneLimit ? 'Zone Limit Reached' : 'Approaching Zone Limit'}
+                </p>
+                <p
+                  className={`mt-1 text-xs leading-relaxed ${
+                    isAtZoneLimit ? 'text-red-100/90' : 'text-amber-100/90'
+                  }`}
+                >
+                  {isAtZoneLimit
+                    ? `You've reached the zone limit for ${planTierLabel}. Upgrade to add more zones.`
+                    : `${remainingZones} ${remainingZones === 1 ? 'zone' : 'zones'} remaining on ${planTierLabel}.`}
+                </p>
+              </div>
+
+              {shouldShowUpgradeCta ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleUpgradeClick}
+                  className="h-9 shrink-0"
+                >
+                  Upgrade Plan
+                </Button>
+              ) : null}
+            </div>
+
+            <div className="mt-3">
+              <div
+                className={`mb-1 flex items-center justify-between text-xs ${
+                  isAtZoneLimit ? 'text-red-100/95' : 'text-amber-100/95'
+                }`}
+              >
+                <span>
+                  {currentZoneCount} / {maxZones} zones
+                </span>
+                <span>{roundedPercentUsed}% used</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-black/25">
+                <div
+                  className={`h-1.5 rounded-full transition-all ${
+                    isAtZoneLimit ? 'bg-red-400' : 'bg-amber-400'
+                  }`}
+                  style={{ width: `${progressWidthPercent}%` }}
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {isAtZoneLimit ? (
+          <p className="text-xs font-medium text-red-300">
+            Creating zones is disabled until you upgrade your plan.
+          </p>
+        ) : null}
         
         {errors.general && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-800">{errors.general}</p>
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3">
+            <p className="text-sm text-red-200">{errors.general}</p>
           </div>
         )}
 
-        <div>
-          <p className="text-sm text-gray-slate mb-4">
+        <div className="rounded-lg border border-gray-light/60 dark:border-gray-slate/60 bg-transparent p-3">
+          <p className="text-sm text-gray-slate">
             Adding zone to: <span className="font-semibold text-orange-dark dark:text-white">{organizationName}</span>
           </p>
         </div>
@@ -267,8 +351,8 @@ export function AddZoneModal({
         </div>
 
         {/* SOA Configuration Section */}
-        <div className="pt-4 border-t border-gray-light -mx-6 px-6">
-          <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">
+        <div className="rounded-lg border border-gray-light/60 dark:border-gray-slate/60 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-orange-dark dark:text-white">
             SOA Configuration
           </h3>
           
@@ -320,12 +404,13 @@ export function AddZoneModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end space-x-3 pt-4">
+        <div className="flex items-center justify-end gap-3 pt-2">
           <Button
             type="button"
             variant="secondary"
             onClick={handleClose}
             disabled={isSubmitting}
+            className="h-11 px-5"
           >
             Cancel
           </Button>
@@ -333,6 +418,7 @@ export function AddZoneModal({
             type="submit"
             variant="primary"
             disabled={isSubmitting || !name.trim() || isAtZoneLimit}
+            className="h-11 min-w-[144px]"
           >
             {isSubmitting ? (
               <>

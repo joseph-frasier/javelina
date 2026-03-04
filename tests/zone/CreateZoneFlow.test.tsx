@@ -32,6 +32,12 @@ vi.mock('@/lib/supabase/client', () => ({
         },
       }),
     },
+    from: vi.fn(() => ({
+      select: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
+    })),
   })),
 }));
 
@@ -59,6 +65,15 @@ vi.mock('@/lib/hooks/useUsageCounts', () => ({
   }),
 }));
 
+vi.mock('@/lib/hooks/useFeatureFlags', () => ({
+  useFeatureFlags: () => ({
+    hideProPlans: false,
+    hideBusinessPlans: false,
+    hideUpgradeLimitCta: false,
+    hideTeamInvites: false,
+  }),
+}));
+
 // Mock UI components
 vi.mock('@/components/ui/Modal', () => ({
   Modal: ({ children, isOpen, title }: any) =>
@@ -78,10 +93,6 @@ vi.mock('@/components/ui/Input', () => ({
   default: ({ ...props }: any) => <input {...props} />,
 }));
 
-vi.mock('@/components/ui/UpgradeLimitBanner', () => ({
-  UpgradeLimitBanner: () => null,
-}));
-
 // MSW server setup
 const mockZonesInitial: any[] = [];
 const mockNewZone = {
@@ -94,6 +105,9 @@ const mockNewZone = {
 const server = setupServer(
   // GET zones - returns empty initially, then includes new zone after creation
   http.get('http://localhost:3001/api/zones/organization/:orgId', () => {
+    return HttpResponse.json({ data: mockZonesInitial });
+  }),
+  http.get('/api/backend/zones/organization/:orgId', () => {
     return HttpResponse.json({ data: mockZonesInitial });
   })
 );
@@ -149,6 +163,9 @@ describe('AddZoneModal - Create Zone Flow', () => {
     let zonesData = [...mockZonesInitial];
     server.use(
       http.get('http://localhost:3001/api/zones/organization/:orgId', () => {
+        return HttpResponse.json({ data: zonesData });
+      }),
+      http.get('/api/backend/zones/organization/:orgId', () => {
         return HttpResponse.json({ data: zonesData });
       })
     );
