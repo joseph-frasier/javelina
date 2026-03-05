@@ -485,7 +485,9 @@ export function ManageDNSRecordModal({
           opacity: 1,
           duration: 0.26,
           ease: 'power2.out',
-          onComplete: () => gsap.set(panel, { height: 'auto', overflow: 'visible' }),
+          onComplete: () => {
+            gsap.set(panel, { height: 'auto', overflow: 'visible' });
+          },
         }
       );
       return;

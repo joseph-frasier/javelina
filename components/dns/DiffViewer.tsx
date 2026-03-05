@@ -153,7 +153,9 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
       y: 0,
       duration: 0.2,
       ease: 'power2.out',
-      onComplete: () => gsap.set(container, { clearProps: 'opacity,transform' }),
+      onComplete: () => {
+        gsap.set(container, { clearProps: 'opacity,transform' });
+      },
     });
   }, [mode, isOpen, displayOldData, displayNewData, displayTableName]);
 
