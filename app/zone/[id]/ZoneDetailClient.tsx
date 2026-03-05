@@ -8,8 +8,6 @@ import { Card } from '@/components/ui/Card';
 import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { Modal } from '@/components/ui/Modal';
-import Input from '@/components/ui/Input';
 interface OrganizationDetail {
   id: string;
   name: string;
@@ -40,6 +38,7 @@ import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
 import { DNSRecordsTable } from '@/components/dns/DNSRecordsTable';
 import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
 import { ManageDNSRecordModal } from '@/components/modals/ManageDNSRecordModal';
+import { DeleteZoneModal } from '@/components/modals/DeleteZoneModal';
 import { DNSRecordDetailModal } from '@/components/modals/DNSRecordDetailModal';
 import { EditZoneModal, type EditZoneFormData } from '@/components/modals/EditZoneModal';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
@@ -74,6 +73,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
+  const [isDeleteSaving, setIsDeleteSaving] = useState(false);
   
   // DNS Records state
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
@@ -301,6 +301,9 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   };
 
   const handleDeleteZone = async () => {
+    if (isDeleteSaving) return;
+    setIsDeleteSaving(true);
+
     try {
       const result = await deleteZone(zone.id);
       
@@ -324,6 +327,8 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       }
     } catch (error) {
       addToast('error', `Error deleting zone: ${error}`);
+    } finally {
+      setIsDeleteSaving(false);
     }
   };
 
@@ -559,71 +564,19 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       />
 
       {/* Delete Zone Modal */}
-      <Modal 
-        isOpen={showDeleteModal} 
+      <DeleteZoneModal
+        isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
           setDeleteConfirmationInput('');
-        }} 
-        title="Delete Zone"
-        size="small"
-      >
-        <div>
-          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
-            <svg className="w-6 h-6 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-orange-dark dark:text-white text-center mb-2">
-            Permanently Delete Zone
-          </h3>
-          <p className="text-sm text-gray-slate dark:text-gray-400 text-center mb-6">
-            This action <span className="font-bold text-red-600 dark:text-red-500">cannot be undone</span>. 
-            This will permanently delete the zone <span className="font-bold text-orange-dark dark:text-white">{zone.name}</span> and 
-            all {zoneSummary?.totalRecords || 0} associated DNS records.
-          </p>
-          
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2 text-left">
-              Type <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-orange-dark dark:text-orange">{zone.name}</span> to confirm:
-            </label>
-            <Input
-              type="text"
-              value={deleteConfirmationInput}
-              onChange={(e) => setDeleteConfirmationInput(e.target.value)}
-              placeholder="Enter zone name"
-              className="w-full"
-              autoFocus
-            />
-            {deleteConfirmationInput && deleteConfirmationInput !== zone.name && (
-              <p className="text-xs text-red-600 dark:text-red-500 mt-2 text-left">
-                Zone name does not match
-              </p>
-            )}
-          </div>
-
-          <div className="flex space-x-3">
-            <Button 
-              variant="secondary" 
-              className="flex-1" 
-              onClick={() => {
-                setShowDeleteModal(false);
-                setDeleteConfirmationInput('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              className="flex-1"
-              onClick={handleDeleteZone}
-              disabled={deleteConfirmationInput !== zone.name}
-            >
-              Delete Zone
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        }}
+        onConfirm={handleDeleteZone}
+        zoneName={zone.name}
+        recordCount={zoneSummary?.totalRecords || 0}
+        confirmationInput={deleteConfirmationInput}
+        onConfirmationInputChange={setDeleteConfirmationInput}
+        isDeleting={isDeleteSaving}
+      />
 
       {/* Diff Viewer Modal */}
       <DiffViewer
