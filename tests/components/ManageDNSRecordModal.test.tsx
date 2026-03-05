@@ -127,6 +127,49 @@ describe('ManageDNSRecordModal', () => {
     });
   });
 
+  it('shows all supported CAA tags in the dropdown', async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole('button', { name: 'Show all record types' }));
+    await user.click(screen.getByTestId('record-type-CAA'));
+    const tagInput = screen.getByLabelText('Tag');
+    await user.click(tagInput);
+
+    expect(screen.getByRole('option', { name: 'issue' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'issuewild' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'iodef' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'issuemail' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'contactemail' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'contactphone' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'issuevmc' })).toBeInTheDocument();
+  });
+
+  it('allows typing a custom CAA tag', async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole('button', { name: 'Show all record types' }));
+    await user.click(screen.getByTestId('record-type-CAA'));
+    await user.type(screen.getByLabelText('Name'), '@');
+
+    const tagInput = screen.getByLabelText('Tag');
+    await user.clear(tagInput);
+    await user.type(tagInput, 'customtag');
+
+    await user.type(screen.getByLabelText('Value'), 'ca.example');
+    await user.click(screen.getByRole('button', { name: 'Create Record' }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'CAA',
+          value: '0 customtag "ca.example"',
+        })
+      );
+    });
+  });
+
   it('prefills guided fields in edit mode when structured value can be parsed', async () => {
     const editableMXRecord: DNSRecord = {
       id: 'rec-1',

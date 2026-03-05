@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
+import CaaTagDropdown from '@/components/ui/CaaTagDropdown';
 import type { DNSRecord, DNSRecordType, DNSRecordFormData } from '@/types/dns';
 import { RECORD_TYPE_INFO, TTL_PRESETS } from '@/types/dns';
 import { validateDNSRecord, getFQDN, isValidIPv6 } from '@/lib/utils/dns-validation';
@@ -66,6 +67,15 @@ const ALL_RECORD_TYPE_OPTIONS: RecordTypeOption[] = [
 const COMMON_RECORD_TYPES: DNSRecordType[] = ['A', 'AAAA', 'CNAME', 'MX', 'TXT'];
 const MOBILE_EXTRA_COMMON_RECORD_TYPE: DNSRecordType = 'NS';
 const STRUCTURED_RECORD_TYPES: StructuredRecordType[] = ['MX', 'SRV', 'CAA'];
+const CAA_TAG_OPTIONS = [
+  { value: 'issue', label: 'issue' },
+  { value: 'issuewild', label: 'issuewild' },
+  { value: 'iodef', label: 'iodef' },
+  { value: 'issuemail', label: 'issuemail' },
+  { value: 'contactemail', label: 'contactemail' },
+  { value: 'contactphone', label: 'contactphone' },
+  { value: 'issuevmc', label: 'issuevmc' },
+] as const;
 
 const getDefaultStructuredFields = (): StructuredFields => ({
   mx: { priority: '10', host: '' },
@@ -98,7 +108,7 @@ const parseSRVValue = (value: string): StructuredFields['srv'] | null => {
 
 const parseCAAValue = (value: string): StructuredFields['caa'] | null => {
   const normalized = value.trim();
-  const match = normalized.match(/^(\d+)\s+(issue|issuewild|iodef)\s+"([^"]+)"$/i);
+  const match = normalized.match(/^(\d+)\s+([a-z0-9-]+)\s+"([^"]+)"$/i);
   if (!match) return null;
   return {
     flags: match[1],
@@ -877,20 +887,17 @@ export function ManageDNSRecordModal({
             max={255}
             placeholder="0"
           />
-          <Dropdown
+          <CaaTagDropdown
+            id="caa-tag"
             label="Tag"
             value={structuredFields.caa.tag}
             onChange={(value) =>
               setStructuredFields((prev) => ({
                 ...prev,
-                caa: { ...prev.caa, tag: value },
+                caa: { ...prev.caa, tag: value.toLowerCase() },
               }))
             }
-            options={[
-              { value: 'issue', label: 'issue' },
-              { value: 'issuewild', label: 'issuewild' },
-              { value: 'iodef', label: 'iodef' },
-            ]}
+            options={[...CAA_TAG_OPTIONS]}
           />
           <Input
             id="caa-value"
