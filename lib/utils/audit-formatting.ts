@@ -279,7 +279,7 @@ export function isSystemOnlyChange(
   // For zones, check if only system fields changed
   if (tableName === 'zones') {
     const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
-    const systemFields = new Set(['soa_serial', 'updated_at']);
+    const systemFields = new Set(['soa_serial', 'last_valid_serial', 'updated_at']);
     
     // Check if any non-system field changed
     for (const key of allKeys) {
@@ -358,4 +358,3 @@ export function getChangeSummary(
   
   return summary;
 }
-
