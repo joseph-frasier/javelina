@@ -120,9 +120,13 @@ export default async function OrganizationPage({
     }));
   }
 
-  // Fetch recent activity from audit logs
-  const auditLogs = await getOrganizationAuditLogs(orgId, 10);
-  const recentActivity = await Promise.all(auditLogs.map(log => formatAuditLog(log)));
+  // Editors only see DNS-related audit logs — skip org-level audit fetch for them
+  const recentActivity =
+    userRole !== 'Editor'
+      ? await Promise.all(
+          (await getOrganizationAuditLogs(orgId, 10)).map(log => formatAuditLog(log))
+        )
+      : [];
 
   // Prepare organization data for client component
   const orgData = {

@@ -57,9 +57,10 @@ interface ZoneDetailClientProps {
   zone: any;
   zoneId: string;
   organization?: OrganizationDetail | null;
+  userOrgRole?: string | null;
 }
 
-export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClientProps) {
+export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: ZoneDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -98,12 +99,15 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   });
   const [isEditSaving, setIsEditSaving] = useState(false);
 
+  // BillingContacts only see billing-related audit logs — zone logs are DNS-only
+  const canViewAuditLogs = userOrgRole !== 'BillingContact';
+
   // Load data
   useEffect(() => {
     const loadData = async () => {
       const [summary, logs, records] = await Promise.all([
         getZoneSummary(zoneId, zone.name, zone.records_count || 50),
-        getZoneAuditLogs(zoneId, zone.name),
+        canViewAuditLogs ? getZoneAuditLogs(zoneId, zone.name) : Promise.resolve([]),
         getDNSRecords(zoneId), // Use server action for consistency - routes through Express API
       ]);
       setZoneSummary(summary);
@@ -112,7 +116,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       setFilteredDnsRecords(records);
     };
     loadData();
-  }, [zoneId, zone.name, zone.records_count]);
+  }, [zoneId, zone.name, zone.records_count, canViewAuditLogs]);
 
   // If the page is opened with ?record=<id>, auto-open that DNS record in the details modal.
   useEffect(() => {
@@ -146,7 +150,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
     try {
       const [summary, logs, records] = await Promise.all([
         getZoneSummary(zoneId, zone.name, zone.records_count || 50),
-        getZoneAuditLogs(zoneId, zone.name),
+        canViewAuditLogs ? getZoneAuditLogs(zoneId, zone.name) : Promise.resolve([]),
         getDNSRecords(zoneId),
       ]);
       setZoneSummary(summary);
@@ -519,17 +523,19 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
         />
       </Card>
 
-      {/* Audit Timeline */}
-      <CollapsibleCard 
-        title="Change History" 
-        className="p-4 sm:p-6 mb-6 sm:mb-8"
-        storageKey={`zone-${zoneId}-changeHistory-collapsed`}
-      >
-        <AuditTimeline
-          auditLogs={auditLogs}
-          onDiffClick={setSelectedLog}
-        />
-      </CollapsibleCard>
+      {/* Audit Timeline — hidden for BillingContact (DNS logs not permitted) */}
+      {canViewAuditLogs && (
+        <CollapsibleCard 
+          title="Change History" 
+          className="p-4 sm:p-6 mb-6 sm:mb-8"
+          storageKey={`zone-${zoneId}-changeHistory-collapsed`}
+        >
+          <AuditTimeline
+            auditLogs={auditLogs}
+            onDiffClick={setSelectedLog}
+          />
+        </CollapsibleCard>
+      )}
 
       {/* Record Distribution */}
       <div className="mb-6 sm:mb-8">
