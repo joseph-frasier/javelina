@@ -59,7 +59,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
             content={({ payload }) => (
               <div className="flex flex-wrap justify-center gap-4 mt-4">
                 {payload?.map((entry, index) => {
-                  const dataItem = data.find(d => d.type === entry.value);
+                  const dataItem = entry.payload as RecordTypeCount | undefined;
                   return (
                     <div key={`legend-${index}`} className="flex items-center space-x-2">
                       <div
@@ -67,7 +67,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
                         style={{ backgroundColor: entry.color }}
                       />
                       <span className="text-xs text-gray-slate font-medium">
-                        {entry.value}: {dataItem?.count || 0}
+                        {dataItem?.type}: {dataItem?.count ?? 0}
                       </span>
                     </div>
                   );
