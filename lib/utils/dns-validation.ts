@@ -281,7 +281,7 @@ export function validateSRVRecord(value: string): { valid: boolean; error?: stri
  */
 export function validateCAARecord(value: string): { valid: boolean; error?: string } {
   // CAA format: flags tag "value"
-  const caaRegex = /^(\d+)\s+(issue|issuewild|iodef)\s+"([^"]+)"$/;
+  const caaRegex = /^(\d+)\s+([a-zA-Z0-9-]+)\s+"([^"]+)"$/i;
   const match = value.match(caaRegex);
   
   if (!match) {
@@ -728,4 +728,3 @@ export function detectZoneOverlap(
   
   return { hasOverlap: false };
 }
-

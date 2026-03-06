@@ -18,7 +18,7 @@ interface InviteUsersModalProps {
   organizationName: string;
   /** Plan code from the organization's subscription */
   planCode?: string;
-  /** Callback when member is successfully added */
+  /** Callback when invitation is successfully sent */
   onSuccess?: () => void;
 }
 
@@ -79,13 +79,13 @@ export function InviteUsersModal({
     setIsLoading(true);
 
     try {
-      // Call the real API to add the member
+      // Call the real API to send the invitation
       await organizationsApi.addMember(organizationId, {
         email,
         role,
       });
 
-      addToast('success', `${email} has been added to ${organizationName}!`);
+      addToast('success', `Invitation sent to ${email} for ${organizationName}.`);
       
       // Refetch usage counts to update the member count
       await refetchUsage();
@@ -101,17 +101,20 @@ export function InviteUsersModal({
 
       onClose();
     } catch (error: any) {
-      console.error('Error adding member:', error);
+      console.error('Error sending invitation:', error);
       
       // Handle specific error cases
-      if (error?.statusCode === 404 || error?.details?.code === 'USER_NOT_FOUND') {
-        setErrors({ email: "That user doesn't have a Javelina account yet." });
-        addToast('error', "That user doesn't have a Javelina account yet.");
-      } else if (error?.code === 'LIMIT_EXCEEDED' || error?.details?.code === 'MEMBER_LIMIT_REACHED') {
+      if (error?.code === 'LIMIT_EXCEEDED' || error?.details?.code === 'MEMBER_LIMIT_REACHED') {
         setErrors({ general: 'Team member limit reached. Please upgrade your plan.' });
         addToast('error', 'Team member limit reached. Please upgrade your plan.');
+      } else if (error?.details?.code === 'ALREADY_MEMBER' || error?.code === 'ALREADY_MEMBER') {
+        setErrors({ email: 'That user is already a member of this organization.' });
+        addToast('error', 'That user is already a member of this organization.');
+      } else if (error?.details?.code === 'INVITE_ALREADY_PENDING' || error?.code === 'INVITE_ALREADY_PENDING') {
+        setErrors({ email: 'An invitation for this email is already pending.' });
+        addToast('error', 'An invitation for this email is already pending.');
       } else {
-        const errorMessage = error?.message || error?.error || 'Failed to add member';
+        const errorMessage = error?.message || error?.error || 'Failed to send invitation';
         setErrors({ general: errorMessage });
         addToast('error', errorMessage);
       }
@@ -131,7 +134,7 @@ export function InviteUsersModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Add Team Member"
+      title="Invite Team Member"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Plan limit warning/block */}
@@ -147,7 +150,7 @@ export function InviteUsersModal({
         )}
         
         <p className="text-sm text-gray-slate dark:text-gray-light mb-4">
-          Add an existing Javelina user to {organizationName}
+          Send an invitation to join {organizationName}
         </p>
         
         <div>
@@ -206,7 +209,7 @@ export function InviteUsersModal({
             loading={isLoading}
             disabled={isAtMemberLimit}
           >
-            Add Member
+            Send Invite
           </Button>
         </div>
       </form>

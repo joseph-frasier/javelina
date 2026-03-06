@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -68,6 +68,7 @@ interface OrganizationClientProps {
 
 export function OrganizationClient({ org }: OrganizationClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, fetchProfile } = useAuthStore();
   const { selectAndExpand } = useHierarchyStore();
   
@@ -101,6 +102,17 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
   const [isLifetimePlan, setIsLifetimePlan] = useState(false);
   const canEditOrg = org.role === 'SuperAdmin' || org.role === 'Admin';
+  const greetingName = useMemo(() => {
+    if (!user) return 'User';
+    if (user.display_name && user.display_name !== user.email) return user.display_name;
+    if (user.name && user.name !== user.email) return user.name;
+
+    const emailUsername = user.email.split('@')[0];
+    return emailUsername
+      .split(/[._-]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }, [user]);
 
   // ============================================
   // TAGGING SYSTEM
@@ -199,6 +211,16 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     );
   }, []);
 
+  // Support deep-linking from global search: /organization/:orgId?tag=<tagId>
+  useEffect(() => {
+    const deepLinkedTagId = searchParams.get('tag');
+    if (!deepLinkedTagId) return;
+    if (!tags.length) return;
+    const exists = tags.some((tag) => tag.id === deepLinkedTagId);
+    if (!exists) return;
+    setActiveTagIds((prev) => (prev.length === 1 && prev[0] === deepLinkedTagId ? prev : [deepLinkedTagId]));
+  }, [searchParams, tags]);
+
   // Clear all tag filters
   const handleClearTagFilters = useCallback(() => {
     setActiveTagIds([]);
@@ -238,29 +260,25 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
     const checkPlan = async () => {
       setIsLoadingPlan(true);
       try {
-        // Fetch all orgs to check if this is the newest
-        const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
-        
-        if (orgsWithSubscriptions && orgsWithSubscriptions.length > 0) {
-          // Get the most recent org (last in array)
-          const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
-          // Check if current org matches the newest one
-          const isNewest = mostRecentOrg.org_id === org.id;
-          setIsNewestPlan(isNewest);
-          
-          // Get plan name from the list (plan_code might not be in this response)
-          const currentOrgData = orgsWithSubscriptions.find((o: any) => o.org_id === org.id);
-          if (currentOrgData?.plan_name) {
-            setPlanName(currentOrgData.plan_name);
-          }
+        // Lightweight plan endpoint accessible to all org members
+        const planData = await subscriptionsApi.getOrgPlan(org.id);
+        if (planData?.plan_name) {
+          setPlanName(planData.plan_name);
         }
-        
-        // Fetch current subscription to get the plan_code (this API returns it)
-        const currentSub = await subscriptionsApi.getCurrent(org.id);
-        if (currentSub?.subscription?.plan_code) {
-          setPlanCode(currentSub.subscription.plan_code);
-        } else if (currentSub?.plan?.code) {
-          setPlanCode(currentSub.plan.code);
+        if (planData?.plan_code) {
+          setPlanCode(planData.plan_code);
+        }
+
+        // Fetch all orgs to check if this is the newest (may fail for non-admin roles)
+        try {
+          const orgsWithSubscriptions = await subscriptionsApi.getAllWithSubscriptions();
+          if (orgsWithSubscriptions && orgsWithSubscriptions.length > 0) {
+            const mostRecentOrg = orgsWithSubscriptions[orgsWithSubscriptions.length - 1];
+            setIsNewestPlan(mostRecentOrg.org_id === org.id);
+          }
+        } catch {
+          // Non-admin users can't access this — default to not newest
+          setIsNewestPlan(false);
         }
       } catch (error) {
         console.error('Error checking plan:', error);
@@ -314,7 +332,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
-              Welcome back, {user?.name || 'User'}
+              Welcome back, {greetingName}!
             </h1>
             <div className="flex items-center gap-3">
               <p className="font-light text-gray-slate text-lg">{org.name}</p>

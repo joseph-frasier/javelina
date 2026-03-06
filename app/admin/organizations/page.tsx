@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -42,7 +43,8 @@ interface Organization {
   organization_members?: Array<{ organization_id: string }>;
 }
 
-export default function AdminOrganizationsPage() {
+function AdminOrganizationsPageContent() {
+  const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [filteredOrgs, setFilteredOrgs] = useState<Organization[]>([]);
@@ -172,6 +174,13 @@ export default function AdminOrganizationsPage() {
   useEffect(() => {
     fetchOrganizations();
   }, [fetchOrganizations]);
+
+  useEffect(() => {
+    const search = searchParams.get('search');
+    if (search !== null) {
+      setSearchQuery(search);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     filterOrganizations();
@@ -857,5 +866,13 @@ export default function AdminOrganizationsPage() {
         />
       </AdminLayout>
     </AdminProtectedRoute>
+  );
+}
+
+export default function AdminOrganizationsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminOrganizationsPageContent />
+    </Suspense>
   );
 }

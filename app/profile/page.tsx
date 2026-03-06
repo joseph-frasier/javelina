@@ -162,24 +162,17 @@ export default function ProfilePage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 truncate w-full mb-2">
                     {user.email}
                   </p>
+                  {user.title && (
+                    <p className="text-sm text-orange dark:text-orange truncate w-full mb-2">
+                      {user.title}
+                    </p>
+                  )}
                   {user.role === 'superuser' && (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange/10 text-orange border border-orange/20">
                       SuperUser
                     </span>
                   )}
                 </div>
-
-                {/* Metadata section - only show if there's additional info beyond email */}
-                {user.title && (
-                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                      Title
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {user.title}
-                    </p>
-                  </div>
-                )}
 
                 {/* Action buttons - no separator bar */}
                 <div className="flex flex-col gap-2 mt-3">

@@ -1,15 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/Card';
 import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import Button from '@/components/ui/Button';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { Modal } from '@/components/ui/Modal';
-import Input from '@/components/ui/Input';
 interface OrganizationDetail {
   id: string;
   name: string;
@@ -40,7 +38,9 @@ import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
 import { DNSRecordsTable } from '@/components/dns/DNSRecordsTable';
 import { VerificationChecklist } from '@/components/dns/VerificationChecklist';
 import { ManageDNSRecordModal } from '@/components/modals/ManageDNSRecordModal';
+import { DeleteZoneModal } from '@/components/modals/DeleteZoneModal';
 import { DNSRecordDetailModal } from '@/components/modals/DNSRecordDetailModal';
+import { EditZoneModal, type EditZoneFormData } from '@/components/modals/EditZoneModal';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { 
@@ -57,10 +57,12 @@ interface ZoneDetailClientProps {
   zone: any;
   zoneId: string;
   organization?: OrganizationDetail | null;
+  userOrgRole?: string | null;
 }
 
-export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClientProps) {
+export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: ZoneDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
   const { user } = useAuthStore();
@@ -72,6 +74,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
+  const [isDeleteSaving, setIsDeleteSaving] = useState(false);
   
   // DNS Records state
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
@@ -83,11 +86,12 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   const [showDeleteRecordConfirm, setShowDeleteRecordConfirm] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<DNSRecord | null>(null);
   const [isRecordLoading, setIsRecordLoading] = useState(false);
+  const hasOpenedDeepLinkedRecordRef = useRef(false);
 
 
   
   // Edit form state
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<EditZoneFormData>({
     name: zone.name || '',
     description: zone.description || '',
     admin_email: zone.admin_email || 'admin@example.com',
@@ -95,12 +99,15 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   });
   const [isEditSaving, setIsEditSaving] = useState(false);
 
+  // BillingContacts only see billing-related audit logs — zone logs are DNS-only
+  const canViewAuditLogs = userOrgRole !== 'BillingContact';
+
   // Load data
   useEffect(() => {
     const loadData = async () => {
       const [summary, logs, records] = await Promise.all([
         getZoneSummary(zoneId, zone.name, zone.records_count || 50),
-        getZoneAuditLogs(zoneId, zone.name),
+        canViewAuditLogs ? getZoneAuditLogs(zoneId, zone.name) : Promise.resolve([]),
         getDNSRecords(zoneId), // Use server action for consistency - routes through Express API
       ]);
       setZoneSummary(summary);
@@ -109,7 +116,22 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       setFilteredDnsRecords(records);
     };
     loadData();
-  }, [zoneId, zone.name, zone.records_count]);
+  }, [zoneId, zone.name, zone.records_count, canViewAuditLogs]);
+
+  // If the page is opened with ?record=<id>, auto-open that DNS record in the details modal.
+  useEffect(() => {
+    const deepLinkedRecordId = searchParams.get('record');
+    if (!deepLinkedRecordId) return;
+    if (hasOpenedDeepLinkedRecordRef.current) return;
+    if (!dnsRecords.length) return;
+
+    const targetRecord = dnsRecords.find((record) => record.id === deepLinkedRecordId);
+    if (!targetRecord) return;
+
+    hasOpenedDeepLinkedRecordRef.current = true;
+    setSelectedRecord(targetRecord);
+    setShowRecordDetailModal(true);
+  }, [dnsRecords, searchParams]);
 
   // DNS Record handlers
   const refreshDNSRecords = async () => {
@@ -128,7 +150,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
     try {
       const [summary, logs, records] = await Promise.all([
         getZoneSummary(zoneId, zone.name, zone.records_count || 50),
-        getZoneAuditLogs(zoneId, zone.name),
+        canViewAuditLogs ? getZoneAuditLogs(zoneId, zone.name) : Promise.resolve([]),
         getDNSRecords(zoneId),
       ]);
       setZoneSummary(summary);
@@ -283,6 +305,9 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
   };
 
   const handleDeleteZone = async () => {
+    if (isDeleteSaving) return;
+    setIsDeleteSaving(true);
+
     try {
       const result = await deleteZone(zone.id);
       
@@ -306,6 +331,8 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       }
     } catch (error) {
       addToast('error', `Error deleting zone: ${error}`);
+    } finally {
+      setIsDeleteSaving(false);
     }
   };
 
@@ -464,6 +491,7 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       <Card title="Nameserver Verification" className="p-4 sm:p-6 mb-6 sm:mb-8">
         <VerificationChecklist
           nameservers={zone.nameservers || ['ns1.javelina.cc', 'ns2.javelina.me']}
+          storageKey={`zone-${zoneId}-nameserver-verification-minimized`}
         />
       </Card>
 
@@ -495,17 +523,19 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
         />
       </Card>
 
-      {/* Audit Timeline */}
-      <CollapsibleCard 
-        title="Change History" 
-        className="p-4 sm:p-6 mb-6 sm:mb-8"
-        storageKey={`zone-${zoneId}-changeHistory-collapsed`}
-      >
-        <AuditTimeline
-          auditLogs={auditLogs}
-          onDiffClick={setSelectedLog}
-        />
-      </CollapsibleCard>
+      {/* Audit Timeline — hidden for BillingContact (DNS logs not permitted) */}
+      {canViewAuditLogs && (
+        <CollapsibleCard 
+          title="Change History" 
+          className="p-4 sm:p-6 mb-6 sm:mb-8"
+          storageKey={`zone-${zoneId}-changeHistory-collapsed`}
+        >
+          <AuditTimeline
+            auditLogs={auditLogs}
+            onDiffClick={setSelectedLog}
+          />
+        </CollapsibleCard>
+      )}
 
       {/* Record Distribution */}
       <div className="mb-6 sm:mb-8">
@@ -528,172 +558,31 @@ export function ZoneDetailClient({ zone, zoneId, organization }: ZoneDetailClien
       />
 
       {/* Edit Zone Modal */}
-      <Modal 
-        isOpen={showEditModal} 
-        onClose={() => setShowEditModal(false)} 
-        title={`Edit Zone: ${zone.name}`}
-        size="large"
-      >
-        <div className="space-y-6">
-          {/* Zone Name */}
-          <div>
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Zone Name <span className="text-red-600">*</span></label>
-            <Input
-              type="text"
-              value={editFormData.name}
-              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-              placeholder="e.g., example.com"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Description</label>
-            <textarea
-              value={editFormData.description}
-              onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-              placeholder="Zone description (optional)"
-              rows={3}
-              maxLength={500}
-              className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
-            />
-            <p className="mt-1 text-xs text-gray-slate">
-              {editFormData.description.length}/500 characters
-            </p>
-          </div>
-
-          {/* SOA Configuration Section */}
-          <div className="pt-4 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-orange-dark dark:text-white mb-3">SOA Configuration</h3>
-            <p className="text-xs text-gray-slate mb-4">
-              Root NS records are system-managed by the DNS service. SOA settings control zone metadata.
-            </p>
-            
-            <div className="space-y-4">
-
-              {/* Admin Email */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Admin Email</label>
-                <Input
-                  type="email"
-                  value={editFormData.admin_email}
-                  onChange={(e) => setEditFormData({ ...editFormData, admin_email: e.target.value })}
-                  placeholder="admin@example.com"
-                />
-                <p className="mt-1 text-xs text-gray-slate">Administrative contact email for this zone</p>
-              </div>
-
-              {/* Negative Caching TTL */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">Negative Caching TTL (seconds)</label>
-                <Input
-                  type="number"
-                  value={editFormData.negative_caching_ttl}
-                  onChange={(e) => setEditFormData({ ...editFormData, negative_caching_ttl: parseInt(e.target.value, 10) || 0 })}
-                  placeholder="3600"
-                  min={0}
-                  max={86400}
-                />
-                <p className="mt-1 text-xs text-gray-slate">How long to cache negative DNS responses (0-86400 seconds)</p>
-              </div>
-
-              {/* SOA Serial (Read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                  SOA Serial <span className="text-gray-400">(read-only)</span>
-                </label>
-                <Input
-                  type="text"
-                  value={zone.soa_serial}
-                  disabled
-                  className="bg-gray-100 dark:bg-gray-700"
-                />
-                <p className="mt-1 text-xs text-gray-slate">Auto-increments on any zone or record change</p>
-              </div>
-            </div>
-          </div>
-
-        </div>
-        <div className="flex justify-end space-x-3 pt-6 mt-6">
-          <Button 
-            variant="secondary"
-            onClick={() => setShowEditModal(false)} 
-            disabled={isEditSaving}
-          >
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSaveZone} disabled={isEditSaving}>
-            {isEditSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      </Modal>
+      <EditZoneModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        zoneName={zone.name}
+        formData={editFormData}
+        onFormDataChange={setEditFormData}
+        soaSerial={zone.soa_serial}
+        isSaving={isEditSaving}
+        onSave={handleSaveZone}
+      />
 
       {/* Delete Zone Modal */}
-      <Modal 
-        isOpen={showDeleteModal} 
+      <DeleteZoneModal
+        isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
           setDeleteConfirmationInput('');
-        }} 
-        title="Delete Zone"
-        size="small"
-      >
-        <div>
-          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
-            <svg className="w-6 h-6 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-orange-dark dark:text-white text-center mb-2">
-            Permanently Delete Zone
-          </h3>
-          <p className="text-sm text-gray-slate dark:text-gray-400 text-center mb-6">
-            This action <span className="font-bold text-red-600 dark:text-red-500">cannot be undone</span>. 
-            This will permanently delete the zone <span className="font-bold text-orange-dark dark:text-white">{zone.name}</span> and 
-            all {zoneSummary?.totalRecords || 0} associated DNS records.
-          </p>
-          
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2 text-left">
-              Type <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-orange-dark dark:text-orange">{zone.name}</span> to confirm:
-            </label>
-            <Input
-              type="text"
-              value={deleteConfirmationInput}
-              onChange={(e) => setDeleteConfirmationInput(e.target.value)}
-              placeholder="Enter zone name"
-              className="w-full"
-              autoFocus
-            />
-            {deleteConfirmationInput && deleteConfirmationInput !== zone.name && (
-              <p className="text-xs text-red-600 dark:text-red-500 mt-2 text-left">
-                Zone name does not match
-              </p>
-            )}
-          </div>
-
-          <div className="flex space-x-3">
-            <Button 
-              variant="secondary" 
-              className="flex-1" 
-              onClick={() => {
-                setShowDeleteModal(false);
-                setDeleteConfirmationInput('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              className="flex-1"
-              onClick={handleDeleteZone}
-              disabled={deleteConfirmationInput !== zone.name}
-            >
-              Delete Zone
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        }}
+        onConfirm={handleDeleteZone}
+        zoneName={zone.name}
+        recordCount={zoneSummary?.totalRecords || 0}
+        confirmationInput={deleteConfirmationInput}
+        onConfirmationInputChange={setDeleteConfirmationInput}
+        isDeleting={isDeleteSaving}
+      />
 
       {/* Diff Viewer Modal */}
       <DiffViewer
