@@ -299,6 +299,17 @@ export const plansApi = {
   },
 };
 
+export interface Invitation {
+  id: string;
+  email: string;
+  role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer';
+  status: 'pending' | 'awaiting_verification';
+  invited_by_name?: string;
+  invited_by_email?: string;
+  created_at: string;
+  expires_at?: string;
+}
+
 // Organizations API
 export const organizationsApi = {
   /**
@@ -381,6 +392,20 @@ export const organizationsApi = {
     message?: string;
   }> => {
     return apiClient.post(`/organizations/${id}/members`, data);
+  },
+
+  /**
+   * Get pending invitations for an organization
+   */
+  getInvitations: (id: string): Promise<Invitation[]> => {
+    return apiClient.get(`/organizations/${id}/invitations`);
+  },
+
+  /**
+   * Revoke a pending invitation
+   */
+  revokeInvitation: (id: string, invitationId: string): Promise<{ success: boolean }> => {
+    return apiClient.post(`/organizations/${id}/invitations/${invitationId}/revoke`);
   },
 
   /**
