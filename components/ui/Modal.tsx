@@ -158,7 +158,7 @@ export function Modal({
       {/* Overlay */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(0,176,255,0.08),transparent_28%),radial-gradient(circle_at_bottom,rgba(239,114,21,0.1),transparent_30%),rgba(6,10,15,0.52)] pointer-events-auto"
+        className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(0,176,255,0.06),transparent_28%),radial-gradient(circle_at_bottom,rgba(239,114,21,0.08),transparent_30%),rgba(15,23,42,0.18)] dark:bg-[radial-gradient(circle_at_top,rgba(0,176,255,0.08),transparent_28%),radial-gradient(circle_at_bottom,rgba(239,114,21,0.1),transparent_30%),rgba(6,10,15,0.52)] pointer-events-auto"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -175,7 +175,7 @@ export function Modal({
         <div
           ref={modalRef}
           className={clsx(
-            `relative w-full ${sizeClasses[size]} pointer-events-auto rounded-[24px] border border-white/10 bg-[#0b0f14] text-white shadow-[0_30px_90px_rgba(0,0,0,0.45)]`,
+            `relative w-full ${sizeClasses[size]} pointer-events-auto rounded-[24px] border border-gray-light bg-white text-orange-dark shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-[#0b0f14] dark:text-white dark:shadow-[0_30px_90px_rgba(0,0,0,0.45)]`,
             allowOverflow ? 'overflow-visible' : 'overflow-hidden',
             contentClassName
           )}
@@ -184,26 +184,26 @@ export function Modal({
             e.nativeEvent.stopImmediatePropagation();
           }}
         >
-          <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.12),transparent_32%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[24px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.08),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.08),transparent_32%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.12),transparent_32%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[24px] bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-white/40" />
 
           {/* Header */}
-          <div className="relative border-b border-white/10 px-6 py-5 md:px-7">
+          <div className="relative border-b border-gray-light px-6 py-5 md:px-7 dark:border-white/10">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {eyebrow && (
-                  <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-blue-electric/90">
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-blue-electric">
                     {eyebrow}
                   </p>
                 )}
                 <h3
                   id="modal-title"
-                  className="text-xl font-semibold tracking-tight text-[#fff3ea] md:text-[1.7rem]"
+                  className="text-xl font-semibold tracking-tight text-orange-dark md:text-[1.7rem] dark:text-[#fff3ea]"
                 >
                   {title}
                 </h3>
                 {subtitle && (
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-white/70">
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-slate dark:text-white/70">
                     {subtitle}
                   </p>
                 )}
@@ -211,7 +211,7 @@ export function Modal({
               </div>
               <button
                 onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-light bg-white/80 text-gray-slate transition-colors hover:border-gray-slate/30 hover:bg-gray-50 hover:text-orange-dark dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:border-white/20 dark:hover:bg-white/10 dark:hover:text-white"
                 aria-label="Close modal"
               >
                 <svg
@@ -237,7 +237,7 @@ export function Modal({
           </div>
 
           {footer && (
-            <div className="relative border-t border-white/10 px-6 py-4 md:px-7">
+            <div className="relative border-t border-gray-light px-6 py-4 md:px-7 dark:border-white/10">
               {footer}
             </div>
           )}

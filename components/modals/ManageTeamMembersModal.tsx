@@ -253,14 +253,14 @@ export function ManageTeamMembersModal({
         bodyClassName="space-y-6"
         headerContent={
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70">
+            <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
               {users.length} member{users.length === 1 ? '' : 's'}
             </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70">
+            <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
               {invitations.length} pending invite{invitations.length === 1 ? '' : 's'}
             </span>
             {topRoleDistribution[0] && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70">
+              <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
                 Largest group: {topRoleDistribution[0][0]} ({topRoleDistribution[0][1]})
               </span>
             )}
@@ -276,17 +276,17 @@ export function ManageTeamMembersModal({
       >
         <div className="space-y-6">
           {/* Tab Strip */}
-          <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1">
+          <div className="inline-flex rounded-full border border-gray-light bg-gray-50 p-1 dark:border-white/10 dark:bg-white/[0.04]">
             <button
               onClick={() => setActiveTab('members')}
               className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === 'members'
                   ? 'bg-orange text-white shadow-[0_10px_30px_rgba(239,114,21,0.28)]'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-gray-slate hover:text-orange-dark dark:text-white/60 dark:hover:text-white'
               }`}
             >
               Members
-              <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'members' ? 'bg-white/20 text-white' : 'bg-white/10 text-white/60'}`}>
+              <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'members' ? 'bg-white/20 text-white' : 'bg-white text-gray-slate dark:bg-white/10 dark:text-white/60'}`}>
                 {users.length}
               </span>
             </button>
@@ -295,12 +295,12 @@ export function ManageTeamMembersModal({
               className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === 'invitations'
                   ? 'bg-orange text-white shadow-[0_10px_30px_rgba(239,114,21,0.28)]'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-gray-slate hover:text-orange-dark dark:text-white/60 dark:hover:text-white'
               }`}
             >
               Pending Invitations
               {invitations.length > 0 && (
-                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'invitations' ? 'bg-white/20 text-white' : 'bg-amber-500/15 text-amber-200'}`}>
+                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'invitations' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200'}`}>
                   {invitations.length}
                 </span>
               )}
@@ -311,7 +311,7 @@ export function ManageTeamMembersModal({
           {activeTab === 'members' && (
             <>
               <div className="grid gap-3 md:grid-cols-[1.3fr_1fr]">
-                <div className="rounded-[22px] border border-blue-electric/20 bg-blue-electric/10 p-5">
+                <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
                   <div className="flex items-center gap-2 text-blue-electric">
                     <svg
                       className="h-5 w-5"
@@ -328,16 +328,16 @@ export function ManageTeamMembersModal({
                     </svg>
                     <span className="text-sm font-medium uppercase tracking-[0.24em]">Team overview</span>
                   </div>
-                  <p className="mt-4 text-3xl font-semibold tracking-tight text-white">
+                  <p className="mt-4 text-3xl font-semibold tracking-tight text-orange-dark dark:text-white">
                     {users.length} active member{users.length === 1 ? '' : 's'}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-white/65">
+                  <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/65">
                     Keep access current by promoting the right people and removing unused seats quickly.
                   </p>
                 </div>
 
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-5">
-                  <p className="text-sm font-medium text-[#fff3ea]">Role distribution</p>
+                <div className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+                  <p className="text-sm font-medium text-orange-dark dark:text-[#fff3ea]">Role distribution</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {topRoleDistribution.length > 0 ? (
                       topRoleDistribution.map(([roleName, count]) => (
@@ -349,7 +349,7 @@ export function ManageTeamMembersModal({
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm text-white/55">No active members yet.</span>
+                      <span className="text-sm text-gray-slate dark:text-white/55">No active members yet.</span>
                     )}
                   </div>
                 </div>
@@ -360,7 +360,7 @@ export function ManageTeamMembersModal({
                 {users.map((user) => (
                   <div
                     key={user.user_id}
-                    className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
+                    className="rounded-[22px] border border-gray-light bg-white p-4 shadow-sm transition-colors hover:border-orange/25 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none dark:hover:border-white/20 dark:hover:bg-white/[0.06]"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex items-center space-x-3 min-w-0">
@@ -383,10 +383,10 @@ export function ManageTeamMembersModal({
 
                       {/* User Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-medium text-white">
+                        <p className="truncate text-sm font-medium text-orange-dark dark:text-white">
                           {user.name}
                         </p>
-                        <p className="truncate text-sm text-white/55">
+                        <p className="truncate text-sm text-gray-slate dark:text-white/55">
                           {user.email}
                         </p>
                       </div>
@@ -395,7 +395,7 @@ export function ManageTeamMembersModal({
                       {/* Role Management */}
                       <div className="flex items-center gap-2 self-end lg:self-auto">
                         {editingUserId === user.user_id ? (
-                          <div className="flex w-full flex-col gap-2 rounded-2xl border border-white/10 bg-black/20 p-2 sm:w-auto sm:flex-row sm:items-center">
+                          <div className="flex w-full flex-col gap-2 rounded-2xl border border-gray-light bg-gray-50 p-2 sm:w-auto sm:flex-row sm:items-center dark:border-white/10 dark:bg-black/20">
                             <div className="relative z-[100] sm:w-48">
                               <Dropdown
                                 value={editingRole}
@@ -449,7 +449,7 @@ export function ManageTeamMembersModal({
                               onClick={() =>
                                 setRemoveConfirm({ userId: user.user_id, userName: user.name })
                               }
-                              className="!border-red-500/25 !bg-transparent !text-red-300 hover:!bg-red-500/10 hover:!text-red-200"
+                              className="!border-red-200 !bg-transparent !text-red-600 hover:!bg-red-50 hover:!text-red-700 dark:!border-red-500/25 dark:!text-red-300 dark:hover:!bg-red-500/10 dark:hover:!text-red-200"
                               disabled={isLoading}
                             >
                               Remove
@@ -468,7 +468,7 @@ export function ManageTeamMembersModal({
           {activeTab === 'invitations' && (
             <>
               {isLoadingInvitations ? (
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.04] py-12 text-center">
+                <div className="rounded-[22px] border border-gray-light bg-white py-12 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
                   <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-orange"></div>
                 </div>
               ) : invitations.length > 0 ? (
@@ -476,15 +476,15 @@ export function ManageTeamMembersModal({
                   {invitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
+                      className="rounded-[22px] border border-gray-light bg-white p-4 shadow-sm transition-colors hover:border-orange/25 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none dark:hover:border-white/20 dark:hover:bg-white/[0.06]"
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center space-x-3 min-w-0">
                         {/* Envelope Icon */}
                         <div className="flex-shrink-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/15">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-200 bg-amber-100 dark:border-amber-500/20 dark:bg-amber-500/15">
                             <svg
-                              className="h-6 w-6 text-amber-300"
+                              className="h-6 w-6 text-amber-600 dark:text-amber-300"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -501,17 +501,17 @@ export function ManageTeamMembersModal({
 
                         {/* Invite Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="truncate text-sm font-medium text-white">
+                          <p className="truncate text-sm font-medium text-orange-dark dark:text-white">
                             {invitation.email}
                           </p>
-                          <p className="text-sm text-white/55">
+                          <p className="text-sm text-gray-slate dark:text-white/55">
                             Invited {formatRelativeDate(invitation.created_at)}
                             {invitation.invited_by_name && (
                               <span> by {invitation.invited_by_name}</span>
                             )}
                           </p>
                           {invitation.expires_at && (
-                            <p className="text-sm text-white/45">
+                            <p className="text-sm text-gray-slate/80 dark:text-white/45">
                               Expires:{' '}
                               {new Date(invitation.expires_at).toLocaleDateString('en-US', {
                                 month: 'short',
@@ -544,7 +544,7 @@ export function ManageTeamMembersModal({
                             variant="outline"
                             size="sm"
                             onClick={() => setRevokeConfirm({ invitation })}
-                            className="!border-red-500/25 !bg-transparent !text-red-300 hover:!bg-red-500/10 hover:!text-red-200"
+                            className="!border-red-200 !bg-transparent !text-red-600 hover:!bg-red-50 hover:!text-red-700 dark:!border-red-500/25 dark:!text-red-300 dark:hover:!bg-red-500/10 dark:hover:!text-red-200"
                           >
                             Revoke
                           </Button>
@@ -554,9 +554,9 @@ export function ManageTeamMembersModal({
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[22px] border border-dashed border-white/15 bg-white/[0.03] py-12 text-center">
+                <div className="rounded-[22px] border border-dashed border-gray-light bg-white py-12 text-center shadow-sm dark:border-white/15 dark:bg-white/[0.03] dark:shadow-none">
                   <svg
-                    className="mx-auto mb-4 h-12 w-12 text-white/35"
+                    className="mx-auto mb-4 h-12 w-12 text-gray-slate/40 dark:text-white/35"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -568,8 +568,8 @@ export function ManageTeamMembersModal({
                       d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     />
                   </svg>
-                  <p className="text-base font-medium text-white">No pending invitations</p>
-                  <p className="mt-2 text-sm text-white/55">
+                  <p className="text-base font-medium text-orange-dark dark:text-white">No pending invitations</p>
+                  <p className="mt-2 text-sm text-gray-slate dark:text-white/55">
                     New invites will appear here until the recipient accepts.
                   </p>
                 </div>
