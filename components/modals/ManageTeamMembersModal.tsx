@@ -85,10 +85,10 @@ export function ManageTeamMembersModal({
   }, [organizationId]);
 
   useEffect(() => {
-    if (isOpen && activeTab === 'invitations') {
+    if (isOpen) {
       fetchInvitations();
     }
-  }, [isOpen, activeTab, fetchInvitations]);
+  }, [isOpen, fetchInvitations]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -230,41 +230,77 @@ export function ManageTeamMembersModal({
     { value: 'Admin', label: 'Admin - Can manage resources' },
   ];
 
+  const roleDistribution = users.reduce<Record<string, number>>((acc, user) => {
+    acc[user.role] = (acc[user.role] || 0) + 1;
+    return acc;
+  }, {});
+
+  const topRoleDistribution = Object.entries(roleDistribution)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
   return (
     <>
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={`Manage Team - ${organizationName}`}
+        title="Manage Team Access"
+        eyebrow={organizationName}
+        subtitle="Review who has access, adjust roles, and keep pending invitations moving without leaving this workspace."
         size="large"
+        allowOverflow
+        bodyClassName="space-y-6"
+        headerContent={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70">
+              {users.length} member{users.length === 1 ? '' : 's'}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70">
+              {invitations.length} pending invite{invitations.length === 1 ? '' : 's'}
+            </span>
+            {topRoleDistribution[0] && (
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70">
+                Largest group: {topRoleDistribution[0][0]} ({topRoleDistribution[0][1]})
+              </span>
+            )}
+          </div>
+        }
+        footer={
+          <div className="flex justify-end">
+            <Button variant="primary" onClick={onClose}>
+              Close
+            </Button>
+          </div>
+        }
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Tab Strip */}
-          <div className="flex border-b border-gray-light dark:border-gray-slate">
+          <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1">
             <button
               onClick={() => setActiveTab('members')}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === 'members'
-                  ? 'border-orange text-orange'
-                  : 'border-transparent text-gray-slate dark:text-gray-light hover:text-gray-slate dark:hover:text-white'
+                  ? 'bg-orange text-white shadow-[0_10px_30px_rgba(239,114,21,0.28)]'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
               Members
-              <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-gray-light/30 dark:bg-gray-slate/30">
+              <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'members' ? 'bg-white/20 text-white' : 'bg-white/10 text-white/60'}`}>
                 {users.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('invitations')}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === 'invitations'
-                  ? 'border-orange text-orange'
-                  : 'border-transparent text-gray-slate dark:text-gray-light hover:text-gray-slate dark:hover:text-white'
+                  ? 'bg-orange text-white shadow-[0_10px_30px_rgba(239,114,21,0.28)]'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
               Pending Invitations
               {invitations.length > 0 && (
-                <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'invitations' ? 'bg-white/20 text-white' : 'bg-amber-500/15 text-amber-200'}`}>
                   {invitations.length}
                 </span>
               )}
@@ -274,25 +310,48 @@ export function ManageTeamMembersModal({
           {/* Members Tab */}
           {activeTab === 'members' && (
             <>
-              {/* Header Info */}
-              <div className="bg-blue-electric/5 dark:bg-blue-electric/10 border border-blue-electric/20 rounded-lg p-4">
-                <div className="flex items-center space-x-2">
-                  <svg
-                    className="w-5 h-5 text-blue-electric"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-slate dark:text-white">
-                    {users.length} {users.length === 1 ? 'member' : 'members'}
-                  </span>
+              <div className="grid gap-3 md:grid-cols-[1.3fr_1fr]">
+                <div className="rounded-[22px] border border-blue-electric/20 bg-blue-electric/10 p-5">
+                  <div className="flex items-center gap-2 text-blue-electric">
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium uppercase tracking-[0.24em]">Team overview</span>
+                  </div>
+                  <p className="mt-4 text-3xl font-semibold tracking-tight text-white">
+                    {users.length} active member{users.length === 1 ? '' : 's'}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-white/65">
+                    Keep access current by promoting the right people and removing unused seats quickly.
+                  </p>
+                </div>
+
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-5">
+                  <p className="text-sm font-medium text-[#fff3ea]">Role distribution</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {topRoleDistribution.length > 0 ? (
+                      topRoleDistribution.map(([roleName, count]) => (
+                        <span
+                          key={roleName}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium ${getRoleColor(roleName)}`}
+                        >
+                          {roleName} {count}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-white/55">No active members yet.</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -301,19 +360,20 @@ export function ManageTeamMembersModal({
                 {users.map((user) => (
                   <div
                     key={user.user_id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate"
+                    className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
                   >
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex items-center space-x-3 min-w-0">
                       {/* Avatar */}
                       <div className="flex-shrink-0">
                         {user.avatar ? (
                           <img
                             src={user.avatar}
                             alt={user.name}
-                            className="w-12 h-12 rounded-full"
+                            className="h-12 w-12 rounded-full"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange/20 bg-orange/15">
                             <span className="text-base font-bold text-orange">
                               {getInitials(user.name)}
                             </span>
@@ -323,45 +383,48 @@ export function ManageTeamMembersModal({
 
                       {/* User Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-slate dark:text-white truncate">
+                        <p className="truncate text-sm font-medium text-white">
                           {user.name}
                         </p>
-                        <p className="text-xs text-gray-slate dark:text-gray-light truncate">
+                        <p className="truncate text-sm text-white/55">
                           {user.email}
                         </p>
                       </div>
+                      </div>
 
                       {/* Role Management */}
-                      <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 self-end lg:self-auto">
                         {editingUserId === user.user_id ? (
-                          <div className="flex items-center space-x-2">
-                            <div className="w-48 relative z-[100]">
+                          <div className="flex w-full flex-col gap-2 rounded-2xl border border-white/10 bg-black/20 p-2 sm:w-auto sm:flex-row sm:items-center">
+                            <div className="relative z-[100] sm:w-48">
                               <Dropdown
                                 value={editingRole}
                                 onChange={setEditingRole}
                                 options={roleOptions}
                               />
                             </div>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={handleSaveRole}
-                              loading={isLoading}
-                              disabled={isLoading}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingUserId(null);
-                                setEditingRole('');
-                              }}
-                              disabled={isLoading}
-                            >
-                              ✕
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={handleSaveRole}
+                                loading={isLoading}
+                                disabled={isLoading}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingUserId(null);
+                                  setEditingRole('');
+                                }}
+                                disabled={isLoading}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
                           </div>
                         ) : (
                           <>
@@ -373,48 +436,23 @@ export function ManageTeamMembersModal({
                               {user.role}
                             </span>
                             <Button
-                              variant="secondary"
+                              variant="primary"
                               size="sm"
                               onClick={() => handleEditRole(user.user_id, user.role)}
-                              className="!bg-orange hover:!bg-orange-dark !text-white"
                               disabled={isLoading}
                             >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
+                              Edit role
                             </Button>
                             <Button
-                              variant="secondary"
+                              variant="outline"
                               size="sm"
                               onClick={() =>
                                 setRemoveConfirm({ userId: user.user_id, userName: user.name })
                               }
-                              className="!bg-red-600 hover:!bg-red-700 !text-white"
+                              className="!border-red-500/25 !bg-transparent !text-red-300 hover:!bg-red-500/10 hover:!text-red-200"
                               disabled={isLoading}
                             >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
+                              Remove
                             </Button>
                           </>
                         )}
@@ -430,22 +468,23 @@ export function ManageTeamMembersModal({
           {activeTab === 'invitations' && (
             <>
               {isLoadingInvitations ? (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.04] py-12 text-center">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-orange"></div>
                 </div>
               ) : invitations.length > 0 ? (
                 <div className="space-y-3">
                   {invitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate"
+                      className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
                     >
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex items-center space-x-3 min-w-0">
                         {/* Envelope Icon */}
                         <div className="flex-shrink-0">
-                          <div className="w-12 h-12 rounded-full bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/15">
                             <svg
-                              className="w-6 h-6 text-amber-600 dark:text-amber-400"
+                              className="h-6 w-6 text-amber-300"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -462,17 +501,17 @@ export function ManageTeamMembersModal({
 
                         {/* Invite Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-slate dark:text-white truncate">
+                          <p className="truncate text-sm font-medium text-white">
                             {invitation.email}
                           </p>
-                          <p className="text-xs text-gray-slate dark:text-gray-light">
+                          <p className="text-sm text-white/55">
                             Invited {formatRelativeDate(invitation.created_at)}
                             {invitation.invited_by_name && (
                               <span> by {invitation.invited_by_name}</span>
                             )}
                           </p>
                           {invitation.expires_at && (
-                            <p className="text-xs text-gray-slate dark:text-gray-light">
+                            <p className="text-sm text-white/45">
                               Expires:{' '}
                               {new Date(invitation.expires_at).toLocaleDateString('en-US', {
                                 month: 'short',
@@ -481,28 +520,31 @@ export function ManageTeamMembersModal({
                             </p>
                           )}
                         </div>
+                        </div>
 
                         {/* Status + Role Badges + Revoke */}
-                        <div className="flex items-center space-x-2 flex-shrink-0">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full border font-medium ${getStatusColor(
-                              invitation.status
-                            )}`}
-                          >
-                            {getStatusLabel(invitation.status)}
-                          </span>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full border font-medium ${getRoleColor(
-                              invitation.role
-                            )}`}
-                          >
-                            {invitation.role}
-                          </span>
+                        <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full border font-medium ${getStatusColor(
+                                invitation.status
+                              )}`}
+                            >
+                              {getStatusLabel(invitation.status)}
+                            </span>
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full border font-medium ${getRoleColor(
+                                invitation.role
+                              )}`}
+                            >
+                              {invitation.role}
+                            </span>
+                          </div>
                           <Button
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
                             onClick={() => setRevokeConfirm({ invitation })}
-                            className="!bg-red-600 hover:!bg-red-700 !text-white"
+                            className="!border-red-500/25 !bg-transparent !text-red-300 hover:!bg-red-500/10 hover:!text-red-200"
                           >
                             Revoke
                           </Button>
@@ -512,9 +554,9 @@ export function ManageTeamMembersModal({
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
+                <div className="rounded-[22px] border border-dashed border-white/15 bg-white/[0.03] py-12 text-center">
                   <svg
-                    className="w-12 h-12 text-gray-slate dark:text-gray-light mx-auto mb-3 opacity-50"
+                    className="mx-auto mb-4 h-12 w-12 text-white/35"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -526,20 +568,14 @@ export function ManageTeamMembersModal({
                       d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     />
                   </svg>
-                  <p className="text-sm text-gray-slate dark:text-gray-light">
-                    No pending invitations
+                  <p className="text-base font-medium text-white">No pending invitations</p>
+                  <p className="mt-2 text-sm text-white/55">
+                    New invites will appear here until the recipient accepts.
                   </p>
                 </div>
               )}
             </>
           )}
-
-          {/* Footer */}
-          <div className="flex justify-end pt-4">
-            <Button variant="secondary" onClick={onClose}>
-              Close
-            </Button>
-          </div>
         </div>
       </Modal>
 
