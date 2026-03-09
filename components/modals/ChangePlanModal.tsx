@@ -222,8 +222,8 @@ export function ChangePlanModal({
     >
       <div className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">Current subscription context</p>
+          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Current subscription context</p>
             <p className="mt-3 text-sm leading-6 text-gray-slate dark:text-white/65">
               {currentIsLifetime
                 ? 'Select a higher-tier lifetime plan to pay the difference once. Plans below your current lifetime tier remain unavailable.'
@@ -231,8 +231,8 @@ export function ChangePlanModal({
             </p>
           </div>
 
-          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">How this works</p>
+          <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">How this works</p>
             <ol className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
               <li>1. Compare the plans that are available from your current tier.</li>
               <li>2. Select one plan to unlock the pricing review.</li>
