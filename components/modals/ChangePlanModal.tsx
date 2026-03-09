@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchPlans, type Plan, isValidUpgrade, getUpgradeType, calculateLifetimeUpgradePrice, isLifetimePlan } from '@/lib/plans-config';
 import { useToastStore } from '@/lib/toast-store';
 import { stripeApi } from '@/lib/api-client';
-import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import Button from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 
 interface ChangePlanModalProps {
   isOpen: boolean;
@@ -37,81 +36,11 @@ export function ChangePlanModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [upgradePricing, setUpgradePricing] = useState<UpgradePricing | null>(null);
   const [calculatingPrice, setCalculatingPrice] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
   const addToast = useToastStore((state) => state.addToast);
   
   // Feature flags for starter-only launch
   const { hideProPlans, hideBusinessPlans } = useFeatureFlags();
   
-  const modalRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  // Handle opening/closing with animation
-  useEffect(() => {
-    if (isOpen) {
-      setShouldRender(true);
-    }
-  }, [isOpen]);
-
-  // GSAP Opening Animation
-  useGSAP(() => {
-    if (!shouldRender) return;
-
-    if (isOpen && modalRef.current && overlayRef.current) {
-      gsap.fromTo(
-        overlayRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: 'power2.out' }
-      );
-
-      gsap.fromTo(
-        modalRef.current,
-        { scale: 0.95, opacity: 0, y: 20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }
-      );
-    }
-  }, [isOpen, shouldRender]);
-
-  // GSAP Closing Animation
-  useEffect(() => {
-    if (!shouldRender) return;
-    if (isOpen) return;
-
-    if (modalRef.current && overlayRef.current) {
-      gsap.killTweensOf([modalRef.current, overlayRef.current]);
-
-      const tl = gsap.timeline({
-        onComplete: () => setShouldRender(false)
-      });
-
-      tl.to(overlayRef.current, {
-        opacity: 0,
-        duration: 0.2,
-        ease: 'power2.in'
-      });
-
-      tl.to(modalRef.current, {
-        scale: 0.95,
-        opacity: 0,
-        y: 20,
-        duration: 0.2,
-        ease: 'power2.in'
-      }, 0);
-    }
-  }, [isOpen, shouldRender]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
   const loadPlans = useCallback(async () => {
     try {
       setLoading(true);
@@ -259,276 +188,296 @@ export function ChangePlanModal({
     }
   };
 
-  if (!shouldRender) return null;
-
   const currentIsLifetime = isLifetimePlan(currentPlanCode);
+  const currentPlan = plans.find((plan) => plan.code === currentPlanCode) || null;
+  const selectedPlan = plans.find((plan) => plan.code === selectedPlanCode) || null;
+
+  const reviewTitleByType: Record<UpgradePricing['upgradeType'], string> = {
+    'subscription-to-lifetime': 'Lifetime upgrade review',
+    'lifetime-to-lifetime': 'Lifetime plan review',
+    'subscription-to-subscription': 'Subscription change review',
+    invalid: 'Plan review',
+  };
+
+  const confirmLabelByType: Record<UpgradePricing['upgradeType'], string> = {
+    'subscription-to-lifetime': 'Continue to Checkout',
+    'lifetime-to-lifetime': 'Continue to Checkout',
+    'subscription-to-subscription': 'Confirm Plan Change',
+    invalid: 'Confirm Change',
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 min-h-screen overflow-hidden">
-      {/* Overlay */}
-      <div 
-        ref={overlayRef}
-        className="fixed inset-0 bg-black/50 dark:bg-black/70"
-        onClick={onClose}
-      />
-      {/* Modal */}
-      <div 
-        ref={modalRef}
-        className="relative bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="border-b border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-orange">
-                {currentIsLifetime ? 'Upgrade Lifetime Plan' : 'Change Subscription Plan'}
-              </h2>
-              <p className="text-sm text-gray-400 mt-1">
-                {currentIsLifetime 
-                  ? 'Upgrade to a higher tier lifetime plan. Downgrades are not available for lifetime plans.'
-                  : 'Upgrade to a lifetime plan or change your monthly subscription.'}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
-              disabled={isSubmitting}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={currentIsLifetime ? 'Upgrade Lifetime Plan' : 'Change Subscription Plan'}
+      eyebrow={currentPlan ? `Current plan: ${currentPlan.name}` : 'Plan change'}
+      subtitle={
+        currentIsLifetime
+          ? 'Review eligible higher-tier lifetime plans. Lifetime downgrades remain unavailable.'
+          : 'Compare eligible monthly and lifetime options, then review pricing before you confirm.'
+      }
+      size="xlarge"
+      bodyClassName="space-y-6"
+    >
+      <div className="space-y-6">
+        <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Current subscription context</p>
+            <p className="mt-3 text-sm leading-6 text-gray-slate dark:text-white/65">
+              {currentIsLifetime
+                ? 'Select a higher-tier lifetime plan to pay the difference once. Plans below your current lifetime tier remain unavailable.'
+                : 'Select any valid upgrade or subscription change. Pricing below updates after you choose a plan.'}
+            </p>
+          </div>
+
+          <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">How this works</p>
+            <ol className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
+              <li>1. Compare the plans that are available from your current tier.</li>
+              <li>2. Select one plan to unlock the pricing review.</li>
+              <li>3. Scroll down to the bottom to confirm the change or continue to checkout for lifetime upgrades.</li>
+            </ol>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4 sm:p-6 pb-16 sm:pb-12">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-            </div>
-          ) : (
-            <>
-              {/* Plan Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {loading ? (
+          <div className="flex items-center justify-center rounded-[22px] border border-gray-light bg-white py-16 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-orange"></div>
+          </div>
+        ) : (
+          <>
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 {plans.map((plan) => {
                   const isCurrent = plan.code === currentPlanCode;
                   const isSelected = selectedPlanCode === plan.code;
                   const isValidUpgradeOption = isValidUpgrade(currentPlanCode, plan.code);
                   const planIsLifetime = isLifetimePlan(plan.code);
                   const isDisabled = isCurrent || !isValidUpgradeOption;
+                  const actionLabel = isCurrent
+                    ? 'Current Plan'
+                    : !isValidUpgradeOption
+                    ? 'Unavailable'
+                    : isSelected
+                    ? 'Selected'
+                    : 'Review Plan';
 
                   return (
                     <div
                       key={plan.id}
-                      className={`relative rounded-xl p-6 transition-all flex flex-col ${
+                      className={`relative flex flex-col rounded-[22px] border p-6 transition-all ${
                         isCurrent
-                          ? 'bg-gray-50 dark:bg-[#252525] border-2 border-orange'
+                          ? 'border-orange bg-orange/10 dark:border-orange dark:bg-white/[0.06]'
                           : isSelected
-                          ? 'bg-gray-100 dark:bg-[#252525] border-2 border-orange ring-2 ring-orange/50'
+                          ? 'border-orange bg-orange/10 shadow-[0_0_0_1px_rgba(239,114,21,0.12)] dark:border-orange dark:bg-white/[0.06]'
                           : isDisabled
-                          ? 'bg-gray-100 dark:bg-[#252525] border-2 border-gray-200 dark:border-[#333] opacity-50 cursor-not-allowed'
-                          : 'bg-gray-100 dark:bg-[#252525] border-2 border-gray-200 dark:border-[#333] hover:border-orange/50 cursor-pointer'
+                          ? 'border-gray-light bg-gray-50/70 opacity-65 dark:border-white/10 dark:bg-white/[0.03]'
+                          : 'border-gray-light bg-white hover:border-orange/40 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-orange/40 dark:hover:bg-white/[0.06]'
                       }`}
                     >
-                      {/* Popular Badge */}
-                      {plan.popular && !isCurrent && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange text-white uppercase">
-                            Popular
-                          </span>
+                      <div className="mb-5 flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          {isCurrent && (
+                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-white">
+                              Current
+                            </span>
+                          )}
+                          {plan.popular && !isCurrent && (
+                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange/15 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-orange">
+                              Popular
+                            </span>
+                          )}
+                          {planIsLifetime && (
+                            <span className="inline-flex items-center justify-center rounded-full border border-blue-electric/20 bg-blue-electric/10 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-blue-electric">
+                              Lifetime
+                            </span>
+                          )}
                         </div>
-                      )}
-
-                      {/* Current Plan Badge */}
-                      {isCurrent && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange text-white uppercase">
-                            Current Plan
+                        {!isCurrent && !isValidUpgradeOption && (
+                          <span className="inline-flex items-center justify-center rounded-full border border-gray-light bg-white px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-gray-slate dark:border-white/10 dark:bg-white/[0.05] dark:text-white/55">
+                            Not available
                           </span>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
-                      {/* Lifetime Badge */}
-                      {planIsLifetime && !isCurrent && (
-                        <div className="absolute -top-3 right-4">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-600 text-white uppercase">
-                            Lifetime
-                          </span>
-                        </div>
-                      )}
+                      <h3 className="text-2xl font-bold text-orange mb-2">{plan.name}</h3>
 
-                      {/* Plan Name */}
-                      <h3 className="text-xl font-bold text-orange mb-2">
-                        {plan.name}
-                      </h3>
-
-                      {/* Price */}
                       <div className="mb-4">
                         <div className="text-4xl font-black text-orange">
                           ${plan.monthly?.amount.toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">
-                          {planIsLifetime ? 'ONE-TIME' : '/MONTH'}
+                        <div className="mt-1 text-sm uppercase tracking-[0.22em] text-gray-slate dark:text-white/45">
+                          {planIsLifetime ? 'One-time' : 'Per month'}
                         </div>
                       </div>
 
-                      {/* Description */}
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      <p className="mb-5 text-sm leading-6 text-gray-slate dark:text-white/60">
                         {plan.description}
                       </p>
 
-                      {/* Features */}
-                      <ul className="space-y-3 mb-6 flex-grow">
+                      <ul className="mb-6 flex-grow space-y-3">
                         {plan.features.slice(0, 5).map((feature, idx) => (
                           <li key={idx} className="flex items-start">
                             <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-sm text-gray-700 dark:text-gray-300">
-                              {feature.name}
-                            </span>
+                            <span className="text-sm text-gray-slate dark:text-white/75">{feature.name}</span>
                           </li>
                         ))}
                       </ul>
 
-                      {/* Action Button - pushed to bottom with mt-auto */}
                       <div className="mt-auto">
-                      {isCurrent ? (
+                        {isDisabled && !isCurrent && (
+                          <p className="mb-3 text-xs leading-5 text-gray-slate dark:text-white/45">
+                            This plan cannot be selected from your current tier.
+                          </p>
+                        )}
                         <button
-                          disabled
-                          className="w-full py-3 px-4 rounded-lg font-bold border-2 border-orange text-orange cursor-not-allowed opacity-60"
-                        >
-                          Current Plan
-                        </button>
-                      ) : !isValidUpgradeOption ? (
-                        <button
-                          disabled
-                            className="w-full py-3 px-4 rounded-lg font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50"
-                        >
-                          Not Available
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleSelectPlan(plan.code)}
-                          disabled={isSubmitting || calculatingPrice}
-                          className={`w-full py-3 px-4 rounded-lg font-bold transition-colors ${
-                            isSelected
-                              ? 'bg-orange text-white border-2 border-orange'
-                              : 'bg-transparent border-2 border-orange text-orange hover:bg-orange hover:text-white'
+                          onClick={() => !isDisabled && handleSelectPlan(plan.code)}
+                          disabled={isSubmitting || calculatingPrice || isDisabled}
+                          className={`w-full rounded-md border-2 px-4 py-3 font-semibold transition-colors ${
+                            isCurrent
+                              ? 'border-orange text-orange cursor-not-allowed opacity-70'
+                              : isDisabled
+                              ? 'border-gray-light text-gray-slate cursor-not-allowed dark:border-white/10 dark:text-white/35'
+                              : isSelected
+                              ? 'border-orange bg-orange text-white'
+                              : 'border-orange text-orange hover:bg-orange hover:text-white'
                           }`}
                         >
-                          {isSelected ? 'Selected' : 'Select'}
+                          {actionLabel}
                         </button>
-                      )}
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Pricing Breakdown Section */}
               {selectedPlanCode && upgradePricing && !calculatingPrice && (
-                <div className="bg-gray-100 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded-lg p-6 mb-6">
-                  <h3 className="text-lg font-bold text-orange mb-4">Upgrade Pricing</h3>
-                  
-                  {upgradePricing.upgradeType === 'subscription-to-lifetime' && (
-                    <div className="space-y-3 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Lifetime Plan Price:</span>
-                        <span className="text-gray-900 dark:text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}</span>
+                <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+                  <div className="rounded-[22px] border border-gray-light bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Review pricing</p>
+                    <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+                      <div>
+                        <h3 className="text-xl font-semibold text-orange-dark dark:text-[#fff3ea]">
+                          {reviewTitleByType[upgradePricing.upgradeType]}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+                          {selectedPlan ? `Selected plan: ${selectedPlan.name}` : 'Selected plan'}
+                        </p>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Credit from Current Subscription:</span>
-                        <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
-                      </div>
-                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 -mx-6 px-6 flex justify-between">
-                        <span className="text-gray-900 dark:text-white font-bold">Total Due Today:</span>
-                        <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Your monthly subscription will be canceled, and you&apos;ll receive a prorated credit for the remaining days.
-                      </p>
+                      <span className="rounded-full border border-gray-light bg-gray-50 px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/[0.05] dark:text-white/65">
+                        {upgradePricing.upgradeType.replaceAll('-', ' ')}
+                      </span>
                     </div>
-                  )}
-                  
-                  {upgradePricing.upgradeType === 'lifetime-to-lifetime' && (
-                    <div className="space-y-3 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">New Plan Price:</span>
-                        <span className="text-gray-900 dark:text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Current Plan Credit:</span>
-                        <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
-                      </div>
-                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 -mx-6 px-6 flex justify-between">
-                        <span className="text-gray-900 dark:text-white font-bold">Upgrade Cost:</span>
-                        <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Pay the difference to upgrade to a higher tier lifetime plan.
-                      </p>
-                    </div>
-                  )}
-                  
-                  {upgradePricing.upgradeType === 'subscription-to-subscription' && (
-                    <div className="space-y-3 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">New Plan Price:</span>
-                        <span className="text-gray-900 dark:text-white font-semibold">${upgradePricing.originalPrice.toFixed(2)}/month</span>
-                      </div>
-                      {upgradePricing.credit > 0 && (
+
+                    {upgradePricing.upgradeType === 'subscription-to-lifetime' && (
+                      <div className="mt-5 space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Credit from Current Subscription:</span>
-                          <span className="text-green-600 dark:text-green-400 font-semibold">-${upgradePricing.credit.toFixed(2)}</span>
+                          <span className="text-gray-slate dark:text-white/55">Lifetime plan price</span>
+                          <span className="font-semibold text-orange-dark dark:text-white">${upgradePricing.originalPrice.toFixed(2)}</span>
                         </div>
-                      )}
-                      <div className="border-t border-gray-300 dark:border-gray-600 pt-3 -mx-6 px-6 flex justify-between">
-                        <span className="text-gray-900 dark:text-white font-bold">Total Due Today:</span>
-                        <span className="text-orange font-bold text-xl">${upgradePricing.finalPrice.toFixed(2)}</span>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-slate dark:text-white/55">Credit from current subscription</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">-${upgradePricing.credit.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-gray-light pt-4 dark:border-white/10">
+                          <span className="font-bold text-orange-dark dark:text-white">Total due today</span>
+                          <span className="text-xl font-bold text-orange">${upgradePricing.finalPrice.toFixed(2)}</span>
+                        </div>
+                        <p className="pt-1 text-sm leading-6 text-gray-slate dark:text-white/55">
+                          Your monthly subscription will be canceled, and you&apos;ll receive a prorated credit for the remaining days.
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        You&apos;ll be charged the prorated difference today. Your new rate of ${upgradePricing.originalPrice.toFixed(2)}/month starts at your next billing period.
-                      </p>
+                    )}
+
+                    {upgradePricing.upgradeType === 'lifetime-to-lifetime' && (
+                      <div className="mt-5 space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-slate dark:text-white/55">New plan price</span>
+                          <span className="font-semibold text-orange-dark dark:text-white">${upgradePricing.originalPrice.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-slate dark:text-white/55">Current plan credit</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">-${upgradePricing.credit.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-gray-light pt-4 dark:border-white/10">
+                          <span className="font-bold text-orange-dark dark:text-white">Upgrade cost</span>
+                          <span className="text-xl font-bold text-orange">${upgradePricing.finalPrice.toFixed(2)}</span>
+                        </div>
+                        <p className="pt-1 text-sm leading-6 text-gray-slate dark:text-white/55">
+                          Pay the difference to upgrade to a higher tier lifetime plan.
+                        </p>
+                      </div>
+                    )}
+
+                    {upgradePricing.upgradeType === 'subscription-to-subscription' && (
+                      <div className="mt-5 space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-slate dark:text-white/55">New plan price</span>
+                          <span className="font-semibold text-orange-dark dark:text-white">${upgradePricing.originalPrice.toFixed(2)}/month</span>
+                        </div>
+                        {upgradePricing.credit > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-slate dark:text-white/55">Credit from current subscription</span>
+                            <span className="font-semibold text-green-600 dark:text-green-400">-${upgradePricing.credit.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-slate dark:text-white/55">Total due today</span>
+                          <span className="text-xl font-bold text-orange">${upgradePricing.finalPrice.toFixed(2)}</span>
+                        </div>
+                        <p className="border-t border-gray-light pt-4 text-sm leading-6 text-gray-slate dark:border-white/10 dark:text-white/55">
+                          You&apos;ll be charged the prorated difference today. Your new rate of ${upgradePricing.originalPrice.toFixed(2)}/month starts at your next billing period.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-6 dark:border-orange/25 dark:bg-orange/10">
+                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Confirm change</p>
+                    <h3 className="mt-3 text-xl font-semibold text-orange-dark dark:text-[#fff3ea]">
+                      {selectedPlan ? `Move to ${selectedPlan.name}` : 'Confirm selected plan'}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/65">
+                      {upgradePricing.upgradeType === 'subscription-to-subscription'
+                        ? 'Your subscription will update after confirmation, and any proration is handled automatically.'
+                        : 'Lifetime upgrades continue through checkout with your pricing details prefilled.'}
+                    </p>
+                    <div className="mt-6 flex flex-col gap-3">
+                      <Button
+                        variant="primary"
+                        onClick={handleConfirmChange}
+                        disabled={isSubmitting}
+                        className="w-full"
+                      >
+                        {isSubmitting ? 'Processing...' : confirmLabelByType[upgradePricing.upgradeType]}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setSelectedPlanCode(null);
+                          setUpgradePricing(null);
+                        }}
+                        disabled={isSubmitting}
+                        className="w-full"
+                      >
+                        Choose a Different Plan
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
               {calculatingPrice && (
-                <div className="bg-gray-100 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded-lg p-6 mb-6 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange mr-3"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Calculating upgrade price...</span>
+                <div className="flex items-center justify-center rounded-[22px] border border-gray-light bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+                  <div className="mr-3 h-8 w-8 animate-spin rounded-full border-b-2 border-orange"></div>
+                  <span className="text-gray-slate dark:text-white/60">Calculating upgrade price...</span>
                 </div>
               )}
-
-              {/* Confirmation Section */}
-              {selectedPlanCode && upgradePricing && !calculatingPrice && (
-                <div className="flex gap-3 justify-end">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setSelectedPlanCode(null);
-                      setUpgradePricing(null);
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleConfirmChange}
-                    disabled={isSubmitting}
-                    className="min-w-[180px]"
-                  >
-                    {isSubmitting ? 'Processing...' : 'Confirm Upgrade'}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+          </>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
