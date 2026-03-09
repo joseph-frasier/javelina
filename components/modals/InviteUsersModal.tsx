@@ -246,16 +246,13 @@ export function InviteUsersModal({
           <div className={`mt-5 rounded-2xl border p-4 ${usageToneClasses.card}`}>
             <p className="text-sm font-medium text-orange-dark dark:text-[#fff3ea]">What they can do</p>
             <ul className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
-              <li className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-orange" />
+              <li>
                 Assign a role now so the invite lands with the right permissions.
               </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-electric" />
+              <li>
                 Pending invites can still be reviewed or revoked from team management.
               </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/50" />
+              <li>
                 Billing access is only granted when you explicitly choose Billing Contact.
               </li>
             </ul>
