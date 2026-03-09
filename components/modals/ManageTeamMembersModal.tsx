@@ -65,9 +65,13 @@ export function ManageTeamMembersModal({
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setEditingUserId(null);
-      setEditingRole('');
-      setActiveTab('members');
+      const resetTimer = window.setTimeout(() => {
+        setEditingUserId(null);
+        setEditingRole('');
+        setActiveTab('members');
+      }, 250);
+
+      return () => window.clearTimeout(resetTimer);
     }
   }, [isOpen]);
 
