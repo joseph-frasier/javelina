@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { ZoneDetailClient } from '@/app/zone/[id]/ZoneDetailClient';
+import { getUserRoleInOrganization } from '@/lib/api/roles';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -75,11 +76,18 @@ export default async function ZonePage({
     }
   }
 
+  // Fetch user's role in the organization (needed for audit log visibility)
+  let userOrgRole: string | null = null;
+  if (zoneData.organization_id) {
+    userOrgRole = await getUserRoleInOrganization(zoneData.organization_id);
+  }
+
   return (
     <ZoneDetailClient 
       zone={zoneData} 
       zoneId={id}
       organization={organization}
+      userOrgRole={userOrgRole}
     />
   );
 }

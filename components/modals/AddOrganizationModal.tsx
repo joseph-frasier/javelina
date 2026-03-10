@@ -205,198 +205,201 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
     }
   };
 
+  const planPriceLabel = selectedPlan?.monthly
+    ? selectedPlan.monthly.amount > 0
+      ? `$${selectedPlan.monthly.amount.toFixed(2)}/month`
+      : 'Free forever'
+    : 'Plan selected later';
+
   return (
     <Modal 
       isOpen={isOpen} 
       onClose={handleClose} 
-      title={selectedPlan ? `Create Organization - ${selectedPlan.name} Plan` : "Add Organization"} 
+      title="Create Organization"
+      eyebrow={selectedPlan ? `${selectedPlan.name} plan setup` : 'Organization setup'}
+      subtitle="Set up the organization profile, billing contact, and administrative contact in one pass."
       size="large"
+      allowOverflow
+      bodyClassName="space-y-6"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {selectedPlan && (
-          <div className="p-4 bg-orange-light border border-orange rounded-lg">
-            <div className="flex items-start space-x-3">
-              <svg
-                className="w-5 h-5 text-orange flex-shrink-0 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange/20 bg-white/70 text-orange dark:bg-orange/15">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-orange-dark">
-                  Selected Plan: {selectedPlan.name}
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Plan Summary</p>
+                <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
+                  <h3 className="text-xl font-semibold text-orange-dark dark:text-[#fff3ea]">
+                    {selectedPlan ? selectedPlan.name : 'Organization setup'}
+                  </h3>
+                  <span className="text-sm font-medium text-gray-slate dark:text-white/70">
+                    {planPriceLabel}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/70">
+                  {selectedPlan
+                    ? selectedPlan.description
+                    : 'Create the organization now and attach or change the plan afterward if needed.'}
                 </p>
-                <p className="text-xs text-gray-slate mt-1">
-                  {selectedPlan.description}
-                  {selectedPlan.monthly && selectedPlan.monthly.amount > 0 && (
-                    <> • ${selectedPlan.monthly.amount.toFixed(2)}/month</>
-                  )}
-                  {selectedPlan.monthly && selectedPlan.monthly.amount === 0 && (
-                    <> • Free forever</>
-                  )}
+                <p className="mt-3 text-sm text-gray-slate dark:text-white/55">
+                  {selectedPlan
+                    ? 'Submitting this form creates the organization and carries the selected plan details into the billing flow.'
+                    : 'This form creates the organization and stores the required billing and admin contacts.'}
                 </p>
               </div>
             </div>
           </div>
-        )}
-        
+
+          <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">Setup Flow</p>
+            <ol className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
+              <li>1. Name the organization and add team-facing context.</li>
+              <li>2. Add billing contact and address details.</li>
+              <li>3. Confirm the administrative owner and submit.</li>
+            </ol>
+          </div>
+        </div>
+
         {errors.general && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/25 dark:bg-red-500/10">
             <p className="text-sm text-red-800">{errors.general}</p>
           </div>
         )}
 
-        <div>
-          <label htmlFor="org-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-            Organization Name <span className="text-red-500">*</span>
-          </label>
-          <Input
-            id="org-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Company Corp"
-            disabled={isSubmitting}
-            className={errors.name ? 'border-red-500' : ''}
-            maxLength={100}
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-          )}
-          <p className="mt-1 text-xs text-gray-slate">
-            {name.length}/100 characters
-          </p>
-        </div>
+        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+          <div className="mb-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 1</p>
+            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Organization profile</h3>
+            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+              Start with the name and description your teammates will recognize first.
+            </p>
+          </div>
 
-        <div>
-          <label htmlFor="org-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-            Description
-          </label>
-          <textarea
-            id="org-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description or notes"
-            disabled={isSubmitting}
-            rows={3}
-            maxLength={500}
-            className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
-          />
-          <p className="mt-1 text-xs text-gray-slate">
-            {description.length}/500 characters
-          </p>
-        </div>
-
-        {/* Billing Contact Section */}
-        <div className="pt-4">
-          <h3 className="text-base font-semibold text-orange-dark mb-4">Billing Contact Information</h3>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="billing-email" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Billing Email <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="billing-email"
-                type="email"
-                value={billingEmail}
-                onChange={(e) => {
-                  setBillingEmail(e.target.value);
-                  if (copyBillingEmail) {
-                    setAdminContactEmail(e.target.value);
-                  }
-                }}
-                placeholder="billing@example.com"
-                disabled={isSubmitting}
-                className={errors.billing_email ? 'border-red-500' : ''}
-              />
-              {errors.billing_email && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_email}</p>
-              )}
-            </div>
+          <div className="space-y-5">
+            <Input
+              id="org-name"
+              label="Organization Name *"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Company Corp"
+              disabled={isSubmitting}
+              error={errors.name}
+              helperText={`${name.length}/100 characters`}
+              className={errors.name ? 'border-red-500' : ''}
+              maxLength={100}
+            />
 
             <div>
-              <label htmlFor="billing-phone" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Billing Phone <span className="text-red-500">*</span>
+              <label htmlFor="org-description" className="mb-2 block text-sm font-medium text-orange-dark dark:text-white">
+                Description
               </label>
-              <Input
-                id="billing-phone"
-                type="tel"
-                value={billingPhone}
-                onChange={(e) => {
-                  const normalized = normalizePhoneInput(e.target.value);
-                  setBillingPhone(normalized);
-                  if (copyBillingPhone) {
-                    setAdminContactPhone(normalized);
-                  }
-                }}
-                onBlur={(e) => {
-                  const formatted = formatUSPhone(e.target.value);
-                  if (formatted !== e.target.value) {
-                    setBillingPhone(formatted);
-                    if (copyBillingPhone) {
-                      setAdminContactPhone(formatted);
-                    }
-                  }
-                }}
-                placeholder="(555) 123-4567"
+              <textarea
+                id="org-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional description or notes"
                 disabled={isSubmitting}
-                className={errors.billing_phone ? 'border-red-500' : ''}
+                rows={4}
+                maxLength={500}
+                className="w-full rounded-xl border border-gray-light bg-white px-4 py-3 text-orange-dark placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-orange disabled:cursor-not-allowed disabled:bg-gray-light dark:border-white/10 dark:bg-[#0f151d] dark:text-white dark:placeholder:text-white/25"
               />
-              {errors.billing_phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_phone}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-slate">
-                Format: (XXX) XXX-XXXX or XXX-XXX-XXXX
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="billing-address" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Billing Address <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="billing-address"
-                type="text"
-                value={billingAddress}
-                onChange={(e) => setBillingAddress(e.target.value)}
-                placeholder="123 Main Street"
-                disabled={isSubmitting}
-                className={errors.billing_address ? 'border-red-500' : ''}
-              />
-              {errors.billing_address && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_address}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="billing-city" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                  City <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  id="billing-city"
-                  type="text"
-                  value={billingCity}
-                  onChange={(e) => setBillingCity(e.target.value)}
-                  placeholder="San Francisco"
-                  disabled={isSubmitting}
-                  className={errors.billing_city ? 'border-red-500' : ''}
-                />
-                {errors.billing_city && (
-                  <p className="mt-1 text-sm text-red-600">{errors.billing_city}</p>
-                )}
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-slate dark:text-white/45">
+                <span>Give teammates a short explanation of what this workspace is for.</span>
+                <span>{description.length}/500 characters</span>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+          <div className="mb-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 2</p>
+            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Billing contact</h3>
+            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+              These details are used for invoices, receipts, and billing follow-up.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              id="billing-email"
+              label="Billing Email *"
+              type="email"
+              value={billingEmail}
+              onChange={(e) => {
+                setBillingEmail(e.target.value);
+                if (copyBillingEmail) {
+                  setAdminContactEmail(e.target.value);
+                }
+              }}
+              placeholder="billing@example.com"
+              disabled={isSubmitting}
+              helperText="Use the address that should receive billing notices."
+              error={errors.billing_email}
+              className={errors.billing_email ? 'border-red-500' : ''}
+            />
+
+            <Input
+              id="billing-phone"
+              label="Billing Phone *"
+              type="tel"
+              value={billingPhone}
+              onChange={(e) => {
+                const normalized = normalizePhoneInput(e.target.value);
+                setBillingPhone(normalized);
+                if (copyBillingPhone) {
+                  setAdminContactPhone(normalized);
+                }
+              }}
+              onBlur={(e) => {
+                const formatted = formatUSPhone(e.target.value);
+                if (formatted !== e.target.value) {
+                  setBillingPhone(formatted);
+                  if (copyBillingPhone) {
+                    setAdminContactPhone(formatted);
+                  }
+                }
+              }}
+              placeholder="(555) 123-4567"
+              disabled={isSubmitting}
+              helperText="Accepted formats: (XXX) XXX-XXXX or XXX-XXX-XXXX"
+              error={errors.billing_phone}
+              className={errors.billing_phone ? 'border-red-500' : ''}
+            />
+
+            <Input
+              id="billing-address"
+              label="Billing Address *"
+              type="text"
+              value={billingAddress}
+              onChange={(e) => setBillingAddress(e.target.value)}
+              placeholder="123 Main Street"
+              disabled={isSubmitting}
+              error={errors.billing_address}
+              className={errors.billing_address ? 'border-red-500' : ''}
+            />
+
+            <div className="grid gap-4 md:grid-cols-[1.1fr_1fr_0.7fr]">
+              <Input
+                id="billing-city"
+                label="City *"
+                type="text"
+                value={billingCity}
+                onChange={(e) => setBillingCity(e.target.value)}
+                placeholder="San Francisco"
+                disabled={isSubmitting}
+                error={errors.billing_city}
+                className={errors.billing_city ? 'border-red-500' : ''}
+              />
 
               <div>
-                <label htmlFor="billing-state" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                <label htmlFor="billing-state" className="mb-2 block text-sm font-medium text-orange-dark dark:text-white">
                   State <span className="text-red-500">*</span>
                 </label>
                 <Dropdown
@@ -416,14 +419,10 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                   <p className="mt-1 text-sm text-red-600">{errors.billing_state}</p>
                 )}
               </div>
-            </div>
 
-            <div className="w-1/2 pr-2">
-              <label htmlFor="billing-zip" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                ZIP Code <span className="text-red-500">*</span>
-              </label>
               <Input
                 id="billing-zip"
+                label="ZIP Code *"
                 type="text"
                 value={billingZip}
                 onChange={(e) => {
@@ -433,61 +432,73 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                 placeholder="94102"
                 maxLength={5}
                 disabled={isSubmitting}
+                helperText="5-digit ZIP"
+                error={errors.billing_zip}
                 className={errors.billing_zip ? 'border-red-500' : ''}
               />
-              {errors.billing_zip && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_zip}</p>
-              )}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Admin Contact Section */}
-        <div className="pt-4">
-          <h3 className="text-base font-semibold text-orange-dark mb-4">Administrative Contact</h3>
-          
+        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+          <div className="mb-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 3</p>
+            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Administrative contact</h3>
+            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+              Choose who should receive operational and account-level follow-up.
+            </p>
+          </div>
+
           <div className="space-y-4">
-            <div>
-              <label htmlFor="admin-email" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Admin Contact Email <span className="text-red-500">*</span>
+            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
+              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+                <input
+                  type="checkbox"
+                  checked={copyBillingEmail}
+                  onChange={(e) => {
+                    setCopyBillingEmail(e.target.checked);
+                    if (e.target.checked) {
+                      setAdminContactEmail(billingEmail);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="mr-2"
+                />
+                Use billing email for the admin contact
               </label>
               <Input
                 id="admin-email"
+                label="Admin Contact Email *"
                 type="email"
                 value={adminContactEmail}
                 onChange={(e) => setAdminContactEmail(e.target.value)}
                 placeholder="admin@example.com"
                 disabled={isSubmitting || copyBillingEmail}
+                helperText={copyBillingEmail ? 'This field is synced from billing email.' : 'Use the address that should receive admin notices.'}
+                error={errors.admin_contact_email}
                 className={errors.admin_contact_email ? 'border-red-500' : ''}
               />
-              {errors.admin_contact_email && (
-                <p className="mt-1 text-sm text-red-600">{errors.admin_contact_email}</p>
-              )}
-              <div className="mt-2">
-                <label className="flex items-center text-sm text-gray-slate">
-                  <input
-                    type="checkbox"
-                    checked={copyBillingEmail}
-                    onChange={(e) => {
-                      setCopyBillingEmail(e.target.checked);
-                      if (e.target.checked) {
-                        setAdminContactEmail(billingEmail);
-                      }
-                    }}
-                    disabled={isSubmitting}
-                    className="mr-2"
-                  />
-                  Same as billing email
-                </label>
-              </div>
             </div>
 
-            <div>
-              <label htmlFor="admin-phone" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Admin Contact Phone <span className="text-red-500">*</span>
+            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
+              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+                <input
+                  type="checkbox"
+                  checked={copyBillingPhone}
+                  onChange={(e) => {
+                    setCopyBillingPhone(e.target.checked);
+                    if (e.target.checked) {
+                      setAdminContactPhone(billingPhone);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="mr-2"
+                />
+                Use billing phone for the admin contact
               </label>
               <Input
                 id="admin-phone"
+                label="Admin Contact Phone *"
                 type="tel"
                 value={adminContactPhone}
                 onChange={(e) => setAdminContactPhone(normalizePhoneInput(e.target.value))}
@@ -499,36 +510,15 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                 }}
                 placeholder="(555) 123-4567"
                 disabled={isSubmitting || copyBillingPhone}
+                helperText={copyBillingPhone ? 'This field is synced from billing phone.' : 'Accepted formats: (XXX) XXX-XXXX or XXX-XXX-XXXX'}
+                error={errors.admin_contact_phone}
                 className={errors.admin_contact_phone ? 'border-red-500' : ''}
               />
-              {errors.admin_contact_phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.admin_contact_phone}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-slate">
-                Format: (XXX) XXX-XXXX or XXX-XXX-XXXX
-              </p>
-              <div className="mt-2">
-                <label className="flex items-center text-sm text-gray-slate">
-                  <input
-                    type="checkbox"
-                    checked={copyBillingPhone}
-                    onChange={(e) => {
-                      setCopyBillingPhone(e.target.checked);
-                      if (e.target.checked) {
-                        setAdminContactPhone(billingPhone);
-                      }
-                    }}
-                    disabled={isSubmitting}
-                    className="mr-2"
-                  />
-                  Same as billing phone
-                </label>
-              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="flex items-center justify-end space-x-3 pt-4">
+        <div className="flex items-center justify-end space-x-3 pt-2">
           <Button
             type="button"
             variant="secondary"
@@ -559,4 +549,3 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
     </Modal>
   );
 }
-

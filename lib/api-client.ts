@@ -272,6 +272,13 @@ export const subscriptionsApi = {
   getAllWithSubscriptions: () => {
     return apiClient.get('/subscriptions/all');
   },
+
+  /**
+   * Get plan name and code for an organization (accessible to all members)
+   */
+  getOrgPlan: (org_id: string) => {
+    return apiClient.get(`/subscriptions/plan?org_id=${org_id}`);
+  },
 };
 
 
@@ -291,6 +298,17 @@ export const plansApi = {
     return apiClient.get(`/plans/${code}`);
   },
 };
+
+export interface Invitation {
+  id: string;
+  email: string;
+  role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer';
+  status: 'pending' | 'awaiting_verification';
+  invited_by_name?: string;
+  invited_by_email?: string;
+  created_at: string;
+  expires_at?: string;
+}
 
 // Organizations API
 export const organizationsApi = {
@@ -361,10 +379,33 @@ export const organizationsApi = {
   },
 
   /**
-   * Add a member to an organization
+   * Send a team invitation for an organization member
    */
-  addMember: (id: string, data: { email: string; role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer' }) => {
+  addMember: (
+    id: string,
+    data: { email: string; role: 'Admin' | 'Editor' | 'BillingContact' | 'Viewer' }
+  ): Promise<{
+    success: boolean;
+    invitation_id?: string;
+    status?: 'pending' | 'awaiting_verification' | 'accepted' | 'expired' | 'revoked' | 'failed';
+    email?: string;
+    message?: string;
+  }> => {
     return apiClient.post(`/organizations/${id}/members`, data);
+  },
+
+  /**
+   * Get pending invitations for an organization
+   */
+  getInvitations: (id: string): Promise<Invitation[]> => {
+    return apiClient.get(`/organizations/${id}/invitations`);
+  },
+
+  /**
+   * Revoke a pending invitation
+   */
+  revokeInvitation: (id: string, invitationId: string): Promise<{ success: boolean }> => {
+    return apiClient.post(`/organizations/${id}/invitations/${invitationId}/revoke`);
   },
 
   /**
@@ -764,6 +805,18 @@ export const authApi = {
   }> => {
     return apiClient.post('/auth/refresh-verification-status');
   },
+
+  /**
+   * Finalize any pending organization invitation after verification/login
+   */
+  finalizeInvitation: (): Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    organization_id?: string;
+  }> => {
+    return apiClient.post('/auth/finalize-invitation');
+  },
 };
 
 // Tags API
@@ -1091,6 +1144,65 @@ export interface SupportConversationDetail {
   conversation: SupportConversation;
   messages: SupportMessage[];
 }
+
+// Global search interfaces
+export type GlobalSearchContext = 'member' | 'admin';
+export type GlobalSearchScope = 'current' | 'all';
+export type GlobalSearchResultType =
+  | 'organization'
+  | 'zone'
+  | 'dns_record'
+  | 'tag'
+  | 'user'
+  | 'discount_code'
+  | 'audit_event'
+  | 'support_conversation';
+
+export interface GlobalSearchResult {
+  id: string;
+  type: GlobalSearchResultType;
+  title: string;
+  subtitle: string;
+  route: string;
+  score: number;
+  org_id?: string;
+  zone_id?: string;
+  record_id?: string;
+  updated_at?: string;
+  badge?: string;
+}
+
+export interface GlobalSearchResponse {
+  query: string;
+  scope: GlobalSearchScope;
+  context: GlobalSearchContext;
+  results: GlobalSearchResult[];
+  counts: Record<string, number>;
+  took_ms: number;
+}
+
+export const searchApi = {
+  global: (params: {
+    q: string;
+    context: GlobalSearchContext;
+    scope: GlobalSearchScope;
+    org_id?: string;
+    limit?: number;
+    useAdminAuth?: boolean;
+  }): Promise<GlobalSearchResponse> => {
+    const query = new URLSearchParams();
+    query.set('q', params.q);
+    query.set('context', params.context);
+    query.set('scope', params.scope);
+    if (params.org_id) query.set('org_id', params.org_id);
+    if (params.limit) query.set('limit', String(params.limit));
+    const adminToken = params.useAdminAuth ? getAdminSessionToken() : null;
+    const options = adminToken
+      ? { headers: { Authorization: `Bearer ${adminToken}` } }
+      : undefined;
+    return apiClient.get(`/search/global?${query.toString()}`, options);
+  },
+};
 
 // Export everything
 export default apiClient;
