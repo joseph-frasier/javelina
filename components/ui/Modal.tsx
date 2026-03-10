@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { clsx } from 'clsx';
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,9 +13,28 @@ interface ModalProps {
   subtitle?: string;
   children: React.ReactNode;
   size?: 'small' | 'medium' | 'large' | 'xlarge';
+  eyebrow?: string;
+  headerContent?: React.ReactNode;
+  footer?: React.ReactNode;
+  bodyClassName?: string;
+  contentClassName?: string;
+  allowOverflow?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medium' }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  subtitle,
+  children,
+  size = 'medium',
+  eyebrow,
+  headerContent,
+  footer,
+  bodyClassName,
+  contentClassName,
+  allowOverflow = false,
+}: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -138,7 +158,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
       {/* Overlay */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-black bg-opacity-50 pointer-events-auto"
+        className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(0,176,255,0.06),transparent_28%),radial-gradient(circle_at_bottom,rgba(239,114,21,0.08),transparent_30%),rgba(15,23,42,0.18)] dark:bg-[radial-gradient(circle_at_top,rgba(0,176,255,0.08),transparent_28%),radial-gradient(circle_at_bottom,rgba(239,114,21,0.1),transparent_30%),rgba(6,10,15,0.52)] pointer-events-auto"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -154,28 +174,48 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
       >
         <div
           ref={modalRef}
-          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-orange-dark rounded-lg shadow-xl pointer-events-auto`}
+          className={clsx(
+            `relative w-full ${sizeClasses[size]} pointer-events-auto rounded-[24px] border border-gray-light bg-white text-orange-dark shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-[#0b0f14] dark:text-white dark:shadow-[0_30px_90px_rgba(0,0,0,0.45)]`,
+            allowOverflow ? 'overflow-visible' : 'overflow-hidden',
+            contentClassName
+          )}
           onClick={(e) => {
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
           }}
         >
+          <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.08),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.08),transparent_32%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.12),transparent_32%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[24px] bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-white/40" />
+
           {/* Header */}
-          <div className="p-6 border-b border-gray-light">
-            <div className="flex items-center justify-between">
-              <h3
-                id="modal-title"
-                className="text-xl font-semibold text-orange-dark dark:text-white"
-              >
-                {title}
-              </h3>
+          <div className="relative border-b border-gray-light px-6 py-5 md:px-7 dark:border-white/10">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                {eyebrow && (
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-blue-electric">
+                    {eyebrow}
+                  </p>
+                )}
+                <h3
+                  id="modal-title"
+                  className="text-xl font-semibold tracking-tight text-orange-dark md:text-[1.7rem] dark:text-[#fff3ea]"
+                >
+                  {title}
+                </h3>
+                {subtitle && (
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-slate dark:text-white/70">
+                    {subtitle}
+                  </p>
+                )}
+                {headerContent && <div className="mt-4">{headerContent}</div>}
+              </div>
               <button
                 onClick={onClose}
-                className="text-gray-slate hover:text-orange-dark dark:hover:text-white transition-colors"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-light bg-white/80 text-gray-slate transition-colors hover:border-gray-slate/30 hover:bg-gray-50 hover:text-orange-dark dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:border-white/20 dark:hover:bg-white/10 dark:hover:text-white"
                 aria-label="Close modal"
               >
                 <svg
-                  className="w-6 h-6"
+                  className="h-5 w-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -189,17 +229,18 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
                 </svg>
               </button>
             </div>
-            {subtitle && (
-              <p className="text-sm text-gray-slate dark:text-gray-400 mt-2">
-                {subtitle}
-              </p>
-            )}
           </div>
 
           {/* Body */}
-          <div className="p-6">
+          <div className={clsx('relative px-6 py-6 md:px-7', bodyClassName)}>
             {children}
           </div>
+
+          {footer && (
+            <div className="relative border-t border-gray-light px-6 py-4 md:px-7 dark:border-white/10">
+              {footer}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -208,4 +249,3 @@ export function Modal({ isOpen, onClose, title, subtitle, children, size = 'medi
   // Render modal at document.body level using portal
   return createPortal(modalContent, document.body);
 }
-

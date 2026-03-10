@@ -139,113 +139,126 @@ export function EditBillingInfoModal({
     <Modal 
       isOpen={isOpen} 
       onClose={handleClose} 
-      title={`Edit Billing Information - ${organizationName}`}
+      title="Edit Billing Information"
+      eyebrow={`${organizationName} billing record`}
+      subtitle="Update the billing contact details and administrative owner information together."
       size="large"
+      bodyClassName="space-y-6"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Billing Contact Section */}
-        <div>
-          <h3 className="text-base font-semibold text-orange-dark mb-4">Billing Contact Information</h3>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="edit-billing-email" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Billing Email <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="edit-billing-email"
-                type="email"
-                value={billingEmail}
-                onChange={(e) => {
-                  setBillingEmail(e.target.value);
-                  if (copyBillingEmail) {
-                    setAdminContactEmail(e.target.value);
-                  }
-                }}
-                placeholder="billing@example.com"
-                disabled={isSubmitting}
-                className={errors.billing_email ? 'border-red-500' : ''}
-              />
-              {errors.billing_email && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_email}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="edit-billing-phone" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Billing Phone <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="edit-billing-phone"
-                type="tel"
-                value={billingPhone}
-                onChange={(e) => {
-                  const normalized = normalizePhoneInput(e.target.value);
-                  setBillingPhone(normalized);
-                  if (copyBillingPhone) {
-                    setAdminContactPhone(normalized);
-                  }
-                }}
-                onBlur={(e) => {
-                  const formatted = formatUSPhone(e.target.value);
-                  if (formatted !== e.target.value) {
-                    setBillingPhone(formatted);
-                    if (copyBillingPhone) {
-                      setAdminContactPhone(formatted);
-                    }
-                  }
-                }}
-                placeholder="(555) 123-4567"
-                disabled={isSubmitting}
-                className={errors.billing_phone ? 'border-red-500' : ''}
-              />
-              {errors.billing_phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_phone}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-slate">
-                Format: (XXX) XXX-XXXX or XXX-XXX-XXXX
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="edit-billing-address" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Billing Address <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="edit-billing-address"
-                type="text"
-                value={billingAddress}
-                onChange={(e) => setBillingAddress(e.target.value)}
-                placeholder="123 Main Street"
-                disabled={isSubmitting}
-                className={errors.billing_address ? 'border-red-500' : ''}
-              />
-              {errors.billing_address && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_address}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="edit-billing-city" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                  City <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  id="edit-billing-city"
-                  type="text"
-                  value={billingCity}
-                  onChange={(e) => setBillingCity(e.target.value)}
-                  placeholder="San Francisco"
-                  disabled={isSubmitting}
-                  className={errors.billing_city ? 'border-red-500' : ''}
-                />
-                {errors.billing_city && (
-                  <p className="mt-1 text-sm text-red-600">{errors.billing_city}</p>
-                )}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange/20 bg-white/70 text-orange dark:bg-orange/15">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                </svg>
               </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Billing record</p>
+                <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">
+                  Keep invoices and owner contacts current
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/70">
+                  Changes here update the organization billing profile used for receipts, billing follow-up, and administrative account communication.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">What to update</p>
+            <ol className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
+              <li>1. Confirm the billing email, phone, and mailing address.</li>
+              <li>2. Review the administrative contact or reuse the billing contact where it makes sense.</li>
+              <li>3. Save changes to update the organization billing record.</li>
+            </ol>
+          </div>
+        </div>
+
+        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+          <div className="mb-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 1</p>
+            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Billing contact</h3>
+            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+              These details are used for invoices, billing notices, and mailed correspondence.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              id="edit-billing-email"
+              label="Billing Email *"
+              type="email"
+              value={billingEmail}
+              onChange={(e) => {
+                setBillingEmail(e.target.value);
+                if (copyBillingEmail) {
+                  setAdminContactEmail(e.target.value);
+                }
+              }}
+              placeholder="billing@example.com"
+              disabled={isSubmitting}
+              helperText="Use the email that should receive invoices and billing alerts."
+              error={errors.billing_email}
+              className={errors.billing_email ? 'border-red-500' : ''}
+            />
+
+            <Input
+              id="edit-billing-phone"
+              label="Billing Phone *"
+              type="tel"
+              value={billingPhone}
+              onChange={(e) => {
+                const normalized = normalizePhoneInput(e.target.value);
+                setBillingPhone(normalized);
+                if (copyBillingPhone) {
+                  setAdminContactPhone(normalized);
+                }
+              }}
+              onBlur={(e) => {
+                const formatted = formatUSPhone(e.target.value);
+                if (formatted !== e.target.value) {
+                  setBillingPhone(formatted);
+                  if (copyBillingPhone) {
+                    setAdminContactPhone(formatted);
+                  }
+                }
+              }}
+              placeholder="(555) 123-4567"
+              disabled={isSubmitting}
+              helperText="Accepted formats: (XXX) XXX-XXXX or XXX-XXX-XXXX"
+              error={errors.billing_phone}
+              className={errors.billing_phone ? 'border-red-500' : ''}
+            />
+
+            <Input
+              id="edit-billing-address"
+              label="Billing Address *"
+              type="text"
+              value={billingAddress}
+              onChange={(e) => setBillingAddress(e.target.value)}
+              placeholder="123 Main Street"
+              disabled={isSubmitting}
+              error={errors.billing_address}
+              className={errors.billing_address ? 'border-red-500' : ''}
+            />
+
+            <div className="grid gap-4 md:grid-cols-[1.1fr_1fr_0.7fr]">
+              <Input
+                id="edit-billing-city"
+                label="City *"
+                type="text"
+                value={billingCity}
+                onChange={(e) => setBillingCity(e.target.value)}
+                placeholder="San Francisco"
+                disabled={isSubmitting}
+                error={errors.billing_city}
+                className={errors.billing_city ? 'border-red-500' : ''}
+              />
 
               <div>
-                <label htmlFor="edit-billing-state" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+                <label htmlFor="edit-billing-state" className="mb-2 block text-sm font-medium text-orange-dark dark:text-white">
                   State <span className="text-red-500">*</span>
                 </label>
                 <Dropdown
@@ -265,14 +278,10 @@ export function EditBillingInfoModal({
                   <p className="mt-1 text-sm text-red-600">{errors.billing_state}</p>
                 )}
               </div>
-            </div>
 
-            <div className="w-1/2 pr-2">
-              <label htmlFor="edit-billing-zip" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                ZIP Code <span className="text-red-500">*</span>
-              </label>
               <Input
                 id="edit-billing-zip"
+                label="ZIP Code *"
                 type="text"
                 value={billingZip}
                 onChange={(e) => {
@@ -282,61 +291,73 @@ export function EditBillingInfoModal({
                 placeholder="94102"
                 maxLength={5}
                 disabled={isSubmitting}
+                helperText="5-digit ZIP"
+                error={errors.billing_zip}
                 className={errors.billing_zip ? 'border-red-500' : ''}
               />
-              {errors.billing_zip && (
-                <p className="mt-1 text-sm text-red-600">{errors.billing_zip}</p>
-              )}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Admin Contact Section */}
-        <div className="pt-4 -mx-6 px-6">
-          <h3 className="text-base font-semibold text-orange-dark mb-4">Administrative Contact</h3>
-          
+        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+          <div className="mb-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 2</p>
+            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Administrative contact</h3>
+            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+              Set the person who should receive account-level and operational follow-up.
+            </p>
+          </div>
+
           <div className="space-y-4">
-            <div>
-              <label htmlFor="edit-admin-email" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Admin Contact Email <span className="text-red-500">*</span>
+            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
+              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+                <input
+                  type="checkbox"
+                  checked={copyBillingEmail}
+                  onChange={(e) => {
+                    setCopyBillingEmail(e.target.checked);
+                    if (e.target.checked) {
+                      setAdminContactEmail(billingEmail);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="mr-2"
+                />
+                Use billing email for the admin contact
               </label>
               <Input
                 id="edit-admin-email"
+                label="Admin Contact Email *"
                 type="email"
                 value={adminContactEmail}
                 onChange={(e) => setAdminContactEmail(e.target.value)}
                 placeholder="admin@example.com"
                 disabled={isSubmitting || copyBillingEmail}
+                helperText={copyBillingEmail ? 'This field stays synced to the billing email while this option is enabled.' : 'Use the email that should receive admin notices.'}
+                error={errors.admin_contact_email}
                 className={errors.admin_contact_email ? 'border-red-500' : ''}
               />
-              {errors.admin_contact_email && (
-                <p className="mt-1 text-sm text-red-600">{errors.admin_contact_email}</p>
-              )}
-              <div className="mt-2">
-                <label className="flex items-center text-sm text-gray-slate">
-                  <input
-                    type="checkbox"
-                    checked={copyBillingEmail}
-                    onChange={(e) => {
-                      setCopyBillingEmail(e.target.checked);
-                      if (e.target.checked) {
-                        setAdminContactEmail(billingEmail);
-                      }
-                    }}
-                    disabled={isSubmitting}
-                    className="mr-2"
-                  />
-                  Same as billing email
-                </label>
-              </div>
             </div>
 
-            <div>
-              <label htmlFor="edit-admin-phone" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Admin Contact Phone <span className="text-red-500">*</span>
+            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
+              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+                <input
+                  type="checkbox"
+                  checked={copyBillingPhone}
+                  onChange={(e) => {
+                    setCopyBillingPhone(e.target.checked);
+                    if (e.target.checked) {
+                      setAdminContactPhone(billingPhone);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="mr-2"
+                />
+                Use billing phone for the admin contact
               </label>
               <Input
                 id="edit-admin-phone"
+                label="Admin Contact Phone *"
                 type="tel"
                 value={adminContactPhone}
                 onChange={(e) => setAdminContactPhone(normalizePhoneInput(e.target.value))}
@@ -348,36 +369,15 @@ export function EditBillingInfoModal({
                 }}
                 placeholder="(555) 123-4567"
                 disabled={isSubmitting || copyBillingPhone}
+                helperText={copyBillingPhone ? 'This field stays synced to the billing phone while this option is enabled.' : 'Accepted formats: (XXX) XXX-XXXX or XXX-XXX-XXXX'}
+                error={errors.admin_contact_phone}
                 className={errors.admin_contact_phone ? 'border-red-500' : ''}
               />
-              {errors.admin_contact_phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.admin_contact_phone}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-slate">
-                Format: (XXX) XXX-XXXX or XXX-XXX-XXXX
-              </p>
-              <div className="mt-2">
-                <label className="flex items-center text-sm text-gray-slate">
-                  <input
-                    type="checkbox"
-                    checked={copyBillingPhone}
-                    onChange={(e) => {
-                      setCopyBillingPhone(e.target.checked);
-                      if (e.target.checked) {
-                        setAdminContactPhone(billingPhone);
-                      }
-                    }}
-                    disabled={isSubmitting}
-                    className="mr-2"
-                  />
-                  Same as billing phone
-                </label>
-              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="flex items-center justify-end space-x-3 pt-4">
+        <div className="flex items-center justify-end gap-3 pt-2">
           <Button
             type="button"
             variant="secondary"
@@ -408,4 +408,3 @@ export function EditBillingInfoModal({
     </Modal>
   );
 }
-
