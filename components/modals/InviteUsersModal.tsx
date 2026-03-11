@@ -106,6 +106,11 @@ export function InviteUsersModal({
       return;
     }
 
+    if (email.length > 254) {
+      setErrors({ email: 'Email address must be 254 characters or fewer' });
+      return;
+    }
+
     if (!validateEmail(email)) {
       setErrors({ email: 'Please enter a valid email address' });
       return;
@@ -316,6 +321,7 @@ export function InviteUsersModal({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="teammate@example.com"
+                maxLength={254}
                 error={errors.email}
                 helperText="We’ll email a secure invite link to this address."
                 disabled={isLoading}
