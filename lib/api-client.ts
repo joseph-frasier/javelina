@@ -1204,5 +1204,46 @@ export const searchApi = {
   },
 };
 
+// ============================================================
+// DOMAIN REGISTRATION API METHODS
+// ============================================================
+
+import type {
+  DomainSearchResponse,
+  DomainPricingResponse,
+  DomainCheckoutParams,
+  DomainCheckoutResponse,
+  DomainTransferCheckResponse,
+  DomainTransferStatusResponse,
+  DomainsListResponse,
+  DomainDetailResponse,
+} from "@/types/domains";
+
+export const domainsApi = {
+  search: (q: string, tlds?: string[]): Promise<DomainSearchResponse> => {
+    const params = new URLSearchParams({ q });
+    if (tlds?.length) params.set("tlds", tlds.join(","));
+    return apiClient.get(`/domains/search?${params.toString()}`);
+  },
+
+  getPricing: (domain: string): Promise<DomainPricingResponse> =>
+    apiClient.get(`/domains/pricing?domain=${encodeURIComponent(domain)}`),
+
+  checkout: (params: DomainCheckoutParams): Promise<DomainCheckoutResponse> =>
+    apiClient.post("/domains/checkout", params),
+
+  checkTransfer: (domain: string): Promise<DomainTransferCheckResponse> =>
+    apiClient.get(`/domains/transfer/check?domain=${encodeURIComponent(domain)}`),
+
+  getTransferStatus: (id: string): Promise<DomainTransferStatusResponse> =>
+    apiClient.get(`/domains/transfer/${id}/status`),
+
+  list: (): Promise<DomainsListResponse> =>
+    apiClient.get("/domains"),
+
+  getById: (id: string): Promise<DomainDetailResponse> =>
+    apiClient.get(`/domains/${id}`),
+};
+
 // Export everything
 export default apiClient;

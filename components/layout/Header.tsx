@@ -167,16 +167,12 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               >
                 Analytics
               </Link>
-              {process.env.NEXT_PUBLIC_OPENSRS_STOREFRONT_URL && (
-                <a
-                  href={process.env.NEXT_PUBLIC_OPENSRS_STOREFRONT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-md transition-colors"
-                >
-                  Purchase domain
-                </a>
-              )}
+              <Link
+                href="/domains"
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-md transition-colors"
+              >
+                Domains
+              </Link>
             </nav>
             <div className="relative" ref={notificationRef}>
               <button 
