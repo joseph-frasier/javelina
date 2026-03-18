@@ -1,6 +1,7 @@
 'use client';
 
 import { WorldMapSvg } from './WorldMapSvg';
+import { POPS } from './popData';
 
 interface MapCardProps {
   selectedId: string | null;
@@ -10,6 +11,8 @@ interface MapCardProps {
 }
 
 export function MapCard({ selectedId, hoveredId, onSelect, onHover }: MapCardProps) {
+  const activePoPCount = POPS.filter((pop) => !pop.comingSoon).length;
+
   return (
     <div className="relative bg-[#131521] border border-white/10 rounded-2xl overflow-hidden">
       {/* Header bar */}
@@ -30,7 +33,7 @@ export function MapCard({ selectedId, hoveredId, onSelect, onHover }: MapCardPro
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
           </span>
-          <span className="text-xs text-green-400 font-semibold">30 PoPs active</span>
+          <span className="text-xs text-green-400 font-semibold">{activePoPCount} PoPs active</span>
         </div>
       </div>
 
