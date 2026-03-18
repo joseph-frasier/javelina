@@ -88,7 +88,7 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
                 {domain.domain_name}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
+                {domain.registration_type === 'linked' ? 'Linked' : domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
                 {domain.registered_at && ` · Registered ${new Date(domain.registered_at).toLocaleDateString()}`}
                 {domain.expires_at && ` · Expires ${new Date(domain.expires_at).toLocaleDateString()}`}
               </p>

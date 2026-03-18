@@ -1243,6 +1243,9 @@ export const domainsApi = {
 
   getById: (id: string): Promise<DomainDetailResponse> =>
     apiClient.get(`/domains/${id}`),
+
+  link: (domain: string): Promise<DomainDetailResponse> =>
+    apiClient.post("/domains/link", { domain }),
 };
 
 // Export everything

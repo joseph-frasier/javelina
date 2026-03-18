@@ -12,7 +12,7 @@ export type DomainStatus =
   | "failed"
   | "cancelled";
 
-export type DomainRegistrationType = "new" | "transfer";
+export type DomainRegistrationType = "new" | "transfer" | "linked";
 
 export type DomainAvailability =
   | "available"
