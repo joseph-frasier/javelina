@@ -1263,6 +1263,9 @@ export const domainsApi = {
 
   setLock: (id: string, locked: boolean): Promise<{ success: boolean; locked: boolean }> =>
     apiClient.put(`/domains/${id}/lock`, { locked }),
+
+  unlink: (id: string): Promise<{ success: boolean }> =>
+    apiClient.delete(`/domains/${id}`),
 };
 
 // Export everything

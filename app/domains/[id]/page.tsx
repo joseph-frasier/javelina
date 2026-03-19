@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import type {
   Domain,
   DomainManagementResponse,
@@ -143,6 +144,11 @@ export default function DomainDetailPage() {
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const [selectedOrgName, setSelectedOrgName] = useState('');
 
+  // Unlink state
+  const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+  const [unlinkError, setUnlinkError] = useState<string | null>(null);
+
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -274,6 +280,18 @@ export default function DomainDetailPage() {
   const handleZoneCreated = (zoneId: string) => {
     setIsAddZoneOpen(false);
     router.push(`/zone/${zoneId}`);
+  };
+
+  const handleUnlink = async () => {
+    setIsUnlinking(true);
+    setUnlinkError(null);
+    try {
+      await domainsApi.unlink(domainId);
+      router.push('/domains/my-domains');
+    } catch (err: any) {
+      setUnlinkError(extractErrorMessage(err, 'Failed to remove domain'));
+      setIsUnlinking(false);
+    }
   };
 
   if (isLoading) {
@@ -525,6 +543,45 @@ export default function DomainDetailPage() {
           </div>
         )}
       </Card>
+
+      {/* Remove from Javelina (linked domains only) */}
+      {domain.registration_type === 'linked' && (
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-6">
+          <h3 className="text-base font-semibold text-red-700 dark:text-red-400">
+            Remove Domain
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            This domain was linked from the OpenSRS Storefront. Removing it will only detach it from
+            your Javelina account&mdash;your domain registration with OpenSRS is not affected and you
+            can re-link it at any time.
+          </p>
+
+          {unlinkError && (
+            <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <p className="text-sm text-red-700 dark:text-red-400">{unlinkError}</p>
+            </div>
+          )}
+
+          <button
+            onClick={() => setShowUnlinkConfirm(true)}
+            className="mt-4 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          >
+            Remove from Javelina
+          </button>
+
+          <ConfirmationModal
+            isOpen={showUnlinkConfirm}
+            onClose={() => setShowUnlinkConfirm(false)}
+            onConfirm={handleUnlink}
+            title="Remove Domain"
+            message={`Are you sure you want to remove ${domain.domain_name} from your Javelina account? Your domain registration with OpenSRS is not affected and you can re-link it at any time.`}
+            confirmText="Remove Domain"
+            cancelText="Keep Domain"
+            variant="danger"
+            isLoading={isUnlinking}
+          />
+        </div>
+      )}
 
       {/* Add Zone Modal */}
       {selectedOrgId && (
