@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { clsx } from 'clsx';
 import type { DNSRecord } from '@/types/dns';
 import { RECORD_TYPE_INFO } from '@/types/dns';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ExportButton } from '@/components/admin/ExportButton';
+import { Pagination } from '@/components/admin/Pagination';
 
 interface DNSRecordsTableProps {
   records: DNSRecord[];
@@ -36,6 +37,8 @@ export function DNSRecordsTable({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<keyof DNSRecord | null>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
@@ -57,7 +60,7 @@ export function DNSRecordsTable({
     // Priority range checking removed - priority is now part of the value field
     
     return priorityRanges.filter(range => hasRecordsInRange.get(range.key));
-  }, [records, priorityRanges]);
+  }, [priorityRanges]);
 
   // Filter records based on search query, status, priority, and tags
   const filteredRecords = useMemo(() => {
@@ -92,7 +95,7 @@ export function DNSRecordsTable({
     // Priority filter removed - priority is now part of the value field (not a separate column)
     
     return filtered;
-  }, [records, searchQuery, statusFilters, priorityFilters, priorityRanges, zoneName]);
+  }, [records, searchQuery, zoneName]);
 
   // Sort records
   const filteredAndSortedRecords = useMemo(() => {
@@ -121,14 +124,36 @@ export function DNSRecordsTable({
     });
   }, [filteredRecords, sortKey, sortDirection]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedRecords.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRecords = useMemo(
+    () => filteredAndSortedRecords.slice(startIndex, endIndex),
+    [filteredAndSortedRecords, startIndex, endIndex]
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortKey, sortDirection, records]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   // Handle select all checkbox
   const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
-      onSelectionChange(filteredAndSortedRecords.map(r => r.id));
+      const pageRecordIds = paginatedRecords.map(r => r.id);
+      const nextSelected = Array.from(new Set([...selectedRecords, ...pageRecordIds]));
+      onSelectionChange(nextSelected);
     } else {
-      onSelectionChange([]);
+      const pageRecordIds = new Set(paginatedRecords.map(r => r.id));
+      onSelectionChange(selectedRecords.filter(id => !pageRecordIds.has(id)));
     }
-  }, [onSelectionChange, filteredAndSortedRecords]);
+  }, [onSelectionChange, paginatedRecords, selectedRecords]);
 
   // Handle individual checkbox
   const handleSelectRecord = useCallback((recordId: string, checked: boolean) => {
@@ -189,10 +214,10 @@ export function DNSRecordsTable({
   // Calculate active filter count
   const activeFilterCount = statusFilters.size + priorityFilters.size;
 
-  // Check if all visible records are selected
-  const allSelected = filteredAndSortedRecords.length > 0 && 
-    filteredAndSortedRecords.every(r => selectedRecords.includes(r.id));
-  const someSelected = selectedRecords.length > 0 && !allSelected;
+  // Check if all records on the current page are selected
+  const allSelected = paginatedRecords.length > 0 &&
+    paginatedRecords.every(r => selectedRecords.includes(r.id));
+  const someSelected = paginatedRecords.some(r => selectedRecords.includes(r.id)) && !allSelected;
 
   if (loading) {
     return (
@@ -227,6 +252,66 @@ export function DNSRecordsTable({
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Get started by creating your first DNS record.
         </p>
+      </div>
+    );
+  }
+
+  if (filteredAndSortedRecords.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="relative">
+          <input
+            type="search"
+            placeholder="Search records by name, type, or value..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+          />
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        <div className="text-center py-12 border border-dashed border-gray-light dark:border-gray-700 rounded-lg">
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            No matching DNS records
+          </h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Try a different search term to find the record you need.
+          </p>
+          {searchQuery.trim() && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="mt-4 inline-flex items-center rounded-md border border-gray-light dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -412,7 +497,7 @@ export function DNSRecordsTable({
             </tr>
           </thead>
           <tbody>
-            {filteredAndSortedRecords.map((record) => {
+            {paginatedRecords.map((record) => {
               const isSelected = selectedRecords.includes(record.id);
               const fqdn = record.name === '@' || record.name === '' 
                 ? zoneName 
@@ -477,7 +562,7 @@ export function DNSRecordsTable({
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
-        {filteredAndSortedRecords.map((record) => {
+        {paginatedRecords.map((record) => {
           const isSelected = selectedRecords.includes(record.id);
           const fqdn = record.name === '@' || record.name === '' 
             ? zoneName 
@@ -542,13 +627,14 @@ export function DNSRecordsTable({
         })}
       </div>
 
-      {/* Results count */}
-      {(filteredAndSortedRecords.length !== records.length || activeFilterCount > 0) && (
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          Showing {filteredAndSortedRecords.length} of {records.length} records
-          {activeFilterCount > 0 && ` (${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} applied)`}
-        </div>
-      )}
+      <Pagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={filteredAndSortedRecords.length}
+        itemsPerPage={itemsPerPage}
+      />
+
     </div>
   );
 }
