@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Domain } from '@/types/domains';
 
 interface DomainsListProps {
@@ -78,9 +79,10 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
   return (
     <div className="space-y-2">
       {domains.map((domain) => (
-        <div
+        <Link
           key={domain.id}
-          className="flex items-center justify-between p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md transition-shadow"
+          href={`/domains/${domain.id}`}
+          className="flex items-center justify-between p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md hover:border-orange/50 transition-all cursor-pointer"
         >
           <div className="flex items-center gap-4">
             <div>
@@ -101,8 +103,11 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
               </span>
             )}
             <DomainStatusBadge status={domain.status} />
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );

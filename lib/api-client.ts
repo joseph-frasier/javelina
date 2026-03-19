@@ -1217,6 +1217,8 @@ import type {
   DomainTransferStatusResponse,
   DomainsListResponse,
   DomainDetailResponse,
+  DomainManagementResponse,
+  DomainContact,
 } from "@/types/domains";
 
 export const domainsApi = {
@@ -1246,6 +1248,21 @@ export const domainsApi = {
 
   link: (domain: string): Promise<DomainDetailResponse> =>
     apiClient.post("/domains/link", { domain }),
+
+  getManagement: (id: string): Promise<DomainManagementResponse> =>
+    apiClient.get(`/domains/${id}/manage`),
+
+  updateContacts: (id: string, contact: DomainContact): Promise<{ success: boolean }> =>
+    apiClient.put(`/domains/${id}/contacts`, { contact }),
+
+  updateNameservers: (id: string, nameservers: string[]): Promise<{ success: boolean }> =>
+    apiClient.put(`/domains/${id}/nameservers`, { nameservers }),
+
+  setAutoRenew: (id: string, auto_renew: boolean): Promise<{ success: boolean; auto_renew: boolean }> =>
+    apiClient.put(`/domains/${id}/auto-renew`, { auto_renew }),
+
+  setLock: (id: string, locked: boolean): Promise<{ success: boolean; locked: boolean }> =>
+    apiClient.put(`/domains/${id}/lock`, { locked }),
 };
 
 // Export everything

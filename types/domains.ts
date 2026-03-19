@@ -122,3 +122,19 @@ export interface DomainsListResponse {
 export interface DomainDetailResponse {
   domain: Domain;
 }
+
+export interface DomainManagementResponse {
+  domain: Domain;
+  live: {
+    expiry_date?: string;
+    registered_date?: string;
+    nameservers?: string[];
+    contact_info?: Record<string, any>;
+  };
+  zone: {
+    id: string;
+    name: string;
+    organization_id: string;
+    organization_name: string;
+  } | null;
+}

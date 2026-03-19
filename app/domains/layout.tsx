@@ -10,6 +10,8 @@ const TABS = [
   { href: '/domains/my-domains', label: 'My Domains' },
 ] as const;
 
+const TAB_PATHS = new Set(TABS.map((t) => t.href));
+
 export default function DomainsLayout({
   children,
 }: {
@@ -20,6 +22,18 @@ export default function DomainsLayout({
 
   const success = searchParams.get('success');
   const cancelled = searchParams.get('cancelled');
+
+  const isDetailPage = !TAB_PATHS.has(pathname);
+
+  if (isDetailPage) {
+    return (
+      <ProtectedRoute>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
+          {children}
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
