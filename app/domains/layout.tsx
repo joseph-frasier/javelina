@@ -23,7 +23,7 @@ export default function DomainsLayout({
 
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-orange-dark dark:text-white">
             Domains
