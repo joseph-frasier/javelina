@@ -7,7 +7,6 @@ interface DomainSearchResultsProps {
   results: DomainSearchResult[];
   title: string;
   onRegister: (domain: string) => void;
-  onTransfer: (domain: string) => void;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -43,7 +42,6 @@ export default function DomainSearchResults({
   results,
   title,
   onRegister,
-  onTransfer,
 }: DomainSearchResultsProps) {
   if (results.length === 0) return null;
 
@@ -77,15 +75,6 @@ export default function DomainSearchResults({
                   onClick={() => onRegister(result.domain)}
                 >
                   Register
-                </Button>
-              )}
-              {result.status === 'taken' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onTransfer(result.domain)}
-                >
-                  Transfer
                 </Button>
               )}
             </div>
