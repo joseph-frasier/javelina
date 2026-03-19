@@ -10,7 +10,7 @@ const TABS = [
   { href: '/domains/my-domains', label: 'My Domains' },
 ] as const;
 
-const TAB_PATHS = new Set(TABS.map((t) => t.href));
+const TAB_PATHS: Set<string> = new Set(TABS.map((t) => t.href));
 
 export default function DomainsLayout({
   children,
