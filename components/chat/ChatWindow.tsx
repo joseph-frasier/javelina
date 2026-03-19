@@ -615,8 +615,8 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                     )}
                   </div>
 
-                  {/* Create Ticket button only - feedback buttons removed for now */}
-                  {showEscalation && message.nextAction?.type === 'offer_ticket' && (
+                  {/* Ticket escalation button */}
+                  {showEscalation && (message.nextAction?.type === 'offer_ticket' || message.nextAction?.type === 'log_bug') && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       <button
                         onClick={handleCreateTicket}
