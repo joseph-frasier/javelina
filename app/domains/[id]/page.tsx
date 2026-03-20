@@ -157,6 +157,7 @@ export default function DomainDetailPage() {
       setData(result);
 
       setAutoRenew(result.domain.auto_renew || false);
+      setDomainLocked(result.live?.locked ?? false);
 
       // Populate nameservers from live data or DB
       const ns = result.live?.nameservers || result.domain.nameservers?.map(n => n.name) || [];
