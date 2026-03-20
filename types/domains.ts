@@ -130,6 +130,7 @@ export interface DomainManagementResponse {
     registered_date?: string;
     nameservers?: string[];
     contact_info?: Record<string, any>;
+    locked?: boolean;
   };
   zone: {
     id: string;
