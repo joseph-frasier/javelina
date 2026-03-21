@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
 import type { DomainContact, DomainRegistrationType } from '@/types/domains';
 
@@ -22,6 +23,9 @@ const US_STATES = [
   'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
   'VA','WA','WV','WI','WY','DC',
 ];
+
+const selectClasses =
+  'w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors';
 
 export default function DomainCheckoutForm({
   domain,
@@ -93,60 +97,59 @@ export default function DomainCheckoutForm({
   };
 
   const totalPrice = price * years;
+  const type = registrationType === 'transfer' ? 'Transfer' : 'Register';
 
   return (
-    <Card
-      title={`${registrationType === 'transfer' ? 'Transfer' : 'Register'}: ${domain}`}
-      className="max-w-2xl mx-auto"
-    >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Order Summary */}
-        <div className="p-4 rounded-lg bg-orange-light dark:bg-gray-800 border border-gray-light dark:border-gray-700">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-medium text-orange-dark dark:text-white">{domain}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {registrationType === 'transfer' ? 'Domain Transfer' : 'New Registration'}
-              </p>
+    <div className="max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit}>
+        <Card>
+          {/* Order Summary Strip */}
+          <div className="flex items-center justify-between gap-4 rounded-lg bg-orange/5 dark:bg-orange/10 px-4 py-3 mb-5">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="shrink-0 text-xs font-medium uppercase tracking-[0.22em] text-orange">
+                {type}
+              </span>
+              <span className="truncate font-bold text-orange-dark dark:text-white text-sm">
+                {domain}
+              </span>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-orange">
-                ${totalPrice.toFixed(2)} {currency.toUpperCase()}
-              </p>
-              <div className="flex items-center gap-2 mt-1">
-                <select
-                  value={years}
-                  onChange={(e) => setYears(Number(e.target.value))}
-                  className="text-xs border border-gray-light dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-orange-dark dark:text-white"
-                >
-                  {[1, 2, 3, 5, 10].map((y) => (
-                    <option key={y} value={y}>
-                      {y} year{y > 1 ? 's' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <select
+                value={years}
+                onChange={(e) => setYears(Number(e.target.value))}
+                className="px-2 py-1 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors"
+              >
+                {[1, 2, 3, 5, 10].map((y) => (
+                  <option key={y} value={y}>
+                    {y}yr
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ${price.toFixed(2)}/yr
+              </span>
+              <span className="font-black text-orange text-lg">
+                ${totalPrice.toFixed(2)}
+              </span>
             </div>
           </div>
-        </div>
 
-        {/* Auth Code for Transfers */}
-        {registrationType === 'transfer' && (
-          <Input
-            label="Authorization / EPP Code"
-            placeholder="Enter the auth code from your current registrar"
-            value={authCode}
-            onChange={(e) => setAuthCode(e.target.value)}
-            required
-          />
-        )}
+          {/* Auth Code - transfer only */}
+          {registrationType === 'transfer' && (
+            <div className="mb-5">
+              <Input
+                label="Authorization / EPP Code"
+                placeholder="Enter the auth code from your current registrar"
+                value={authCode}
+                onChange={(e) => setAuthCode(e.target.value)}
+                required
+              />
+            </div>
+          )}
 
-        {/* Contact Information */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-            Registrant Contact Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Contact */}
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Contact</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <Input
               label="First Name"
               value={contact.first_name}
@@ -158,12 +161,6 @@ export default function DomainCheckoutForm({
               value={contact.last_name}
               onChange={(e) => updateContact('last_name', e.target.value)}
               required
-            />
-            <Input
-              label="Organization (optional)"
-              value={contact.org_name || ''}
-              onChange={(e) => updateContact('org_name', e.target.value)}
-              className="md:col-span-2"
             />
             <Input
               label="Email"
@@ -179,88 +176,90 @@ export default function DomainCheckoutForm({
               onChange={(e) => updateContact('phone', e.target.value)}
               required
             />
-            <Input
-              label="Address"
-              value={contact.address1}
-              onChange={(e) => updateContact('address1', e.target.value)}
-              required
-              className="md:col-span-2"
-            />
-            <Input
-              label="Address Line 2 (optional)"
-              value={contact.address2 || ''}
-              onChange={(e) => updateContact('address2', e.target.value)}
-              className="md:col-span-2"
-            />
+          </div>
+
+          {/* Address */}
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Address</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <div className="md:col-span-2">
+              <Input
+                label="Address"
+                value={contact.address1}
+                onChange={(e) => updateContact('address1', e.target.value)}
+                helperText="Include suite, unit, etc. if needed"
+                required
+              />
+            </div>
             <Input
               label="City"
               value={contact.city}
               onChange={(e) => updateContact('city', e.target.value)}
               required
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                State
-              </label>
-              <select
-                value={contact.state}
-                onChange={(e) => updateContact('state', e.target.value)}
-                required
-                className="w-full rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                <option value="">Select state</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+            <Dropdown
+              label="State"
+              value={contact.state}
+              onChange={(val) => updateContact('state', val)}
+              options={[
+                { value: '', label: 'Select state' },
+                ...US_STATES.map((s) => ({ value: s, label: s })),
+              ]}
+            />
             <Input
               label="ZIP / Postal Code"
               value={contact.postal_code}
               onChange={(e) => updateContact('postal_code', e.target.value)}
               required
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                Country
-              </label>
-              <select
-                value={contact.country}
-                onChange={(e) => updateContact('country', e.target.value)}
-                required
-                className="w-full rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="GB">United Kingdom</option>
-                <option value="AU">Australia</option>
-              </select>
+            <Dropdown
+              label="Country"
+              value={contact.country}
+              onChange={(val) => updateContact('country', val)}
+              options={[
+                { value: 'US', label: 'United States' },
+                { value: 'CA', label: 'Canada' },
+                { value: 'GB', label: 'United Kingdom' },
+                { value: 'AU', label: 'Australia' },
+              ]}
+            />
+          </div>
+
+          {/* Organization - half width */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <Input
+              label="Organization"
+              helperText="Optional"
+              value={contact.org_name || ''}
+              onChange={(e) => updateContact('org_name', e.target.value)}
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 mb-4 animate-fadeIn">
+              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
             </div>
-          </div>
-        </div>
+          )}
 
-        {error && (
-          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          {/* Buttons - inside card, side by side */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button type="submit" variant="primary" size="lg" className="flex-1" loading={isSubmitting}>
+              {isSubmitting
+                ? 'Processing...'
+                : `Pay $${totalPrice.toFixed(2)} & ${type}`}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
           </div>
-        )}
-
-        <div className="flex gap-3 justify-end pt-2">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                Processing...
-              </span>
-            ) : (
-              `Pay $${totalPrice.toFixed(2)} & ${registrationType === 'transfer' ? 'Transfer' : 'Register'}`
-            )}
-          </Button>
-        </div>
+        </Card>
       </form>
-    </Card>
+    </div>
   );
 }

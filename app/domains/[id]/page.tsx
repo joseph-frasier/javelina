@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
@@ -457,33 +458,27 @@ export default function DomainDetailPage() {
             <Input label="Address" value={contact.address1} onChange={(e) => updateContact('address1', e.target.value)} required className="md:col-span-2" />
             <Input label="Address Line 2 (optional)" value={contact.address2 || ''} onChange={(e) => updateContact('address2', e.target.value)} className="md:col-span-2" />
             <Input label="City" value={contact.city} onChange={(e) => updateContact('city', e.target.value)} required />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">State</label>
-              <select
-                value={contact.state}
-                onChange={(e) => updateContact('state', e.target.value)}
-                required
-                className="w-full rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                <option value="">Select state</option>
-                {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
+            <Dropdown
+              label="State"
+              value={contact.state}
+              onChange={(val) => updateContact('state', val)}
+              options={[
+                { value: '', label: 'Select state' },
+                ...US_STATES.map((s) => ({ value: s, label: s })),
+              ]}
+            />
             <Input label="ZIP / Postal Code" value={contact.postal_code} onChange={(e) => updateContact('postal_code', e.target.value)} required />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Country</label>
-              <select
-                value={contact.country}
-                onChange={(e) => updateContact('country', e.target.value)}
-                required
-                className="w-full rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="GB">United Kingdom</option>
-                <option value="AU">Australia</option>
-              </select>
-            </div>
+            <Dropdown
+              label="Country"
+              value={contact.country}
+              onChange={(val) => updateContact('country', val)}
+              options={[
+                { value: 'US', label: 'United States' },
+                { value: 'CA', label: 'Canada' },
+                { value: 'GB', label: 'United Kingdom' },
+                { value: 'AU', label: 'Australia' },
+              ]}
+            />
           </div>
 
           <div className="flex justify-end pt-2">
