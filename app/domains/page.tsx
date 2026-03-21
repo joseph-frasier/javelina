@@ -1,107 +1,77 @@
 'use client';
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
-import DomainSearchBar from '@/components/domains/DomainSearchBar';
-import DomainSearchResults from '@/components/domains/DomainSearchResults';
-import DomainCheckoutForm from '@/components/domains/DomainCheckoutForm';
-import { domainsApi } from '@/lib/api-client';
-import type { DomainSearchResult } from '@/types/domains';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import RegisterDomainsContent from '@/components/domains/RegisterDomainsContent';
+import TransferDomainContent from '@/components/domains/TransferDomainContent';
+import MyDomainsContent from '@/components/domains/MyDomainsContent';
 
-type View = 'search' | 'checkout';
+const TABS = [
+  { param: 'register', href: '/domains', label: 'Register Domains' },
+  { param: 'transfer', href: '/domains?tab=transfer', label: 'Transfer Domain' },
+  { param: 'my-domains', href: '/domains?tab=my-domains', label: 'My Domains' },
+] as const;
 
-export default function RegisterDomainsPage() {
-  const [view, setView] = useState<View>('search');
-
-  const [isSearching, setIsSearching] = useState(false);
-  const [lookupResults, setLookupResults] = useState<DomainSearchResult[]>([]);
-  const [suggestions, setSuggestions] = useState<DomainSearchResult[]>([]);
-  const [searchError, setSearchError] = useState<string | null>(null);
-
-  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
-  const [selectedPrice, setSelectedPrice] = useState<number>(0);
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('USD');
-
-  const handleSearch = async (query: string) => {
-    setIsSearching(true);
-    setSearchError(null);
-    setLookupResults([]);
-    setSuggestions([]);
-
-    try {
-      const result = await domainsApi.search(query);
-      setLookupResults(result.lookup || []);
-      setSuggestions(result.suggestions || []);
-    } catch (err: any) {
-      const message = err?.details || err?.message || 'Search failed';
-      setSearchError(typeof message === 'string' ? message : 'Search failed');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleRegister = (domain: string) => {
-    const result = lookupResults.find((r) => r.domain === domain)
-      || suggestions.find((r) => r.domain === domain);
-
-    setSelectedDomain(domain);
-    setSelectedPrice(result?.pricing?.price || 12.99);
-    setSelectedCurrency(result?.pricing?.currency || 'USD');
-    setView('checkout');
-  };
-
-  const handleCheckoutCancel = () => {
-    setView('search');
-    setSelectedDomain(null);
-  };
-
-  const handleCheckoutSuccess = () => {
-    setView('search');
-    setSelectedDomain(null);
-  };
+export default function DomainsPage() {
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab') || 'register';
+  const success = searchParams.get('success') === 'true';
+  const cancelled = searchParams.get('cancelled') === 'true';
 
   return (
     <div className="space-y-6">
-      {view === 'search' && (
-        <Card title="Find a domain">
-          <div className="space-y-6">
-            <DomainSearchBar onSearch={handleSearch} isLoading={isSearching} />
+      <div>
+        <h1 className="text-2xl font-bold text-orange-dark dark:text-white">
+          Domains
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Search, register, and manage your domain names.
+        </p>
+      </div>
 
-            {searchError && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-700 dark:text-red-400">{searchError}</p>
-              </div>
-            )}
-
-            {lookupResults.length > 0 && (
-              <DomainSearchResults
-                results={lookupResults}
-                title="Availability"
-                onRegister={handleRegister}
-              />
-            )}
-
-            {suggestions.length > 0 && (
-              <DomainSearchResults
-                results={suggestions}
-                title="Suggestions"
-                onRegister={handleRegister}
-              />
-            )}
-          </div>
-        </Card>
+      {success && (
+        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+            Payment successful! Your domain is being processed. This may take a few moments.
+          </p>
+        </div>
+      )}
+      {cancelled && (
+        <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+          <p className="text-sm text-yellow-700 dark:text-yellow-400 font-medium">
+            Checkout was cancelled. You can try again anytime.
+          </p>
+        </div>
       )}
 
-      {view === 'checkout' && selectedDomain && (
-        <DomainCheckoutForm
-          domain={selectedDomain}
-          registrationType="new"
-          price={selectedPrice}
-          currency={selectedCurrency}
-          onCancel={handleCheckoutCancel}
-          onSuccess={handleCheckoutSuccess}
-        />
-      )}
+      <nav className="flex gap-6 border-b border-gray-light dark:border-gray-700">
+        {TABS.map((t) => {
+          const isActive = tab === t.param;
+          return (
+            <Link
+              key={t.param}
+              href={t.href}
+              className={`pb-3 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'text-orange-dark dark:text-orange border-b-2 border-orange'
+                  : 'text-gray-slate dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100'
+              }`}
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className={tab === 'register' ? '' : 'hidden'}>
+        <RegisterDomainsContent />
+      </div>
+      <div className={tab === 'transfer' ? '' : 'hidden'}>
+        <TransferDomainContent />
+      </div>
+      <div className={tab === 'my-domains' ? '' : 'hidden'}>
+        <MyDomainsContent success={success} />
+      </div>
     </div>
   );
 }

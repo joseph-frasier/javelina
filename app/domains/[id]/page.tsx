@@ -287,7 +287,7 @@ export default function DomainDetailPage() {
     setUnlinkError(null);
     try {
       await domainsApi.unlink(domainId);
-      router.push('/domains/my-domains');
+      router.push('/domains?tab=my-domains');
     } catch (err: any) {
       setUnlinkError(extractErrorMessage(err, 'Failed to remove domain'));
       setIsUnlinking(false);
@@ -307,7 +307,7 @@ export default function DomainDetailPage() {
   if (loadError || !data) {
     return (
       <div className="space-y-4">
-        <Link href="/domains/my-domains" className="text-sm text-orange hover:text-orange-dark transition-colors">
+        <Link href="/domains?tab=my-domains" className="text-sm text-orange hover:text-orange-dark transition-colors">
           &larr; Back to My Domains
         </Link>
         <ErrorMessage message={loadError || 'Domain not found'} />
@@ -321,7 +321,7 @@ export default function DomainDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Link href="/domains/my-domains" className="text-sm text-orange hover:text-orange-dark transition-colors">
+        <Link href="/domains?tab=my-domains" className="text-sm text-orange hover:text-orange-dark transition-colors">
           &larr; Back to My Domains
         </Link>
         <div className="mt-3 flex items-center gap-4">
