@@ -1221,6 +1221,18 @@ import type {
   DomainContact,
 } from "@/types/domains";
 
+import type {
+  SslProductsListResponse,
+  SslCheckoutParams,
+  SslCheckoutResponse,
+  CertificatesListResponse,
+  CertificateDetailResponse,
+  CertificateDownloadResponse,
+  CSRValidationResponse,
+  ApproverInfo,
+  DvAuthMethod,
+} from "@/types/certificates";
+
 export const domainsApi = {
   search: (q: string, tlds?: string[]): Promise<DomainSearchResponse> => {
     const params = new URLSearchParams({ q });
@@ -1266,6 +1278,52 @@ export const domainsApi = {
 
   unlink: (id: string): Promise<{ success: boolean }> =>
     apiClient.delete(`/domains/${id}`),
+};
+
+// ============================================================
+// SSL CERTIFICATE API METHODS
+// ============================================================
+
+export const certificatesApi = {
+  listProducts: (): Promise<SslProductsListResponse> =>
+    apiClient.get("/certificates/products"),
+
+  getProductPricing: (product_type: string): Promise<{ pricing: { price: number; currency: string; product_type: string } }> =>
+    apiClient.get(`/certificates/products/pricing?product_type=${encodeURIComponent(product_type)}`),
+
+  getApprovers: (domain: string, product_type: string): Promise<{ approvers: ApproverInfo[] }> =>
+    apiClient.get(`/certificates/approvers?domain=${encodeURIComponent(domain)}&product_type=${encodeURIComponent(product_type)}`),
+
+  validateCSR: (csr: string, product_type: string): Promise<CSRValidationResponse> =>
+    apiClient.post("/certificates/validate-csr", { csr, product_type }),
+
+  checkout: (params: SslCheckoutParams): Promise<SslCheckoutResponse> =>
+    apiClient.post("/certificates/checkout", params),
+
+  list: (domain?: string): Promise<CertificatesListResponse> => {
+    const url = domain
+      ? `/certificates?domain=${encodeURIComponent(domain)}`
+      : "/certificates";
+    return apiClient.get(url);
+  },
+
+  getById: (id: string): Promise<CertificateDetailResponse> =>
+    apiClient.get(`/certificates/${id}`),
+
+  getStatus: (id: string): Promise<{ certificate: any; order_info: any }> =>
+    apiClient.get(`/certificates/${id}/status`),
+
+  download: (id: string): Promise<CertificateDownloadResponse> =>
+    apiClient.get(`/certificates/${id}/download`),
+
+  cancel: (id: string): Promise<{ success: boolean }> =>
+    apiClient.post(`/certificates/${id}/cancel`),
+
+  updateValidation: (id: string, dv_auth_method: DvAuthMethod, approver_email?: string): Promise<{ success: boolean; dv_auth_details?: Record<string, any> }> =>
+    apiClient.put(`/certificates/${id}/validation`, { dv_auth_method, approver_email }),
+
+  resendApproval: (id: string): Promise<{ success: boolean }> =>
+    apiClient.post(`/certificates/${id}/resend-approval`),
 };
 
 // Export everything
