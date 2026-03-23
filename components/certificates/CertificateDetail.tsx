@@ -189,7 +189,7 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
   if (loadError || !certificate) {
     return (
       <div className="space-y-4">
-        <Link href="/certificates" className="text-sm text-orange hover:text-orange/70 transition-colors">
+        <Link href="/domains?tab=ssl-certificates" className="text-sm text-orange hover:text-orange/70 transition-colors">
           &larr; Back to SSL Certificates
         </Link>
         <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -207,7 +207,7 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
     <div className="space-y-6">
       {/* Back link + header */}
       <div>
-        <Link href="/certificates" className="text-sm text-orange hover:text-orange/70 transition-colors">
+        <Link href="/domains?tab=ssl-certificates" className="text-sm text-orange hover:text-orange/70 transition-colors">
           &larr; Back to SSL Certificates
         </Link>
         <div className="mt-3 flex items-center gap-3 flex-wrap">
