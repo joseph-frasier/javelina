@@ -222,6 +222,16 @@ export default function CertificateCheckoutForm({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!csr.trim()) {
+      setError(
+        csrMode === 'generate'
+          ? 'Please generate your certificate key before continuing. Click the "Generate Certificate Key" button above.'
+          : 'Please paste your Certificate Signing Request (CSR) before continuing.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
