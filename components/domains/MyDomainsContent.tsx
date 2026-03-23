@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import DomainsList from '@/components/domains/DomainsList';
 import { domainsApi } from '@/lib/api-client';
+import { useToastStore } from '@/lib/toast-store';
 import type { Domain } from '@/types/domains';
 
 interface MyDomainsContentProps {
@@ -20,8 +21,8 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [linkDomain, setLinkDomain] = useState('');
   const [isLinking, setIsLinking] = useState(false);
-  const [linkError, setLinkError] = useState<string | null>(null);
-  const [linkSuccess, setLinkSuccess] = useState<string | null>(null);
+
+  const { addToast } = useToastStore();
 
   const loadDomains = useCallback(async () => {
     try {
@@ -51,18 +52,16 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
     if (!trimmed) return;
 
     setIsLinking(true);
-    setLinkError(null);
-    setLinkSuccess(null);
 
     try {
       await domainsApi.link(trimmed);
-      setLinkSuccess(`${trimmed} has been linked to your account.`);
+      addToast('success', `${trimmed} has been linked to your account.`);
       setLinkDomain('');
       setShowLinkForm(false);
       loadDomains();
     } catch (err: any) {
       const message = err?.details || err?.message || 'Failed to link domain';
-      setLinkError(typeof message === 'string' ? message : 'Failed to link domain');
+      addToast('error', typeof message === 'string' ? message : 'Failed to link domain');
     } finally {
       setIsLinking(false);
     }
@@ -85,11 +84,7 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setShowLinkForm(true);
-                setLinkError(null);
-                setLinkSuccess(null);
-              }}
+              onClick={() => setShowLinkForm(true)}
             >
               Link domain
             </Button>
@@ -127,7 +122,6 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
               size="md"
               onClick={() => {
                 setShowLinkForm(false);
-                setLinkError(null);
                 setLinkDomain('');
               }}
               disabled={isLinking}
@@ -136,19 +130,7 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
             </Button>
           </form>
         )}
-
-        {linkError && (
-          <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-            <p className="text-sm text-red-700 dark:text-red-400">{linkError}</p>
-          </div>
-        )}
       </div>
-
-      {linkSuccess && (
-        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-          <p className="text-sm text-green-700 dark:text-green-400 font-medium">{linkSuccess}</p>
-        </div>
-      )}
 
       <Card title="My Domains">
         <DomainsList domains={domains} isLoading={isLoading} />

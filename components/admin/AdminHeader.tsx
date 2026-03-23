@@ -236,7 +236,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                     </div>
                     <a
                       href={`mailto:${supportEmail}`}
-                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
+                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-lg transition-colors"
                     >
                       Send Email
                     </a>
@@ -287,7 +287,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-orange-dark transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2"
+                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-[#d46410] transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2"
               >
                 <span className="text-white font-bold text-base">
                   {adminInitial}

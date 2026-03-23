@@ -8,7 +8,7 @@ export function ChatBubble({ onClick }: ChatBubbleProps) {
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 bg-orange hover:bg-orange-dark rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-orange/50 z-50"
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 bg-orange hover:bg-[#d46410] rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-orange/50 z-50"
       aria-label="Open Jave AI Chat"
     >
       {/* Robot/AI Icon */}

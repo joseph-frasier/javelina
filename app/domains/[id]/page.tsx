@@ -475,7 +475,7 @@ export default function DomainDetailPage() {
             </div>
             <Link
               href={`/zone/${zone.id}`}
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-md transition-colors"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
             >
               Manage DNS records
             </Link>

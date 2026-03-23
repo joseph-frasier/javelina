@@ -620,7 +620,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                     <div className="mt-2 flex flex-wrap gap-2">
                       <button
                         onClick={handleCreateTicket}
-                        className="rounded-full border border-orange/30 bg-orange px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-dark"
+                        className="rounded-full border border-orange/30 bg-orange px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#d46410]"
                       >
                         Create Ticket
                       </button>
@@ -668,7 +668,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
           <button
             onClick={handleSend}
             disabled={loading || !inputValue.trim() || inputValue.length > MAX_MESSAGE_LENGTH || !isAuthenticated || !user}
-            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange transition-colors hover:bg-orange-dark focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-[#071633]"
+            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange transition-colors hover:bg-[#d46410] focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-[#071633]"
             aria-label="Send message"
           >
             <svg

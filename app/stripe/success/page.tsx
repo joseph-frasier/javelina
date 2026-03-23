@@ -103,7 +103,7 @@ function SuccessPageContent() {
             </p>
             <button
               onClick={() => router.push('/pricing')}
-              className="w-full bg-orange hover:bg-orange-dark text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              className="w-full bg-orange hover:bg-[#d46410] text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
               Back to Pricing
             </button>
@@ -144,7 +144,7 @@ function SuccessPageContent() {
             </p>
             <button
               onClick={() => router.push(redirectPath)}
-              className="w-full bg-orange hover:bg-orange-dark text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              className="w-full bg-orange hover:bg-[#d46410] text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
               Go to Dashboard Now
             </button>

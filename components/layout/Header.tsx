@@ -169,7 +169,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               </Link>
               <Link
                 href="/domains"
-                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-md transition-colors"
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
               >
                 Domains
               </Link>
@@ -265,7 +265,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                     </div>
                     <a
                       href={`mailto:${supportEmail}`}
-                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-lg transition-colors"
+                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-lg transition-colors"
                     >
                       Send Email
                     </a>
@@ -315,7 +315,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-orange-dark transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 overflow-hidden"
+                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-[#d46410] transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 overflow-hidden"
                 aria-label={`User menu for ${userName}`}
                 aria-expanded={isDropdownOpen}
                 aria-haspopup="true"
