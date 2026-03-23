@@ -18,7 +18,7 @@ function NewCertificateContent() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
-          href="/certificates"
+          href="/domains?tab=ssl-certificates"
           className="text-blue-electric hover:underline text-sm flex items-center gap-1"
         >
           <svg
