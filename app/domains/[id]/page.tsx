@@ -12,6 +12,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
 import type {
   Domain,
   DomainManagementResponse,
@@ -510,6 +511,9 @@ export default function DomainDetailPage() {
           </div>
         )}
       </Card>
+
+      {/* SSL Certificates */}
+      <DomainCertificatesSection domainName={domain.domain_name} />
 
       {/* Remove from Javelina (linked domains only) */}
       {domain.registration_type === 'linked' && (

@@ -173,6 +173,12 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               >
                 Domains
               </Link>
+              <Link
+                href="/certificates"
+                className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
+              >
+                Certificates
+              </Link>
             </nav>
             <div className="relative" ref={notificationRef}>
               <button 
