@@ -318,7 +318,7 @@ export default function DomainDetailPage() {
       {/* Domain Settings */}
       <Card title="Domain Settings">
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-gray-light dark:border-gray-700">
+          <div className="flex items-center justify-between py-3">
             <div>
               <p className="text-sm font-medium text-orange-dark dark:text-white">Auto-Renew</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
