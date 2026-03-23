@@ -116,35 +116,40 @@ export default function CertificateCheckoutForm({
     return phone;
   };
 
-  // Fetch approvers when email auth method is selected and domain is available
+  // Fetch approvers when email auth method is selected and domain looks valid
+  // Debounced to avoid firing on every keystroke
   useEffect(() => {
-    if (dvAuthMethod !== 'email' || !domain.trim()) {
+    const trimmed = domain.trim();
+    const looksLikeDomain = trimmed.includes('.') && trimmed.length >= 4 && !trimmed.endsWith('.');
+
+    if (dvAuthMethod !== 'email' || !looksLikeDomain) {
       setApprovers([]);
       setApproverEmail('');
       setApproversError(null);
       return;
     }
 
-    const fetchApprovers = async () => {
+    const timer = setTimeout(async () => {
       setIsLoadingApprovers(true);
       setApproversError(null);
       setApprovers([]);
       setApproverEmail('');
       try {
-        const data = await certificatesApi.getApprovers(domain.trim(), selectedProduct.product_type);
+        const data = await certificatesApi.getApprovers(trimmed, selectedProduct.product_type);
         setApprovers(data.approvers);
         if (data.approvers.length > 0) {
           setApproverEmail(data.approvers[0].email);
         }
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch approver emails';
-        setApproversError(message);
+      } catch {
+        // Fail silently — fall back to manual email input
+        setApproversError(null);
+        setApprovers([]);
       } finally {
         setIsLoadingApprovers(false);
       }
-    };
+    }, 800);
 
-    fetchApprovers();
+    return () => clearTimeout(timer);
   }, [dvAuthMethod, domain, selectedProduct.product_type]);
 
   const handleValidateCSR = async () => {
@@ -282,6 +287,105 @@ export default function CertificateCheckoutForm({
               onChange={(e) => setDomain(e.target.value)}
               required
               helperText={selectedProduct.wildcard ? 'For wildcard certs, enter the base domain (e.g. example.com). The wildcard (*.example.com) will be covered.' : undefined}
+            />
+          </div>
+
+          {/* Contact — moved above CSR so org/country are filled before generation */}
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Admin Contact</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <Input
+              label="First Name"
+              value={contact.first_name}
+              onChange={(e) => updateContact('first_name', e.target.value)}
+              required
+            />
+            <Input
+              label="Last Name"
+              value={contact.last_name}
+              onChange={(e) => updateContact('last_name', e.target.value)}
+              required
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={contact.email}
+              onChange={(e) => updateContact('email', e.target.value)}
+              required
+            />
+            <Input
+              label="Phone"
+              placeholder="(555) 123-4567"
+              value={contact.phone}
+              onChange={(e) => updateContact('phone', e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <Input
+              label="Organization"
+              value={contact.org_name}
+              onChange={(e) => updateContact('org_name', e.target.value)}
+              required
+            />
+            <Input
+              label="Title"
+              helperText="Optional"
+              value={contact.title || ''}
+              onChange={(e) => updateContact('title', e.target.value)}
+            />
+          </div>
+
+          {/* Address */}
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Address</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <div className="md:col-span-2">
+              <Input
+                label="Address"
+                value={contact.address1}
+                onChange={(e) => updateContact('address1', e.target.value)}
+                helperText="Include suite, unit, etc. if needed"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Input
+                label="Address Line 2"
+                helperText="Optional"
+                value={contact.address2 || ''}
+                onChange={(e) => updateContact('address2', e.target.value)}
+              />
+            </div>
+            <Input
+              label="City"
+              value={contact.city}
+              onChange={(e) => updateContact('city', e.target.value)}
+              required
+            />
+            <Dropdown
+              label="State"
+              value={contact.state}
+              onChange={(val) => updateContact('state', val)}
+              options={[
+                { value: '', label: 'Select state' },
+                ...US_STATES.map((s) => ({ value: s, label: s })),
+              ]}
+            />
+            <Input
+              label="ZIP / Postal Code"
+              value={contact.postal_code}
+              onChange={(e) => updateContact('postal_code', e.target.value)}
+              required
+            />
+            <Dropdown
+              label="Country"
+              value={contact.country}
+              onChange={(val) => updateContact('country', val)}
+              options={[
+                { value: 'US', label: 'United States' },
+                { value: 'CA', label: 'Canada' },
+                { value: 'GB', label: 'United Kingdom' },
+                { value: 'AU', label: 'Australia' },
+              ]}
             />
           </div>
 
@@ -454,10 +558,7 @@ export default function CertificateCheckoutForm({
               {isLoadingApprovers && (
                 <p className="text-sm text-gray-slate dark:text-gray-400">Loading approver addresses...</p>
               )}
-              {approversError && (
-                <p className="text-sm text-red-600 dark:text-red-400">{approversError}</p>
-              )}
-              {!isLoadingApprovers && !approversError && approvers.length > 0 && (
+              {!isLoadingApprovers && approvers.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-orange-dark mb-2">
                     Approver Email
@@ -479,7 +580,7 @@ export default function CertificateCheckoutForm({
                   </p>
                 </div>
               )}
-              {!isLoadingApprovers && !approversError && approvers.length === 0 && domain.trim() && (
+              {!isLoadingApprovers && approvers.length === 0 && domain.trim() && (
                 <div>
                   <Input
                     label="Approver Email"
@@ -508,105 +609,6 @@ export default function CertificateCheckoutForm({
               value={serverType}
               onChange={setServerType}
               options={SERVER_TYPES}
-            />
-          </div>
-
-          {/* Contact */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Admin Contact</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <Input
-              label="First Name"
-              value={contact.first_name}
-              onChange={(e) => updateContact('first_name', e.target.value)}
-              required
-            />
-            <Input
-              label="Last Name"
-              value={contact.last_name}
-              onChange={(e) => updateContact('last_name', e.target.value)}
-              required
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={contact.email}
-              onChange={(e) => updateContact('email', e.target.value)}
-              required
-            />
-            <Input
-              label="Phone"
-              placeholder="(555) 123-4567"
-              value={contact.phone}
-              onChange={(e) => updateContact('phone', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-            <Input
-              label="Organization"
-              value={contact.org_name}
-              onChange={(e) => updateContact('org_name', e.target.value)}
-              required
-            />
-            <Input
-              label="Title"
-              helperText="Optional"
-              value={contact.title || ''}
-              onChange={(e) => updateContact('title', e.target.value)}
-            />
-          </div>
-
-          {/* Address */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Address</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-            <div className="md:col-span-2">
-              <Input
-                label="Address"
-                value={contact.address1}
-                onChange={(e) => updateContact('address1', e.target.value)}
-                helperText="Include suite, unit, etc. if needed"
-                required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Input
-                label="Address Line 2"
-                helperText="Optional"
-                value={contact.address2 || ''}
-                onChange={(e) => updateContact('address2', e.target.value)}
-              />
-            </div>
-            <Input
-              label="City"
-              value={contact.city}
-              onChange={(e) => updateContact('city', e.target.value)}
-              required
-            />
-            <Dropdown
-              label="State"
-              value={contact.state}
-              onChange={(val) => updateContact('state', val)}
-              options={[
-                { value: '', label: 'Select state' },
-                ...US_STATES.map((s) => ({ value: s, label: s })),
-              ]}
-            />
-            <Input
-              label="ZIP / Postal Code"
-              value={contact.postal_code}
-              onChange={(e) => updateContact('postal_code', e.target.value)}
-              required
-            />
-            <Dropdown
-              label="Country"
-              value={contact.country}
-              onChange={(val) => updateContact('country', val)}
-              options={[
-                { value: 'US', label: 'United States' },
-                { value: 'CA', label: 'Canada' },
-                { value: 'GB', label: 'United Kingdom' },
-                { value: 'AU', label: 'Australia' },
-              ]}
             />
           </div>
 
