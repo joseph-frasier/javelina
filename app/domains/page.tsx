@@ -44,7 +44,7 @@ export default function DomainsPage() {
         </div>
       )}
 
-      <nav className="flex gap-6 border-b border-gray-light dark:border-gray-700">
+      <nav className="inline-flex gap-6">
         {TABS.map((t) => {
           const isActive = tab === t.param;
           return (
@@ -53,7 +53,7 @@ export default function DomainsPage() {
               href={t.href}
               className={`pb-3 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'text-orange-dark dark:text-orange border-b-2 border-orange'
+                  ? 'text-orange'
                   : 'text-gray-slate dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100'
               }`}
             >

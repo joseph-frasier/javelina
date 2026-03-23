@@ -54,15 +54,15 @@ export default function DomainSearchResults({
         {results.map((result) => (
           <div
             key={result.domain}
-            className="flex items-center justify-between p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md transition-shadow"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md transition-shadow"
           >
-            <div className="flex items-center gap-4">
-              <span className="font-medium text-orange-dark dark:text-white">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="font-medium text-orange-dark dark:text-white truncate">
                 {result.domain}
               </span>
               <StatusBadge status={result.status} />
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between sm:justify-end gap-4">
               {result.pricing && (
                 <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                   ${result.pricing.price.toFixed(2)}/yr
