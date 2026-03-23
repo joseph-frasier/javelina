@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
+import { useToastStore } from '@/lib/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import type {
@@ -88,15 +90,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function SuccessMessage({ message }: { message: string | null }) {
-  if (!message) return null;
-  return (
-    <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-      <p className="text-sm text-green-700 dark:text-green-400">{message}</p>
-    </div>
-  );
-}
-
 function ErrorMessage({ message }: { message: string | null }) {
   if (!message) return null;
   return (
@@ -110,6 +103,7 @@ export default function DomainDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthStore();
+  const { addToast } = useToastStore();
   const domainId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -121,14 +115,10 @@ export default function DomainDetailPage() {
   const [isTogglingAutoRenew, setIsTogglingAutoRenew] = useState(false);
   const [isTogglingLock, setIsTogglingLock] = useState(false);
   const [domainLocked, setDomainLocked] = useState(false);
-  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
-  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   // Nameservers state
   const [nameservers, setNameservers] = useState<string[]>(['', '']);
   const [isSavingNs, setIsSavingNs] = useState(false);
-  const [nsMessage, setNsMessage] = useState<string | null>(null);
-  const [nsError, setNsError] = useState<string | null>(null);
 
   // Contact state
   const [contact, setContact] = useState<DomainContact>({
@@ -136,8 +126,6 @@ export default function DomainDetailPage() {
     address1: '', address2: '', city: '', state: '', postal_code: '', country: 'US',
   });
   const [isSavingContact, setIsSavingContact] = useState(false);
-  const [contactMessage, setContactMessage] = useState<string | null>(null);
-  const [contactError, setContactError] = useState<string | null>(null);
 
   // Zone modal state
   const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
@@ -147,7 +135,6 @@ export default function DomainDetailPage() {
   // Unlink state
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
-  const [unlinkError, setUnlinkError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -194,15 +181,13 @@ export default function DomainDetailPage() {
 
   const handleToggleAutoRenew = async () => {
     setIsTogglingAutoRenew(true);
-    setSettingsMessage(null);
-    setSettingsError(null);
     try {
       const newVal = !autoRenew;
       await domainsApi.setAutoRenew(domainId, newVal);
       setAutoRenew(newVal);
-      setSettingsMessage(`Auto-renew ${newVal ? 'enabled' : 'disabled'}.`);
+      addToast('success', `Auto-renew ${newVal ? 'enabled' : 'disabled'}.`);
     } catch (err: any) {
-      setSettingsError(extractErrorMessage(err, 'Failed to update auto-renew'));
+      addToast('error', extractErrorMessage(err, 'Failed to update auto-renew'));
     } finally {
       setIsTogglingAutoRenew(false);
     }
@@ -210,15 +195,13 @@ export default function DomainDetailPage() {
 
   const handleToggleLock = async () => {
     setIsTogglingLock(true);
-    setSettingsMessage(null);
-    setSettingsError(null);
     try {
       const newVal = !domainLocked;
       await domainsApi.setLock(domainId, newVal);
       setDomainLocked(newVal);
-      setSettingsMessage(`Domain ${newVal ? 'locked' : 'unlocked'}.`);
+      addToast('success', `Domain ${newVal ? 'locked' : 'unlocked'}.`);
     } catch (err: any) {
-      setSettingsError(extractErrorMessage(err, 'Failed to update domain lock'));
+      addToast('error', extractErrorMessage(err, 'Failed to update domain lock'));
     } finally {
       setIsTogglingLock(false);
     }
@@ -227,16 +210,14 @@ export default function DomainDetailPage() {
   const handleSaveNameservers = async (e: FormEvent) => {
     e.preventDefault();
     const filtered = nameservers.filter(ns => ns.trim());
-    if (filtered.length === 0) { setNsError('At least one nameserver is required.'); return; }
+    if (filtered.length === 0) { addToast('error', 'At least one nameserver is required.'); return; }
 
     setIsSavingNs(true);
-    setNsMessage(null);
-    setNsError(null);
     try {
       await domainsApi.updateNameservers(domainId, filtered);
-      setNsMessage('Nameservers updated successfully.');
+      addToast('success', 'Nameservers updated successfully.');
     } catch (err: any) {
-      setNsError(extractErrorMessage(err, 'Failed to update nameservers'));
+      addToast('error', extractErrorMessage(err, 'Failed to update nameservers'));
     } finally {
       setIsSavingNs(false);
     }
@@ -245,13 +226,11 @@ export default function DomainDetailPage() {
   const handleSaveContact = async (e: FormEvent) => {
     e.preventDefault();
     setIsSavingContact(true);
-    setContactMessage(null);
-    setContactError(null);
     try {
       await domainsApi.updateContacts(domainId, contact);
-      setContactMessage('Contact information updated successfully.');
+      addToast('success', 'Contact information updated successfully.');
     } catch (err: any) {
-      setContactError(extractErrorMessage(err, 'Failed to update contacts'));
+      addToast('error', extractErrorMessage(err, 'Failed to update contacts'));
     } finally {
       setIsSavingContact(false);
     }
@@ -284,12 +263,11 @@ export default function DomainDetailPage() {
 
   const handleUnlink = async () => {
     setIsUnlinking(true);
-    setUnlinkError(null);
     try {
       await domainsApi.unlink(domainId);
-      router.push('/domains/my-domains');
+      router.push('/domains?tab=my-domains');
     } catch (err: any) {
-      setUnlinkError(extractErrorMessage(err, 'Failed to remove domain'));
+      addToast('error', extractErrorMessage(err, 'Failed to remove domain'));
       setIsUnlinking(false);
     }
   };
@@ -307,7 +285,7 @@ export default function DomainDetailPage() {
   if (loadError || !data) {
     return (
       <div className="space-y-4">
-        <Link href="/domains/my-domains" className="text-sm text-orange hover:text-orange-dark transition-colors">
+        <Link href="/domains?tab=my-domains" className="text-sm text-orange hover:text-orange/70 transition-colors">
           &larr; Back to My Domains
         </Link>
         <ErrorMessage message={loadError || 'Domain not found'} />
@@ -321,7 +299,7 @@ export default function DomainDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Link href="/domains/my-domains" className="text-sm text-orange hover:text-orange-dark transition-colors">
+        <Link href="/domains?tab=my-domains" className="text-sm text-orange hover:text-orange/70 transition-colors">
           &larr; Back to My Domains
         </Link>
         <div className="mt-3 flex items-center gap-4">
@@ -340,7 +318,7 @@ export default function DomainDetailPage() {
       {/* Domain Settings */}
       <Card title="Domain Settings">
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-gray-light dark:border-gray-700">
+          <div className="flex items-center justify-between py-3">
             <div>
               <p className="text-sm font-medium text-orange-dark dark:text-white">Auto-Renew</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -380,8 +358,6 @@ export default function DomainDetailPage() {
             </button>
           </div>
 
-          <SuccessMessage message={settingsMessage} />
-          <ErrorMessage message={settingsError} />
         </div>
       </Card>
 
@@ -440,8 +416,6 @@ export default function DomainDetailPage() {
             </Button>
           </div>
 
-          <SuccessMessage message={nsMessage} />
-          <ErrorMessage message={nsError} />
         </form>
       </Card>
 
@@ -457,33 +431,27 @@ export default function DomainDetailPage() {
             <Input label="Address" value={contact.address1} onChange={(e) => updateContact('address1', e.target.value)} required className="md:col-span-2" />
             <Input label="Address Line 2 (optional)" value={contact.address2 || ''} onChange={(e) => updateContact('address2', e.target.value)} className="md:col-span-2" />
             <Input label="City" value={contact.city} onChange={(e) => updateContact('city', e.target.value)} required />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">State</label>
-              <select
-                value={contact.state}
-                onChange={(e) => updateContact('state', e.target.value)}
-                required
-                className="w-full rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                <option value="">Select state</option>
-                {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
+            <Dropdown
+              label="State"
+              value={contact.state}
+              onChange={(val) => updateContact('state', val)}
+              options={[
+                { value: '', label: 'Select state' },
+                ...US_STATES.map((s) => ({ value: s, label: s })),
+              ]}
+            />
             <Input label="ZIP / Postal Code" value={contact.postal_code} onChange={(e) => updateContact('postal_code', e.target.value)} required />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Country</label>
-              <select
-                value={contact.country}
-                onChange={(e) => updateContact('country', e.target.value)}
-                required
-                className="w-full rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="GB">United Kingdom</option>
-                <option value="AU">Australia</option>
-              </select>
-            </div>
+            <Dropdown
+              label="Country"
+              value={contact.country}
+              onChange={(val) => updateContact('country', val)}
+              options={[
+                { value: 'US', label: 'United States' },
+                { value: 'CA', label: 'Canada' },
+                { value: 'GB', label: 'United Kingdom' },
+                { value: 'AU', label: 'Australia' },
+              ]}
+            />
           </div>
 
           <div className="flex justify-end pt-2">
@@ -492,8 +460,6 @@ export default function DomainDetailPage() {
             </Button>
           </div>
 
-          <SuccessMessage message={contactMessage} />
-          <ErrorMessage message={contactError} />
         </form>
       </Card>
 
@@ -555,12 +521,6 @@ export default function DomainDetailPage() {
             your Javelina account&mdash;your domain registration with OpenSRS is not affected and you
             can re-link it at any time.
           </p>
-
-          {unlinkError && (
-            <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-700 dark:text-red-400">{unlinkError}</p>
-            </div>
-          )}
 
           <button
             onClick={() => setShowUnlinkConfirm(true)}

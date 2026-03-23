@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, FormEvent } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -9,12 +8,13 @@ import DomainsList from '@/components/domains/DomainsList';
 import { domainsApi } from '@/lib/api-client';
 import type { Domain } from '@/types/domains';
 
-export default function MyDomainsPage() {
-  const searchParams = useSearchParams();
+interface MyDomainsContentProps {
+  success?: boolean;
+}
+
+export default function MyDomainsContent({ success }: MyDomainsContentProps) {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const success = searchParams.get('success');
 
   // Link domain state
   const [showLinkForm, setShowLinkForm] = useState(false);
@@ -40,7 +40,7 @@ export default function MyDomainsPage() {
   }, [loadDomains]);
 
   useEffect(() => {
-    if (success === 'true') {
+    if (success) {
       loadDomains();
     }
   }, [success, loadDomains]);

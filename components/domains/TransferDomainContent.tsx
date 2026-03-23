@@ -10,7 +10,7 @@ import type { DomainTransferCheckResponse } from '@/types/domains';
 
 type View = 'check' | 'checkout';
 
-export default function TransferDomainPage() {
+export default function TransferDomainContent() {
   const [view, setView] = useState<View>('check');
   const [domain, setDomain] = useState('');
   const [isChecking, setIsChecking] = useState(false);

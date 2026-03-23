@@ -247,8 +247,122 @@ export function ChangePlanModal({
           </div>
         ) : (
           <>
+              {/* Monthly plans */}
+              {plans.some(p => !isLifetimePlan(p.code)) && (
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Monthly Plans</p>
+              )}
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-                {plans.map((plan) => {
+                {plans.filter(p => !isLifetimePlan(p.code)).map((plan) => {
+                  const isCurrent = plan.code === currentPlanCode;
+                  const isSelected = selectedPlanCode === plan.code;
+                  const isValidUpgradeOption = isValidUpgrade(currentPlanCode, plan.code);
+                  const planIsLifetime = isLifetimePlan(plan.code);
+                  const isDisabled = isCurrent || !isValidUpgradeOption;
+                  const actionLabel = isCurrent
+                    ? 'Current Plan'
+                    : !isValidUpgradeOption
+                    ? 'Unavailable'
+                    : isSelected
+                    ? 'Selected'
+                    : 'Review Plan';
+
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative flex flex-col rounded-[22px] border p-6 transition-all ${
+                        isCurrent
+                          ? 'border-orange bg-orange/10 dark:border-orange dark:bg-white/[0.06]'
+                          : isSelected
+                          ? 'border-orange bg-orange/10 shadow-[0_0_0_1px_rgba(239,114,21,0.12)] dark:border-orange dark:bg-white/[0.06]'
+                          : isDisabled
+                          ? 'border-gray-light bg-gray-50/70 opacity-65 dark:border-white/10 dark:bg-white/[0.03]'
+                          : 'border-gray-light bg-white hover:border-orange/40 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-orange/40 dark:hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <div className="mb-5 flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          {isCurrent && (
+                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-white">
+                              Current
+                            </span>
+                          )}
+                          {plan.popular && !isCurrent && (
+                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange/15 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-orange">
+                              Popular
+                            </span>
+                          )}
+                          {planIsLifetime && (
+                            <span className="inline-flex items-center justify-center rounded-full border border-blue-electric/20 bg-blue-electric/10 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-blue-electric">
+                              Lifetime
+                            </span>
+                          )}
+                        </div>
+                        {!isCurrent && !isValidUpgradeOption && (
+                          <span className="inline-flex items-center justify-center rounded-full border border-gray-light bg-white px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-gray-slate dark:border-white/10 dark:bg-white/[0.05] dark:text-white/55">
+                            Not available
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-2xl font-bold text-orange mb-2">{plan.name}</h3>
+
+                      <div className="mb-4">
+                        <div className="text-4xl font-black text-orange">
+                          ${plan.monthly?.amount.toFixed(2)}
+                        </div>
+                        <div className="mt-1 text-sm uppercase tracking-[0.22em] text-gray-slate dark:text-white/45">
+                          {planIsLifetime ? 'One-time' : 'Per month'}
+                        </div>
+                      </div>
+
+                      <p className="mb-5 text-sm leading-6 text-gray-slate dark:text-white/60">
+                        {plan.description}
+                      </p>
+
+                      <ul className="mb-6 flex-grow space-y-3">
+                        {plan.features.slice(0, 5).map((feature, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-sm text-gray-slate dark:text-white/75">{feature.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-auto">
+                        {isDisabled && !isCurrent && (
+                          <p className="mb-3 text-xs leading-5 text-gray-slate dark:text-white/45">
+                            This plan cannot be selected from your current tier.
+                          </p>
+                        )}
+                        <button
+                          onClick={() => !isDisabled && handleSelectPlan(plan.code)}
+                          disabled={isSubmitting || calculatingPrice || isDisabled}
+                          className={`w-full rounded-md border-2 px-4 py-3 font-semibold transition-colors ${
+                            isCurrent
+                              ? 'border-orange text-orange cursor-not-allowed opacity-70'
+                              : isDisabled
+                              ? 'border-gray-light text-gray-slate cursor-not-allowed dark:border-white/10 dark:text-white/35'
+                              : isSelected
+                              ? 'border-orange bg-orange text-white'
+                              : 'border-orange text-orange hover:bg-orange hover:text-white'
+                          }`}
+                        >
+                          {actionLabel}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Lifetime plans */}
+              {plans.some(p => isLifetimePlan(p.code)) && (
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Lifetime Plans</p>
+              )}
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                {plans.filter(p => isLifetimePlan(p.code)).map((plan) => {
                   const isCurrent = plan.code === currentPlanCode;
                   const isSelected = selectedPlanCode === plan.code;
                   const isValidUpgradeOption = isValidUpgrade(currentPlanCode, plan.code);
