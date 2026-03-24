@@ -252,7 +252,7 @@ export default function OrganizationBillingPage() {
               </div>
               <button
                 onClick={() => setShowEditBillingModal(true)}
-                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-orange-dark transition-colors"
+                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-[#d46410] transition-colors"
               >
                 Edit Billing Info
               </button>

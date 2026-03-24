@@ -318,8 +318,8 @@ export default function DomainDetailPage() {
       {/* Domain Settings */}
       <Card title="Domain Settings">
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3">
-            <div>
+          <div className="flex items-center justify-between gap-4 py-3">
+            <div className="min-w-0">
               <p className="text-sm font-medium text-orange-dark dark:text-white">Auto-Renew</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Automatically renew this domain before it expires.
@@ -328,7 +328,7 @@ export default function DomainDetailPage() {
             <button
               onClick={handleToggleAutoRenew}
               disabled={isTogglingAutoRenew}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                 autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
               } ${isTogglingAutoRenew ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
@@ -338,8 +338,8 @@ export default function DomainDetailPage() {
             </button>
           </div>
 
-          <div className="flex items-center justify-between py-3">
-            <div>
+          <div className="flex items-center justify-between gap-4 py-3">
+            <div className="min-w-0">
               <p className="text-sm font-medium text-orange-dark dark:text-white">Domain Lock</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Prevent unauthorized transfers of this domain. Changes may take a few minutes to propagate.
@@ -348,7 +348,7 @@ export default function DomainDetailPage() {
             <button
               onClick={handleToggleLock}
               disabled={isTogglingLock}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                 domainLocked ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
               } ${isTogglingLock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
@@ -407,7 +407,7 @@ export default function DomainDetailPage() {
             <button
               type="button"
               onClick={addNameserverField}
-              className="text-sm text-orange hover:text-orange-dark transition-colors"
+              className="text-sm text-orange hover:text-[#d46410] transition-colors"
             >
               + Add nameserver
             </button>
@@ -475,7 +475,7 @@ export default function DomainDetailPage() {
             </div>
             <Link
               href={`/zone/${zone.id}`}
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-md transition-colors"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
             >
               Manage DNS records
             </Link>
