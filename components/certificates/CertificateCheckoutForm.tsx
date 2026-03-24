@@ -5,8 +5,9 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
-import { certificatesApi } from '@/lib/api-client';
+import { certificatesApi, domainsApi } from '@/lib/api-client';
 import { generateCSR, downloadTextFile } from '@/lib/csr-generator';
+import type { Domain } from '@/types/domains';
 import type {
   SslProduct,
   SslCheckoutParams,
@@ -78,6 +79,9 @@ export default function CertificateCheckoutForm({
   onBack,
 }: CertificateCheckoutFormProps) {
   const [domain, setDomain] = useState(initialDomain);
+  const [userDomains, setUserDomains] = useState<Domain[]>([]);
+  const [showDomainDropdown, setShowDomainDropdown] = useState(false);
+  const domainInputRef = useRef<HTMLDivElement>(null);
   const [csr, setCsr] = useState('');
   const [serverType, setServerType] = useState('apache');
   const [dvAuthMethod, setDvAuthMethod] = useState<DvAuthMethod>('email');
@@ -115,6 +119,32 @@ export default function CertificateCheckoutForm({
     if (digits.length === 11 && digits.startsWith('1')) return `+1.${digits.slice(1)}`;
     return phone;
   };
+
+  // Fetch user's existing domains for the selector
+  useEffect(() => {
+    domainsApi.list()
+      .then((data) => {
+        const active = (data.domains || []).filter((d: Domain) => d.status === 'active');
+        setUserDomains(active);
+      })
+      .catch(() => setUserDomains([]));
+  }, []);
+
+  // Close domain dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (domainInputRef.current && !domainInputRef.current.contains(e.target as Node)) {
+        setShowDomainDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Filter domains based on current input
+  const filteredDomains = userDomains.filter((d) =>
+    d.domain_name.toLowerCase().includes(domain.toLowerCase())
+  );
 
   // Fetch approvers when email auth method is selected and domain looks valid
   // Debounced to avoid firing on every keystroke
@@ -289,15 +319,39 @@ export default function CertificateCheckoutForm({
 
           {/* Domain */}
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Domain</p>
-          <div className="mb-5">
+          <div className="mb-5 relative" ref={domainInputRef}>
             <Input
               label="Domain Name"
               placeholder="example.com"
               value={domain}
-              onChange={(e) => setDomain(e.target.value)}
+              onChange={(e) => {
+                setDomain(e.target.value);
+                setShowDomainDropdown(true);
+              }}
+              onFocus={() => setShowDomainDropdown(true)}
               required
               helperText={selectedProduct.wildcard ? 'For wildcard certs, enter the base domain (e.g. example.com). The wildcard (*.example.com) will be covered.' : undefined}
             />
+            {showDomainDropdown && filteredDomains.length > 0 && (
+              <div className="absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <p className="px-3 py-1.5 text-xs font-medium text-gray-slate dark:text-gray-400 uppercase tracking-wider border-b border-gray-light dark:border-gray-700">
+                  Your domains
+                </p>
+                {filteredDomains.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm text-orange-dark dark:text-gray-100 hover:bg-orange/5 dark:hover:bg-orange/10 transition-colors"
+                    onClick={() => {
+                      setDomain(d.domain_name);
+                      setShowDomainDropdown(false);
+                    }}
+                  >
+                    {d.domain_name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Contact — moved above CSR so org/country are filled before generation */}
