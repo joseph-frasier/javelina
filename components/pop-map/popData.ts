@@ -13,7 +13,7 @@ export interface PoP {
 export const POPS: PoP[] = [
   // North America
   { id: 'nyc', city: 'New York (NJ)', country: 'United States', region: 'NA', lat: 40.7128, lon: -74.006 },
-  { id: 'atl', city: 'Atlanta', country: 'United States', region: 'NA', lat: 33.749, lon: -84.388, comingSoon: true },
+  { id: 'atl', city: 'Atlanta', country: 'United States', region: 'NA', lat: 33.749, lon: -84.388 },
   { id: 'mia', city: 'Miami', country: 'United States', region: 'NA', lat: 25.7617, lon: -80.1918 },
   { id: 'ord', city: 'Chicago', country: 'United States', region: 'NA', lat: 41.8781, lon: -87.6298 },
   { id: 'dfw', city: 'Dallas', country: 'United States', region: 'NA', lat: 32.7767, lon: -96.797 },
@@ -21,12 +21,12 @@ export const POPS: PoP[] = [
   { id: 'sfo', city: 'Silicon Valley', country: 'United States', region: 'NA', lat: 37.3861, lon: -122.0839 },
   { id: 'sea', city: 'Seattle', country: 'United States', region: 'NA', lat: 47.6062, lon: -122.3321 },
   { id: 'yyz', city: 'Toronto', country: 'Canada', region: 'NA', lat: 43.6532, lon: -79.3832 },
-  { id: 'mex', city: 'Mexico City', country: 'Mexico', region: 'NA', lat: 19.4326, lon: -99.1332, comingSoon: true },
+  { id: 'mex', city: 'Mexico City', country: 'Mexico', region: 'NA', lat: 19.4326, lon: -99.1332 },
   { id: 'hnl', city: 'Honolulu', country: 'United States', region: 'NA', lat: 21.3069, lon: -157.8583, comingSoon: true },
 
   // South America
   { id: 'gru', city: 'São Paulo', country: 'Brazil', region: 'SA', lat: -23.5505, lon: -46.6333 },
-  { id: 'scl', city: 'Santiago', country: 'Chile', region: 'SA', lat: -33.4489, lon: -70.6693, comingSoon: true },
+  { id: 'scl', city: 'Santiago', country: 'Chile', region: 'SA', lat: -33.4489, lon: -70.6693 },
 
   // Europe
   { id: 'lhr', city: 'London', country: 'United Kingdom', region: 'EU', lat: 51.5074, lon: -0.1278 },

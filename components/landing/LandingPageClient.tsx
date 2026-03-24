@@ -184,7 +184,7 @@ export default function LandingPageClient() {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
-                    30 PoPs across 6 continents and 19 countries
+                    31 PoPs across 6 continents and 19 countries
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
@@ -279,13 +279,13 @@ export default function LandingPageClient() {
                   <div key={setIdx} className="flex gap-2 sm:gap-3 items-center">
                     {[
                       'Anycast routing',
-                      '30 global PoPs',
+                      '31 global PoPs',
                       'Low-latency resolution',
                       'BGP path selection',
                       'Zero-downtime failover',
                       'DDoS resilience',
                       '6 continents',
-                      'Single IP, 30 nodes',
+                      'Single IP, 31 nodes',
                       'Local DNS resolution',
                       'No TTL-dependent delays',
                     ].map((feature) => (
@@ -326,7 +326,7 @@ export default function LandingPageClient() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Low-Latency Global Resolution</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  Every DNS query is answered by the nearest node. With 30 PoPs across 6 continents, most users resolve from the nearest node with no backhauling or cross-continent round trips.
+                  Every DNS query is answered by the nearest node. With 31 PoPs across 6 continents, most users resolve from the nearest node with no backhauling or cross-continent round trips.
                 </p>
               </div>
 
@@ -352,7 +352,7 @@ export default function LandingPageClient() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Architectural DDoS Resilience</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  Attack traffic is distributed across 30 nodes by default. There is no single point of concentration to overwhelm. Resilience is built into the network topology, not bolted on.
+                  Attack traffic is distributed across 31 nodes by default. There is no single point of concentration to overwhelm. Resilience is built into the network topology, not bolted on.
                 </p>
               </div>
 
@@ -365,7 +365,7 @@ export default function LandingPageClient() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">Single IP, Global Reach</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
-                  One IP address announced from 30 locations. BGP handles routing to the optimal node automatically. Simplified configuration with no geographic load-balancing complexity on your end.
+                  One IP address announced from 31 locations. BGP handles routing to the optimal node automatically. Simplified configuration with no geographic load-balancing complexity on your end.
                 </p>
               </div>
             </div>
@@ -437,13 +437,13 @@ export default function LandingPageClient() {
                     Global Anycast <span className="text-orange-400">Network</span>
                   </h2>
                   <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
-                    A single IP address announced from 30 PoPs across 6 continents and 19 countries. BGP routes every query to the nearest node for low-latency resolution and automatic failover.
+                    A single IP address announced from 31 PoPs across 6 continents and 19 countries. BGP routes every query to the nearest node for low-latency resolution and automatic failover.
                   </p>
 
                   {/* Inline stat chips */}
                   <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
                     {[
-                      { label: '30 PoPs', sub: '6 continents' },
+                      { label: '31 PoPs', sub: '6 continents' },
                       { label: 'Low latency', sub: 'resolution' },
                       { label: 'Automatic', sub: 'failover' },
                     ].map((chip) => (
@@ -498,14 +498,14 @@ export default function LandingPageClient() {
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
                         </span>
-                        <span className="text-xs text-green-400 font-medium">30 active</span>
+                        <span className="text-xs text-green-400 font-medium">31 active</span>
                       </div>
                     </div>
                     {/* PoP region rows */}
                     {[
-                      { region: 'North America', count: 11 },
-                      { region: 'Europe', count: 7 },
-                      { region: 'Asia Pacific', count: 8 },
+                      { region: 'North America', count: 10 },
+                      { region: 'Europe', count: 8 },
+                      { region: 'Asia Pacific', count: 9 },
                       { region: 'South America', count: 2 },
                       { region: 'Middle East & Africa', count: 2 },
                     ].map((r) => (

@@ -49,6 +49,12 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      { source: '/domains/transfer', destination: '/domains?tab=transfer', permanent: true },
+      { source: '/domains/my-domains', destination: '/domains?tab=my-domains', permanent: true },
+    ];
+  },
   // Proxy API calls through same origin to avoid Safari ITP third-party cookie blocking.
   // Login/signup full-page navigations still go directly to Express.
   async rewrites() {

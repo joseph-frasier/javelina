@@ -1204,5 +1204,69 @@ export const searchApi = {
   },
 };
 
+// ============================================================
+// DOMAIN REGISTRATION API METHODS
+// ============================================================
+
+import type {
+  DomainSearchResponse,
+  DomainPricingResponse,
+  DomainCheckoutParams,
+  DomainCheckoutResponse,
+  DomainTransferCheckResponse,
+  DomainTransferStatusResponse,
+  DomainsListResponse,
+  DomainDetailResponse,
+  DomainManagementResponse,
+  DomainContact,
+} from "@/types/domains";
+
+export const domainsApi = {
+  search: (q: string, tlds?: string[]): Promise<DomainSearchResponse> => {
+    const params = new URLSearchParams({ q });
+    if (tlds?.length) params.set("tlds", tlds.join(","));
+    return apiClient.get(`/domains/search?${params.toString()}`);
+  },
+
+  getPricing: (domain: string): Promise<DomainPricingResponse> =>
+    apiClient.get(`/domains/pricing?domain=${encodeURIComponent(domain)}`),
+
+  checkout: (params: DomainCheckoutParams): Promise<DomainCheckoutResponse> =>
+    apiClient.post("/domains/checkout", params),
+
+  checkTransfer: (domain: string): Promise<DomainTransferCheckResponse> =>
+    apiClient.get(`/domains/transfer/check?domain=${encodeURIComponent(domain)}`),
+
+  getTransferStatus: (id: string): Promise<DomainTransferStatusResponse> =>
+    apiClient.get(`/domains/transfer/${id}/status`),
+
+  list: (): Promise<DomainsListResponse> =>
+    apiClient.get("/domains"),
+
+  getById: (id: string): Promise<DomainDetailResponse> =>
+    apiClient.get(`/domains/${id}`),
+
+  link: (domain: string): Promise<DomainDetailResponse> =>
+    apiClient.post("/domains/link", { domain }),
+
+  getManagement: (id: string): Promise<DomainManagementResponse> =>
+    apiClient.get(`/domains/${id}/manage`),
+
+  updateContacts: (id: string, contact: DomainContact): Promise<{ success: boolean }> =>
+    apiClient.put(`/domains/${id}/contacts`, { contact }),
+
+  updateNameservers: (id: string, nameservers: string[]): Promise<{ success: boolean }> =>
+    apiClient.put(`/domains/${id}/nameservers`, { nameservers }),
+
+  setAutoRenew: (id: string, auto_renew: boolean): Promise<{ success: boolean; auto_renew: boolean }> =>
+    apiClient.put(`/domains/${id}/auto-renew`, { auto_renew }),
+
+  setLock: (id: string, locked: boolean): Promise<{ success: boolean; locked: boolean }> =>
+    apiClient.put(`/domains/${id}/lock`, { locked }),
+
+  unlink: (id: string): Promise<{ success: boolean }> =>
+    apiClient.delete(`/domains/${id}`),
+};
+
 // Export everything
 export default apiClient;

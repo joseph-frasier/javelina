@@ -98,7 +98,7 @@ export default function InfrastructurePage() {
             Global Anycast <span className="text-orange-400">DNS Network</span>
           </h1>
           <p className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-light">
-            Javelina DNS runs an Anycast network where a single IP address is announced from 30 Points of Presence across 6 continents and 19 countries. BGP routes each query to the nearest available node for local resolution and automatic routing-layer failover.
+            Javelina DNS runs an Anycast network where a single IP address is announced from 31 Points of Presence across 6 continents and 19 countries. BGP routes each query to the nearest available node for local resolution and automatic routing-layer failover.
           </p>
         </div>
       </section>
@@ -121,7 +121,7 @@ export default function InfrastructurePage() {
               </div>
               <h3 className="text-base font-bold text-white mb-2">BGP Path Selection</h3>
               <p className="text-sm text-gray-400 leading-relaxed">
-                A single IP address is announced from all 30 locations via BGP. The internet&apos;s routing infrastructure automatically selects the shortest network path.
+                A single IP address is announced from all 31 locations via BGP. The internet&apos;s routing infrastructure automatically selects the shortest network path.
               </p>
             </div>
             <div className="group rounded-2xl p-6 bg-white/5 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
@@ -166,7 +166,7 @@ export default function InfrastructurePage() {
             Ready to use the <span className="text-orange-400">network</span>?
           </h2>
           <p className="text-gray-400 mb-8 font-light">
-            Every zone is served from all 30 PoPs with Anycast routing, automatic failover, and low-latency resolution with no configuration required.
+            Every zone is served from all 31 PoPs with Anycast routing, automatic failover, and low-latency resolution with no configuration required.
           </p>
           <button onClick={signup} className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-8 py-4 text-base font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group">
             Get started
