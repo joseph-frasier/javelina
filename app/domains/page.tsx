@@ -31,14 +31,14 @@ export default function DomainsPage() {
         </p>
       </div>
 
-      {success && (
+      {success && tab !== 'ssl-certificates' && (
         <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-            Payment successful! Your order is being processed. This may take a few moments.
+            Payment successful! Your domain is being processed. This may take a few moments.
           </p>
         </div>
       )}
-      {cancelled && (
+      {cancelled && tab !== 'ssl-certificates' && (
         <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
           <p className="text-sm text-yellow-700 dark:text-yellow-400 font-medium">
             Checkout was cancelled. You can try again anytime.
