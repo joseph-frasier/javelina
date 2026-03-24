@@ -139,3 +139,8 @@ export interface DomainManagementResponse {
     organization_name: string;
   } | null;
 }
+
+export interface DomainRenewalResponse {
+  checkout_url: string;
+  session_id: string;
+}

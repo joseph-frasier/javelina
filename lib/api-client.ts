@@ -1219,6 +1219,7 @@ import type {
   DomainDetailResponse,
   DomainManagementResponse,
   DomainContact,
+  DomainRenewalResponse,
 } from "@/types/domains";
 
 import type {
@@ -1278,6 +1279,9 @@ export const domainsApi = {
 
   unlink: (id: string): Promise<{ success: boolean }> =>
     apiClient.delete(`/domains/${id}`),
+
+  renew: (id: string, years: number): Promise<DomainRenewalResponse> =>
+    apiClient.post(`/domains/${id}/renew`, { years }),
 };
 
 // ============================================================
