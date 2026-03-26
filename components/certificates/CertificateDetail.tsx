@@ -27,8 +27,15 @@ const CANCELLABLE_STATUSES: CertificateStatus[] = [
   'awaiting_approval',
 ];
 
+const PRODUCT_DISPLAY_NAMES: Record<string, string> = {
+  ssl123: 'SSL Lite — DigiCert',
+  comodo_premiumssl_wildcard: 'SSL Wildcard MDDV — Sectigo',
+  comodo_instantssl: 'Instant SSL Premium — Sectigo',
+  sslwebserver_ev: 'SSL Webserver EV — Thawte',
+};
+
 function formatProductType(productType: string): string {
-  return productType
+  return PRODUCT_DISPLAY_NAMES[productType] || productType
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
