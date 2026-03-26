@@ -133,7 +133,7 @@ export default function CertificateProductSelector({ onSelect }: CertificateProd
                 : 'px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-slate dark:text-gray-400 hover:text-orange-dark dark:hover:text-gray-200 -mb-px transition-colors'
             }
           >
-            {level.toUpperCase()}
+            {LEVEL_LABELS[level]}
           </button>
         ))}
       </div>
@@ -202,6 +202,12 @@ export default function CertificateProductSelector({ onSelect }: CertificateProd
           </button>
         ))}
       </div>
+
+      {/* Additional products note */}
+      <p className="text-xs text-gray-slate dark:text-gray-400 mt-6 text-center">
+        Need a different certificate? Additional SSL products are available upon request.{' '}
+        <a href="mailto:support@javelina.cc" className="text-orange hover:underline">Contact us</a>
+      </p>
     </div>
   );
 }
