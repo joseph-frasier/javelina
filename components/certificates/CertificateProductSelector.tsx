@@ -183,10 +183,16 @@ export default function CertificateProductSelector({ onSelect }: CertificateProd
 
             {/* Price */}
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-black text-orange">
-                ${product.price.toFixed(2)}
-              </span>
-              <span className="text-xs text-gray-slate dark:text-gray-400">/yr</span>
+              {product.price === 0 ? (
+                <span className="text-xl font-black text-green-500">Free</span>
+              ) : (
+                <>
+                  <span className="text-xl font-black text-orange">
+                    ${product.price.toFixed(2)}
+                  </span>
+                  <span className="text-xs text-gray-slate dark:text-gray-400">/yr</span>
+                </>
+              )}
             </div>
 
             {/* CTA hint */}

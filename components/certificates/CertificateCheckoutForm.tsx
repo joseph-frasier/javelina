@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { certificatesApi, domainsApi } from '@/lib/api-client';
@@ -13,7 +12,6 @@ import type {
   SslCheckoutParams,
   CertificateContact,
   DvAuthMethod,
-  ApproverInfo,
 } from '@/types/certificates';
 
 interface CertificateCheckoutFormProps {
@@ -21,39 +19,6 @@ interface CertificateCheckoutFormProps {
   initialDomain?: string;
   onBack: () => void;
 }
-
-const US_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
-  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
-  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
-  'VA','WA','WV','WI','WY','DC',
-];
-
-const SERVER_TYPES = [
-  { value: 'apache', label: 'Apache' },
-  { value: 'nginx', label: 'Nginx' },
-  { value: 'iis', label: 'IIS (Windows)' },
-  { value: 'exchange', label: 'Microsoft Exchange' },
-  { value: 'other', label: 'Other' },
-];
-
-const DV_AUTH_OPTIONS: { value: DvAuthMethod; label: string; description: string }[] = [
-  {
-    value: 'email',
-    label: 'Email',
-    description: 'Receive a verification email at an admin address for your domain (e.g. admin@yourdomain.com).',
-  },
-  {
-    value: 'dns',
-    label: 'DNS',
-    description: 'Add a CNAME or TXT record to your domain\'s DNS. Best if you have direct DNS access.',
-  },
-  {
-    value: 'file',
-    label: 'File',
-    description: 'Upload a small verification file to your web server at a specific URL path.',
-  },
-];
 
 const emptyContact = (): CertificateContact => ({
   first_name: '',
@@ -70,9 +35,6 @@ const emptyContact = (): CertificateContact => ({
   title: '',
 });
 
-const selectClasses =
-  'w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors';
-
 export default function CertificateCheckoutForm({
   selectedProduct,
   initialDomain = '',
@@ -80,15 +42,9 @@ export default function CertificateCheckoutForm({
 }: CertificateCheckoutFormProps) {
   const [domain, setDomain] = useState(initialDomain);
   const [userDomains, setUserDomains] = useState<Domain[]>([]);
-  const [showDomainDropdown, setShowDomainDropdown] = useState(false);
-  const domainInputRef = useRef<HTMLDivElement>(null);
   const [csr, setCsr] = useState('');
-  const [serverType, setServerType] = useState('apache');
-  const [dvAuthMethod, setDvAuthMethod] = useState<DvAuthMethod>('email');
-  const [approverEmail, setApproverEmail] = useState('');
-  const [approvers, setApprovers] = useState<ApproverInfo[]>([]);
-  const [isLoadingApprovers, setIsLoadingApprovers] = useState(false);
-  const [approversError, setApproversError] = useState<string | null>(null);
+  const serverType = 'apache';
+  const dvAuthMethod: DvAuthMethod = 'dns';
   const [contact, setContact] = useState<CertificateContact>(emptyContact());
 
   const [csrMode, setCsrMode] = useState<'generate' | 'manual'>('generate');
@@ -109,10 +65,6 @@ export default function CertificateCheckoutForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateContact = (field: keyof CertificateContact, value: string) => {
-    setContact((prev) => ({ ...prev, [field]: value }));
-  };
-
   const formatPhone = (phone: string): string => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length === 10) return `+1.${digits}`;
@@ -130,57 +82,6 @@ export default function CertificateCheckoutForm({
       .catch(() => setUserDomains([]));
   }, []);
 
-  // Close domain dropdown on outside click
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (domainInputRef.current && !domainInputRef.current.contains(e.target as Node)) {
-        setShowDomainDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-  // Filter domains based on current input
-  const filteredDomains = userDomains.filter((d) =>
-    d.domain_name.toLowerCase().includes(domain.toLowerCase())
-  );
-
-  // Fetch approvers when email auth method is selected and domain looks valid
-  // Debounced to avoid firing on every keystroke
-  useEffect(() => {
-    const trimmed = domain.trim();
-    const looksLikeDomain = trimmed.includes('.') && trimmed.length >= 4 && !trimmed.endsWith('.');
-
-    if (dvAuthMethod !== 'email' || !looksLikeDomain) {
-      setApprovers([]);
-      setApproverEmail('');
-      setApproversError(null);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsLoadingApprovers(true);
-      setApproversError(null);
-      setApprovers([]);
-      setApproverEmail('');
-      try {
-        const data = await certificatesApi.getApprovers(trimmed, selectedProduct.product_type);
-        setApprovers(data.approvers);
-        if (data.approvers.length > 0) {
-          setApproverEmail(data.approvers[0].email);
-        }
-      } catch {
-        // Fail silently — fall back to manual email input
-        setApproversError(null);
-        setApprovers([]);
-      } finally {
-        setIsLoadingApprovers(false);
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [dvAuthMethod, domain, selectedProduct.product_type]);
 
   const handleValidateCSR = async () => {
     if (!csr.trim()) return;
@@ -200,15 +101,7 @@ export default function CertificateCheckoutForm({
 
   const handleGenerateCSR = async () => {
     if (!domain.trim()) {
-      setError('Please enter a domain name first.');
-      return;
-    }
-    if (!contact.org_name.trim()) {
-      setError('Please fill in your organization name before generating a certificate.');
-      return;
-    }
-    if (!contact.country) {
-      setError('Please select your country before generating a certificate.');
+      setError('Please select a domain first.');
       return;
     }
 
@@ -220,8 +113,8 @@ export default function CertificateCheckoutForm({
     try {
       const result = await generateCSR({
         commonName: domain.trim(),
-        organization: contact.org_name.trim(),
-        country: contact.country,
+        organization: contact.org_name.trim() || domain.trim(),
+        country: contact.country || 'US',
         state: contact.state || undefined,
         city: contact.city || undefined,
       });
@@ -274,7 +167,6 @@ export default function CertificateCheckoutForm({
           phone: formatPhone(contact.phone),
         },
         dv_auth_method: dvAuthMethod,
-        approver_email: dvAuthMethod === 'email' ? approverEmail : undefined,
         server_type: serverType,
         reg_type: 'new',
       };
@@ -308,150 +200,103 @@ export default function CertificateCheckoutForm({
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                ${selectedProduct.price.toFixed(2)}/yr
-              </span>
-              <span className="font-black text-orange text-lg">
-                ${selectedProduct.price.toFixed(2)}
-              </span>
+              {selectedProduct.price === 0 ? (
+                <span className="font-black text-green-500 text-lg">Free</span>
+              ) : (
+                <>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    ${selectedProduct.price.toFixed(2)}/yr
+                  </span>
+                  <span className="font-black text-orange text-lg">
+                    ${selectedProduct.price.toFixed(2)}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Domain */}
+          {/* Domain Selection */}
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Domain</p>
-          <div className="mb-5 relative" ref={domainInputRef}>
-            <Input
-              label="Domain Name"
-              placeholder="example.com"
-              value={domain}
-              onChange={(e) => {
-                setDomain(e.target.value);
-                setShowDomainDropdown(true);
-              }}
-              onFocus={() => setShowDomainDropdown(true)}
-              required
-              helperText={selectedProduct.wildcard ? 'For wildcard certs, enter the base domain (e.g. example.com). The wildcard (*.example.com) will be covered.' : undefined}
-            />
-            {showDomainDropdown && filteredDomains.length > 0 && (
-              <div className="absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                <p className="px-3 py-1.5 text-xs font-medium text-gray-slate dark:text-gray-400 uppercase tracking-wider border-b border-gray-light dark:border-gray-700">
-                  Your domains
-                </p>
-                {filteredDomains.map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm text-orange-dark dark:text-gray-100 hover:bg-orange/5 dark:hover:bg-orange/10 transition-colors"
-                    onClick={() => {
-                      setDomain(d.domain_name);
-                      setShowDomainDropdown(false);
-                    }}
-                  >
-                    {d.domain_name}
-                  </button>
-                ))}
-              </div>
+          <div className="mb-5">
+            {userDomains.length > 0 ? (
+              <>
+                <Dropdown
+                  label="Select a domain"
+                  value={domain}
+                  onChange={(val) => {
+                    setDomain(val);
+                    const selected = userDomains.find((d) => d.domain_name === val);
+                    if (selected?.contact_info) {
+                      const ci = selected.contact_info;
+                      setContact({
+                        first_name: ci.first_name || '',
+                        last_name: ci.last_name || '',
+                        org_name: ci.org_name || '',
+                        email: ci.email || '',
+                        phone: ci.phone || '',
+                        title: ci.title || '',
+                        address1: ci.address1 || '',
+                        address2: ci.address2 || '',
+                        city: ci.city || '',
+                        state: ci.state || '',
+                        postal_code: ci.postal_code || '',
+                        country: ci.country || 'US',
+                      });
+                    }
+                    // Reset CSR when domain changes
+                    setCsr('');
+                    setCsrGenerated(false);
+                    setCsrResult(null);
+                    setCsrError(null);
+                  }}
+                  options={[
+                    { value: '', label: 'Choose a domain...' },
+                    ...userDomains.map((d) => ({ value: d.domain_name, label: d.domain_name })),
+                  ]}
+                />
+                {selectedProduct.wildcard && domain && (
+                  <p className="text-xs text-gray-slate dark:text-gray-400 mt-1.5">
+                    The wildcard (*.{domain}) will be covered by this certificate.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-slate dark:text-gray-400 p-3 rounded-lg border border-gray-light dark:border-gray-600">
+                No active domains found. <a href="/domains" className="text-orange hover:underline">Register a domain</a> first.
+              </p>
             )}
           </div>
 
-          {/* Contact — moved above CSR so org/country are filled before generation */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Admin Contact</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <Input
-              label="First Name"
-              value={contact.first_name}
-              onChange={(e) => updateContact('first_name', e.target.value)}
-              required
-            />
-            <Input
-              label="Last Name"
-              value={contact.last_name}
-              onChange={(e) => updateContact('last_name', e.target.value)}
-              required
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={contact.email}
-              onChange={(e) => updateContact('email', e.target.value)}
-              required
-            />
-            <Input
-              label="Phone"
-              placeholder="(555) 123-4567"
-              value={contact.phone}
-              onChange={(e) => updateContact('phone', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-            <Input
-              label="Organization"
-              value={contact.org_name}
-              onChange={(e) => updateContact('org_name', e.target.value)}
-              required
-            />
-            <Input
-              label="Title"
-              helperText="Optional"
-              value={contact.title || ''}
-              onChange={(e) => updateContact('title', e.target.value)}
-            />
-          </div>
-
-          {/* Address */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Address</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-            <div className="md:col-span-2">
-              <Input
-                label="Address"
-                value={contact.address1}
-                onChange={(e) => updateContact('address1', e.target.value)}
-                helperText="Include suite, unit, etc. if needed"
-                required
-              />
+          {/* Contact summary (auto-filled from domain) */}
+          {domain && contact.first_name && (
+            <div className="mb-5">
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Contact Info</p>
+              <div className="p-3 rounded-lg border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-slate dark:text-gray-400 text-xs">Name</span>
+                    <p className="text-orange-dark dark:text-white">{contact.first_name} {contact.last_name}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-slate dark:text-gray-400 text-xs">Email</span>
+                    <p className="text-orange-dark dark:text-white">{contact.email}</p>
+                  </div>
+                  {contact.org_name && (
+                    <div>
+                      <span className="text-gray-slate dark:text-gray-400 text-xs">Organization</span>
+                      <p className="text-orange-dark dark:text-white">{contact.org_name}</p>
+                    </div>
+                  )}
+                  {contact.city && (
+                    <div>
+                      <span className="text-gray-slate dark:text-gray-400 text-xs">Location</span>
+                      <p className="text-orange-dark dark:text-white">{contact.city}{contact.state ? `, ${contact.state}` : ''} {contact.country}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="md:col-span-2">
-              <Input
-                label="Address Line 2"
-                helperText="Optional"
-                value={contact.address2 || ''}
-                onChange={(e) => updateContact('address2', e.target.value)}
-              />
-            </div>
-            <Input
-              label="City"
-              value={contact.city}
-              onChange={(e) => updateContact('city', e.target.value)}
-              required
-            />
-            <Dropdown
-              label="State"
-              value={contact.state}
-              onChange={(val) => updateContact('state', val)}
-              options={[
-                { value: '', label: 'Select state' },
-                ...US_STATES.map((s) => ({ value: s, label: s })),
-              ]}
-            />
-            <Input
-              label="ZIP / Postal Code"
-              value={contact.postal_code}
-              onChange={(e) => updateContact('postal_code', e.target.value)}
-              required
-            />
-            <Dropdown
-              label="Country"
-              value={contact.country}
-              onChange={(val) => updateContact('country', val)}
-              options={[
-                { value: 'US', label: 'United States' },
-                { value: 'CA', label: 'Canada' },
-                { value: 'GB', label: 'United Kingdom' },
-                { value: 'AU', label: 'Australia' },
-              ]}
-            />
-          </div>
+          )}
 
           {/* CSR */}
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Security Certificate</p>
@@ -482,7 +327,7 @@ export default function CertificateCheckoutForm({
                     We&apos;ll generate a secure certificate key pair for you. Your private key will be automatically downloaded and never sent to our servers.
                   </p>
                   <p className="text-xs text-gray-slate/70 dark:text-gray-500 mb-4">
-                    Fill in the domain, organization, and country fields above first.
+                    Select a domain above first.
                   </p>
                   <Button
                     type="button"
@@ -490,7 +335,7 @@ export default function CertificateCheckoutForm({
                     size="md"
                     onClick={handleGenerateCSR}
                     loading={isGeneratingCsr}
-                    disabled={!domain.trim() || !contact.org_name.trim() || !contact.country}
+                    disabled={!domain.trim()}
                   >
                     {isGeneratingCsr ? 'Generating...' : 'Generate Certificate Key'}
                   </Button>
@@ -592,88 +437,13 @@ export default function CertificateCheckoutForm({
             </div>
           )}
 
-          {/* DV Auth Method */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Domain Validation Method</p>
-          <div className="space-y-2 mb-5">
-            {DV_AUTH_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className={`flex gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${dvAuthMethod === option.value ? 'border-orange bg-orange/5 dark:bg-orange/10' : 'border-gray-light dark:border-gray-600 hover:border-orange/50'}`}
-              >
-                <input
-                  type="radio"
-                  name="dv_auth_method"
-                  value={option.value}
-                  checked={dvAuthMethod === option.value}
-                  onChange={() => setDvAuthMethod(option.value)}
-                  className="mt-0.5 accent-orange shrink-0"
-                />
-                <div>
-                  <p className="text-sm font-medium text-orange-dark dark:text-gray-100">{option.label}</p>
-                  <p className="text-xs text-gray-slate dark:text-gray-400 mt-0.5">{option.description}</p>
-                </div>
-              </label>
-            ))}
-          </div>
-
-          {/* Approver email selector (email method only) */}
-          {dvAuthMethod === 'email' && (
-            <div className="mb-5">
-              {isLoadingApprovers && (
-                <p className="text-sm text-gray-slate dark:text-gray-400">Loading approver addresses...</p>
-              )}
-              {!isLoadingApprovers && approvers.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-orange-dark mb-2">
-                    Approver Email
-                  </label>
-                  <select
-                    value={approverEmail}
-                    onChange={(e) => setApproverEmail(e.target.value)}
-                    required
-                    className={selectClasses}
-                  >
-                    {approvers.map((a) => (
-                      <option key={a.email} value={a.email}>
-                        {a.email}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1.5 text-xs text-gray-slate dark:text-gray-400">
-                    A verification email will be sent to this address.
-                  </p>
-                </div>
-              )}
-              {!isLoadingApprovers && approvers.length === 0 && domain.trim() && (
-                <div>
-                  <Input
-                    label="Approver Email"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={approverEmail}
-                    onChange={(e) => setApproverEmail(e.target.value)}
-                    required
-                    helperText="Enter the admin email address for your domain."
-                  />
-                </div>
-              )}
-              {!domain.trim() && (
-                <p className="text-sm text-gray-slate dark:text-gray-400">
-                  Enter a domain name above to see available approver addresses.
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Server Type */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Server Type</p>
-          <div className="mb-5">
-            <Dropdown
-              label="Web Server"
-              value={serverType}
-              onChange={setServerType}
-              options={SERVER_TYPES}
-            />
+          {/* Domain Validation Info */}
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Domain Validation</p>
+          <div className="p-3 rounded-lg border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 mb-5">
+            <p className="text-sm font-medium text-orange-dark dark:text-gray-100">DNS Validation</p>
+            <p className="text-xs text-gray-slate dark:text-gray-400 mt-1">
+              To prove you own this domain, you&apos;ll add a DNS record after checkout. The exact record details (type, name, and value) will be shown on your certificate page with copy buttons — just paste them into your DNS zone.
+            </p>
           </div>
 
           {/* Error */}
@@ -686,7 +456,7 @@ export default function CertificateCheckoutForm({
           {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
             <Button type="submit" variant="primary" size="lg" className="flex-1" loading={isSubmitting}>
-              {isSubmitting ? 'Processing...' : `Pay $${selectedProduct.price.toFixed(2)} & Continue`}
+              {isSubmitting ? 'Processing...' : selectedProduct.price === 0 ? 'Get Certificate' : `Pay $${selectedProduct.price.toFixed(2)} & Continue`}
             </Button>
             <Button
               type="button"
