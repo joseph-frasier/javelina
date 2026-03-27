@@ -6,16 +6,20 @@ import RegisterDomainsContent from '@/components/domains/RegisterDomainsContent'
 import TransferDomainContent from '@/components/domains/TransferDomainContent';
 import MyDomainsContent from '@/components/domains/MyDomainsContent';
 import CertificatesList from '@/components/certificates/CertificatesList';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
-const TABS = [
+const BASE_TABS = [
   { param: 'register', href: '/domains', label: 'Register Domains' },
   { param: 'transfer', href: '/domains?tab=transfer', label: 'Transfer Domain' },
   { param: 'my-domains', href: '/domains?tab=my-domains', label: 'My Domains' },
-  { param: 'ssl-certificates', href: '/domains?tab=ssl-certificates', label: 'SSL Certificates' },
 ] as const;
+
+const SSL_TAB = { param: 'ssl-certificates', href: '/domains?tab=ssl-certificates', label: 'SSL Certificates' } as const;
 
 export default function DomainsPage() {
   const searchParams = useSearchParams();
+  const { hideSslCertificates } = useFeatureFlags();
+  const TABS = hideSslCertificates ? BASE_TABS : [...BASE_TABS, SSL_TAB];
   const tab = searchParams.get('tab') || 'register';
   const success = searchParams.get('success') === 'true';
   const cancelled = searchParams.get('cancelled') === 'true';
@@ -74,7 +78,7 @@ export default function DomainsPage() {
       <div className={tab === 'my-domains' ? '' : 'hidden'}>
         <MyDomainsContent success={success} />
       </div>
-      <div className={tab === 'ssl-certificates' ? '' : 'hidden'}>
+      <div className={!hideSslCertificates && tab === 'ssl-certificates' ? '' : 'hidden'}>
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Purchase and manage SSL/TLS certificates for your domains.
