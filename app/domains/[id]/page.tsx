@@ -13,6 +13,7 @@ import { useToastStore } from '@/lib/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import type {
   Domain,
   DomainManagementResponse,
@@ -107,6 +108,7 @@ export default function DomainDetailPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
+  const { hideSslCertificates } = useFeatureFlags();
   const domainId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -630,7 +632,7 @@ export default function DomainDetailPage() {
       </Card>
 
       {/* SSL Certificates */}
-      <DomainCertificatesSection domainName={domain.domain_name} />
+      {!hideSslCertificates && <DomainCertificatesSection domainName={domain.domain_name} />}
 
       {/* Remove from Javelina (linked domains only) */}
       {domain.registration_type === 'linked' && (

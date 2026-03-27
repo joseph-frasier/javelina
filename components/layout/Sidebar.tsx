@@ -13,6 +13,7 @@ import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { organizationsApi } from '@/lib/api-client';
 import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
@@ -27,6 +28,7 @@ export function Sidebar({
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { expandedOrgs, toggleOrg, selectAndExpand } = useHierarchyStore();
+  const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Refs for GSAP animations
@@ -310,17 +312,34 @@ export function Sidebar({
               </svg>
               <span className="font-medium">Analytics</span>
             </Link>
-            <Link
-              href="/domains"
-              onClick={onMobileMenuClose}
-              className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-gray-slate dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700"
-              aria-label="Go to domains page"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-              </svg>
-              <span className="font-medium">Domains</span>
-            </Link>
+            {showDomainsIntegration && (
+              <Link
+                href="/domains"
+                onClick={onMobileMenuClose}
+                className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-gray-slate dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700"
+                aria-label="Go to domains page"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                </svg>
+                <span className="font-medium">Domains</span>
+              </Link>
+            )}
+            {showOpenSrsStorefront && process.env.NEXT_PUBLIC_OPENSRS_STOREFRONT_URL && (
+              <a
+                href={process.env.NEXT_PUBLIC_OPENSRS_STOREFRONT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onMobileMenuClose}
+                className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-gray-slate dark:text-gray-300 hover:bg-gray-light dark:hover:bg-gray-700"
+                aria-label="Purchase a domain"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                </svg>
+                <span className="font-medium">Purchase Domain</span>
+              </a>
+            )}
           </div>
 
           {/* Organizations Section */}
