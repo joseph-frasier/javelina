@@ -130,6 +130,7 @@ export interface DomainManagementResponse {
     registered_date?: string;
     nameservers?: string[];
     contact_info?: Record<string, any>;
+    locked?: boolean;
   };
   zone: {
     id: string;
@@ -137,4 +138,9 @@ export interface DomainManagementResponse {
     organization_id: string;
     organization_name: string;
   } | null;
+}
+
+export interface DomainRenewalResponse {
+  checkout_url: string;
+  session_id: string;
 }

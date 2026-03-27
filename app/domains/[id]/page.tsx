@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, FormEvent } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -12,10 +12,13 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import type {
   Domain,
   DomainManagementResponse,
   DomainContact,
+  DomainPricing,
 } from '@/types/domains';
 
 const US_STATES = [
@@ -102,8 +105,10 @@ function ErrorMessage({ message }: { message: string | null }) {
 export default function DomainDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
+  const { hideSslCertificates } = useFeatureFlags();
   const domainId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -136,6 +141,15 @@ export default function DomainDetailPage() {
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
 
+  // Renewal state
+  const [renewalPricing, setRenewalPricing] = useState<DomainPricing | null>(null);
+  const [selectedYears, setSelectedYears] = useState(1);
+  const [isRenewing, setIsRenewing] = useState(false);
+
+  // URL param banners
+  const renewedParam = searchParams.get('renewed');
+  const renewalCancelledParam = searchParams.get('renewal_cancelled');
+
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -144,6 +158,7 @@ export default function DomainDetailPage() {
       setData(result);
 
       setAutoRenew(result.domain.auto_renew || false);
+      setDomainLocked(result.live?.locked ?? false);
 
       // Populate nameservers from live data or DB
       const ns = result.live?.nameservers || result.domain.nameservers?.map(n => n.name) || [];
@@ -178,6 +193,15 @@ export default function DomainDetailPage() {
   }, [domainId]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!data?.domain) return;
+    const domain = data.domain;
+    if (domain.status !== 'active' || !domain.expires_at) return;
+    domainsApi.getPricing(domain.domain_name)
+      .then((res) => setRenewalPricing(res.pricing))
+      .catch(() => { /* non-critical, silently ignore */ });
+  }, [data]);
 
   const handleToggleAutoRenew = async () => {
     setIsTogglingAutoRenew(true);
@@ -272,6 +296,17 @@ export default function DomainDetailPage() {
     }
   };
 
+  const handleRenew = async () => {
+    setIsRenewing(true);
+    try {
+      const { checkout_url } = await domainsApi.renew(domainId, selectedYears);
+      window.location.href = checkout_url;
+    } catch (err: any) {
+      addToast('error', extractErrorMessage(err, 'Failed to start renewal checkout'));
+      setIsRenewing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -295,8 +330,29 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  const renewalTotalPrice =
+    renewalPricing && renewalPricing.price > 0
+      ? (renewalPricing.price * selectedYears).toFixed(2)
+      : null;
+
   return (
     <div className="space-y-6">
+      {/* Success / cancel banners from renewal redirect */}
+      {renewedParam === 'true' && (
+        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <p className="text-sm font-medium text-green-700 dark:text-green-400">
+            Domain renewed successfully! Your new expiration date has been updated.
+          </p>
+        </div>
+      )}
+      {renewalCancelledParam === 'true' && (
+        <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+          <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+            Renewal cancelled. Your domain has not been renewed.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <Link href="/domains?tab=my-domains" className="text-sm text-orange hover:text-orange/70 transition-colors">
@@ -360,6 +416,71 @@ export default function DomainDetailPage() {
 
         </div>
       </Card>
+
+      {/* Renewal */}
+      {domain.status === 'active' && domain.expires_at && (
+        <Card title="Renewal">
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              RENEWAL
+            </p>
+
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Current expiration</p>
+              <p className="text-sm font-medium text-orange-dark dark:text-white">
+                {new Date(domain.expires_at).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label htmlFor="renewal-years" className="text-sm text-gray-500 dark:text-gray-400">
+                Renew for
+              </label>
+              <select
+                id="renewal-years"
+                value={selectedYears}
+                onChange={(e) => setSelectedYears(Number(e.target.value))}
+                className="text-sm rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-orange-dark dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange/50"
+              >
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
+                  <option key={y} value={y}>
+                    {y} {y === 1 ? 'year' : 'years'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {renewalTotalPrice && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Total</span>
+                <span className="font-semibold text-orange-dark dark:text-white">
+                  ${renewalTotalPrice} {renewalPricing?.currency?.toUpperCase() || 'USD'}
+                </span>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                disabled={isRenewing}
+                onClick={handleRenew}
+              >
+                {isRenewing
+                  ? 'Redirecting to checkout...'
+                  : renewalTotalPrice
+                  ? `Renew for $${renewalTotalPrice}`
+                  : 'Renew Domain'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Nameservers */}
       <Card title="Nameservers">
@@ -509,6 +630,9 @@ export default function DomainDetailPage() {
           </div>
         )}
       </Card>
+
+      {/* SSL Certificates */}
+      {!hideSslCertificates && <DomainCertificatesSection domainName={domain.domain_name} />}
 
       {/* Remove from Javelina (linked domains only) */}
       {domain.registration_type === 'linked' && (
