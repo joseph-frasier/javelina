@@ -1204,5 +1204,131 @@ export const searchApi = {
   },
 };
 
+// ============================================================
+// DOMAIN REGISTRATION API METHODS
+// ============================================================
+
+import type {
+  DomainSearchResponse,
+  DomainPricingResponse,
+  DomainCheckoutParams,
+  DomainCheckoutResponse,
+  DomainTransferCheckResponse,
+  DomainTransferStatusResponse,
+  DomainsListResponse,
+  DomainDetailResponse,
+  DomainManagementResponse,
+  DomainContact,
+  DomainRenewalResponse,
+} from "@/types/domains";
+
+import type {
+  SslProductsListResponse,
+  SslCheckoutParams,
+  SslCheckoutResponse,
+  CertificatesListResponse,
+  CertificateDetailResponse,
+  CertificateDownloadResponse,
+  CSRValidationResponse,
+  ApproverInfo,
+  DvAuthMethod,
+} from "@/types/certificates";
+
+export const domainsApi = {
+  search: (q: string, tlds?: string[]): Promise<DomainSearchResponse> => {
+    const params = new URLSearchParams({ q });
+    if (tlds?.length) params.set("tlds", tlds.join(","));
+    return apiClient.get(`/domains/search?${params.toString()}`);
+  },
+
+  getPricing: (domain: string): Promise<DomainPricingResponse> =>
+    apiClient.get(`/domains/pricing?domain=${encodeURIComponent(domain)}`),
+
+  checkout: (params: DomainCheckoutParams): Promise<DomainCheckoutResponse> =>
+    apiClient.post("/domains/checkout", params),
+
+  checkTransfer: (domain: string): Promise<DomainTransferCheckResponse> =>
+    apiClient.get(`/domains/transfer/check?domain=${encodeURIComponent(domain)}`),
+
+  getTransferStatus: (id: string): Promise<DomainTransferStatusResponse> =>
+    apiClient.get(`/domains/transfer/${id}/status`),
+
+  list: (): Promise<DomainsListResponse> =>
+    apiClient.get("/domains"),
+
+  getById: (id: string): Promise<DomainDetailResponse> =>
+    apiClient.get(`/domains/${id}`),
+
+  link: (domain: string): Promise<DomainDetailResponse> =>
+    apiClient.post("/domains/link", { domain }),
+
+  getManagement: (id: string): Promise<DomainManagementResponse> =>
+    apiClient.get(`/domains/${id}/manage`),
+
+  updateContacts: (id: string, contact: DomainContact): Promise<{ success: boolean }> =>
+    apiClient.put(`/domains/${id}/contacts`, { contact }),
+
+  updateNameservers: (id: string, nameservers: string[]): Promise<{ success: boolean }> =>
+    apiClient.put(`/domains/${id}/nameservers`, { nameservers }),
+
+  setAutoRenew: (id: string, auto_renew: boolean): Promise<{ success: boolean; auto_renew: boolean }> =>
+    apiClient.put(`/domains/${id}/auto-renew`, { auto_renew }),
+
+  setLock: (id: string, locked: boolean): Promise<{ success: boolean; locked: boolean }> =>
+    apiClient.put(`/domains/${id}/lock`, { locked }),
+
+  unlink: (id: string): Promise<{ success: boolean }> =>
+    apiClient.delete(`/domains/${id}`),
+
+  renew: (id: string, years: number): Promise<DomainRenewalResponse> =>
+    apiClient.post(`/domains/${id}/renew`, { years }),
+};
+
+// ============================================================
+// SSL CERTIFICATE API METHODS
+// ============================================================
+
+export const certificatesApi = {
+  listProducts: (): Promise<SslProductsListResponse> =>
+    apiClient.get("/certificates/products"),
+
+  getProductPricing: (product_type: string): Promise<{ pricing: { price: number; currency: string; product_type: string } }> =>
+    apiClient.get(`/certificates/products/pricing?product_type=${encodeURIComponent(product_type)}`),
+
+  getApprovers: (domain: string, product_type: string): Promise<{ approvers: ApproverInfo[] }> =>
+    apiClient.get(`/certificates/approvers?domain=${encodeURIComponent(domain)}&product_type=${encodeURIComponent(product_type)}`),
+
+  validateCSR: (csr: string, product_type: string): Promise<CSRValidationResponse> =>
+    apiClient.post("/certificates/validate-csr", { csr, product_type }),
+
+  checkout: (params: SslCheckoutParams): Promise<SslCheckoutResponse> =>
+    apiClient.post("/certificates/checkout", params),
+
+  list: (domain?: string): Promise<CertificatesListResponse> => {
+    const url = domain
+      ? `/certificates?domain=${encodeURIComponent(domain)}`
+      : "/certificates";
+    return apiClient.get(url);
+  },
+
+  getById: (id: string): Promise<CertificateDetailResponse> =>
+    apiClient.get(`/certificates/${id}`),
+
+  getStatus: (id: string): Promise<{ certificate: any; order_info: any }> =>
+    apiClient.get(`/certificates/${id}/status`),
+
+  download: (id: string): Promise<CertificateDownloadResponse> =>
+    apiClient.get(`/certificates/${id}/download`),
+
+  cancel: (id: string): Promise<{ success: boolean }> =>
+    apiClient.post(`/certificates/${id}/cancel`),
+
+  updateValidation: (id: string, dv_auth_method: DvAuthMethod, approver_email?: string): Promise<{ success: boolean; dv_auth_details?: Record<string, any> }> =>
+    apiClient.put(`/certificates/${id}/validation`, { dv_auth_method, approver_email }),
+
+  resendApproval: (id: string): Promise<{ success: boolean }> =>
+    apiClient.post(`/certificates/${id}/resend-approval`),
+};
+
 // Export everything
 export default apiClient;

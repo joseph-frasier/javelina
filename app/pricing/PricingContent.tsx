@@ -176,35 +176,35 @@ export default function PricingContent() {
           </p>
         </section>
 
-        {/* Lifetime Plans Section */}
-        <section className="mb-12" aria-labelledby="lifetime-plans-heading">
+        {/* Monthly Subscription Plans Section */}
+        <section className="mb-12" aria-labelledby="monthly-plans-heading">
           <div className="text-center mb-6">
-            <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
-              Lifetime Plans
+            <h2 id="monthly-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
+              Monthly Subscriptions
             </h2>
             <p className="text-sm text-gray-slate font-light">
-              Pay once, own forever. No recurring fees.
+              Flexible monthly billing. Cancel anytime.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {PLANS_CONFIG.filter(plan => {
-              // Filter out enterprise lifetime
-              if (plan.id === 'enterprise_lifetime') return false;
-              // Only include lifetime plans (always show all 3: starter, pro, premium)
-              if (!plan.code.includes('_lifetime')) return false;
+              // Filter out enterprise
+              if (plan.id === 'enterprise') return false;
+              // Only include monthly subscription plans (not lifetime) - always show all 3: starter, pro, business
+              if (plan.code.includes('_lifetime')) return false;
               return true;
             }).map((plan) => {
               // Determine if this plan should be shown as "coming soon"
               const isComingSoon = 
-                (hideProPlans && plan.code === 'pro_lifetime') || 
-                (hideBusinessPlans && plan.code === 'premium_lifetime');
+                (hideProPlans && plan.code === 'pro') || 
+                (hideBusinessPlans && plan.code === 'business');
               
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
                 price: plan.monthly?.amount || 0,
                 priceId: plan.monthly?.priceId || '',
-                interval: 'lifetime' as const,
+                interval: 'month' as const,
                 features: plan.features.filter(f => f.included).map(f => f.name),
                 description: plan.description,
                 popular: plan.popular,
@@ -276,35 +276,35 @@ export default function PricingContent() {
           </div>
         ))} */}
 
-        {/* Monthly Subscription Plans Section */}
-        <section className="mb-12" aria-labelledby="monthly-plans-heading">
+        {/* Lifetime Plans Section */}
+        <section className="mb-12" aria-labelledby="lifetime-plans-heading">
           <div className="text-center mb-6">
-            <h2 id="monthly-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
-              Monthly Subscriptions
+            <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
+              Lifetime Plans
             </h2>
             <p className="text-sm text-gray-slate font-light">
-              Flexible monthly billing. Cancel anytime.
+              Pay once, own forever. No recurring fees.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {PLANS_CONFIG.filter(plan => {
-              // Filter out enterprise
-              if (plan.id === 'enterprise') return false;
-              // Only include monthly subscription plans (not lifetime) - always show all 3: starter, pro, business
-              if (plan.code.includes('_lifetime')) return false;
+              // Filter out enterprise lifetime
+              if (plan.id === 'enterprise_lifetime') return false;
+              // Only include lifetime plans (always show all 3: starter, pro, premium)
+              if (!plan.code.includes('_lifetime')) return false;
               return true;
             }).map((plan) => {
               // Determine if this plan should be shown as "coming soon"
               const isComingSoon = 
-                (hideProPlans && plan.code === 'pro') || 
-                (hideBusinessPlans && plan.code === 'business');
+                (hideProPlans && plan.code === 'pro_lifetime') || 
+                (hideBusinessPlans && plan.code === 'premium_lifetime');
               
               const planForCard = {
                 id: plan.id,
                 name: plan.name,
                 price: plan.monthly?.amount || 0,
                 priceId: plan.monthly?.priceId || '',
-                interval: 'month' as const,
+                interval: 'lifetime' as const,
                 features: plan.features.filter(f => f.included).map(f => f.name),
                 description: plan.description,
                 popular: plan.popular,

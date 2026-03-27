@@ -7,13 +7,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-orange text-white hover:bg-orange-dark dark:bg-orange dark:hover:bg-orange-dark focus:ring-orange',
+        primary: 'border-2 border-transparent bg-orange text-white hover:bg-[#d46410] dark:bg-orange dark:hover:bg-[#d46410] focus:ring-orange',
         secondary:
-          'bg-blue-electric text-white hover:bg-blue-teal focus:ring-blue-electric',
+          'border-2 border-transparent bg-blue-electric text-white hover:bg-blue-teal focus:ring-blue-electric',
         ghost: 'bg-transparent text-orange hover:underline',
         outline:
           'border-2 border-orange text-orange hover:bg-orange hover:text-white dark:hover:bg-orange dark:hover:opacity-90',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+        danger: 'border-2 border-transparent bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
       },
       size: {
         sm: 'px-3 py-1.5 text-sm',

@@ -1,4 +1,5 @@
 import { Globe, Zap, Shield } from 'lucide-react';
+import { POPS } from './popData';
 
 interface Chip {
   icon: React.ReactNode;
@@ -10,11 +11,13 @@ interface StatChipsProps {
   compact?: boolean;
 }
 
+const activePoPCount = POPS.filter((pop) => !pop.comingSoon).length;
+
 const chips: Chip[] = [
   {
     icon: <Globe className="w-4 h-4 text-orange-400" />,
     label: 'PoPs',
-    value: '30 Locations',
+    value: `${activePoPCount} Active`,
   },
   {
     icon: <Zap className="w-4 h-4 text-orange-400" />,
