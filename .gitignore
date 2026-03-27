@@ -45,6 +45,7 @@ next-env.d.ts
 .cursor/
 .agents/
 .claude/
+CLAUDE.md
 
 # next.js docs
 .next-docs/

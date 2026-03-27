@@ -15,6 +15,12 @@ export interface FeatureFlags {
   hideUpgradeLimitCta: boolean;
   /** Hide team member invite/management UI for all orgs */
   hideTeamInvites: boolean;
+  /** Show the direct API domain registration integration (Domains page) */
+  showDomainsIntegration: boolean;
+  /** Show the OpenSRS storefront link in the header */
+  showOpenSrsStorefront: boolean;
+  /** Hide the SSL Certificates tab and domain detail SSL section */
+  hideSslCertificates: boolean;
 }
 
 /**
@@ -26,6 +32,9 @@ const DEFAULT_FLAGS: FeatureFlags = {
   hideBusinessPlans: false,
   hideUpgradeLimitCta: false,
   hideTeamInvites: false,
+  showDomainsIntegration: false,
+  showOpenSrsStorefront: false,
+  hideSslCertificates: false,
 };
 
 /**
@@ -37,6 +46,9 @@ export const LD_FLAG_KEYS = {
   HIDE_BUSINESS_PLANS: 'pricing-hide-business-plans',
   HIDE_UPGRADE_LIMIT_CTA: 'billing-hide-limit-upgrade-button',
   HIDE_TEAM_INVITES: 'orgs-hide-team-invites',
+  SHOW_DOMAINS_INTEGRATION: 'domains-show-api-integration',
+  SHOW_OPENSRS_STOREFRONT: 'domains-show-opensrs-storefront',
+  HIDE_SSL_CERTIFICATES: 'domains-hide-ssl-certificates',
 } as const;
 
 /**
@@ -68,6 +80,9 @@ export function useFeatureFlags(): FeatureFlags {
           hideBusinessPlans: allFlags[LD_FLAG_KEYS.HIDE_BUSINESS_PLANS] ?? DEFAULT_FLAGS.hideBusinessPlans,
           hideUpgradeLimitCta: allFlags[LD_FLAG_KEYS.HIDE_UPGRADE_LIMIT_CTA] ?? DEFAULT_FLAGS.hideUpgradeLimitCta,
           hideTeamInvites: allFlags[LD_FLAG_KEYS.HIDE_TEAM_INVITES] ?? DEFAULT_FLAGS.hideTeamInvites,
+          showDomainsIntegration: allFlags[LD_FLAG_KEYS.SHOW_DOMAINS_INTEGRATION] ?? DEFAULT_FLAGS.showDomainsIntegration,
+          showOpenSrsStorefront: allFlags[LD_FLAG_KEYS.SHOW_OPENSRS_STOREFRONT] ?? DEFAULT_FLAGS.showOpenSrsStorefront,
+          hideSslCertificates: allFlags[LD_FLAG_KEYS.HIDE_SSL_CERTIFICATES] ?? DEFAULT_FLAGS.hideSslCertificates,
         };
         setFlags(newFlags);
       } catch (err) {
@@ -110,5 +125,8 @@ export function getFeatureFlags(ldFlags: Record<string, any> = {}): FeatureFlags
     hideBusinessPlans: ldFlags[LD_FLAG_KEYS.HIDE_BUSINESS_PLANS] ?? DEFAULT_FLAGS.hideBusinessPlans,
     hideUpgradeLimitCta: ldFlags[LD_FLAG_KEYS.HIDE_UPGRADE_LIMIT_CTA] ?? DEFAULT_FLAGS.hideUpgradeLimitCta,
     hideTeamInvites: ldFlags[LD_FLAG_KEYS.HIDE_TEAM_INVITES] ?? DEFAULT_FLAGS.hideTeamInvites,
+    showDomainsIntegration: ldFlags[LD_FLAG_KEYS.SHOW_DOMAINS_INTEGRATION] ?? DEFAULT_FLAGS.showDomainsIntegration,
+    showOpenSrsStorefront: ldFlags[LD_FLAG_KEYS.SHOW_OPENSRS_STOREFRONT] ?? DEFAULT_FLAGS.showOpenSrsStorefront,
+    hideSslCertificates: ldFlags[LD_FLAG_KEYS.HIDE_SSL_CERTIFICATES] ?? DEFAULT_FLAGS.hideSslCertificates,
   };
 }

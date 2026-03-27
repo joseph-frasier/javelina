@@ -13,6 +13,7 @@ import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { detectZoneOverlap } from '@/lib/utils/dns-validation';
 import { createClient } from '@/lib/supabase/client';
+import { subscriptionsApi } from '@/lib/api-client';
 
 interface AddZoneModalProps {
   isOpen: boolean;
@@ -44,9 +45,27 @@ export function AddZoneModal({
 
   const { addToast } = useToastStore();
   const { hideUpgradeLimitCta } = useFeatureFlags();
-  
+
+  // Fetch plan code from API if not provided as a prop
+  const [fetchedPlanCode, setFetchedPlanCode] = useState<string | null>(null);
+  useEffect(() => {
+    setFetchedPlanCode(null);
+    if (planCode || !organizationId || !isOpen) return;
+    let cancelled = false;
+    subscriptionsApi.getOrgPlan(organizationId).then((planData) => {
+      if (!cancelled && planData?.plan_code) {
+        setFetchedPlanCode(planData.plan_code);
+      }
+    }).catch(() => {
+      // Fall back to defaults if fetch fails
+    });
+    return () => { cancelled = true; };
+  }, [planCode, organizationId, isOpen]);
+
+  const resolvedPlanCode = planCode || fetchedPlanCode || undefined;
+
   // Plan limits and usage tracking
-  const { limits, tier, wouldExceedLimit } = usePlanLimits(planCode);
+  const { limits, tier, wouldExceedLimit } = usePlanLimits(resolvedPlanCode);
   const { usage, refetch: refetchUsage } = useUsageCounts(organizationId);
   
   // Fetch all zone names globally for overlap detection
