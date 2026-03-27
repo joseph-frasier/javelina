@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, FormEvent } from 'react';
+import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
@@ -234,7 +235,7 @@ export default function CertificateCheckoutForm({
                         org_name: ci.org_name || '',
                         email: ci.email || '',
                         phone: ci.phone || '',
-                        title: ci.title || '',
+                        title: '',
                         address1: ci.address1 || '',
                         address2: ci.address2 || '',
                         city: ci.city || '',
@@ -262,7 +263,7 @@ export default function CertificateCheckoutForm({
               </>
             ) : (
               <p className="text-sm text-gray-slate dark:text-gray-400 p-3 rounded-lg border border-gray-light dark:border-gray-600">
-                No active domains found. <a href="/domains" className="text-orange hover:underline">Register a domain</a> first.
+                No active domains found. <Link href="/domains" className="text-orange hover:underline">Register a domain</Link> first.
               </p>
             )}
           </div>
