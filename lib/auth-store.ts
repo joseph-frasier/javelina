@@ -46,6 +46,7 @@ export interface Organization {
 
 export interface User {
   id: string
+  auth0_user_id?: string | null
   name: string
   email: string
   role: UserRole
