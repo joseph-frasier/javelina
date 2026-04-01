@@ -8,15 +8,7 @@
  * cross-domain calls to the Express backend work in production.
  */
 
-import { getAdminSessionToken } from '@/lib/admin-session-token';
 import { getIdleSync } from '@/lib/idle/idleSync';
-
-// Endpoints that require the admin JWT (called from the admin panel)
-const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
-
-function isAdminEndpoint(endpoint: string): boolean {
-  return ADMIN_ENDPOINT_PREFIXES.some((prefix) => endpoint.startsWith(prefix));
-}
 
 // Error class for API errors
 export class ApiError extends Error {
@@ -42,16 +34,6 @@ async function apiRequest<T = any>(
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
-
-    // Attach admin JWT as Authorization header for admin-panel endpoints only.
-    // This enables cross-domain requests to the Express backend in production.
-    // The cookie-based flow still works for same-domain / local development.
-    if (!headers['Authorization'] && isAdminEndpoint(endpoint)) {
-      const adminToken = getAdminSessionToken();
-      if (adminToken) {
-        headers['Authorization'] = `Bearer ${adminToken}`;
-      }
-    }
 
     // Route through same-origin proxy to avoid Safari ITP third-party cookie blocking.
     // Next.js rewrites in next.config.ts forward /api/backend/* to the Express backend.
@@ -656,6 +638,20 @@ export const adminApi = {
     if (params?.actor_type) query.append('actor_type', params.actor_type);
     const queryString = query.toString();
     return apiClient.get(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Flagged zone management
+  getFlaggedZones: () => {
+    return apiClient.get('/admin/zones/flagged');
+  },
+  approveFlaggedZone: (zoneId: string) => {
+    return apiClient.put(`/admin/zones/${zoneId}/approve`);
+  },
+  renameFlaggedZone: (zoneId: string, name: string) => {
+    return apiClient.put(`/admin/zones/${zoneId}/rename`, { name });
+  },
+  deleteFlaggedZone: (zoneId: string) => {
+    return apiClient.delete(`/admin/zones/${zoneId}`);
   },
 };
 
