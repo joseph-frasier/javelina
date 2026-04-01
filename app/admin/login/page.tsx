@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
             borderWidth: '1px',
           }}>
             <p className="text-sm" style={{ color: '#ef4444' }}>
-              Access denied. Your account does not have SuperAdmin privileges.
+              Access denied. Your account does not have admin privileges.
             </p>
           </div>
         )}
