@@ -6,12 +6,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
-import {
-  getFlaggedZones,
-  approveFlaggedZone,
-  renameFlaggedZone,
-  deleteFlaggedZone
-} from '@/lib/actions/admin/zones';
+import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 
 interface FlaggedZone {
@@ -37,15 +32,11 @@ export default function AdminZonesPage() {
   const fetchZones = async () => {
     setLoading(true);
     try {
-      const result = await getFlaggedZones();
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        setZones(result.data || []);
-      }
+      const data = await adminApi.getFlaggedZones();
+      setZones(data || []);
     } catch (error) {
       console.error('Failed to fetch flagged zones:', error);
-      addToast('error', 'Failed to fetch flagged zones');
+      addToast('error', error instanceof Error ? error.message : 'Failed to fetch flagged zones');
     } finally {
       setLoading(false);
     }
@@ -58,16 +49,12 @@ export default function AdminZonesPage() {
   const handleApprove = async (zoneId: string, zoneName: string) => {
     setProcessingZone(zoneId);
     try {
-      const result = await approveFlaggedZone(zoneId);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', `Zone "${zoneName}" approved successfully!`);
-        fetchZones(); // Refresh the list
-      }
+      await adminApi.approveFlaggedZone(zoneId);
+      addToast('success', `Zone "${zoneName}" approved successfully!`);
+      fetchZones(); // Refresh the list
     } catch (error) {
       console.error('Failed to approve zone:', error);
-      addToast('error', 'Failed to approve zone');
+      addToast('error', error instanceof Error ? error.message : 'Failed to approve zone');
     } finally {
       setProcessingZone(null);
     }
@@ -81,18 +68,14 @@ export default function AdminZonesPage() {
 
     setProcessingZone(zoneId);
     try {
-      const result = await renameFlaggedZone(zoneId, newZoneName.trim());
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', `Zone renamed to "${newZoneName}" successfully!`);
-        setRenameZoneId(null);
-        setNewZoneName('');
-        fetchZones(); // Refresh the list
-      }
+      await adminApi.renameFlaggedZone(zoneId, newZoneName.trim());
+      addToast('success', `Zone renamed to "${newZoneName}" successfully!`);
+      setRenameZoneId(null);
+      setNewZoneName('');
+      fetchZones(); // Refresh the list
     } catch (error) {
       console.error('Failed to rename zone:', error);
-      addToast('error', 'Failed to rename zone');
+      addToast('error', error instanceof Error ? error.message : 'Failed to rename zone');
     } finally {
       setProcessingZone(null);
     }
@@ -105,16 +88,12 @@ export default function AdminZonesPage() {
 
     setProcessingZone(zoneId);
     try {
-      const result = await deleteFlaggedZone(zoneId);
-      if (result.error) {
-        addToast('error', result.error);
-      } else {
-        addToast('success', `Zone "${zoneName}" deleted successfully!`);
-        fetchZones(); // Refresh the list
-      }
+      await adminApi.deleteFlaggedZone(zoneId);
+      addToast('success', `Zone "${zoneName}" deleted successfully!`);
+      fetchZones(); // Refresh the list
     } catch (error) {
       console.error('Failed to delete zone:', error);
-      addToast('error', 'Failed to delete zone');
+      addToast('error', error instanceof Error ? error.message : 'Failed to delete zone');
     } finally {
       setProcessingZone(null);
     }
