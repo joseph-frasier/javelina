@@ -640,6 +640,13 @@ export const adminApi = {
     return apiClient.get(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`);
   },
 
+  /**
+   * List all domains across all users (admin only)
+   */
+  listDomains: () => {
+    return apiClient.get('/admin/domains');
+  },
+
   // Flagged zone management
   getFlaggedZones: () => {
     return apiClient.get('/admin/zones/flagged');
