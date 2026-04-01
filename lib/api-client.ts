@@ -942,12 +942,6 @@ export const supportApi = {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (isAdminEndpoint('/support/chat/stream')) {
-      const adminToken = getAdminSessionToken();
-      if (adminToken) {
-        headers['Authorization'] = `Bearer ${adminToken}`;
-      }
-    }
 
     // Use dedicated streaming proxy so response is streamed (rewrite can buffer).
     const url = '/api/support/chat/stream';
@@ -1192,11 +1186,7 @@ export const searchApi = {
     query.set('scope', params.scope);
     if (params.org_id) query.set('org_id', params.org_id);
     if (params.limit) query.set('limit', String(params.limit));
-    const adminToken = params.useAdminAuth ? getAdminSessionToken() : null;
-    const options = adminToken
-      ? { headers: { Authorization: `Bearer ${adminToken}` } }
-      : undefined;
-    return apiClient.get(`/search/global?${query.toString()}`, options);
+    return apiClient.get(`/search/global?${query.toString()}`);
   },
 };
 

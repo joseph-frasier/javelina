@@ -36,12 +36,12 @@ export async function middleware(request: NextRequest) {
     // Check if user just completed payment (allow dashboard access)
     const paymentComplete = request.nextUrl.searchParams.get('payment_complete') === 'true'
 
-    // Protect /admin/* routes: require admin session cookie (except /admin/login which is public)
+    // Admin routes require a valid session (same Auth0 session as main app).
+    // The actual superadmin check happens server-side via /api/admin/me.
+    // Middleware just checks the session cookie exists as a fast gate.
     if (request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/admin/login')) {
-      const adminCookie = request.cookies.get(
-        process.env.NODE_ENV === 'production' ? '__Host-admin_session' : 'admin_session'
-      )
-      if (!adminCookie) {
+      const sessionCookie = request.cookies.get('javelina_session')
+      if (!sessionCookie) {
         return NextResponse.redirect(new URL('/admin/login', request.url))
       }
     }
