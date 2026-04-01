@@ -5,6 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
+import Dropdown from '@/components/ui/Dropdown';
 
 interface DomainTransaction {
   id: string;
@@ -137,6 +138,8 @@ export default function AdminOpenSRSPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortKey, setSortKey] = useState<SortKey | null>('registered_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
   const { addToast } = useToastStore();
 
   const fetchDomains = useCallback(async () => {
@@ -215,6 +218,17 @@ export default function AdminOpenSRSPage() {
     return filtered;
   }, [domains, searchQuery, typeFilter, statusFilter, sortKey, sortDirection]);
 
+  const totalPages = Math.ceil(filteredDomains.length / pageSize);
+  const paginatedDomains = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredDomains.slice(start, start + pageSize);
+  }, [filteredDomains, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, typeFilter, statusFilter]);
+
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
@@ -263,30 +277,32 @@ export default function AdminOpenSRSPage() {
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
                   />
                 </div>
-                <select
+                <Dropdown
                   value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
-                >
-                  <option value="all">All Types</option>
-                  <option value="new">New</option>
-                  <option value="transfer">Transfer</option>
-                  <option value="linked">Linked</option>
-                </select>
-                <select
+                  onChange={setTypeFilter}
+                  options={[
+                    { value: 'all', label: 'All Types' },
+                    { value: 'new', label: 'New' },
+                    { value: 'transfer', label: 'Transfer' },
+                    { value: 'linked', label: 'Linked' },
+                  ]}
+                  className="sm:w-44"
+                />
+                <Dropdown
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                </select>
+                  onChange={setStatusFilter}
+                  options={[
+                    { value: 'all', label: 'All Statuses' },
+                    { value: 'active', label: 'Active' },
+                    { value: 'pending', label: 'Pending' },
+                  ]}
+                  className="sm:w-44"
+                />
               </div>
 
               {/* Results count */}
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {filteredDomains.length} domain{filteredDomains.length !== 1 ? 's' : ''}
+                Showing {Math.min((currentPage - 1) * pageSize + 1, filteredDomains.length)}–{Math.min(currentPage * pageSize, filteredDomains.length)} of {filteredDomains.length} domain{filteredDomains.length !== 1 ? 's' : ''}
                 {(searchQuery || typeFilter !== 'all' || statusFilter !== 'all') && ` (filtered from ${domains.length})`}
               </p>
 
@@ -300,8 +316,8 @@ export default function AdminOpenSRSPage() {
                         <SortableHeader label="Action" sortKey="registration_type" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
                         <SortableHeader label="Status" sortKey="status" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
                         <SortableHeader label="Cost" sortKey="amount_paid" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                        <SortableHeader label="Valid Until" sortKey="expires_at" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
                         <SortableHeader label="Registered" sortKey="registered_at" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                        <SortableHeader label="Valid Until" sortKey="expires_at" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
                         <SortableHeader label="User" sortKey="user_email" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Order ID
@@ -326,7 +342,7 @@ export default function AdminOpenSRSPage() {
                           </td>
                         </tr>
                       ) : (
-                        filteredDomains.map((domain) => (
+                        paginatedDomains.map((domain) => (
                           <tr key={domain.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td className="px-4 py-3 text-sm font-medium text-orange-dark dark:text-white">
                               {domain.domain_name}
@@ -339,6 +355,9 @@ export default function AdminOpenSRSPage() {
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                               {formatCurrency(domain.amount_paid, domain.currency)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                              {formatDate(domain.registered_at)}
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span
@@ -354,9 +373,6 @@ export default function AdminOpenSRSPage() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                              {formatDate(domain.registered_at)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                               <div>{domain.user_name}</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">{domain.user_email}</div>
                             </td>
@@ -370,6 +386,29 @@ export default function AdminOpenSRSPage() {
                   </table>
                 </div>
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
