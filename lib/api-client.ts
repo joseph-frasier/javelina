@@ -685,7 +685,9 @@ export const adminApi = {
    * Seed TLD pricing from OpenSRS wholesale prices
    */
   seedTldPricing: () => {
-    return apiClient.post('/admin/tld-pricing/seed');
+    return apiClient.post('/admin/tld-pricing/seed', undefined, {
+      signal: AbortSignal.timeout(120000), // 2 min timeout for seeding 87 TLDs
+    });
   },
 
   // Flagged zone management
