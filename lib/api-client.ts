@@ -647,6 +647,47 @@ export const adminApi = {
     return apiClient.get('/admin/domains');
   },
 
+  /**
+   * List all TLD pricing (admin only)
+   */
+  listTldPricing: () => {
+    return apiClient.get('/admin/tld-pricing');
+  },
+
+  /**
+   * Get global TLD margin
+   */
+  getGlobalMargin: () => {
+    return apiClient.get('/admin/tld-pricing/global-margin');
+  },
+
+  /**
+   * Update global TLD margin
+   */
+  updateGlobalMargin: (margin: number) => {
+    return apiClient.put('/admin/tld-pricing/global-margin', { margin });
+  },
+
+  /**
+   * Update a single TLD's pricing
+   */
+  updateTldPricing: (tld: string, updates: {
+    margin_override?: number | null;
+    sale_registration?: number | null;
+    sale_renewal?: number | null;
+    sale_transfer?: number | null;
+    is_active?: boolean;
+  }) => {
+    return apiClient.put(`/admin/tld-pricing/${encodeURIComponent(tld)}`, updates);
+  },
+
+  /**
+   * Seed TLD pricing from OpenSRS wholesale prices
+   */
+  seedTldPricing: () => {
+    return apiClient.post('/admin/tld-pricing/seed');
+  },
+
   // Flagged zone management
   getFlaggedZones: () => {
     return apiClient.get('/admin/zones/flagged');
