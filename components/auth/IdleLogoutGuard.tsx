@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIdleLogout } from '@/lib/hooks/useIdleLogout';
 import { getIdleSync } from '@/lib/idle/idleSync';
-import { clearAdminSessionToken } from '@/lib/admin-session-token';
+
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { IDLE_CONFIG } from '@/lib/idle/config';
 
@@ -66,18 +66,12 @@ export function IdleLogoutGuard() {
     setShowWarningModal(false);
 
     if (isAdminRoute) {
-      // Admin routes: Set inactivity flag and redirect to admin login
-      clearAdminSessionToken();
       try {
-        localStorage.setItem('admin-logout-reason', 'inactivity');
         localStorage.removeItem('javelina-last-activity');
       } catch (error) {
-        console.error('[IdleLogoutGuard] Failed to set logout reason:', error);
+        console.error('[IdleLogoutGuard] Failed to clear activity:', error);
       }
-      
-      // Admin logout happens via middleware checking the cookie expiration
-      // Just redirect to admin login page
-      router.replace('/admin/login');
+      window.location.href = '/api/logout';
       return;
     }
 

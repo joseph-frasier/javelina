@@ -8,15 +8,7 @@
  * cross-domain calls to the Express backend work in production.
  */
 
-import { getAdminSessionToken } from '@/lib/admin-session-token';
 import { getIdleSync } from '@/lib/idle/idleSync';
-
-// Endpoints that require the admin JWT (called from the admin panel)
-const ADMIN_ENDPOINT_PREFIXES = ['/admin/', '/admin?', '/discounts', '/support/admin'];
-
-function isAdminEndpoint(endpoint: string): boolean {
-  return ADMIN_ENDPOINT_PREFIXES.some((prefix) => endpoint.startsWith(prefix));
-}
 
 // Error class for API errors
 export class ApiError extends Error {
@@ -42,16 +34,6 @@ async function apiRequest<T = any>(
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
-
-    // Attach admin JWT as Authorization header for admin-panel endpoints only.
-    // This enables cross-domain requests to the Express backend in production.
-    // The cookie-based flow still works for same-domain / local development.
-    if (!headers['Authorization'] && isAdminEndpoint(endpoint)) {
-      const adminToken = getAdminSessionToken();
-      if (adminToken) {
-        headers['Authorization'] = `Bearer ${adminToken}`;
-      }
-    }
 
     // Route through same-origin proxy to avoid Safari ITP third-party cookie blocking.
     // Next.js rewrites in next.config.ts forward /api/backend/* to the Express backend.
@@ -657,6 +639,70 @@ export const adminApi = {
     const queryString = query.toString();
     return apiClient.get(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`);
   },
+
+  /**
+   * List all domains across all users (admin only)
+   */
+  listDomains: () => {
+    return apiClient.get('/admin/domains');
+  },
+
+  /**
+   * List all TLD pricing (admin only)
+   */
+  listTldPricing: () => {
+    return apiClient.get('/admin/tld-pricing');
+  },
+
+  /**
+   * Get global TLD margin
+   */
+  getGlobalMargin: () => {
+    return apiClient.get('/admin/tld-pricing/global-margin');
+  },
+
+  /**
+   * Update global TLD margin
+   */
+  updateGlobalMargin: (margin: number) => {
+    return apiClient.put('/admin/tld-pricing/global-margin', { margin });
+  },
+
+  /**
+   * Update a single TLD's pricing
+   */
+  updateTldPricing: (tld: string, updates: {
+    margin_override?: number | null;
+    sale_registration?: number | null;
+    sale_renewal?: number | null;
+    sale_transfer?: number | null;
+    is_active?: boolean;
+  }) => {
+    return apiClient.put(`/admin/tld-pricing/${encodeURIComponent(tld)}`, updates);
+  },
+
+  /**
+   * Seed TLD pricing from OpenSRS wholesale prices
+   */
+  seedTldPricing: () => {
+    return apiClient.post('/admin/tld-pricing/seed', undefined, {
+      signal: AbortSignal.timeout(120000), // 2 min timeout for seeding 87 TLDs
+    });
+  },
+
+  // Flagged zone management
+  getFlaggedZones: () => {
+    return apiClient.get('/admin/zones/flagged');
+  },
+  approveFlaggedZone: (zoneId: string) => {
+    return apiClient.put(`/admin/zones/${zoneId}/approve`);
+  },
+  renameFlaggedZone: (zoneId: string, name: string) => {
+    return apiClient.put(`/admin/zones/${zoneId}/rename`, { name });
+  },
+  deleteFlaggedZone: (zoneId: string) => {
+    return apiClient.delete(`/admin/zones/${zoneId}`);
+  },
 };
 
 // Discounts/Promotion Codes API
@@ -946,12 +992,6 @@ export const supportApi = {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (isAdminEndpoint('/support/chat/stream')) {
-      const adminToken = getAdminSessionToken();
-      if (adminToken) {
-        headers['Authorization'] = `Bearer ${adminToken}`;
-      }
-    }
 
     // Use dedicated streaming proxy so response is streamed (rewrite can buffer).
     const url = '/api/support/chat/stream';
@@ -1196,11 +1236,7 @@ export const searchApi = {
     query.set('scope', params.scope);
     if (params.org_id) query.set('org_id', params.org_id);
     if (params.limit) query.set('limit', String(params.limit));
-    const adminToken = params.useAdminAuth ? getAdminSessionToken() : null;
-    const options = adminToken
-      ? { headers: { Authorization: `Bearer ${adminToken}` } }
-      : undefined;
-    return apiClient.get(`/search/global?${query.toString()}`, options);
+    return apiClient.get(`/search/global?${query.toString()}`);
   },
 };
 

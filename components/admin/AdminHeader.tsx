@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getAdminUser, logoutAdmin } from '@/lib/admin-auth';
-import { clearAdminSessionToken } from '@/lib/admin-session-token';
+import { getAdminUser } from '@/lib/admin-auth';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
 import { useGlobalSearch } from '@/components/search/useGlobalSearch';
@@ -48,11 +47,9 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
     fetchAdmin();
   }, []);
 
-  const handleLogout = async () => {
-    clearAdminSessionToken();
-    await logoutAdmin();
-    router.push('/admin/login');
+  const handleLogout = () => {
     setIsDropdownOpen(false);
+    window.location.href = '/api/logout';
   };
 
   const cycleTheme = () => {
