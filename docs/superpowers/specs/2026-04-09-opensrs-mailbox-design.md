@@ -159,10 +159,13 @@ Individual mailboxes and aliases are managed directly via OpenSRS Mail API — n
 
 ### Billing
 
-- Mailbox counts fetched from OpenSRS API on billing cycle
-- Charge = (number of mailboxes) x (tier sale price) per month
-- Added as a line item to the customer's existing Stripe subscription
-- Proration handled on tier changes and mailbox count changes
+- Each domain with email enabled gets its own Stripe Subscription
+- Subscription uses per-unit monthly price (quantity = number of mailboxes)
+- When mailboxes are added/removed, subscription quantity is updated with proration
+- When tier changes, subscription price is swapped to the new tier's price
+- When email is disabled, subscription is canceled
+- Stripe Products and Prices are created dynamically per tier and cached in `mailbox_pricing` table
+- Webhook handlers for `invoice.payment_failed` and `customer.subscription.deleted` suspend email service
 
 ## Testing
 

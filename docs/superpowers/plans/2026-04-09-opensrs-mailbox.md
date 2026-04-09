@@ -24,6 +24,8 @@
 | `src/routes/admin.ts` | Modify | Add mailbox pricing admin routes |
 | `src/routes/index.ts` | Modify | Mount mailbox routes |
 | `src/types/mailbox.ts` | Create | Mailbox-related type definitions |
+| `src/services/mailbox-billing.ts` | Create | Stripe subscription management for mailbox billing |
+| `src/controllers/stripeController.ts` | Modify | Add mailbox webhook handlers |
 
 ### Frontend (`/Users/sethchesky/Documents/GitHub/javelina`)
 
@@ -55,6 +57,8 @@ CREATE TABLE public.mailbox_pricing (
   margin_percent numeric(5,2) NOT NULL DEFAULT 50,
   sale_price_override numeric(10,2),
   mailbox_limit integer NOT NULL DEFAULT 0,
+  stripe_product_id text,
+  stripe_price_id text,
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -66,6 +70,8 @@ CREATE TABLE public.domain_mailboxes (
   domain_id uuid NOT NULL REFERENCES public.domains(id) ON DELETE CASCADE,
   tier_id uuid NOT NULL REFERENCES public.mailbox_pricing(id),
   opensrs_mail_domain text,
+  stripe_subscription_id text,
+  stripe_customer_id text,
   status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'disabled')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -132,6 +138,8 @@ export interface DomainMailboxRow {
   domain_id: string;
   tier_id: string;
   opensrs_mail_domain: string | null;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
   status: "active" | "suspended" | "disabled";
   created_at: string;
   updated_at: string;
@@ -2483,7 +2491,473 @@ git commit -m "feat: add mailbox pricing tab to admin OpenSRS page"
 
 ---
 
-## Task 13: Verify and Test
+## Task 13: Backend — Mailbox Billing Service
+
+**Files:**
+- Create: `/Users/sethchesky/Documents/GitHub/javelina-backend/src/services/mailbox-billing.ts`
+
+This service handles creating and managing Stripe subscriptions for mailbox billing. Each domain with email enabled gets its own Stripe Subscription with quantity = number of mailboxes. The subscription uses a per-unit monthly price that corresponds to the selected tier.
+
+- [ ] **Step 1: Create the billing service**
+
+```typescript
+import Stripe from "stripe";
+import { stripe } from "../config/stripe";
+import { supabaseAdmin } from "../config/supabase";
+import { env } from "../config/env";
+import type { MailboxPricingRow, DomainMailboxRow } from "../types/mailbox";
+
+// Stripe product/price IDs are created on first use and cached in app_settings
+const MAILBOX_PRODUCT_NAME = "Javelina Email Mailbox";
+
+function computeSalePrice(tier: MailboxPricingRow): number {
+  if (tier.sale_price_override !== null) return tier.sale_price_override;
+  return Math.round(tier.opensrs_cost * (1 + tier.margin_percent / 100) * 100) / 100;
+}
+
+/**
+ * Get or create a Stripe Price for a mailbox tier.
+ * Prices are stored in the mailbox_pricing table as stripe_price_id.
+ * If no price exists, one is created dynamically.
+ */
+async function getOrCreateStripePrice(tier: MailboxPricingRow): Promise<string> {
+  // Check if we already have a stripe_price_id for this tier at this price
+  const { data: existing } = await supabaseAdmin
+    .from("mailbox_pricing")
+    .select("stripe_price_id, stripe_product_id")
+    .eq("id", tier.id)
+    .single();
+
+  const salePrice = computeSalePrice(tier);
+  const unitAmount = Math.round(salePrice * 100); // cents
+
+  // If price exists, verify it matches current sale price
+  if (existing?.stripe_price_id) {
+    try {
+      const stripePrice = await stripe!.prices.retrieve(existing.stripe_price_id);
+      if (stripePrice.unit_amount === unitAmount && stripePrice.active) {
+        return existing.stripe_price_id;
+      }
+      // Price changed — deactivate old price and create new one
+      await stripe!.prices.update(existing.stripe_price_id, { active: false });
+    } catch {
+      // Price not found in Stripe, create new one
+    }
+  }
+
+  // Get or create the Stripe Product
+  let productId = existing?.stripe_product_id;
+  if (!productId) {
+    const product = await stripe!.products.create({
+      name: `${MAILBOX_PRODUCT_NAME} - ${tier.tier_name}`,
+      description: `${tier.storage_gb}GB email mailbox`,
+      metadata: { tier_id: tier.id, tier_name: tier.tier_name },
+    });
+    productId = product.id;
+  }
+
+  // Create the recurring price
+  const price = await stripe!.prices.create({
+    product: productId,
+    unit_amount: unitAmount,
+    currency: "usd",
+    recurring: { interval: "month" },
+    metadata: { tier_id: tier.id, tier_name: tier.tier_name },
+  });
+
+  // Save price and product IDs back to the tier row
+  await supabaseAdmin
+    .from("mailbox_pricing")
+    .update({
+      stripe_price_id: price.id,
+      stripe_product_id: productId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", tier.id);
+
+  return price.id;
+}
+
+/**
+ * Get or create a Stripe Customer for the user.
+ * Reuses the customer from the user's org subscription if available.
+ */
+async function getOrCreateCustomer(
+  userId: string,
+  email: string
+): Promise<string> {
+  // Check if user's org already has a Stripe customer
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("email, name")
+    .eq("id", userId)
+    .single();
+
+  const userEmail = email || profile?.email;
+
+  // Check for existing customer by email
+  const customers = await stripe!.customers.list({
+    email: userEmail,
+    limit: 1,
+  });
+
+  if (customers.data.length > 0) {
+    return customers.data[0].id;
+  }
+
+  // Create new customer
+  const customer = await stripe!.customers.create({
+    email: userEmail,
+    name: profile?.name || undefined,
+    metadata: { user_id: userId },
+  });
+
+  return customer.id;
+}
+
+/**
+ * Create a Stripe Subscription for a domain's email service.
+ * Called when email is enabled on a domain.
+ */
+export async function createMailboxSubscription(
+  userId: string,
+  userEmail: string,
+  domainId: string,
+  domainName: string,
+  tier: MailboxPricingRow
+): Promise<{ subscriptionId: string; customerId: string }> {
+  if (!stripe) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const priceId = await getOrCreateStripePrice(tier);
+  const customerId = await getOrCreateCustomer(userId, userEmail);
+
+  // Create subscription with quantity 0 (no mailboxes yet)
+  const subscription = await stripe.subscriptions.create({
+    customer: customerId,
+    items: [{ price: priceId, quantity: 0 }],
+    payment_behavior: "default_incomplete",
+    payment_settings: { save_default_payment_method: "on_subscription" },
+    metadata: {
+      type: "mailbox",
+      domain_id: domainId,
+      domain_name: domainName,
+      tier_id: tier.id,
+      tier_name: tier.tier_name,
+      user_id: userId,
+    },
+  });
+
+  return {
+    subscriptionId: subscription.id,
+    customerId,
+  };
+}
+
+/**
+ * Update the quantity on a mailbox subscription.
+ * Called when mailboxes are added or removed.
+ */
+export async function updateMailboxSubscriptionQuantity(
+  stripeSubscriptionId: string,
+  newQuantity: number
+): Promise<void> {
+  if (!stripe) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+  const itemId = subscription.items.data[0]?.id;
+
+  if (!itemId) {
+    throw new Error("No subscription item found");
+  }
+
+  await stripe.subscriptions.update(stripeSubscriptionId, {
+    items: [{ id: itemId, quantity: newQuantity }],
+    proration_behavior: "create_prorations",
+  });
+}
+
+/**
+ * Update the price on a mailbox subscription when the tier changes.
+ * Called when a customer changes their email plan.
+ */
+export async function updateMailboxSubscriptionTier(
+  stripeSubscriptionId: string,
+  newTier: MailboxPricingRow,
+  currentQuantity: number
+): Promise<void> {
+  if (!stripe) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const newPriceId = await getOrCreateStripePrice(newTier);
+  const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+  const itemId = subscription.items.data[0]?.id;
+
+  if (!itemId) {
+    throw new Error("No subscription item found");
+  }
+
+  await stripe.subscriptions.update(stripeSubscriptionId, {
+    items: [{ id: itemId, price: newPriceId, quantity: currentQuantity }],
+    proration_behavior: "create_prorations",
+  });
+}
+
+/**
+ * Cancel the mailbox subscription.
+ * Called when email is disabled on a domain.
+ */
+export async function cancelMailboxSubscription(
+  stripeSubscriptionId: string
+): Promise<void> {
+  if (!stripe) {
+    throw new Error("Stripe is not configured");
+  }
+
+  await stripe.subscriptions.cancel(stripeSubscriptionId);
+}
+```
+
+- [ ] **Step 2: Update the mailbox_pricing migration to include Stripe columns**
+
+In the migration file `supabase/migrations/20260409000000_create_mailbox_tables.sql`, the `mailbox_pricing` table needs two additional columns:
+
+```sql
+-- Add after mailbox_limit column:
+  stripe_product_id text,
+  stripe_price_id text,
+```
+
+- [ ] **Step 3: Update the MailboxPricingRow type to include Stripe fields**
+
+In `/Users/sethchesky/Documents/GitHub/javelina-backend/src/types/mailbox.ts`, add to `MailboxPricingRow`:
+
+```typescript
+export interface MailboxPricingRow {
+  id: string;
+  tier_name: string;
+  storage_gb: number;
+  opensrs_cost: number;
+  margin_percent: number;
+  sale_price_override: number | null;
+  mailbox_limit: number;
+  stripe_product_id: string | null;
+  stripe_price_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /Users/sethchesky/Documents/GitHub/javelina-backend
+git add src/services/mailbox-billing.ts src/types/mailbox.ts
+git commit -m "feat: add mailbox Stripe billing service"
+```
+
+---
+
+## Task 14: Backend — Integrate Billing into Mailbox Controller
+
+**Files:**
+- Modify: `/Users/sethchesky/Documents/GitHub/javelina-backend/src/controllers/mailboxController.ts`
+- Modify: `/Users/sethchesky/Documents/GitHub/javelina-backend/src/controllers/stripeController.ts`
+
+The existing `enableEmail`, `disableEmail`, `createDomainMailbox`, `deleteDomainMailbox`, and `changePlan` handlers need to create/update/cancel Stripe subscriptions.
+
+- [ ] **Step 1: Update enableEmail to create a Stripe subscription**
+
+Add import at top of `mailboxController.ts`:
+```typescript
+import {
+  createMailboxSubscription,
+  updateMailboxSubscriptionQuantity,
+  updateMailboxSubscriptionTier,
+  cancelMailboxSubscription,
+} from "../services/mailbox-billing";
+```
+
+In the `enableEmail` handler, after `await setBranding(...)` and before the `domain_mailboxes` insert, add:
+
+```typescript
+  // Create Stripe subscription for mailbox billing
+  let stripeSubscriptionId: string | null = null;
+  let stripeCustomerId: string | null = null;
+  try {
+    const billing = await createMailboxSubscription(
+      userId,
+      req.user!.email || "",
+      domainId,
+      domain.domain_name,
+      tier
+    );
+    stripeSubscriptionId = billing.subscriptionId;
+    stripeCustomerId = billing.customerId;
+  } catch (err: any) {
+    console.error("Failed to create billing subscription:", err.message);
+    // Continue without billing — admin can reconcile later
+  }
+```
+
+Update the `domain_mailboxes` insert to include Stripe fields:
+
+```typescript
+  const { data: record, error } = await supabaseAdmin
+    .from("domain_mailboxes")
+    .insert({
+      domain_id: domainId,
+      tier_id: tier_id,
+      opensrs_mail_domain: domain.domain_name,
+      stripe_subscription_id: stripeSubscriptionId,
+      stripe_customer_id: stripeCustomerId,
+      status: "active",
+    })
+    .select()
+    .single();
+```
+
+- [ ] **Step 2: Update disableEmail to cancel the Stripe subscription**
+
+In the `disableEmail` handler, after verifying the domain exists and before deleting from `domain_mailboxes`, add:
+
+```typescript
+  // Cancel Stripe subscription
+  if (existing.stripe_subscription_id) {
+    try {
+      await cancelMailboxSubscription(existing.stripe_subscription_id);
+    } catch (err: any) {
+      console.error("Failed to cancel billing subscription:", err.message);
+    }
+  }
+```
+
+- [ ] **Step 3: Update createDomainMailbox to increment subscription quantity**
+
+In the `createDomainMailbox` handler, after the successful `omaCreateMailbox` call, add:
+
+```typescript
+  // Update Stripe subscription quantity
+  if (existing.stripe_subscription_id) {
+    try {
+      const updatedMailboxes = await omaListMailboxes(domain.domain_name);
+      await updateMailboxSubscriptionQuantity(
+        existing.stripe_subscription_id,
+        updatedMailboxes.length
+      );
+    } catch (err: any) {
+      console.error("Failed to update billing quantity:", err.message);
+    }
+  }
+```
+
+- [ ] **Step 4: Update deleteDomainMailbox to decrement subscription quantity**
+
+In the `deleteDomainMailbox` handler, after the successful `omaDeleteMailbox` call, add:
+
+```typescript
+  // Update Stripe subscription quantity
+  const domainMailbox = await getDomainMailbox(domainId);
+  if (domainMailbox?.stripe_subscription_id) {
+    try {
+      const remainingMailboxes = await omaListMailboxes(domain.domain_name);
+      await updateMailboxSubscriptionQuantity(
+        domainMailbox.stripe_subscription_id,
+        remainingMailboxes.length
+      );
+    } catch (err: any) {
+      console.error("Failed to update billing quantity:", err.message);
+    }
+  }
+```
+
+- [ ] **Step 5: Update changePlan to update subscription price**
+
+In the `changePlan` handler, after updating mailbox quotas and before the `domain_mailboxes` update, add:
+
+```typescript
+  // Update Stripe subscription to new tier price
+  if (existing.stripe_subscription_id) {
+    try {
+      await updateMailboxSubscriptionTier(
+        existing.stripe_subscription_id,
+        newTier,
+        mailboxes.length
+      );
+    } catch (err: any) {
+      console.error("Failed to update billing tier:", err.message);
+    }
+  }
+```
+
+- [ ] **Step 6: Add mailbox webhook handler to stripeController.ts**
+
+In `/Users/sethchesky/Documents/GitHub/javelina-backend/src/controllers/stripeController.ts`, add a handler for mailbox subscription events. In the main webhook switch statement, add:
+
+```typescript
+// Inside the existing switch(event.type) block, in the
+// customer.subscription.deleted handler:
+
+// Check if this is a mailbox subscription
+if (subscription.metadata?.type === "mailbox") {
+  const domainId = subscription.metadata.domain_id;
+  if (domainId) {
+    await supabaseAdmin
+      .from("domain_mailboxes")
+      .update({
+        status: "suspended",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("domain_id", domainId)
+      .eq("stripe_subscription_id", subscription.id);
+    console.log(`Mailbox subscription canceled for domain ${domainId}`);
+  }
+  return;
+}
+```
+
+And in the `invoice.payment_failed` handler:
+
+```typescript
+// Check if this is a mailbox subscription payment failure
+const failedSubscriptionId = invoice.subscription;
+if (failedSubscriptionId) {
+  const { data: mailboxRecord } = await supabaseAdmin
+    .from("domain_mailboxes")
+    .select("*")
+    .eq("stripe_subscription_id", failedSubscriptionId)
+    .single();
+
+  if (mailboxRecord) {
+    await supabaseAdmin
+      .from("domain_mailboxes")
+      .update({
+        status: "suspended",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", mailboxRecord.id);
+    console.log(`Mailbox subscription payment failed for domain ${mailboxRecord.domain_id}`);
+    return;
+  }
+}
+```
+
+- [ ] **Step 7: Commit**
+
+```bash
+cd /Users/sethchesky/Documents/GitHub/javelina-backend
+git add src/controllers/mailboxController.ts src/controllers/stripeController.ts
+git commit -m "feat: integrate Stripe billing into mailbox controller and webhooks"
+```
+
+---
+
+## Task 15: Verify and Test
 
 - [ ] **Step 1: Start the backend and check for compilation errors**
 
@@ -2524,7 +2998,27 @@ Navigate to `/admin/opensrs` and click the "Mailbox Pricing" tab. Verify the pri
 
 Set `OPENSRS_MAIL_ENV=test` and test enabling email on a domain. Verify the OpenSRS Mail API calls succeed against the sandbox.
 
-- [ ] **Step 7: Final commit if any fixes were needed**
+- [ ] **Step 7: Verify Stripe subscription creation**
+
+After enabling email on a domain, check the Stripe dashboard (or use `stripe subscriptions list --limit 1`) to verify a subscription was created with:
+- quantity: 0
+- metadata.type: "mailbox"
+- metadata.domain_name: the domain name
+- recurring price matching the selected tier
+
+- [ ] **Step 8: Test mailbox creation updates billing quantity**
+
+Create a mailbox via the UI or API. Verify the Stripe subscription quantity incremented to 1. Create a second mailbox and verify quantity is 2. Delete one and verify quantity decrements back to 1.
+
+- [ ] **Step 9: Test plan change updates billing price**
+
+Change the email plan tier for a domain. Verify in Stripe that the subscription item's price ID updated to match the new tier, and proration was created.
+
+- [ ] **Step 10: Test disable email cancels subscription**
+
+Disable email on a domain. Verify the Stripe subscription status is "canceled" in the dashboard.
+
+- [ ] **Step 11: Final commit if any fixes were needed**
 
 ```bash
 git add -A
