@@ -285,9 +285,11 @@ export default function AdminDashboard() {
                   <p className="text-gray-slate dark:text-gray-400 text-sm font-medium">Discount Codes</p>
                 </div>
               </div>
-              {/* Placeholder to match height of cards with counts */}
-              <p className="text-3xl font-bold mb-2 opacity-0">0</p>
-              <p className="text-xs text-gray-500 mb-3 opacity-0">.</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                {loading ? '—' : kpis.totalDiscountCodes.toLocaleString()}
+              </p>
+              {/* Placeholder to match subtitle */}
+              <p className="text-xs mb-3 opacity-0">.</p>
               <Button
                 size="sm"
                 variant="ghost"
