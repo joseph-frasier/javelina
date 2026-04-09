@@ -4,10 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { ConfirmationModal } from '@/components/modals/ConfirmationModal';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { mailboxApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
-import { extractErrorMessage } from '@/lib/utils';
+
+function extractErrorMessage(err: any, fallback: string): string {
+  if (err?.message) return err.message;
+  if (typeof err === 'string') return err;
+  return fallback;
+}
 import type {
   MailboxPricingTier,
   DomainEmailStatus,
@@ -540,16 +545,16 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
         </div>
       </div>
 
-      {showDisableConfirm && (
-        <ConfirmationModal
-          title="Disable Email"
-          message={`Are you sure you want to disable email for ${domainName}? This will permanently delete all mailboxes and aliases.`}
-          confirmLabel={disablingEmail ? 'Disabling...' : 'Disable Email'}
-          onConfirm={handleDisableEmail}
-          onCancel={() => setShowDisableConfirm(false)}
-          destructive
-        />
-      )}
+      <ConfirmationModal
+        isOpen={showDisableConfirm}
+        title="Disable Email"
+        message={`Are you sure you want to disable email for ${domainName}? This will permanently delete all mailboxes and aliases.`}
+        confirmText={disablingEmail ? 'Disabling...' : 'Disable Email'}
+        onConfirm={handleDisableEmail}
+        onClose={() => setShowDisableConfirm(false)}
+        variant="danger"
+        isLoading={disablingEmail}
+      />
     </Card>
   );
 }
