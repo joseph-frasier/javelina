@@ -14,6 +14,7 @@ import { EditWhoisModal } from '@/components/modals/EditWhoisModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Pagination } from '@/components/admin/Pagination';
 import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
+import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
 import type {
@@ -580,6 +581,14 @@ export default function DomainDetailPage() {
           </div>{/* end right column */}
         </div>{/* end inner grid */}
       </div>{/* end combined card */}
+
+      {/* Email */}
+      {domain && domain.status === 'active' && (
+        <DomainEmailSection
+          domainId={domain.id}
+          domainName={domain.domain_name}
+        />
+      )}
 
       {/* WHOIS Contact — read-only display with edit modal */}
       <Card
