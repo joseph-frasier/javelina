@@ -1,33 +1,37 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { clsx } from 'clsx';
-import type { DNSRecord } from '@/types/dns';
+import gsap from 'gsap';
+import type { DNSRecord, DNSRecordType } from '@/types/dns';
 import { RECORD_TYPE_INFO } from '@/types/dns';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { ExportButton } from '@/components/admin/ExportButton';
-import { Pagination } from '@/components/admin/Pagination';
+import { getFQDN } from '@/lib/utils/dns-validation';
 
 interface DNSRecordsTableProps {
   records: DNSRecord[];
   selectedRecords: string[];
   onSelectionChange: (selectedIds: string[]) => void;
   onRecordClick: (record: DNSRecord) => void;
-  onStatusToggle?: (record: DNSRecord) => void;
   loading?: boolean;
   zoneName: string;
-  // Zone metadata for BIND export
   nameservers?: string[];
   soaSerial?: number;
   defaultTTL?: number;
 }
+
+// Canonical display order for record types
+const TYPE_ORDER: DNSRecordType[] = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SRV', 'CAA', 'PTR', 'SOA'];
+
+// Record types where the value is a hostname that gets the zone suffix appended in display
+const ZONE_SUFFIX_TYPES = new Set<DNSRecordType>(['CNAME', 'MX', 'NS', 'SRV', 'PTR']);
 
 export function DNSRecordsTable({
   records,
   selectedRecords,
   onSelectionChange,
   onRecordClick,
-  onStatusToggle,
   loading = false,
   zoneName,
   nameservers,
@@ -37,125 +41,178 @@ export function DNSRecordsTable({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<keyof DNSRecord | null>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  
-  // Filter states
-  const [showFilters, setShowFilters] = useState(false);
-  const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set());
-  const [priorityFilters, setPriorityFilters] = useState<Set<string>>(new Set());
+  const [activeTypeFilter, setActiveTypeFilter] = useState<DNSRecordType | 'all'>('all');
 
-  // Define priority ranges for filtering
-  const priorityRanges = useMemo(() => [
-    { key: 'high', label: 'High Priority (0-10)', min: 0, max: 10 },
-    { key: 'medium', label: 'Medium Priority (11-30)', min: 11, max: 30 },
-    { key: 'low', label: 'Low Priority (31+)', min: 31, max: 65535 },
-    { key: 'na', label: 'N/A', min: null, max: null },
-  ], []);
+  // expandedSections is the exception list — default is collapsed.
+  // Stored in localStorage so the user's open/close choices persist across page visits.
+  const storageKey = useMemo(() => `dns-expanded-sections-${zoneName}`, [zoneName]);
+  const [expandedSections, setExpandedSections] = useState<Set<DNSRecordType>>(() => {
+    try {
+      const raw = localStorage.getItem(`dns-expanded-sections-${zoneName}`);
+      if (raw) return new Set(JSON.parse(raw) as DNSRecordType[]);
+    } catch {}
+    return new Set();
+  });
 
-  // Check which priority ranges have records
-  const availablePriorityRanges = useMemo(() => {
-    const hasRecordsInRange = new Map<string, boolean>();
-    
-    // Priority range checking removed - priority is now part of the value field
-    
-    return priorityRanges.filter(range => hasRecordsInRange.get(range.key));
-  }, [priorityRanges]);
+  const sectionContentRefs = useRef<Map<DNSRecordType, HTMLDivElement | null>>(new Map());
+  const chevronRefs = useRef<Map<DNSRecordType, SVGSVGElement | null>>(new Map());
+  const activeTweens = useRef<gsap.core.Tween[]>([]);
 
-  // Filter records based on search query, status, priority, and tags
   const filteredRecords = useMemo(() => {
-    let filtered = records;
-    
-    // Filter out root NS records (system-managed, not user-editable)
-    // Root NS records are where type=NS and name is '@', '', or matches zoneName
-    filtered = filtered.filter(record => {
+    let filtered = records.filter(record => {
       if (record.type === 'NS') {
-        const normalizedName = record.name.trim();
-        const isRootNS = normalizedName === '@' || 
-                        normalizedName === '' || 
-                        normalizedName === zoneName;
-        return !isRootNS; // Exclude root NS records
+        const n = record.name.trim();
+        return !(n === '@' || n === '' || n === zoneName);
       }
-      return true; // Include all other records
+      return true;
     });
-    
-    // Apply search query filter
+
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(record => 
-        record.name.toLowerCase().includes(query) ||
-        record.type.toLowerCase().includes(query) ||
-        record.value.toLowerCase().includes(query) ||
-        (record.comment && record.comment.toLowerCase().includes(query))
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(r =>
+        r.name.toLowerCase().includes(q) ||
+        r.type.toLowerCase().includes(q) ||
+        r.value.toLowerCase().includes(q) ||
+        (r.comment && r.comment.toLowerCase().includes(q))
       );
     }
-    
-    // Status filter removed - all DNS records are now active by default (active field removed from schema)
-    
-    // Priority filter removed - priority is now part of the value field (not a separate column)
-    
+
     return filtered;
   }, [records, searchQuery, zoneName]);
 
-  // Sort records
   const filteredAndSortedRecords = useMemo(() => {
-    if (!sortKey || !sortDirection) return filteredRecords;
-    
+    if (!sortKey) return filteredRecords;
     return [...filteredRecords].sort((a, b) => {
-      let aValue = a[sortKey];
-      let bValue = b[sortKey];
-      
-      // Handle null/undefined
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
-      
-      // Handle numbers
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
-      // Handle strings
-      const aStr = String(aValue).toLowerCase();
-      const bStr = String(bValue).toLowerCase();
-      return sortDirection === 'asc' 
-        ? aStr.localeCompare(bStr) 
-        : bStr.localeCompare(aStr);
+      const aStr = String(aVal).toLowerCase();
+      const bStr = String(bVal).toLowerCase();
+      return sortDirection === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
     });
   }, [filteredRecords, sortKey, sortDirection]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredAndSortedRecords.length / itemsPerPage));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (safeCurrentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedRecords = useMemo(
-    () => filteredAndSortedRecords.slice(startIndex, endIndex),
-    [filteredAndSortedRecords, startIndex, endIndex]
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, sortKey, sortDirection, records]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+  // Single pass: build both presentTypes and groupedRecords
+  const { presentTypes, groupedRecords } = useMemo(() => {
+    const typeSet = new Set<DNSRecordType>();
+    const groups = new Map<DNSRecordType, DNSRecord[]>();
+    for (const record of filteredAndSortedRecords) {
+      typeSet.add(record.type);
+      if (!groups.has(record.type)) groups.set(record.type, []);
+      groups.get(record.type)!.push(record);
     }
-  }, [currentPage, totalPages]);
+    return { presentTypes: TYPE_ORDER.filter(t => typeSet.has(t)), groupedRecords: groups };
+  }, [filteredAndSortedRecords]);
 
-  // Handle select all checkbox
-  const handleSelectAll = useCallback((checked: boolean) => {
-    if (checked) {
-      const pageRecordIds = paginatedRecords.map(r => r.id);
-      const nextSelected = Array.from(new Set([...selectedRecords, ...pageRecordIds]));
-      onSelectionChange(nextSelected);
+  const visibleTypes = activeTypeFilter === 'all' ? presentTypes : [activeTypeFilter];
+  const isSingleTypeView = activeTypeFilter !== 'all';
+
+  // Reset active filter if search removes all records of the filtered type
+  useEffect(() => {
+    if (activeTypeFilter !== 'all' && !presentTypes.includes(activeTypeFilter)) {
+      setActiveTypeFilter('all');
+    }
+  }, [presentTypes, activeTypeFilter]);
+
+  // Persist expanded sections to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(expandedSections)));
+    } catch {}
+  }, [expandedSections, storageKey]);
+
+  // Set initial GSAP height/rotation for all sections whenever visible sections change.
+  // Runs after DOM update so refs are populated. GSAP owns these inline styles from here on.
+  useLayoutEffect(() => {
+    visibleTypes.forEach(type => {
+      const contentEl = sectionContentRefs.current.get(type);
+      const chevronEl = chevronRefs.current.get(type);
+      const isExpanded = expandedSections.has(type);
+
+      if (contentEl) {
+        if (!isSingleTypeView && !isExpanded) {
+          gsap.set(contentEl, { height: 0, overflow: 'hidden' });
+        } else {
+          gsap.set(contentEl, { clearProps: 'all' });
+        }
+      }
+      if (chevronEl) {
+        gsap.set(chevronEl, { rotate: isSingleTypeView || isExpanded ? 180 : 0 });
+      }
+    });
+  }, [visibleTypes]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Intentionally only re-runs when sections change, not on every toggle —
+  // toggleSection handles GSAP for individual open/close after initial setup.
+
+  // Kill tweens on unmount
+  useEffect(() => () => { activeTweens.current.forEach(t => t.kill()); }, []);
+
+  const handleSort = useCallback((key: keyof DNSRecord) => {
+    if (sortKey === key) {
+      if (sortDirection === 'asc') setSortDirection('desc');
+      else { setSortKey(null); setSortDirection('asc'); }
     } else {
-      const pageRecordIds = new Set(paginatedRecords.map(r => r.id));
-      onSelectionChange(selectedRecords.filter(id => !pageRecordIds.has(id)));
+      setSortKey(key);
+      setSortDirection('asc');
     }
-  }, [onSelectionChange, paginatedRecords, selectedRecords]);
+  }, [sortKey, sortDirection]);
 
-  // Handle individual checkbox
+  const toggleSection = useCallback((type: DNSRecordType) => {
+    const contentEl = sectionContentRefs.current.get(type);
+    const chevronEl = chevronRefs.current.get(type);
+    if (!contentEl) return;
+
+    // Kill any in-flight tweens before starting new ones
+    activeTweens.current.forEach(t => t.kill());
+    activeTweens.current = [];
+
+    if (expandedSections.has(type)) {
+      activeTweens.current.push(
+        gsap.fromTo(contentEl,
+          { height: contentEl.offsetHeight, overflow: 'hidden' },
+          { height: 0, duration: 0.35, ease: 'power3.inOut' }
+        )
+      );
+      if (chevronEl) activeTweens.current.push(
+        gsap.to(chevronEl, { rotate: 0, duration: 0.3, ease: 'power2.out' })
+      );
+    } else {
+      activeTweens.current.push(
+        gsap.fromTo(contentEl,
+          { height: 0, overflow: 'hidden' },
+          { height: 'auto', duration: 0.4, ease: 'power3.out', clearProps: 'overflow,height' }
+        )
+      );
+      if (chevronEl) activeTweens.current.push(
+        gsap.to(chevronEl, { rotate: 180, duration: 0.3, ease: 'power2.out' })
+      );
+    }
+
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  }, [expandedSections]);
+
+  const handleSectionSelectAll = useCallback((sectionRecords: DNSRecord[], checked: boolean) => {
+    const ids = sectionRecords.map(r => r.id);
+    if (checked) {
+      const combined = new Set(selectedRecords);
+      ids.forEach(id => combined.add(id));
+      onSelectionChange(Array.from(combined));
+    } else {
+      const idSet = new Set(ids);
+      onSelectionChange(selectedRecords.filter(id => !idSet.has(id)));
+    }
+  }, [selectedRecords, onSelectionChange]);
+
   const handleSelectRecord = useCallback((recordId: string, checked: boolean) => {
     if (checked) {
       onSelectionChange([...selectedRecords, recordId]);
@@ -164,67 +221,21 @@ export function DNSRecordsTable({
     }
   }, [selectedRecords, onSelectionChange]);
 
-  // Handle column sort
-  const handleSort = useCallback((key: keyof DNSRecord) => {
-    if (sortKey === key) {
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else {
-        setSortKey(null);
-        setSortDirection('asc');
-      }
-    } else {
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  }, [sortKey, sortDirection]);
-
-  // Handle status filter toggle
-  const handleStatusFilter = useCallback((status: string) => {
-    setStatusFilters(prev => {
-      const next = new Set(prev);
-      if (next.has(status)) {
-        next.delete(status);
-      } else {
-        next.add(status);
-      }
-      return next;
-    });
-  }, []);
-
-  // Handle priority filter toggle
-  const handlePriorityFilter = useCallback((priority: string) => {
-    setPriorityFilters(prev => {
-      const next = new Set(prev);
-      if (next.has(priority)) {
-        next.delete(priority);
-      } else {
-        next.add(priority);
-      }
-      return next;
-    });
-  }, []);
-
-  // Clear all filters
-  const handleClearFilters = useCallback(() => {
-    setStatusFilters(new Set());
-    setPriorityFilters(new Set());
-  }, []);
-
-  // Calculate active filter count
-  const activeFilterCount = statusFilters.size + priorityFilters.size;
-
-  // Check if all records on the current page are selected
-  const allSelected = paginatedRecords.length > 0 &&
-    paginatedRecords.every(r => selectedRecords.includes(r.id));
-  const someSelected = paginatedRecords.some(r => selectedRecords.includes(r.id)) && !allSelected;
-
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="flex gap-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+          ))}
+        </div>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
         ))}
       </div>
     );
@@ -233,92 +244,18 @@ export function DNSRecordsTable({
   if (records.length === 0) {
     return (
       <div className="text-center py-12">
-        <svg
-          className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
+        <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-          No DNS records
-        </h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Get started by creating your first DNS record.
-        </p>
-      </div>
-    );
-  }
-
-  if (filteredAndSortedRecords.length === 0) {
-    return (
-      <div className="space-y-4">
-        <div className="relative">
-          <input
-            type="search"
-            placeholder="Search records by name, type, or value..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
-          />
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
-
-        <div className="text-center py-12 border border-dashed border-gray-light dark:border-gray-700 rounded-lg">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-            No matching DNS records
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Try a different search term to find the record you need.
-          </p>
-          {searchQuery.trim() && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="mt-4 inline-flex items-center rounded-md border border-gray-light dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              Clear search
-            </button>
-          )}
-        </div>
+        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No DNS records</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating your first DNS record.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
+
       <div className="relative">
         <input
           type="search"
@@ -327,25 +264,62 @@ export function DNSRecordsTable({
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
         />
-        <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
 
-      {/* Export Button */}
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            onClick={() => setActiveTypeFilter('all')}
+            className={clsx(
+              'px-3 py-1 rounded-full text-xs font-semibold transition-all border',
+              activeTypeFilter === 'all'
+                ? 'bg-orange text-white border-orange shadow-sm'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-light dark:border-gray-600 hover:border-orange dark:hover:border-orange hover:text-orange dark:hover:text-orange'
+            )}
+          >
+            All
+            <span className={clsx(
+              'ml-1.5 px-1.5 py-0.5 rounded-full text-xs',
+              activeTypeFilter === 'all'
+                ? 'bg-white/20 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            )}>
+              {filteredRecords.length}
+            </span>
+          </button>
+
+          {presentTypes.map(type => {
+            const isActive = activeTypeFilter === type;
+            return (
+              <button
+                key={type}
+                onClick={() => setActiveTypeFilter(isActive ? 'all' : type)}
+                className={clsx(
+                  'px-3 py-1 rounded-full text-xs font-semibold transition-all border',
+                  isActive
+                    ? 'bg-orange text-white border-orange shadow-sm'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-light dark:border-gray-600 hover:border-orange dark:hover:border-orange hover:text-orange dark:hover:text-orange'
+                )}
+              >
+                {type}
+                <span className={clsx(
+                  'ml-1.5 px-1.5 py-0.5 rounded-full text-xs',
+                  isActive
+                    ? 'bg-white/20 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                )}>
+                  {groupedRecords.get(type)?.length ?? 0}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <ExportButton
-          data={selectedRecords.length > 0 
+          data={selectedRecords.length > 0
             ? filteredAndSortedRecords.filter(r => selectedRecords.includes(r.id))
             : filteredAndSortedRecords
           }
@@ -358,284 +332,231 @@ export function DNSRecordsTable({
         />
       </div>
 
-      {/* Filters - Hidden for now (not filtering anything currently)
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+      {filteredAndSortedRecords.length === 0 && (
+        <div className="text-center py-12 border border-dashed border-gray-light dark:border-gray-700 rounded-lg">
+          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No matching DNS records</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Try a different search term.</p>
+          {searchQuery.trim() && (
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => setSearchQuery('')}
+              className="mt-4 inline-flex items-center rounded-md border border-gray-light dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <svg 
-                className={clsx(
-                  "w-4 h-4 transition-transform",
-                  showFilters && "rotate-180"
-                )}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-              Filters
-              {activeFilterCount > 0 && (
-                <span className="px-2 py-0.5 text-xs font-semibold text-white bg-orange rounded-full">
-                  {activeFilterCount}
-                </span>
-              )}
+              Clear search
             </button>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={handleClearFilters}
-                className="text-sm text-orange hover:text-orange-dark dark:hover:text-orange-light transition-colors"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
+          )}
         </div>
+      )}
 
-        {showFilters && (
-          <div className="inline-block bg-gray-50 dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-lg p-3 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex flex-col md:flex-row md:gap-8 gap-3">
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Status
-                </h4>
-                <div className="space-y-1.5">
-                  {['Active', 'Inactive'].map(status => (
-                    <label
-                      key={status}
-                      className="flex items-center gap-2 group"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={statusFilters.has(status)}
-                        onChange={() => handleStatusFilter(status)}
-                        className="w-4 h-4 text-orange bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors cursor-pointer">
-                        {status}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+      {visibleTypes.map(type => {
+        const sectionRecords = groupedRecords.get(type) ?? [];
+        if (sectionRecords.length === 0) return null;
 
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Priority
-                </h4>
-                <div className="space-y-1.5">
-                  {availablePriorityRanges.map(range => (
-                    <label
-                      key={range.key}
-                      className="flex items-center gap-2 group"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={priorityFilters.has(range.key)}
-                        onChange={() => handlePriorityFilter(range.key)}
-                        className="w-4 h-4 text-orange bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange dark:group-hover:text-orange transition-colors cursor-pointer">
-                        {range.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      */}
+        const info = RECORD_TYPE_INFO[type];
+        const isExpanded = expandedSections.has(type);
+        const allSectionSelected = sectionRecords.every(r => selectedRecords.includes(r.id));
+        const someSectionSelected = sectionRecords.some(r => selectedRecords.includes(r.id)) && !allSectionSelected;
 
-      {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b-2 border-gray-light dark:border-gray-700">
-              <th className="py-3 px-4 w-12">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = someSelected;
-                  }}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
-                />
-              </th>
-              {[
-                { key: 'name' as keyof DNSRecord | null, label: 'Name', sortable: true },
-                { key: 'type' as keyof DNSRecord | null, label: 'Type', sortable: true },
-                { key: 'value' as keyof DNSRecord | null, label: 'Value', sortable: true },
-                { key: 'ttl' as keyof DNSRecord | null, label: 'TTL', sortable: true },
-              ].map(column => (
-                <th
-                  key={column.key || column.label}
-                  className={clsx(
-                    'text-left py-3 px-4 text-sm font-semibold transition-colors select-none',
-                    column.sortable && 'cursor-pointer hover:text-orange dark:hover:text-orange',
-                    column.key && sortKey === column.key
-                      ? 'text-orange-dark dark:text-orange'
-                      : 'text-gray-700 dark:text-gray-300'
-                  )}
-                  onClick={() => column.sortable && column.key && handleSort(column.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    {column.label}
-                    {column.key && sortKey === column.key && (
-                      <span className="text-orange">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedRecords.map((record) => {
-              const isSelected = selectedRecords.includes(record.id);
-              const fqdn = record.name === '@' || record.name === '' 
-                ? zoneName 
-                : `${record.name}.${zoneName}`;
-              
-              // Determine if we should show zone name suffix for this record type
-              const showZoneSuffix = ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(record.type) &&
-                                     !record.value.endsWith('.');
-              
-              return (
-                <tr
-                  key={record.id}
-                  className={clsx(
-                    'dark:border-gray-700 transition-colors cursor-pointer',
-                    isSelected
-                      ? 'bg-orange/10 dark:bg-orange/20'
-                      : 'hover:bg-gray-light/30 dark:hover:bg-gray-700/30'
-                  )}
-                  onClick={() => onRecordClick(record)}
-                >
-                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => handleSelectRecord(record.id, e.target.checked)}
-                      className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
-                    />
-                  </td>
-                  <td className="py-3 px-4">
-                    <Tooltip content={fqdn}>
-                      <span className="text-sm font-medium text-orange-dark dark:text-orange">
-                        {record.name || '@'}
-                      </span>
-                    </Tooltip>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded text-xs font-medium">
-                      {record.type}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <Tooltip content={showZoneSuffix ? `${record.value}.${zoneName}.` : record.value}>
-                      <span className="text-sm text-gray-slate dark:text-gray-300 font-mono truncate block max-w-md">
-                        {record.value}
-                        {showZoneSuffix && (
-                          <span className="text-gray-400 dark:text-gray-600">
-                            .{zoneName}.
-                          </span>
-                        )}
-                      </span>
-                    </Tooltip>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300">
-                    {record.ttl}s
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+        return (
+          <div key={type} className="border border-gray-light dark:border-gray-700 rounded-lg overflow-hidden">
 
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
-        {paginatedRecords.map((record) => {
-          const isSelected = selectedRecords.includes(record.id);
-          const fqdn = record.name === '@' || record.name === '' 
-            ? zoneName 
-            : `${record.name}.${zoneName}`;
-          
-          // Determine if we should show zone name suffix for this record type
-          const showZoneSuffix = ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(record.type) &&
-                                 !record.value.endsWith('.');
-          
-          return (
             <div
-              key={record.id}
               className={clsx(
-                'border rounded-lg p-4 transition-colors cursor-pointer',
-                isSelected
-                  ? 'border-orange bg-orange/10 dark:bg-orange/20'
-                  : 'border-gray-light dark:border-gray-700 hover:border-orange dark:hover:border-orange'
+                'flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/60',
+                !isSingleTypeView && 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors'
               )}
-              onClick={() => onRecordClick(record)}
+              onClick={() => !isSingleTypeView && toggleSection(type)}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3">
+                <div onClick={e => e.stopPropagation()}>
                   <input
                     type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => handleSelectRecord(record.id, e.target.checked)}
+                    checked={allSectionSelected}
+                    ref={el => { if (el) el.indeterminate = someSectionSelected; }}
+                    onChange={e => handleSectionSelectAll(sectionRecords, e.target.checked)}
                     className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
                   />
-                  <div>
-                    <div className="text-sm font-medium text-orange-dark dark:text-orange">
-                      {record.name || '@'}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {fqdn}
-                    </div>
-                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric dark:text-blue-electric rounded text-xs font-medium">
-                    {record.type}
-                  </span>
-                </div>
+                <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded text-xs font-semibold">
+                  {type}
+                </span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  {info.description}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange/10 text-orange-dark dark:text-orange">
+                  {sectionRecords.length} {sectionRecords.length === 1 ? 'record' : 'records'}
+                </span>
               </div>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Value:</span>
-                  <div className="text-gray-900 dark:text-gray-100 font-mono break-all mt-1">
-                    {record.value}
-                    {showZoneSuffix && (
-                      <span className="text-gray-400 dark:text-gray-600">
-                        .{zoneName}.
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                  <span>TTL: {record.ttl}s</span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
-      <Pagination
-        currentPage={safeCurrentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={filteredAndSortedRecords.length}
-        itemsPerPage={itemsPerPage}
-      />
+              {!isSingleTypeView && (
+                <svg
+                  ref={el => { chevronRefs.current.set(type, el); }}
+                  className="w-4 h-4 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </div>
+
+            {/* Always rendered — GSAP controls height so animations stay smooth */}
+            <div ref={el => { sectionContentRefs.current.set(type, el); }}>
+
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-light dark:border-gray-700 bg-white dark:bg-gray-900/30">
+                      <th className="py-2 px-4 w-12" />
+                      {([
+                        { key: 'name' as keyof DNSRecord, label: 'Name' },
+                        { key: 'type' as keyof DNSRecord, label: 'Type' },
+                        { key: 'value' as keyof DNSRecord, label: 'Value' },
+                        { key: 'ttl' as keyof DNSRecord, label: 'TTL' },
+                      ]).map(col => (
+                        <th
+                          key={col.key}
+                          className={clsx(
+                            'text-left py-2 px-4 text-xs font-semibold uppercase tracking-wider transition-colors select-none cursor-pointer hover:text-orange dark:hover:text-orange',
+                            sortKey === col.key
+                              ? 'text-orange-dark dark:text-orange'
+                              : 'text-gray-500 dark:text-gray-400'
+                          )}
+                          onClick={() => handleSort(col.key)}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            {col.label}
+                            {sortKey === col.key && (
+                              <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-light dark:divide-gray-700/60">
+                    {sectionRecords.map(record => {
+                      const isSelected = selectedRecords.includes(record.id);
+                      const fqdn = getFQDN(record.name, zoneName);
+                      const showZoneSuffix = ZONE_SUFFIX_TYPES.has(record.type) && !record.value.endsWith('.');
+
+                      return (
+                        <tr
+                          key={record.id}
+                          className={clsx(
+                            'transition-colors cursor-pointer',
+                            isSelected
+                              ? 'bg-orange/10 dark:bg-orange/20'
+                              : 'bg-white dark:bg-gray-900/20 hover:bg-gray-light/30 dark:hover:bg-gray-700/30'
+                          )}
+                          onClick={() => onRecordClick(record)}
+                        >
+                          <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={e => handleSelectRecord(record.id, e.target.checked)}
+                              className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <Tooltip content={fqdn}>
+                              <span className="text-sm font-medium text-orange-dark dark:text-orange">
+                                {record.name || '@'}
+                              </span>
+                            </Tooltip>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded text-xs font-medium">
+                              {record.type}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Tooltip content={showZoneSuffix ? `${record.value}.${zoneName}.` : record.value}>
+                              <span className="text-sm text-gray-slate dark:text-gray-300 font-mono truncate block max-w-md">
+                                {record.value}
+                                {showZoneSuffix && (
+                                  <span className="text-gray-400 dark:text-gray-600">.{zoneName}.</span>
+                                )}
+                              </span>
+                            </Tooltip>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300">
+                            {record.ttl}s
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="md:hidden divide-y divide-gray-light dark:divide-gray-700/60">
+                {sectionRecords.map(record => {
+                  const isSelected = selectedRecords.includes(record.id);
+                  const fqdn = getFQDN(record.name, zoneName);
+                  const showZoneSuffix = ZONE_SUFFIX_TYPES.has(record.type) && !record.value.endsWith('.');
+
+                  return (
+                    <div
+                      key={record.id}
+                      className={clsx(
+                        'p-4 transition-colors cursor-pointer',
+                        isSelected
+                          ? 'bg-orange/10 dark:bg-orange/20'
+                          : 'bg-white dark:bg-gray-900/20 hover:bg-gray-light/30 dark:hover:bg-gray-700/30'
+                      )}
+                      onClick={() => onRecordClick(record)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={e => handleSelectRecord(record.id, e.target.checked)}
+                            className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
+                          />
+                          <div>
+                            <div className="text-sm font-medium text-orange-dark dark:text-orange">{record.name || '@'}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{fqdn}</div>
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded text-xs font-medium">
+                          {record.type}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm pl-7">
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">Value: </span>
+                          <span className="text-gray-900 dark:text-gray-100 font-mono break-all">
+                            {record.value}
+                            {showZoneSuffix && <span className="text-gray-400 dark:text-gray-600">.{zoneName}.</span>}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">TTL: {record.ttl}s</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
+          </div>
+        );
+      })}
+
+      {filteredAndSortedRecords.length > 0 && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 text-right">
+          {isSingleTypeView
+            ? `${groupedRecords.get(activeTypeFilter as DNSRecordType)?.length ?? 0} ${activeTypeFilter} record${(groupedRecords.get(activeTypeFilter as DNSRecordType)?.length ?? 0) !== 1 ? 's' : ''}`
+            : `${filteredAndSortedRecords.length} record${filteredAndSortedRecords.length !== 1 ? 's' : ''} across ${visibleTypes.length} type${visibleTypes.length !== 1 ? 's' : ''}`
+          }
+        </p>
+      )}
 
     </div>
   );
 }
-
