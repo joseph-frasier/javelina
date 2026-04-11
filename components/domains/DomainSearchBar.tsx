@@ -29,9 +29,10 @@ export default function DomainSearchBar({ onSearch, isLoading }: DomainSearchBar
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           suffixHint={query && !query.includes('.') ? '.com' : undefined}
+          className="text-lg py-3"
         />
       </div>
-      <Button type="submit" variant="primary" size="md" disabled={isLoading || !query.trim()}>
+      <Button type="submit" variant="primary" size="lg" disabled={isLoading || !query.trim()}>
         {isLoading ? (
           <span className="flex items-center gap-2">
             <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />

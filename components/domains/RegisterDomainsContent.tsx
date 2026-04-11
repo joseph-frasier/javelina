@@ -63,12 +63,15 @@ export default function RegisterDomainsContent() {
   return (
     <div className="space-y-6">
       {view === 'search' && (
-        <Card title="Find a domain">
+        <Card title="Find a domain" description="Search for available domain names across hundreds of TLDs.">
           <div className="space-y-6">
             <DomainSearchBar onSearch={handleSearch} isLoading={isSearching} />
 
             {searchError && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex gap-2.5">
+                <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
                 <p className="text-sm text-red-700 dark:text-red-400">{searchError}</p>
               </div>
             )}
@@ -82,11 +85,13 @@ export default function RegisterDomainsContent() {
             )}
 
             {suggestions.length > 0 && (
-              <DomainSearchResults
-                results={suggestions}
-                title="Suggestions"
-                onRegister={handleRegister}
-              />
+              <div className="border-t border-gray-100 dark:border-white/5 pt-4">
+                <DomainSearchResults
+                  results={suggestions}
+                  title="Suggestions"
+                  onRegister={handleRegister}
+                />
+              </div>
             )}
           </div>
         </Card>
