@@ -409,7 +409,7 @@ export default function DomainDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3 border-t border-gray-100 dark:border-white/5">
+          <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -446,10 +446,10 @@ export default function DomainDetailPage() {
 
             {/* Renewal */}
             {domain.status === 'active' && domain.expires_at && (
-              <div className="border-t border-gray-100 dark:border-white/5 pt-6">
+              <div>
                 <h3 className="text-base font-semibold text-orange mb-4">Renewal</h3>
                 <div className="space-y-4">
-            <div className="text-center pb-4 mb-0 border-b border-gray-100 dark:border-white/5">
+            <div className="text-center pb-4 mb-0">
               {(() => {
                 const daysRemaining = Math.ceil((new Date(domain.expires_at!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                 return (

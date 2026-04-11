@@ -1,7 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { DomainSearchResult } from '@/types/domains';
 import Button from '@/components/ui/Button';
+import { Pagination } from '@/components/admin/Pagination';
+
+const RESULTS_PER_PAGE = 6;
 
 interface DomainSearchResultsProps {
   results: DomainSearchResult[];
@@ -43,7 +47,16 @@ export default function DomainSearchResults({
   title,
   onRegister,
 }: DomainSearchResultsProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  useEffect(() => { setCurrentPage(1); }, [results]);
+
   if (results.length === 0) return null;
+
+  const totalPages = Math.ceil(results.length / RESULTS_PER_PAGE);
+  const pagedResults = results.slice(
+    (currentPage - 1) * RESULTS_PER_PAGE,
+    currentPage * RESULTS_PER_PAGE
+  );
 
   return (
     <div>
@@ -51,7 +64,7 @@ export default function DomainSearchResults({
         {title}
       </h3>
       <div className="space-y-2">
-        {results.map((result) => (
+        {pagedResults.map((result) => (
           <div
             key={result.domain}
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md transition-shadow"
@@ -81,6 +94,13 @@ export default function DomainSearchResults({
           </div>
         ))}
       </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={results.length}
+        itemsPerPage={RESULTS_PER_PAGE}
+      />
     </div>
   );
 }

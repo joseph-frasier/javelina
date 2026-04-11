@@ -85,13 +85,11 @@ export default function RegisterDomainsContent() {
             )}
 
             {suggestions.length > 0 && (
-              <div className="border-t border-gray-100 dark:border-white/5 pt-4">
-                <DomainSearchResults
-                  results={suggestions}
-                  title="Suggestions"
-                  onRegister={handleRegister}
-                />
-              </div>
+              <DomainSearchResults
+                results={suggestions}
+                title="Suggestions"
+                onRegister={handleRegister}
+              />
             )}
           </div>
         </Card>
