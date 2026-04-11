@@ -362,18 +362,21 @@ export default function DomainDetailPage() {
           </span>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
-          {domain.registration_type === 'linked' ? 'Linked' : domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
-          {domain.registered_at && ` · Registered ${new Date(domain.registered_at).toLocaleDateString()}`}
+          {domain.registration_type === 'linked' ? 'Linked · ' : domain.registration_type === 'transfer' ? 'Transfer · ' : ''}
+          {domain.registered_at && `Registered ${new Date(domain.registered_at).toLocaleDateString()}`}
           {domain.expires_at && ` · Expires ${new Date(domain.expires_at).toLocaleDateString()}`}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* Left column: Domain Settings + Renewal */}
-        <div className="space-y-6">
-          {/* Domain Settings */}
-      <Card title="Domain Settings">
-        <div className="space-y-4">
+      {/* Combined Domain Settings + Renewal + Nameservers card */}
+      <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-gray-100 dark:divide-white/5">
+          {/* Left column: Domain Settings + Renewal */}
+          <div className="p-6 space-y-6">
+            {/* Domain Settings */}
+            <div>
+              <h3 className="text-base font-semibold text-orange mb-4">Domain Settings</h3>
+              <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
@@ -438,13 +441,14 @@ export default function DomainDetailPage() {
             </div>
           </div>
 
-        </div>
-      </Card>
+              </div>
+            </div>
 
-          {/* Renewal */}
-          {domain.status === 'active' && domain.expires_at && (
-        <Card title="Renewal">
-          <div className="space-y-4">
+            {/* Renewal */}
+            {domain.status === 'active' && domain.expires_at && (
+              <div className="border-t border-gray-100 dark:border-white/5 pt-6">
+                <h3 className="text-base font-semibold text-orange mb-4">Renewal</h3>
+                <div className="space-y-4">
             <div className="text-center pb-4 mb-0 border-b border-gray-100 dark:border-white/5">
               {(() => {
                 const daysRemaining = Math.ceil((new Date(domain.expires_at!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -514,13 +518,16 @@ export default function DomainDetailPage() {
               </Button>
             </div>
           </div>
-        </Card>
-      )}
+              </div>
+            )}
+          </div>{/* end left column */}
 
-        </div>{/* end left column */}
-
-        {/* Right column: Nameservers */}
-        <Card title="Nameservers" icon={<svg className="w-5 h-5 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>}>
+          {/* Right column: Nameservers */}
+          <div className="p-6">
+            <h3 className="text-base font-semibold text-orange mb-4 inline-flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>
+              Nameservers
+            </h3>
         <div className="p-3 mb-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
             Using Javelina for DNS?
@@ -576,8 +583,9 @@ export default function DomainDetailPage() {
           </div>
 
         </form>
-      </Card>
-      </div>{/* end grid */}
+          </div>{/* end right column */}
+        </div>{/* end inner grid */}
+      </div>{/* end combined card */}
 
       {/* WHOIS Contact — read-only display with edit modal */}
       <Card
@@ -591,16 +599,16 @@ export default function DomainDetailPage() {
         <div className="space-y-5">
           {/* Personal */}
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Personal</p>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Personal</p>
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               {[
                 { label: 'First Name', value: contact.first_name },
                 { label: 'Last Name', value: contact.last_name },
                 { label: 'Organization', value: contact.org_name, span: true },
               ].map(({ label, value, span }) => (
                 <div key={label} className={span ? 'md:col-span-2' : undefined}>
-                  <dt className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
-                  <dd className="text-sm font-medium text-orange-dark dark:text-white">
+                  <dt className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
+                  <dd className="text-base font-medium text-orange-dark dark:text-white">
                     {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
                   </dd>
                 </div>
@@ -609,15 +617,15 @@ export default function DomainDetailPage() {
           </div>
           {/* Contact */}
           <div className="border-t border-gray-100 dark:border-white/5 pt-5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Contact</p>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Contact</p>
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               {[
                 { label: 'Email', value: contact.email },
                 { label: 'Phone', value: contact.phone },
               ].map(({ label, value }) => (
                 <div key={label}>
-                  <dt className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
-                  <dd className="text-sm font-medium text-orange-dark dark:text-white">
+                  <dt className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
+                  <dd className="text-base font-medium text-orange-dark dark:text-white">
                     {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
                   </dd>
                 </div>
@@ -626,8 +634,8 @@ export default function DomainDetailPage() {
           </div>
           {/* Address */}
           <div className="border-t border-gray-100 dark:border-white/5 pt-5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Address</p>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Address</p>
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               {[
                 { label: 'Address', value: [contact.address1, contact.address2].filter(Boolean).join(', '), span: true },
                 { label: 'City', value: contact.city },
@@ -636,8 +644,8 @@ export default function DomainDetailPage() {
                 { label: 'Country', value: contact.country },
               ].map(({ label, value, span }) => (
                 <div key={label} className={(span as boolean) ? 'md:col-span-2' : undefined}>
-                  <dt className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
-                  <dd className="text-sm font-medium text-orange-dark dark:text-white">
+                  <dt className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
+                  <dd className="text-base font-medium text-orange-dark dark:text-white">
                     {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
                   </dd>
                 </div>
