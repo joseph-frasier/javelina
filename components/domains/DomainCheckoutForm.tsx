@@ -15,6 +15,7 @@ interface DomainCheckoutFormProps {
   currency: string;
   onCancel: () => void;
   onSuccess: () => void;
+  asModal?: boolean;
 }
 
 const US_STATES = [
@@ -34,6 +35,7 @@ export default function DomainCheckoutForm({
   currency,
   onCancel,
   onSuccess,
+  asModal = false,
 }: DomainCheckoutFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,11 +101,9 @@ export default function DomainCheckoutForm({
   const totalPrice = price * years;
   const type = registrationType === 'transfer' ? 'Transfer' : 'Register';
 
-  return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit}>
-        <Card>
-          {/* Order Summary Strip */}
+  const formContent = (
+    <>
+      {/* Order Summary Strip */}
           <div className="flex items-center justify-between gap-4 rounded-lg bg-orange/5 dark:bg-orange/10 px-4 py-3 mb-5">
             <div className="flex items-center gap-3 min-w-0">
               <span className="shrink-0 text-xs font-medium uppercase tracking-[0.22em] text-orange">
@@ -258,7 +258,17 @@ export default function DomainCheckoutForm({
               Cancel
             </Button>
           </div>
-        </Card>
+    </>
+  );
+
+  if (asModal) {
+    return <form onSubmit={handleSubmit}>{formContent}</form>;
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit}>
+        <Card>{formContent}</Card>
       </form>
     </div>
   );
