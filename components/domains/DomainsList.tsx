@@ -112,13 +112,15 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
           </Link>
         );
       })}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={domains.length}
-        itemsPerPage={DOMAINS_PER_PAGE}
-      />
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={domains.length}
+          itemsPerPage={DOMAINS_PER_PAGE}
+        />
+      )}
     </div>
   );
 }

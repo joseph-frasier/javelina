@@ -21,36 +21,53 @@ export function DomainSearchResultsModal({
   suggestions,
   onRegister,
 }: DomainSearchResultsModalProps) {
+  const hasLookup = lookupResults.length > 0;
+  const hasSuggestions = suggestions.length > 0;
+  const hasBoth = hasLookup && hasSuggestions;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={`Results for "${query}"`}
-      size="large"
+      size="xlarge"
     >
-      <div className="space-y-6">
-        {lookupResults.length > 0 && (
+      {hasBoth ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <DomainSearchResults
             results={lookupResults}
             title="Availability"
             onRegister={onRegister}
           />
-        )}
-
-        {suggestions.length > 0 && (
           <DomainSearchResults
             results={suggestions}
             title="Suggestions"
             onRegister={onRegister}
           />
-        )}
-
-        {lookupResults.length === 0 && suggestions.length === 0 && (
-          <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-            No results found. Try a different domain name.
-          </p>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div>
+          {hasLookup && (
+            <DomainSearchResults
+              results={lookupResults}
+              title="Availability"
+              onRegister={onRegister}
+            />
+          )}
+          {hasSuggestions && (
+            <DomainSearchResults
+              results={suggestions}
+              title="Suggestions"
+              onRegister={onRegister}
+            />
+          )}
+          {!hasLookup && !hasSuggestions && (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              No results found. Try a different domain name.
+            </p>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }

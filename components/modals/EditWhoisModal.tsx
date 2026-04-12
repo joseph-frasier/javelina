@@ -43,7 +43,8 @@ export function EditWhoisModal({
     if (isOpen) {
       setFormData(initialContact);
     }
-  }, [isOpen, initialContact]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const update = (field: keyof DomainContact, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

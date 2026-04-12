@@ -313,6 +313,10 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  const daysRemaining = domain.expires_at
+    ? Math.ceil((new Date(domain.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
   const renewalTotalPrice =
     renewalPricing && renewalPricing.price > 0
       ? (renewalPricing.price * selectedYears).toFixed(2)
@@ -450,17 +454,10 @@ export default function DomainDetailPage() {
                 <h3 className="text-base font-semibold text-orange mb-4">Renewal</h3>
                 <div className="space-y-4">
             <div className="text-center pb-4 mb-0">
-              {(() => {
-                const daysRemaining = Math.ceil((new Date(domain.expires_at!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                return (
-                  <>
-                    <span className={`text-3xl font-bold ${daysRemaining < 30 ? 'text-red-500' : daysRemaining < 90 ? 'text-yellow-500' : 'text-orange'}`}>
+                    <span className={`text-3xl font-bold ${daysRemaining! < 30 ? 'text-red-500' : daysRemaining! < 90 ? 'text-yellow-500' : 'text-orange'}`}>
                       {daysRemaining}
                     </span>
                     <span className="text-sm text-gray-400 dark:text-gray-500 ml-2">days remaining</span>
-                  </>
-                );
-              })()}
             </div>
             <div className="rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 p-4 space-y-4">
               <div className="flex items-center justify-between">

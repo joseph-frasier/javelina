@@ -18,12 +18,7 @@ interface DomainCheckoutFormProps {
   asModal?: boolean;
 }
 
-const US_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
-  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
-  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
-  'VA','WA','WV','WI','WY','DC',
-];
+import { US_STATES, COUNTRY_OPTIONS } from '@/lib/domain-constants';
 
 const selectClasses =
   'w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors';
@@ -215,12 +210,7 @@ export default function DomainCheckoutForm({
               label="Country"
               value={contact.country}
               onChange={(val) => updateContact('country', val)}
-              options={[
-                { value: 'US', label: 'United States' },
-                { value: 'CA', label: 'Canada' },
-                { value: 'GB', label: 'United Kingdom' },
-                { value: 'AU', label: 'Australia' },
-              ]}
+              options={COUNTRY_OPTIONS}
             />
           </div>
 

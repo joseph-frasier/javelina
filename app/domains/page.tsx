@@ -58,17 +58,24 @@ export default function DomainsPage() {
     }
   }, []);
 
-  useEffect(() => { loadDomains(); }, [loadDomains]);
+  const toastFiredRef = useRef(false);
 
   useEffect(() => {
+    loadDomains();
+    if (toastFiredRef.current) return;
     if (success) {
-      loadDomains();
+      toastFiredRef.current = true;
       addToast('success', 'Payment successful! Your domain is being processed. This may take a few moments.');
     }
     if (cancelled) {
+      toastFiredRef.current = true;
       addToast('warning', 'Checkout was cancelled. You can try again anytime.');
     }
-  }, [success, cancelled, loadDomains, addToast]);
+  }, [loadDomains, success, cancelled, addToast]);
+
+  useEffect(() => {
+    return () => { myDomainsTweenRef.current?.kill(); };
+  }, []);
 
   const handleLinkDomain = async (e: FormEvent) => {
     e.preventDefault();

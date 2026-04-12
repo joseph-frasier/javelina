@@ -94,13 +94,15 @@ export default function DomainSearchResults({
           </div>
         ))}
       </div>
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={results.length}
-        itemsPerPage={RESULTS_PER_PAGE}
-      />
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={results.length}
+          itemsPerPage={RESULTS_PER_PAGE}
+        />
+      )}
     </div>
   );
 }
