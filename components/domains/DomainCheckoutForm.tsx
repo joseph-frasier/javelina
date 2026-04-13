@@ -15,14 +15,10 @@ interface DomainCheckoutFormProps {
   currency: string;
   onCancel: () => void;
   onSuccess: () => void;
+  asModal?: boolean;
 }
 
-const US_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
-  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
-  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
-  'VA','WA','WV','WI','WY','DC',
-];
+import { US_STATES, COUNTRY_OPTIONS } from '@/lib/domain-constants';
 
 const selectClasses =
   'w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors';
@@ -34,6 +30,7 @@ export default function DomainCheckoutForm({
   currency,
   onCancel,
   onSuccess,
+  asModal = false,
 }: DomainCheckoutFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,11 +96,9 @@ export default function DomainCheckoutForm({
   const totalPrice = price * years;
   const type = registrationType === 'transfer' ? 'Transfer' : 'Register';
 
-  return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit}>
-        <Card>
-          {/* Order Summary Strip */}
+  const formContent = (
+    <>
+      {/* Order Summary Strip */}
           <div className="flex items-center justify-between gap-4 rounded-lg bg-orange/5 dark:bg-orange/10 px-4 py-3 mb-5">
             <div className="flex items-center gap-3 min-w-0">
               <span className="shrink-0 text-xs font-medium uppercase tracking-[0.22em] text-orange">
@@ -215,12 +210,7 @@ export default function DomainCheckoutForm({
               label="Country"
               value={contact.country}
               onChange={(val) => updateContact('country', val)}
-              options={[
-                { value: 'US', label: 'United States' },
-                { value: 'CA', label: 'Canada' },
-                { value: 'GB', label: 'United Kingdom' },
-                { value: 'AU', label: 'Australia' },
-              ]}
+              options={COUNTRY_OPTIONS}
             />
           </div>
 
@@ -258,7 +248,17 @@ export default function DomainCheckoutForm({
               Cancel
             </Button>
           </div>
-        </Card>
+    </>
+  );
+
+  if (asModal) {
+    return <form onSubmit={handleSubmit}>{formContent}</form>;
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit}>
+        <Card>{formContent}</Card>
       </form>
     </div>
   );

@@ -6,10 +6,11 @@ import Input from '@/components/ui/Input';
 
 interface DomainSearchBarProps {
   onSearch: (query: string) => void;
+  onClear?: () => void;
   isLoading: boolean;
 }
 
-export default function DomainSearchBar({ onSearch, isLoading }: DomainSearchBarProps) {
+export default function DomainSearchBar({ onSearch, onClear, isLoading }: DomainSearchBarProps) {
   const [query, setQuery] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
@@ -20,21 +21,37 @@ export default function DomainSearchBar({ onSearch, isLoading }: DomainSearchBar
     }
   };
 
+  const handleClear = () => {
+    setQuery('');
+    onClear?.();
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 items-end">
-      <div className="flex-1">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="relative">
         <Input
-          label="Search for a domain"
           placeholder="e.g. mybusiness.com or mybusiness"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          suffixHint={query && !query.includes('.') ? '.com' : undefined}
+          className="text-xl py-4 pr-10"
         />
+        {query && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+            aria-label="Clear search"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
-      <Button type="submit" variant="primary" size="md" disabled={isLoading || !query.trim()}>
+      <Button type="submit" variant="primary" size="lg" className="w-full py-3.5 text-base" disabled={isLoading || !query.trim()}>
         {isLoading ? (
-          <span className="flex items-center gap-2">
-            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+          <span className="flex items-center justify-center gap-2">
+            <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
             Searching...
           </span>
         ) : (
