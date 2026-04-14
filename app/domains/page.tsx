@@ -1,29 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, FormEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import gsap from 'gsap';
 import RegisterDomainsContent from '@/components/domains/RegisterDomainsContent';
 import TransferDomainContent from '@/components/domains/TransferDomainContent';
-import DomainsList from '@/components/domains/DomainsList';
+import MyDomainsContent from '@/components/domains/MyDomainsContent';
 import CertificatesList from '@/components/certificates/CertificatesList';
 import { DomainCheckoutModal } from '@/components/modals/DomainCheckoutModal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { domainsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
-import type { Domain, DomainRegistrationType } from '@/types/domains';
+import type { DomainRegistrationType } from '@/types/domains';
+
+const TABS = [
+  { param: 'register', href: '/domains', label: 'Register Domains' },
+  { param: 'transfer', href: '/domains?tab=transfer', label: 'Transfer Domain' },
+  { param: 'my-domains', href: '/domains?tab=my-domains', label: 'My Domains' },
+] as const;
 
 export default function DomainsPage() {
   const searchParams = useSearchParams();
   const { hideSslCertificates } = useFeatureFlags();
-  const tab = searchParams.get('tab');
+  const tab = searchParams.get('tab') || 'register';
   const success = searchParams.get('success') === 'true';
   const cancelled = searchParams.get('cancelled') === 'true';
 
   const { addToast } = useToastStore();
+  const toastFiredRef = useRef(false);
 
   // Checkout modal
   const [checkoutModal, setCheckoutModal] = useState<{
@@ -34,34 +37,7 @@ export default function DomainsPage() {
   } | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
-  // My Domains
-  const [domains, setDomains] = useState<Domain[]>([]);
-  const [isLoadingDomains, setIsLoadingDomains] = useState(true);
-  const [isMyDomainsExpanded, setIsMyDomainsExpanded] = useState(true);
-  const myDomainsContentRef = useRef<HTMLDivElement>(null);
-  const myDomainsTweenRef = useRef<gsap.core.Tween | null>(null);
-
-  // Link domain
-  const [showLinkForm, setShowLinkForm] = useState(false);
-  const [linkDomain, setLinkDomain] = useState('');
-  const [isLinking, setIsLinking] = useState(false);
-
-  const loadDomains = useCallback(async () => {
-    try {
-      setIsLoadingDomains(true);
-      const result = await domainsApi.list();
-      setDomains(result.domains || []);
-    } catch (err) {
-      console.error('Failed to load domains:', err);
-    } finally {
-      setIsLoadingDomains(false);
-    }
-  }, []);
-
-  const toastFiredRef = useRef(false);
-
   useEffect(() => {
-    loadDomains();
     if (toastFiredRef.current) return;
     if (success) {
       toastFiredRef.current = true;
@@ -71,31 +47,7 @@ export default function DomainsPage() {
       toastFiredRef.current = true;
       addToast('warning', 'Checkout was cancelled. You can try again anytime.');
     }
-  }, [loadDomains, success, cancelled, addToast]);
-
-  useEffect(() => {
-    return () => { myDomainsTweenRef.current?.kill(); };
-  }, []);
-
-  const handleLinkDomain = async (e: FormEvent) => {
-    e.preventDefault();
-    const trimmed = linkDomain.trim().toLowerCase();
-    if (!trimmed) return;
-
-    setIsLinking(true);
-    try {
-      await domainsApi.link(trimmed);
-      addToast('success', `${trimmed} has been linked to your account.`);
-      setLinkDomain('');
-      setShowLinkForm(false);
-      loadDomains();
-    } catch (err: any) {
-      const message = err?.details || err?.message || 'Failed to link domain';
-      addToast('error', typeof message === 'string' ? message : 'Failed to link domain');
-    } finally {
-      setIsLinking(false);
-    }
-  };
+  }, [success, cancelled, addToast]);
 
   const handleCheckout = (registrationType: DomainRegistrationType) => (
     domain: string,
@@ -112,7 +64,6 @@ export default function DomainsPage() {
 
   const handleCheckoutSuccess = () => {
     setIsCheckoutOpen(false);
-    loadDomains();
   };
 
   // SSL Certificates — render exclusively when that tab is active
@@ -145,7 +96,7 @@ export default function DomainsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -167,113 +118,35 @@ export default function DomainsPage() {
         )}
       </div>
 
-      {/* Link Domain callout */}
-      <div className="p-4 rounded-lg bg-orange-light dark:bg-gray-800 border border-gray-light dark:border-gray-700">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-orange-dark dark:text-white">
-              Already purchased or transferred a domain through the OpenSRS Storefront?
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Link it to your Javelina account to manage it here.
-            </p>
-          </div>
-          {!showLinkForm && (
-            <Button variant="outline" size="sm" onClick={() => setShowLinkForm(true)}>
-              Link domain
-            </Button>
-          )}
-        </div>
-
-        {showLinkForm && (
-          <form onSubmit={handleLinkDomain} className="mt-4 flex gap-3 items-end">
-            <div className="flex-1">
-              <Input
-                label="Domain name"
-                placeholder="e.g. mydomain.com"
-                value={linkDomain}
-                onChange={(e) => setLinkDomain(e.target.value)}
-              />
-            </div>
-            <Button type="submit" variant="primary" size="md" disabled={isLinking || !linkDomain.trim()}>
-              {isLinking ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  Linking...
-                </span>
-              ) : (
-                'Link'
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="md"
-              onClick={() => { setShowLinkForm(false); setLinkDomain(''); }}
-              disabled={isLinking}
+      {/* Tab Navigation */}
+      <nav className="flex gap-6 border-b border-gray-light dark:border-gray-700">
+        {TABS.map((t) => {
+          const isActive = tab === t.param;
+          return (
+            <Link
+              key={t.param}
+              href={t.href}
+              className={`pb-3 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'text-orange-dark dark:text-orange border-b-2 border-orange'
+                  : 'text-gray-slate dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100'
+              }`}
             >
-              Cancel
-            </Button>
-          </form>
-        )}
-      </div>
+              {t.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-      {/* Register + Transfer — side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+      {/* Tab Content */}
+      <div className={tab === 'register' ? '' : 'hidden'}>
         <RegisterDomainsContent onCheckout={handleCheckout('new')} />
+      </div>
+      <div className={tab === 'transfer' ? '' : 'hidden'}>
         <TransferDomainContent onCheckout={handleCheckout('transfer')} />
       </div>
-
-      {/* My Domains — collapsible with GSAP */}
-      <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow overflow-hidden">
-        <button
-          type="button"
-          onClick={() => {
-            const el = myDomainsContentRef.current;
-            if (!el) return;
-            if (myDomainsTweenRef.current) myDomainsTweenRef.current.kill();
-
-            const next = !isMyDomainsExpanded;
-            setIsMyDomainsExpanded(next);
-
-            if (next) {
-              el.style.height = '0px';
-              el.style.display = 'block';
-              const fullH = el.scrollHeight;
-              myDomainsTweenRef.current = gsap.to(el, {
-                height: fullH,
-                duration: 0.35,
-                ease: 'power2.out',
-                onComplete: () => { el.style.height = 'auto'; },
-              });
-            } else {
-              gsap.set(el, { height: el.scrollHeight });
-              myDomainsTweenRef.current = gsap.to(el, {
-                height: 0,
-                duration: 0.3,
-                ease: 'power2.inOut',
-                onComplete: () => { el.style.display = 'none'; },
-              });
-            }
-          }}
-          className="w-full flex items-center justify-between p-6 cursor-pointer"
-        >
-          <h2 className="text-base font-semibold text-orange">
-            My Domains{!isLoadingDomains && domains.length > 0 ? ` (${domains.length})` : ''}
-          </h2>
-          <svg
-            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isMyDomainsExpanded ? 'rotate-180' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-          </svg>
-        </button>
-        <div ref={myDomainsContentRef} className="px-6 pb-6">
-          <DomainsList domains={domains} isLoading={isLoadingDomains} />
-        </div>
+      <div className={tab === 'my-domains' ? '' : 'hidden'}>
+        <MyDomainsContent success={success} />
       </div>
 
       {/* Checkout Modal */}

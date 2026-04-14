@@ -48,7 +48,7 @@ export default function DomainSearchBar({ onSearch, onClear, isLoading }: Domain
           </button>
         )}
       </div>
-      <Button type="submit" variant="primary" size="lg" className="w-full py-3.5 text-base" disabled={isLoading || !query.trim()}>
+      <Button type="submit" variant="primary" size="md" disabled={isLoading || !query.trim()}>
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />

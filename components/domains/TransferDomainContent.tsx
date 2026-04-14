@@ -71,8 +71,7 @@ export default function TransferDomainContent({ onCheckout }: TransferDomainCont
         <Button
           type="submit"
           variant="primary"
-          size="lg"
-          className="w-full py-3.5 text-base"
+          size="md"
           disabled={isChecking || !domain.trim()}
         >
           {isChecking ? (
