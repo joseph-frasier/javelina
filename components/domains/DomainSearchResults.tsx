@@ -60,9 +60,11 @@ export default function DomainSearchResults({
 
   return (
     <div>
-      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-        {title}
-      </h3>
+      {title && (
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+          {title}
+        </h3>
+      )}
       <div className="space-y-2">
         {pagedResults.map((result) => (
           <div

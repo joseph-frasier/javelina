@@ -7,8 +7,6 @@ import { domainsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import type { DomainSearchResult } from '@/types/domains';
 
-const POPULAR_TLDS = ['.com', '.net', '.io', '.org', '.dev', '.co'];
-
 interface RegisterDomainsContentProps {
   onCheckout: (domain: string, price: number, currency: string) => void;
 }
@@ -49,13 +47,6 @@ export default function RegisterDomainsContent({ onCheckout }: RegisterDomainsCo
     onCheckout(domain, result?.pricing?.price || 12.99, result?.pricing?.currency || 'USD');
   };
 
-  const handleTldClick = (tld: string) => {
-    const base = lastQuery.includes('.') ? lastQuery.split('.')[0] : lastQuery;
-    if (base) {
-      handleSearch(base + tld);
-    }
-  };
-
   const handleClear = () => {
     setLookupResults([]);
     setSuggestions([]);
@@ -76,19 +67,6 @@ export default function RegisterDomainsContent({ onCheckout }: RegisterDomainsCo
         onClear={handleClear}
         isLoading={isSearching}
       />
-
-      <div className="flex flex-wrap gap-3">
-        {POPULAR_TLDS.map(tld => (
-          <button
-            key={tld}
-            type="button"
-            onClick={() => handleTldClick(tld)}
-            className="px-4 py-2 rounded-lg text-sm font-mono font-semibold border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300 hover:border-orange hover:text-orange hover:bg-orange/5 transition-all"
-          >
-            {tld}
-          </button>
-        ))}
-      </div>
 
       {/* Tips */}
       <div className="space-y-4 pt-2">
