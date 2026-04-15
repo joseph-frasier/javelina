@@ -71,10 +71,11 @@ CREATE POLICY "Users can create their own storefront subscriptions"
   WITH CHECK (user_id = auth.uid());
 
 -- Seed products
-INSERT INTO public.storefront_products (code, name, price, billing_interval, features) VALUES
+INSERT INTO public.storefront_products (code, name, description, price, billing_interval, features) VALUES
   (
     'business_starter',
     'Javelina Business Starter',
+    'Everything you need to get your business online with a fully managed website.',
     99.88,
     'month',
     '["Domain Registration", "SSL Certificates", "Javelina DNS", "Website Hosting (1–3 page site)", "Business Email", "Fully Managed Business Website"]'::jsonb
@@ -82,6 +83,7 @@ INSERT INTO public.storefront_products (code, name, price, billing_interval, fea
   (
     'business_pro',
     'Javelina Business Pro',
+    'Premium business package with Microsoft 365 email and a custom AI agent.',
     157.77,
     'month',
     '["Domain Registration", "SSL Certificates", "Javelina DNS", "Microsoft 365 Email", "Business Website (1–5 pages)", "Custom AI Agent"]'::jsonb
