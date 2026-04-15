@@ -21,6 +21,8 @@ export interface FeatureFlags {
   showOpenSrsStorefront: boolean;
   /** Hide the SSL Certificates tab and domain detail SSL section */
   hideSslCertificates: boolean;
+  /** Hide the mailbox/email section on domain detail page */
+  hideMailboxes: boolean;
 }
 
 /**
@@ -35,6 +37,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   showDomainsIntegration: false,
   showOpenSrsStorefront: false,
   hideSslCertificates: false,
+  hideMailboxes: false,
 };
 
 /**
@@ -49,6 +52,7 @@ export const LD_FLAG_KEYS = {
   SHOW_DOMAINS_INTEGRATION: 'domains-show-api-integration',
   SHOW_OPENSRS_STOREFRONT: 'domains-show-opensrs-storefront',
   HIDE_SSL_CERTIFICATES: 'domains-hide-ssl-certificates',
+  HIDE_MAILBOXES: 'domains-hide-mailboxes',
 } as const;
 
 /**
@@ -83,6 +87,7 @@ export function useFeatureFlags(): FeatureFlags {
           showDomainsIntegration: allFlags[LD_FLAG_KEYS.SHOW_DOMAINS_INTEGRATION] ?? DEFAULT_FLAGS.showDomainsIntegration,
           showOpenSrsStorefront: allFlags[LD_FLAG_KEYS.SHOW_OPENSRS_STOREFRONT] ?? DEFAULT_FLAGS.showOpenSrsStorefront,
           hideSslCertificates: allFlags[LD_FLAG_KEYS.HIDE_SSL_CERTIFICATES] ?? DEFAULT_FLAGS.hideSslCertificates,
+          hideMailboxes: allFlags[LD_FLAG_KEYS.HIDE_MAILBOXES] ?? DEFAULT_FLAGS.hideMailboxes,
         };
         setFlags(newFlags);
       } catch (err) {
@@ -128,5 +133,6 @@ export function getFeatureFlags(ldFlags: Record<string, any> = {}): FeatureFlags
     showDomainsIntegration: ldFlags[LD_FLAG_KEYS.SHOW_DOMAINS_INTEGRATION] ?? DEFAULT_FLAGS.showDomainsIntegration,
     showOpenSrsStorefront: ldFlags[LD_FLAG_KEYS.SHOW_OPENSRS_STOREFRONT] ?? DEFAULT_FLAGS.showOpenSrsStorefront,
     hideSslCertificates: ldFlags[LD_FLAG_KEYS.HIDE_SSL_CERTIFICATES] ?? DEFAULT_FLAGS.hideSslCertificates,
+    hideMailboxes: ldFlags[LD_FLAG_KEYS.HIDE_MAILBOXES] ?? DEFAULT_FLAGS.hideMailboxes,
   };
 }

@@ -104,7 +104,7 @@ export default function DomainDetailPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
-  const { hideSslCertificates } = useFeatureFlags();
+  const { hideSslCertificates, hideMailboxes } = useFeatureFlags();
   const domainId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -583,7 +583,7 @@ export default function DomainDetailPage() {
       </div>{/* end combined card */}
 
       {/* Email */}
-      {domain && domain.status === 'active' && (
+      {!hideMailboxes && domain && domain.status === 'active' && (
         <DomainEmailSection
           domainId={domain.id}
           domainName={domain.domain_name}
