@@ -137,6 +137,7 @@ export default function DomainCheckoutForm({
                 placeholder="Enter the auth code from your current registrar"
                 value={authCode}
                 onChange={(e) => setAuthCode(e.target.value)}
+                maxLength={128}
                 required
               />
             </div>
@@ -149,12 +150,14 @@ export default function DomainCheckoutForm({
               label="First Name"
               value={contact.first_name}
               onChange={(e) => updateContact('first_name', e.target.value)}
+              maxLength={64}
               required
             />
             <Input
               label="Last Name"
               value={contact.last_name}
               onChange={(e) => updateContact('last_name', e.target.value)}
+              maxLength={64}
               required
             />
             <Input
@@ -162,6 +165,7 @@ export default function DomainCheckoutForm({
               type="email"
               value={contact.email}
               onChange={(e) => updateContact('email', e.target.value)}
+              maxLength={254}
               required
             />
             <Input
@@ -169,6 +173,7 @@ export default function DomainCheckoutForm({
               placeholder="(555) 123-4567"
               value={contact.phone}
               onChange={(e) => updateContact('phone', e.target.value)}
+              maxLength={20}
               required
             />
           </div>
@@ -182,6 +187,7 @@ export default function DomainCheckoutForm({
                 value={contact.address1}
                 onChange={(e) => updateContact('address1', e.target.value)}
                 helperText="Include suite, unit, etc. if needed"
+                maxLength={128}
                 required
               />
             </div>
@@ -189,6 +195,7 @@ export default function DomainCheckoutForm({
               label="City"
               value={contact.city}
               onChange={(e) => updateContact('city', e.target.value)}
+              maxLength={64}
               required
             />
             <Dropdown
@@ -204,6 +211,7 @@ export default function DomainCheckoutForm({
               label="ZIP / Postal Code"
               value={contact.postal_code}
               onChange={(e) => updateContact('postal_code', e.target.value)}
+              maxLength={16}
               required
             />
             <Dropdown
@@ -221,6 +229,7 @@ export default function DomainCheckoutForm({
               helperText="Optional"
               value={contact.org_name || ''}
               onChange={(e) => updateContact('org_name', e.target.value)}
+              maxLength={128}
             />
           </div>
 

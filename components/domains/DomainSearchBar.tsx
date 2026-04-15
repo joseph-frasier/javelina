@@ -33,6 +33,7 @@ export default function DomainSearchBar({ onSearch, onClear, isLoading }: Domain
           placeholder="e.g. mybusiness.com or mybusiness"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          maxLength={253}
           className="text-xl py-4 pr-10"
         />
         {query && (

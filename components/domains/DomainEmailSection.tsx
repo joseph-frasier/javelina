@@ -145,6 +145,10 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
 
   const handleCreateMailbox = async () => {
     if (!newMailboxUser || !newMailboxPassword) return;
+    if (newMailboxPassword.length < 8) {
+      addToast('error', 'Password must be at least 8 characters.');
+      return;
+    }
     setCreatingMailbox(true);
     try {
       await mailboxApi.createMailbox(domainId, newMailboxUser, newMailboxPassword);
@@ -176,6 +180,10 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
 
   const handleResetPassword = async () => {
     if (!showResetPassword || !resetPasswordValue) return;
+    if (resetPasswordValue.length < 8) {
+      addToast('error', 'Password must be at least 8 characters.');
+      return;
+    }
     setResettingPassword(true);
     try {
       await mailboxApi.resetPassword(domainId, showResetPassword, resetPasswordValue);
@@ -371,8 +379,10 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                   <Input
                     label="Email address"
                     value={newMailboxUser}
-                    onChange={(e) => setNewMailboxUser(e.target.value)}
+                    onChange={(e) => setNewMailboxUser(e.target.value.replace(/[^a-zA-Z0-9._-]/g, ''))}
                     placeholder="user"
+                    maxLength={64}
+                    pattern="[a-zA-Z0-9._-]+"
                   />
                 </div>
                 <span className="pb-2 text-sm text-gray-500">@{domainName}</span>
@@ -382,7 +392,9 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 type="password"
                 value={newMailboxPassword}
                 onChange={(e) => setNewMailboxPassword(e.target.value)}
-                placeholder="Set a password"
+                placeholder="Min 8 characters"
+                minLength={8}
+                maxLength={128}
               />
               <div className="flex gap-2">
                 <Button
@@ -470,7 +482,9 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 type="password"
                 value={resetPasswordValue}
                 onChange={(e) => setResetPasswordValue(e.target.value)}
-                placeholder="New password"
+                placeholder="Min 8 characters"
+                minLength={8}
+                maxLength={128}
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleResetPassword} disabled={!resetPasswordValue || resettingPassword}>
@@ -497,11 +511,11 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
             <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <Input label="Alias" value={newAliasName} onChange={(e) => setNewAliasName(e.target.value)} placeholder="alias" />
+                  <Input label="Alias" value={newAliasName} onChange={(e) => setNewAliasName(e.target.value.replace(/[^a-zA-Z0-9._-]/g, ''))} placeholder="alias" maxLength={64} pattern="[a-zA-Z0-9._-]+" />
                 </div>
                 <span className="pb-2 text-sm text-gray-500">@{domainName}</span>
               </div>
-              <Input label="Forwards to" value={newAliasTarget} onChange={(e) => setNewAliasTarget(e.target.value)} placeholder="existing-mailbox" />
+              <Input label="Forwards to" value={newAliasTarget} onChange={(e) => setNewAliasTarget(e.target.value.replace(/[^a-zA-Z0-9._-]/g, ''))} placeholder="existing-mailbox" maxLength={64} pattern="[a-zA-Z0-9._-]+" />
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleCreateAlias} disabled={!newAliasName || !newAliasTarget || creatingAlias}>
                   {creatingAlias ? 'Creating...' : 'Create Alias'}

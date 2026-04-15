@@ -85,14 +85,14 @@ export function EditWhoisModal({
     >
       <form id="whois-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="First Name" value={formData.first_name} onChange={(e) => update('first_name', e.target.value)} required />
-          <Input label="Last Name" value={formData.last_name} onChange={(e) => update('last_name', e.target.value)} required />
-          <Input label="Organization (optional)" value={formData.org_name || ''} onChange={(e) => update('org_name', e.target.value)} className="md:col-span-2" />
-          <Input label="Email" type="email" value={formData.email} onChange={(e) => update('email', e.target.value)} required />
-          <Input label="Phone" placeholder="(555) 123-4567" value={formData.phone} onChange={(e) => update('phone', e.target.value)} required />
-          <Input label="Address" value={formData.address1} onChange={(e) => update('address1', e.target.value)} required className="md:col-span-2" />
-          <Input label="Address Line 2 (optional)" value={formData.address2 || ''} onChange={(e) => update('address2', e.target.value)} className="md:col-span-2" />
-          <Input label="City" value={formData.city} onChange={(e) => update('city', e.target.value)} required />
+          <Input label="First Name" value={formData.first_name} onChange={(e) => update('first_name', e.target.value)} maxLength={64} required />
+          <Input label="Last Name" value={formData.last_name} onChange={(e) => update('last_name', e.target.value)} maxLength={64} required />
+          <Input label="Organization (optional)" value={formData.org_name || ''} onChange={(e) => update('org_name', e.target.value)} maxLength={128} className="md:col-span-2" />
+          <Input label="Email" type="email" value={formData.email} onChange={(e) => update('email', e.target.value)} maxLength={254} required />
+          <Input label="Phone" placeholder="(555) 123-4567" value={formData.phone} onChange={(e) => update('phone', e.target.value)} maxLength={20} required />
+          <Input label="Address" value={formData.address1} onChange={(e) => update('address1', e.target.value)} maxLength={128} required className="md:col-span-2" />
+          <Input label="Address Line 2 (optional)" value={formData.address2 || ''} onChange={(e) => update('address2', e.target.value)} maxLength={128} className="md:col-span-2" />
+          <Input label="City" value={formData.city} onChange={(e) => update('city', e.target.value)} maxLength={64} required />
           <Dropdown
             label="State"
             value={formData.state}
@@ -102,7 +102,7 @@ export function EditWhoisModal({
               ...US_STATES.map((s) => ({ value: s, label: s })),
             ]}
           />
-          <Input label="ZIP / Postal Code" value={formData.postal_code} onChange={(e) => update('postal_code', e.target.value)} required />
+          <Input label="ZIP / Postal Code" value={formData.postal_code} onChange={(e) => update('postal_code', e.target.value)} maxLength={16} required />
           <Dropdown
             label="Country"
             value={formData.country}

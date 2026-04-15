@@ -66,6 +66,7 @@ export default function TransferDomainContent({ onCheckout }: TransferDomainCont
           placeholder="e.g. mydomain.com"
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
+          maxLength={253}
           className="text-xl py-4"
         />
         <Button
