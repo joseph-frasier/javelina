@@ -600,19 +600,19 @@ export default function DomainDetailPage() {
         }
       >
         <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-          {[
+          {([
             { label: 'First Name', value: contact.first_name },
             { label: 'Last Name', value: contact.last_name },
             { label: 'Email', value: contact.email },
             { label: 'Phone', value: contact.phone },
-            { label: 'Address', value: [contact.address1, contact.address2].filter(Boolean).join(', '), full: true },
+            { label: 'Address', value: [contact.address1, contact.address2].filter(Boolean).join(', '), fullRow: true },
             { label: 'City', value: contact.city },
             { label: 'State', value: contact.state },
             { label: 'ZIP', value: contact.postal_code },
             { label: 'Country', value: contact.country },
             { label: 'Organization', value: contact.org_name },
-          ].map(({ label, value, wide, full }) => (
-            <div key={label} className={full ? 'md:col-span-4' : wide ? 'md:col-span-2' : undefined}>
+          ] as { label: string; value: string | undefined; fullRow?: boolean }[]).map(({ label, value, fullRow }) => (
+            <div key={label} className={fullRow ? 'md:col-span-4' : undefined}>
               <dt className="text-xs text-gray-400 dark:text-gray-500">{label}</dt>
               <dd className="text-sm font-medium text-orange-dark dark:text-white">
                 {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
