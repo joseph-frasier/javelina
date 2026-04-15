@@ -22,7 +22,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
   const { user, logout, profileReady } = useAuthStore();
   const { general, setTheme } = useSettingsStore();
   const { currentOrgId } = useHierarchyStore();
-  const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
+  const { showDomainsIntegration, showOpenSrsStorefront, showBusinessProducts } = useFeatureFlags();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -186,6 +186,14 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                 >
                   Purchase Domain
                 </a>
+              )}
+              {showBusinessProducts && (
+                <Link
+                  href="/storefront"
+                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
+                >
+                  Storefront
+                </Link>
               )}
             </nav>
             <div className="relative" ref={notificationRef}>
