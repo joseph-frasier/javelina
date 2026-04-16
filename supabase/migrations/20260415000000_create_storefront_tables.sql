@@ -37,15 +37,6 @@ CREATE INDEX ON public.storefront_subscriptions(user_id);
 CREATE INDEX ON public.storefront_subscriptions(stripe_subscription_id);
 CREATE INDEX ON public.storefront_products(code);
 
--- updated_at triggers
-CREATE TRIGGER handle_updated_at_storefront_products
-  BEFORE UPDATE ON public.storefront_products
-  FOR EACH ROW EXECUTE PROCEDURE moddatetime(updated_at);
-
-CREATE TRIGGER handle_updated_at_storefront_subscriptions
-  BEFORE UPDATE ON public.storefront_subscriptions
-  FOR EACH ROW EXECUTE PROCEDURE moddatetime(updated_at);
-
 -- Enable RLS
 ALTER TABLE public.storefront_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.storefront_subscriptions ENABLE ROW LEVEL SECURITY;

@@ -300,6 +300,20 @@ export const storefrontApi = {
       customerEmail,
     });
   },
+
+  /**
+   * Get the current user's storefront subscriptions
+   */
+  getSubscriptions: () => {
+    return apiClient.get('/storefront/subscriptions');
+  },
+
+  /**
+   * Create a Stripe Customer Portal session for a storefront subscription
+   */
+  createPortalSession: (subscriptionId: string) => {
+    return apiClient.post<{ url: string }>('/storefront/portal', { subscriptionId });
+  },
 };
 
 export interface Invitation {

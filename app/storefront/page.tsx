@@ -56,10 +56,14 @@ export default function StorefrontPage() {
   }, [showBusinessProducts, loading, router]);
 
   // Show toast on return from Stripe
+  const toastShownRef = useRef(false);
   useEffect(() => {
+    if (toastShownRef.current) return;
     if (status === 'success') {
+      toastShownRef.current = true;
       addToast('success', 'Subscription created successfully! You will receive a confirmation email shortly.');
     } else if (status === 'canceled') {
+      toastShownRef.current = true;
       addToast('info', 'Checkout was canceled. No charges were made.');
     }
   }, [status, addToast]);
@@ -172,50 +176,6 @@ export default function StorefrontPage() {
           </p>
         </section>
 
-        {/* Purchasing on behalf of someone else */}
-        <section className="max-w-xl mx-auto mb-8">
-          <button
-            type="button"
-            onClick={() => setShowCustomerFields(!showCustomerFields)}
-            className="text-sm text-orange hover:text-orange-dark font-medium transition-colors"
-          >
-            {showCustomerFields ? 'Cancel — purchasing for myself' : 'Purchasing for someone else?'}
-          </button>
-          {showCustomerFields && (
-            <div className="mt-3 p-4 bg-white rounded-lg border border-gray-light space-y-3">
-              <p className="text-xs text-gray-slate">
-                Enter the customer&apos;s details. They will receive invoices at the email below.
-              </p>
-              <div>
-                <label htmlFor="customer-name" className="block text-sm font-medium text-orange-dark mb-1">
-                  Customer Name
-                </label>
-                <input
-                  id="customer-name"
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="John Doe"
-                  className="w-full px-3 py-2 border border-gray-light rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label htmlFor="customer-email" className="block text-sm font-medium text-orange-dark mb-1">
-                  Customer Email
-                </label>
-                <input
-                  id="customer-email"
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="john@example.com"
-                  className="w-full px-3 py-2 border border-gray-light rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
-                />
-              </div>
-            </div>
-          )}
-        </section>
-
         {/* Product Cards */}
         <section aria-labelledby="products-heading">
           <h2 id="products-heading" className="sr-only">Available Products</h2>
@@ -286,6 +246,50 @@ export default function StorefrontPage() {
               <p className="text-gray-slate">No products are currently available.</p>
             </div>
           )}
+
+          {/* Purchasing on behalf of someone else */}
+          <div className="mt-8">
+            <button
+              type="button"
+              onClick={() => setShowCustomerFields(!showCustomerFields)}
+              className="text-sm text-orange hover:text-orange-light font-medium transition-colors"
+            >
+              {showCustomerFields ? 'Cancel — purchasing for myself' : 'Purchasing for someone else?'}
+            </button>
+            {showCustomerFields && (
+              <div className="mt-3 p-4 bg-white rounded-lg border border-gray-light space-y-3 max-w-md">
+                <p className="text-xs text-gray-slate">
+                  Enter the customer&apos;s details. They will receive invoices at the email below.
+                </p>
+                <div>
+                  <label htmlFor="customer-name" className="block text-sm font-medium text-orange-dark mb-1">
+                    Customer Name
+                  </label>
+                  <input
+                    id="customer-name"
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="John Doe"
+                    className="w-full px-3 py-2 border border-gray-light rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="customer-email" className="block text-sm font-medium text-orange-dark mb-1">
+                    Customer Email
+                  </label>
+                  <input
+                    id="customer-email"
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="john@example.com"
+                    className="w-full px-3 py-2 border border-gray-light rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </section>
       </main>
     </div>

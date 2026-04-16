@@ -172,7 +172,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               {showDomainsIntegration && (
                 <Link
                   href="/domains"
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
+                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
                 >
                   Domains
                 </Link>
@@ -182,7 +182,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                   href={process.env.NEXT_PUBLIC_OPENSRS_STOREFRONT_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
+                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
                 >
                   Purchase Domain
                 </a>
@@ -190,7 +190,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               {showBusinessProducts && (
                 <Link
                   href="/storefront"
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
+                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
                 >
                   Storefront
                 </Link>
