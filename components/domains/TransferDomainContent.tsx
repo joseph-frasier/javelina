@@ -52,7 +52,7 @@ export default function TransferDomainContent({ onCheckout }: TransferDomainCont
   };
 
   return (
-    <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow p-8 lg:p-10 space-y-8">
+    <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow p-6 lg:p-8 space-y-6 max-w-5xl w-full">
       <div>
         <h2 className="text-2xl font-bold text-orange">Transfer a domain</h2>
         <p className="text-base text-gray-500 dark:text-gray-400 mt-2">
@@ -67,7 +67,7 @@ export default function TransferDomainContent({ onCheckout }: TransferDomainCont
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
           maxLength={253}
-          className="text-xl py-4"
+          className="text-sm py-2"
         />
         <Button
           type="submit"

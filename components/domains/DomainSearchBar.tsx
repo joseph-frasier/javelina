@@ -34,7 +34,7 @@ export default function DomainSearchBar({ onSearch, onClear, isLoading }: Domain
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           maxLength={253}
-          className="text-xl py-4 pr-10"
+          className="text-sm py-2 pr-10"
         />
         {query && (
           <button

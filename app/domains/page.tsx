@@ -139,14 +139,16 @@ export default function DomainsPage() {
       </nav>
 
       {/* Tab Content */}
-      <div className={tab === 'register' ? '' : 'hidden'}>
+      <div className={tab === 'register' ? 'flex justify-center' : 'hidden'}>
         <RegisterDomainsContent onCheckout={handleCheckout('new')} />
       </div>
-      <div className={tab === 'transfer' ? '' : 'hidden'}>
+      <div className={tab === 'transfer' ? 'flex justify-center' : 'hidden'}>
         <TransferDomainContent onCheckout={handleCheckout('transfer')} />
       </div>
-      <div className={tab === 'my-domains' ? '' : 'hidden'}>
-        <MyDomainsContent success={success} />
+      <div className={tab === 'my-domains' ? 'flex justify-center' : 'hidden'}>
+        <div className="max-w-5xl w-full">
+          <MyDomainsContent success={success} />
+        </div>
       </div>
 
       {/* Checkout Modal */}
