@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
@@ -23,7 +23,7 @@ interface StorefrontProduct {
   is_active: boolean;
 }
 
-export default function StorefrontPage() {
+function StorefrontPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
@@ -293,5 +293,22 @@ export default function StorefrontPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function StorefrontPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-orange-light">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+            <span className="text-orange-dark">Loading storefront...</span>
+          </div>
+        </div>
+      }
+    >
+      <StorefrontPageContent />
+    </Suspense>
   );
 }
