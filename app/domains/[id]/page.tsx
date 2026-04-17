@@ -14,6 +14,7 @@ import { EditWhoisModal } from '@/components/modals/EditWhoisModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Pagination } from '@/components/admin/Pagination';
 import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
+import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
 import type {
@@ -103,7 +104,7 @@ export default function DomainDetailPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
-  const { hideSslCertificates } = useFeatureFlags();
+  const { hideSslCertificates, hideMailboxes } = useFeatureFlags();
   const domainId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -581,6 +582,14 @@ export default function DomainDetailPage() {
         </div>{/* end inner grid */}
       </div>{/* end combined card */}
 
+      {/* Email */}
+      {!hideMailboxes && domain && domain.status === 'active' && (
+        <DomainEmailSection
+          domainId={domain.id}
+          domainName={domain.domain_name}
+        />
+      )}
+
       {/* WHOIS Contact — read-only display with edit modal */}
       <Card
         title="WHOIS Contact Information"
@@ -590,63 +599,27 @@ export default function DomainDetailPage() {
           </Button>
         }
       >
-        <div className="space-y-5">
-          {/* Personal */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Personal</p>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              {[
-                { label: 'First Name', value: contact.first_name },
-                { label: 'Last Name', value: contact.last_name },
-                { label: 'Organization', value: contact.org_name, span: true },
-              ].map(({ label, value, span }) => (
-                <div key={label} className={span ? 'md:col-span-2' : undefined}>
-                  <dt className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
-                  <dd className="text-base font-medium text-orange-dark dark:text-white">
-                    {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          {/* Contact */}
-          <div className="border-t border-gray-100 dark:border-white/5 pt-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Contact</p>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              {[
-                { label: 'Email', value: contact.email },
-                { label: 'Phone', value: contact.phone },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <dt className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
-                  <dd className="text-base font-medium text-orange-dark dark:text-white">
-                    {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          {/* Address */}
-          <div className="border-t border-gray-100 dark:border-white/5 pt-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Address</p>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              {[
-                { label: 'Address', value: [contact.address1, contact.address2].filter(Boolean).join(', '), span: true },
-                { label: 'City', value: contact.city },
-                { label: 'State', value: contact.state },
-                { label: 'ZIP / Postal Code', value: contact.postal_code },
-                { label: 'Country', value: contact.country },
-              ].map(({ label, value, span }) => (
-                <div key={label} className={(span as boolean) ? 'md:col-span-2' : undefined}>
-                  <dt className="text-sm text-gray-400 dark:text-gray-500 mb-0.5">{label}</dt>
-                  <dd className="text-base font-medium text-orange-dark dark:text-white">
-                    {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
+        <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
+          {([
+            { label: 'First Name', value: contact.first_name },
+            { label: 'Last Name', value: contact.last_name },
+            { label: 'Email', value: contact.email },
+            { label: 'Phone', value: contact.phone },
+            { label: 'Address', value: [contact.address1, contact.address2].filter(Boolean).join(', '), fullRow: true },
+            { label: 'City', value: contact.city },
+            { label: 'State', value: contact.state },
+            { label: 'ZIP', value: contact.postal_code },
+            { label: 'Country', value: contact.country },
+            { label: 'Organization', value: contact.org_name },
+          ] as { label: string; value: string | undefined; fullRow?: boolean }[]).map(({ label, value, fullRow }) => (
+            <div key={label} className={fullRow ? 'md:col-span-4' : undefined}>
+              <dt className="text-xs text-gray-400 dark:text-gray-500">{label}</dt>
+              <dd className="text-sm font-medium text-orange-dark dark:text-white">
+                {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </Card>
 
       {/* DNS Zone */}
