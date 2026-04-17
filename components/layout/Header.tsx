@@ -22,7 +22,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
   const { user, logout, profileReady } = useAuthStore();
   const { general, setTheme } = useSettingsStore();
   const { currentOrgId } = useHierarchyStore();
-  const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
+  const { showDomainsIntegration, showOpenSrsStorefront, showBusinessProducts } = useFeatureFlags();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -172,7 +172,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               {showDomainsIntegration && (
                 <Link
                   href="/domains"
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
+                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
                 >
                   Domains
                 </Link>
@@ -182,10 +182,18 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                   href={process.env.NEXT_PUBLIC_OPENSRS_STOREFRONT_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
+                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
                 >
                   Purchase Domain
                 </a>
+              )}
+              {showBusinessProducts && (
+                <Link
+                  href="/storefront"
+                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
+                >
+                  Storefront
+                </Link>
               )}
             </nav>
             <div className="relative" ref={notificationRef}>

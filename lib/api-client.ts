@@ -281,6 +281,41 @@ export const plansApi = {
   },
 };
 
+// Storefront API
+export const storefrontApi = {
+  /**
+   * Get all active storefront products
+   */
+  getProducts: () => {
+    return apiClient.get('/storefront/products');
+  },
+
+  /**
+   * Create a Stripe Checkout Session for a storefront product
+   */
+  createCheckout: (productCode: string, customerName?: string, customerEmail?: string) => {
+    return apiClient.post<{ url: string }>('/storefront/checkout', {
+      productCode,
+      customerName,
+      customerEmail,
+    });
+  },
+
+  /**
+   * Get the current user's storefront subscriptions
+   */
+  getSubscriptions: () => {
+    return apiClient.get('/storefront/subscriptions');
+  },
+
+  /**
+   * Create a Stripe Customer Portal session for a storefront subscription
+   */
+  createPortalSession: (subscriptionId: string) => {
+    return apiClient.post<{ url: string }>('/storefront/portal', { subscriptionId });
+  },
+};
+
 export interface Invitation {
   id: string;
   email: string;
@@ -702,6 +737,20 @@ export const adminApi = {
   },
   deleteFlaggedZone: (zoneId: string) => {
     return apiClient.delete(`/admin/zones/${zoneId}`);
+  },
+
+  // Mailbox Pricing
+  listMailboxPricing: () => {
+    return apiClient.get('/admin/mailbox-pricing');
+  },
+
+  updateMailboxPricing: (tierId: string, updates: {
+    margin_percent?: number;
+    sale_price_override?: number | null;
+    mailbox_limit?: number;
+    is_active?: boolean;
+  }) => {
+    return apiClient.put(`/admin/mailbox-pricing/${tierId}`, updates);
   },
 };
 
@@ -1318,6 +1367,54 @@ export const domainsApi = {
 
   renew: (id: string, years: number): Promise<DomainRenewalResponse> =>
     apiClient.post(`/domains/${id}/renew`, { years }),
+};
+
+// ============================================================
+// MAILBOX API METHODS
+// ============================================================
+
+export const mailboxApi = {
+  // Pricing
+  getPricing: () =>
+    apiClient.get("/mailbox/pricing"),
+
+  // Email status
+  getStatus: (domainId: string) =>
+    apiClient.get(`/mailbox/domains/${domainId}/mail/status`),
+
+  // Enable/disable
+  enable: (domainId: string, tierId: string) =>
+    apiClient.post(`/mailbox/domains/${domainId}/mail/enable`, { tier_id: tierId }),
+
+  disable: (domainId: string) =>
+    apiClient.delete(`/mailbox/domains/${domainId}/mail/disable`),
+
+  // Plan
+  changePlan: (domainId: string, tierId: string) =>
+    apiClient.put(`/mailbox/domains/${domainId}/mail/plan`, { tier_id: tierId }),
+
+  // Mailboxes
+  listMailboxes: (domainId: string) =>
+    apiClient.get(`/mailbox/domains/${domainId}/mailboxes`),
+
+  createMailbox: (domainId: string, user: string, password: string) =>
+    apiClient.post(`/mailbox/domains/${domainId}/mailboxes`, { user, password }),
+
+  deleteMailbox: (domainId: string, mailboxUser: string) =>
+    apiClient.delete(`/mailbox/domains/${domainId}/mailboxes/${encodeURIComponent(mailboxUser)}`),
+
+  resetPassword: (domainId: string, mailboxUser: string, password: string) =>
+    apiClient.put(`/mailbox/domains/${domainId}/mailboxes/${encodeURIComponent(mailboxUser)}/password`, { password }),
+
+  // Aliases
+  listAliases: (domainId: string) =>
+    apiClient.get(`/mailbox/domains/${domainId}/aliases`),
+
+  createAlias: (domainId: string, alias: string, target: string) =>
+    apiClient.post(`/mailbox/domains/${domainId}/aliases`, { alias, target }),
+
+  deleteAlias: (domainId: string, aliasName: string) =>
+    apiClient.delete(`/mailbox/domains/${domainId}/aliases/${encodeURIComponent(aliasName)}`),
 };
 
 // ============================================================

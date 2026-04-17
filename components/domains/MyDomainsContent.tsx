@@ -16,13 +16,12 @@ interface MyDomainsContentProps {
 export default function MyDomainsContent({ success }: MyDomainsContentProps) {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { addToast } = useToastStore();
 
   // Link domain state
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [linkDomain, setLinkDomain] = useState('');
   const [isLinking, setIsLinking] = useState(false);
-
-  const { addToast } = useToastStore();
 
   const loadDomains = useCallback(async () => {
     try {
@@ -52,7 +51,6 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
     if (!trimmed) return;
 
     setIsLinking(true);
-
     try {
       await domainsApi.link(trimmed);
       addToast('success', `${trimmed} has been linked to your account.`);
@@ -120,10 +118,7 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
               type="button"
               variant="outline"
               size="md"
-              onClick={() => {
-                setShowLinkForm(false);
-                setLinkDomain('');
-              }}
+              onClick={() => { setShowLinkForm(false); setLinkDomain(''); }}
               disabled={isLinking}
             >
               Cancel
