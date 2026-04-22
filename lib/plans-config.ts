@@ -143,8 +143,10 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
   const order = [
     // Lifetime plans first
     'starter_lifetime', 'pro_lifetime', 'premium_lifetime', 'enterprise_lifetime',
-    // Then subscription plans
-    'starter', 'pro', 'business', 'enterprise'
+    // Then DNS subscription plans
+    'starter', 'pro', 'business', 'enterprise',
+    // Business-line plans (cheapest first)
+    'business_starter', 'business_pro',
   ];
   plans.sort((a, b) => {
     const aIndex = order.indexOf(a.id);
