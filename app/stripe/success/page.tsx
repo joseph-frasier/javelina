@@ -12,6 +12,20 @@ function SuccessPageContent() {
   const [countdown, setCountdown] = useState(3);
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
+  const orgId = searchParams.get('org_id');
+  const intake = searchParams.get('intake');
+  const planCode = searchParams.get('plan_code');
+  const orgName = searchParams.get('org_name');
+
+  function resolveDestination(): string {
+    if (intake === 'business' && orgId && planCode) {
+      const qs = new URLSearchParams({ org_id: orgId, plan_code: planCode });
+      if (orgName) qs.set('org_name', orgName);
+      return `/business/setup?${qs.toString()}`;
+    }
+    return orgId ? `/organization/${orgId}` : '/';
+  }
+
   useEffect(() => {
     const paymentIntent = searchParams.get('payment_intent');
     const setupIntent = searchParams.get('setup_intent');
@@ -65,15 +79,17 @@ function SuccessPageContent() {
 
   useEffect(() => {
     if (!shouldRedirect) return;
-    const orgId = searchParams.get('org_id');
-    const path = orgId ? `/organization/${orgId}` : '/';
     // Navigate after commit
-    router.push(path);
+    router.push(resolveDestination());
     // Defer toast to next tick to avoid state update during render of Providers
     setTimeout(() => {
-      try { addToast('success', 'Welcome to your new plan!'); } catch {}
+      try {
+        addToast('success', intake === 'business'
+          ? 'Welcome to Javelina Business — let\'s set up your site.'
+          : 'Welcome to your new plan!');
+      } catch {}
     }, 0);
-  }, [shouldRedirect, searchParams, router, addToast]);
+  }, [shouldRedirect, searchParams, router, addToast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'error') {
     return (
@@ -114,8 +130,7 @@ function SuccessPageContent() {
   }
 
   if (status === 'success') {
-    const orgId = searchParams.get('org_id');
-    const redirectPath = orgId ? `/organization/${orgId}` : '/';
+    const redirectPath = resolveDestination();
     
     return (
       <div className="min-h-screen bg-accent-light dark:bg-gray-900 flex items-center justify-center p-4">
@@ -140,13 +155,15 @@ function SuccessPageContent() {
               Payment Successful!
             </h1>
             <p className="text-text-muted mb-6">
-              Your subscription is now active. Redirecting to dashboard in {countdown}...
+              {intake === 'business'
+                ? `Your subscription is now active. Redirecting to setup in ${countdown}...`
+                : `Your subscription is now active. Redirecting to dashboard in ${countdown}...`}
             </p>
             <button
               onClick={() => router.push(redirectPath)}
               className="w-full bg-accent hover:bg-accent-hover text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
-              Go to Dashboard Now
+              {intake === 'business' ? 'Set Up My Site Now' : 'Go to Dashboard Now'}
             </button>
           </div>
         </div>
