@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
-import { subscriptionsApi, storefrontApi } from '@/lib/api-client';
+import { subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -61,23 +61,6 @@ function SettingsContent() {
     stripe_customer_id: string | null;
   }>>([]);
   const [billingLoading, setBillingLoading] = useState(false);
-
-  // Storefront subscription states
-  const [storefrontSubs, setStorefrontSubs] = useState<Array<{
-    id: string;
-    status: string;
-    stripe_customer_id: string | null;
-    current_period_end: string | null;
-    created_at: string;
-    storefront_products: {
-      code: string;
-      name: string;
-      price: number;
-      billing_interval: string;
-    };
-  }>>([]);
-  const [storefrontLoading, setStorefrontLoading] = useState(false);
-  const [storefrontPortalLoading, setStorefrontPortalLoading] = useState<string | null>(null);
 
   // Fetch OAuth connection status on mount
   useEffect(() => {
@@ -151,41 +134,12 @@ function SettingsContent() {
     }
   }, [addToast]);
 
-  const fetchStorefrontSubscriptions = useCallback(async () => {
-    setStorefrontLoading(true);
-    try {
-      const data = await storefrontApi.getSubscriptions();
-      setStorefrontSubs(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching storefront subscriptions:', error);
-      setStorefrontSubs([]);
-    } finally {
-      setStorefrontLoading(false);
-    }
-  }, []);
-
-  const handleStorefrontPortal = async (subscriptionId: string) => {
-    setStorefrontPortalLoading(subscriptionId);
-    try {
-      const data = await storefrontApi.createPortalSession(subscriptionId);
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (error) {
-      console.error('Error creating portal session:', error);
-      addToast('error', 'Failed to open billing portal');
-    } finally {
-      setStorefrontPortalLoading(null);
-    }
-  };
-
   // Fetch billing data when billing section is active
   useEffect(() => {
     if (activeSection === 'billing') {
       fetchBillingOrganizations();
-      fetchStorefrontSubscriptions();
     }
-  }, [activeSection, fetchBillingOrganizations, fetchStorefrontSubscriptions]);
+  }, [activeSection, fetchBillingOrganizations]);
 
   // Sort billing orgs by most recent (assuming they have created_at or similar)
   const sortedBillingOrgs = [...billingOrgs].reverse();
@@ -634,78 +588,6 @@ function SettingsContent() {
               {/* Billing & Subscription */}
               {activeSection === 'billing' && (
                 <div ref={billingSectionRef} className="space-y-6">
-
-                {/* Business Services Card */}
-                <Card className="p-4 sm:p-6">
-                  <div className="mb-6">
-                    <h2 className="text-xl sm:text-2xl font-semibold text-orange-dark dark:text-orange mb-2">
-                      Business Services
-                    </h2>
-                    <p className="text-sm text-gray-slate dark:text-gray-400">
-                      Products and services purchased from the Javelina storefront
-                    </p>
-                  </div>
-
-                  {storefrontLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-                    </div>
-                  ) : storefrontSubs.length === 0 ? (
-                    <div className="text-center py-6 text-sm text-gray-slate dark:text-gray-400">
-                      <p>No business services yet.</p>
-                      <a href="/storefront" className="text-orange hover:text-orange-dark dark:hover:text-orange-light underline mt-1 inline-block">
-                        Visit the Storefront to explore available products
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {storefrontSubs.map((sub) => (
-                        <div
-                          key={sub.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border border-gray-light dark:border-gray-700 rounded-lg hover:border-orange/50 dark:hover:border-orange/50 transition-colors gap-4"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2 flex-wrap">
-                              <h3 className="text-base sm:text-lg font-bold text-orange-dark dark:text-orange">
-                                {sub.storefront_products.name}
-                              </h3>
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full ${getBillingStatusColor(sub.status)}`}
-                              >
-                                {sub.status}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm text-gray-slate dark:text-gray-400">
-                              <div>
-                                <span className="font-medium">Price:</span>{' '}
-                                <span className="text-orange-dark dark:text-orange font-semibold">
-                                  ${sub.storefront_products.price}/{sub.storefront_products.billing_interval}
-                                </span>
-                              </div>
-                              {sub.current_period_end && (
-                                <div>
-                                  <span className="font-medium">Next Billing:</span>{' '}
-                                  {formatBillingDate(sub.current_period_end)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {sub.stripe_customer_id && (
-                            <Button
-                              variant="primary"
-                              size="md"
-                              onClick={() => handleStorefrontPortal(sub.id)}
-                              disabled={storefrontPortalLoading === sub.id}
-                              className="w-full sm:w-auto"
-                            >
-                              {storefrontPortalLoading === sub.id ? 'Loading...' : 'Manage Billing'}
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
 
                 {/* Organization Subscriptions */}
                 <Card className="p-4 sm:p-6">
