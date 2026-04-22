@@ -63,7 +63,7 @@ export function StepDNS({ t, data, set }: Props) {
         >
           <div style={{ color: t.accent, marginTop: 2 }}><Icon name="info" size={16} /></div>
           <div style={{ fontSize: 13, color: t.text, fontFamily: FONT, lineHeight: 1.5 }}>
-            You'll update nameservers at your registrar to{' '}
+            You&apos;ll update nameservers at your registrar to{' '}
             <span
               style={{
                 fontFamily: MONO, fontSize: 12,

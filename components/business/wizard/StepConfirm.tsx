@@ -127,7 +127,7 @@ export function StepConfirm({ t, data }: Props) {
         </div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 600, color: t.text, fontFamily: FONT }}>
-            What you're getting ({data.planCode === 'business_pro' ? 'Business Pro' : 'Business Starter'})
+            What you&apos;re getting ({data.planCode === 'business_pro' ? 'Business Pro' : 'Business Starter'})
           </div>
           <ul style={{ margin: '6px 0 0 18px', padding: 0, color: t.textMuted, fontSize: 13, lineHeight: 1.55, fontFamily: FONT }}>
             {features.map((f) => (

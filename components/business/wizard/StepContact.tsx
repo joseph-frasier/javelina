@@ -110,7 +110,7 @@ export function StepContact({ t, data, set }: Props) {
                 fontFamily: FONT, marginTop: 2, lineHeight: 1.5,
               }}
             >
-              Your personal details won't show up in public WHOIS lookups. Registrars see them — nobody else.
+              Your personal details won&apos;t show up in public WHOIS lookups. Registrars see them — nobody else.
             </div>
           </div>
           <Toggle t={t} checked={c.whois !== false} onChange={(v) => update({ whois: v })} />

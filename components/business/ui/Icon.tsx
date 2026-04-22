@@ -1,4 +1,5 @@
 'use client';
+import type { JSX } from 'react';
 import type { CSSProperties } from 'react';
 
 export type IconName =

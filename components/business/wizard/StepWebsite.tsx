@@ -176,7 +176,7 @@ export function StepWebsite({ t, data, set }: Props) {
                 </Button>
               </div>
               <div style={{ fontSize: 12, color: t.textMuted }}>
-                SVG or PNG, transparent background works best. We'll generate favicons automatically.
+                SVG or PNG, transparent background works best. We&apos;ll generate favicons automatically.
               </div>
             </div>
           </div>
@@ -209,7 +209,7 @@ export function StepWebsite({ t, data, set }: Props) {
                   : 'Drop product shots, team photos, or work samples'}
               </div>
               <div style={{ fontSize: 12, color: t.textMuted, marginTop: 2 }}>
-                Up to 20 files. We'll optimize and lay them out.
+                Up to 20 files. We&apos;ll optimize and lay them out.
               </div>
             </div>
             <Button
