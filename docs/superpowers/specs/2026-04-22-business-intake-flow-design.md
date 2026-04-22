@@ -19,7 +19,23 @@ Visual and behavioral spec lives in `/.jbp_mockup/JBP/` (not in production build
 - `components/dashboard.jsx` — post-setup customer dashboard (out of scope this pass, beyond placeholder)
 - `components/jbp-admin.jsx` — internal multi-tenant admin (out of scope)
 
-The mockup is React-without-build (globals, inline styles, custom primitives). We re-implement the wizard using the existing app's stack (Next.js App Router, Tailwind, existing UI primitives), treating the mockup as a visual/interaction spec — not as source to port.
+The mockup is React-without-build (globals, inline styles, custom primitives). We re-implement using the existing app's stack (Next.js App Router, Tailwind, Zustand), but we **adopt the mockup's visual language wholesale** — design tokens, primitive styling (Button, Input, Card, Badge, Radio, Checkbox, Toggle), spacing, typography, border radii, shadows. The existing Javelina UI (orange `/pricing`, `/checkout`, dashboard) is **not** restyled in this pass; it stays as-is. Any rest-of-app redesign is a separate, later initiative.
+
+## Visual system
+
+All new surfaces (`/business/setup`, `/business/[orgId]`, and every new primitive used there) follow the mockup's token system, mapped to Javelina brand colors:
+
+- **Font stack:** `-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, system-ui, sans-serif` (body) and `"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace` (mono). Add Inter via `next/font` if not already present.
+- **Accent = Javelina orange:** `#EF7215` (replacing the mockup's default sky blue). Derive accent-soft (light tint ~ `#FEF0E5`) and ring (`rgba(239,114,21,0.18)`) to match the mockup's `accentSoft` / `ring` roles.
+- **Neutrals:** use the mockup's light-mode grays verbatim (`bg: #f7f8fa`, `surface: #fff`, `surfaceAlt: #fafbfc`, `border: #e6e8ec`, `borderStrong: #d3d7de`, `text: #0f1419`, `textMuted: #566271`, `textFaint: #8a94a3`). These are intentionally cooler/sharper than Javelina's current palette — that's the point of the refresh.
+- **Radii:** `8` (inputs/buttons), `10` (inline panels), `12` (radio cards), `14` (cards).
+- **Shadows:** mockup's `shadowSm` / `shadowMd` values verbatim.
+- **Status colors:** success `#059669`, warning `#d97706`, danger `#dc2626` (mockup values; do not swap for Javelina orange).
+- **Dark mode:** tokens exist in the mockup. Not required this pass; design tokens must be structured so dark mode can be added later without rework.
+
+Tokens live in a single source of truth — either a CSS variable block injected at the root of business routes, or a Tailwind config extension scoped via a CSS-layer class. Either way, the **rest of the app is unaffected**.
+
+The mockup's inline-style primitives (Button, Input, Card, Badge, Radio, Checkbox, Toggle, Icon) are reimplemented as real React+Tailwind components in `components/business/ui/`. They are **separate from `components/ui/`** (which keeps the current Javelina style in use across DNS surfaces). This deliberate duplication is temporary: when the broader redesign happens, the business-style primitives graduate to `components/ui/` and the originals are retired.
 
 ## Decisions
 
@@ -76,7 +92,7 @@ components/business/
     └── BusinessPlaceholderDashboard.tsx
 ```
 
-Shared primitives (`Button`, `Input`, `Logo`, `Breadcrumb`) come from the existing app. Any visual primitive present in the mockup but absent in the app (e.g. `Radio`, `Badge` with tone variants, stepped inputs with icon prefixes) is added to `components/ui/` as a first-class primitive — not a business-specific one — so other surfaces can reuse.
+**Primitives come from a new `components/business/ui/` directory** modeled after the mockup's `tokens.jsx`. We do NOT import the Javelina-styled `components/ui/Button`, `Input`, `Card`, `Breadcrumb`, etc. — the whole point of this pass is the new look. We do reuse the Javelina `Logo` SVG (brand mark stays), but styled per the new tokens.
 
 ### State
 
@@ -174,6 +190,18 @@ Each of the above is a candidate for a follow-up design.
 **New:**
 - `app/business/setup/page.tsx`
 - `app/business/[orgId]/page.tsx`
+- `app/business/layout.tsx` — injects the new-style CSS variable scope and Inter font
+- `components/business/ui/tokens.ts` — exports token object + type
+- `components/business/ui/Button.tsx`
+- `components/business/ui/Input.tsx`
+- `components/business/ui/Card.tsx`
+- `components/business/ui/Badge.tsx`
+- `components/business/ui/Radio.tsx`
+- `components/business/ui/Checkbox.tsx`
+- `components/business/ui/Toggle.tsx`
+- `components/business/ui/Icon.tsx` — wraps the mockup's tiny stroke icon set
+- `components/business/ui/StepHeader.tsx`
+- `components/business/ui/FieldLabel.tsx`
 - `components/business/wizard/BusinessWizardShell.tsx`
 - `components/business/wizard/Stepper.tsx`
 - `components/business/wizard/StepDNS.tsx`
@@ -181,9 +209,10 @@ Each of the above is a candidate for a follow-up design.
 - `components/business/wizard/StepDomain.tsx`
 - `components/business/wizard/StepContact.tsx`
 - `components/business/wizard/StepConfirm.tsx`
+- `components/business/wizard/AestheticCard.tsx` — used inside StepWebsite
+- `components/business/wizard/SummaryRow.tsx` — used inside StepConfirm + dashboard
 - `components/business/dashboard/BusinessPlaceholderDashboard.tsx`
 - `lib/business-intake-store.ts`
-- Possibly `components/ui/Radio.tsx`, `components/ui/Badge.tsx` if equivalents don't already exist
 
 **Modified (minimal):**
 - `app/pricing/PricingContent.tsx` — add `productLine === 'business'` branch in `handleOrgCreated` (appends `&intake=business` to the checkout URL)
