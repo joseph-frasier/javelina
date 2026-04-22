@@ -119,8 +119,12 @@ export default function PricingContent() {
       const isLifetime = planConfig.code.includes('_lifetime');
       const billingInterval = isLifetime ? 'lifetime' : planConfig.monthly.interval;
       
+      const intakeSuffix = planConfig.productLine === 'business' ? '&intake=business' : '';
+      const orgNameSuffix = planConfig.productLine === 'business'
+        ? `&org_name=${encodeURIComponent(orgId)}` // org_id as a stable fallback; real name resolved later
+        : '';
       router.push(
-        `/checkout?org_id=${orgId}&plan_code=${planConfig.code}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=${billingInterval}`
+        `/checkout?org_id=${orgId}&plan_code=${planConfig.code}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=${billingInterval}${intakeSuffix}${orgNameSuffix}`
       );
     } else {
       addToast('error', 'Unable to proceed to checkout. Please try again.');
