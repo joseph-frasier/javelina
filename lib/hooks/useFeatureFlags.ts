@@ -23,12 +23,6 @@ export interface FeatureFlags {
   hideSslCertificates: boolean;
   /** Hide the mailbox/email section on domain detail page */
   hideMailboxes: boolean;
-  /** Show the Business Products storefront page and header link */
-  showBusinessProducts: boolean;
-  /** Show the Business Starter product in the storefront */
-  showBusinessStarter: boolean;
-  /** Show the Business Pro product in the storefront */
-  showBusinessPro: boolean;
 }
 
 /**
@@ -44,9 +38,6 @@ const DEFAULT_FLAGS: FeatureFlags = {
   showOpenSrsStorefront: false,
   hideSslCertificates: false,
   hideMailboxes: false,
-  showBusinessProducts: false,
-  showBusinessStarter: false,
-  showBusinessPro: false,
 };
 
 /**
@@ -62,9 +53,6 @@ export const LD_FLAG_KEYS = {
   SHOW_OPENSRS_STOREFRONT: 'domains-show-opensrs-storefront',
   HIDE_SSL_CERTIFICATES: 'domains-hide-ssl-certificates',
   HIDE_MAILBOXES: 'domains-hide-mailboxes',
-  SHOW_BUSINESS_PRODUCTS: 'store-show-business-products',
-  SHOW_BUSINESS_STARTER: 'store-show-business-starter',
-  SHOW_BUSINESS_PRO: 'store-show-business-pro',
 } as const;
 
 /**
@@ -100,9 +88,6 @@ export function useFeatureFlags(): FeatureFlags {
           showOpenSrsStorefront: allFlags[LD_FLAG_KEYS.SHOW_OPENSRS_STOREFRONT] ?? DEFAULT_FLAGS.showOpenSrsStorefront,
           hideSslCertificates: allFlags[LD_FLAG_KEYS.HIDE_SSL_CERTIFICATES] ?? DEFAULT_FLAGS.hideSslCertificates,
           hideMailboxes: allFlags[LD_FLAG_KEYS.HIDE_MAILBOXES] ?? DEFAULT_FLAGS.hideMailboxes,
-          showBusinessProducts: allFlags[LD_FLAG_KEYS.SHOW_BUSINESS_PRODUCTS] ?? DEFAULT_FLAGS.showBusinessProducts,
-          showBusinessStarter: allFlags[LD_FLAG_KEYS.SHOW_BUSINESS_STARTER] ?? DEFAULT_FLAGS.showBusinessStarter,
-          showBusinessPro: allFlags[LD_FLAG_KEYS.SHOW_BUSINESS_PRO] ?? DEFAULT_FLAGS.showBusinessPro,
         };
         setFlags(newFlags);
       } catch (err) {
@@ -149,8 +134,5 @@ export function getFeatureFlags(ldFlags: Record<string, any> = {}): FeatureFlags
     showOpenSrsStorefront: ldFlags[LD_FLAG_KEYS.SHOW_OPENSRS_STOREFRONT] ?? DEFAULT_FLAGS.showOpenSrsStorefront,
     hideSslCertificates: ldFlags[LD_FLAG_KEYS.HIDE_SSL_CERTIFICATES] ?? DEFAULT_FLAGS.hideSslCertificates,
     hideMailboxes: ldFlags[LD_FLAG_KEYS.HIDE_MAILBOXES] ?? DEFAULT_FLAGS.hideMailboxes,
-    showBusinessProducts: ldFlags[LD_FLAG_KEYS.SHOW_BUSINESS_PRODUCTS] ?? DEFAULT_FLAGS.showBusinessProducts,
-    showBusinessStarter: ldFlags[LD_FLAG_KEYS.SHOW_BUSINESS_STARTER] ?? DEFAULT_FLAGS.showBusinessStarter,
-    showBusinessPro: ldFlags[LD_FLAG_KEYS.SHOW_BUSINESS_PRO] ?? DEFAULT_FLAGS.showBusinessPro,
   };
 }

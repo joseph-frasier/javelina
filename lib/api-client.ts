@@ -281,41 +281,6 @@ export const plansApi = {
   },
 };
 
-// Storefront API
-export const storefrontApi = {
-  /**
-   * Get all active storefront products
-   */
-  getProducts: () => {
-    return apiClient.get('/storefront/products');
-  },
-
-  /**
-   * Create a Stripe Checkout Session for a storefront product
-   */
-  createCheckout: (productCode: string, customerName?: string, customerEmail?: string) => {
-    return apiClient.post<{ url: string }>('/storefront/checkout', {
-      productCode,
-      customerName,
-      customerEmail,
-    });
-  },
-
-  /**
-   * Get the current user's storefront subscriptions
-   */
-  getSubscriptions: () => {
-    return apiClient.get('/storefront/subscriptions');
-  },
-
-  /**
-   * Create a Stripe Customer Portal session for a storefront subscription
-   */
-  createPortalSession: (subscriptionId: string) => {
-    return apiClient.post<{ url: string }>('/storefront/portal', { subscriptionId });
-  },
-};
-
 export interface Invitation {
   id: string;
   email: string;
