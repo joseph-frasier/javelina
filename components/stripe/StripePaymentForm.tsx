@@ -13,6 +13,9 @@ interface StripePaymentFormProps {
   onError: (error: string) => void;
   orgId?: string; // Optional org_id to include in return URL
   flow?: 'payment_intent' | 'setup_intent'; // Type of confirmation to perform
+  intake?: 'business' | null;
+  planCode?: string;
+  orgName?: string;
 }
 
 export function StripePaymentForm({
@@ -20,6 +23,9 @@ export function StripePaymentForm({
   onError,
   orgId,
   flow = 'payment_intent',
+  intake,
+  planCode,
+  orgName,
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
@@ -43,10 +49,16 @@ export function StripePaymentForm({
         return;
       }
 
-      // Build return URL with org_id if available
-      const returnUrl = orgId 
-        ? `${window.location.origin}/stripe/success?org_id=${orgId}`
-        : `${window.location.origin}/stripe/success`;
+      // Build return URL with org_id if available; include intake params for business flows
+      const params = new URLSearchParams();
+      if (orgId) params.set('org_id', orgId);
+      if (intake === 'business') {
+        params.set('intake', 'business');
+        if (planCode) params.set('plan_code', planCode);
+        if (orgName) params.set('org_name', orgName);
+      }
+      const qs = params.toString();
+      const returnUrl = `${window.location.origin}/stripe/success${qs ? `?${qs}` : ''}`;
 
       // Use appropriate confirmation method based on flow type
       const { error } = flow === 'payment_intent'

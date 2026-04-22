@@ -18,6 +18,8 @@ interface CheckoutData {
   plan_name?: string;
   plan_price?: number;
   billing_interval?: string;
+  intake?: 'business' | null;
+  org_name?: string;
   // Upgrade-specific fields
   upgrade_type?: 'subscription-to-lifetime' | 'lifetime-to-lifetime' | null;
   original_price?: number;
@@ -67,6 +69,8 @@ function CheckoutContent() {
     const plan_code = searchParams.get('plan_code');
     const price_id = searchParams.get('price_id');
     const upgrade_type = searchParams.get('upgrade_type') as CheckoutData['upgrade_type'];
+    const intake = searchParams.get('intake') as 'business' | null;
+    const org_name = searchParams.get('org_name') || undefined;
 
     if (!org_id || !plan_code) {
       addToast('error', 'Invalid checkout parameters');
@@ -81,6 +85,8 @@ function CheckoutContent() {
       plan_name: searchParams.get('plan_name') || 'Selected Plan',
       plan_price: parseFloat(searchParams.get('plan_price') || '0'),
       billing_interval: searchParams.get('billing_interval') || 'lifetime',
+      intake,
+      org_name,
       // Upgrade-specific parameters
       upgrade_type: upgrade_type || null,
       original_price: parseFloat(searchParams.get('original_price') || '0'),
@@ -438,6 +444,9 @@ function CheckoutContent() {
                     onError={handlePaymentError}
                     orgId={checkoutData.org_id}
                     flow={flow}
+                    intake={checkoutData.intake}
+                    planCode={checkoutData.plan_code}
+                    orgName={checkoutData.org_name}
                   />
                 </StripeProvider>
               </div>
