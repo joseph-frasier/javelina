@@ -27,6 +27,7 @@ export interface Plan {
   code: string;
   name: string;
   description: string;
+  productLine: 'dns' | 'business';
   popular?: boolean;
   monthly?: PlanPrice;
   annual?: PlanPrice;
@@ -59,6 +60,7 @@ interface DbPlan {
     price_id: string;
     description?: string;
     contact_sales?: boolean;
+    product_line?: 'dns' | 'business';
   };
   entitlements?: Array<{
     key: string;
@@ -95,6 +97,7 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
       code: dbPlan.code,
       name: dbPlan.name,
       description: dbPlan.metadata?.description || '',
+      productLine: dbPlan.metadata?.product_line ?? 'dns',
       popular: baseCode === 'pro_lifetime' || baseCode === 'pro', // Mark Pro plans as popular
       limits: {
         zones: hardcodedLimits.zones,
@@ -311,6 +314,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'starter_lifetime',
     name: 'Starter Lifetime',
     description: 'Perfect for small projects and testing',
+    productLine: 'dns',
     popular: false,
     monthly: {
       amount: 9.95,
@@ -345,6 +349,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'pro_lifetime',
     name: 'Pro Lifetime',
     description: 'For growing teams and production workloads',
+    productLine: 'dns',
     popular: true,
     monthly: {
       amount: 49.95,
@@ -379,6 +384,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'premium_lifetime',
     name: 'Business Lifetime',
     description: 'Advanced features for enterprise teams',
+    productLine: 'dns',
     popular: false,
     monthly: {
       amount: 199.95,
@@ -413,6 +419,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'enterprise_lifetime',
     name: 'Enterprise Lifetime',
     description: 'Custom solutions for large organizations',
+    productLine: 'dns',
     popular: false,
     features: [
       { name: 'Organizations: Custom', included: true },
