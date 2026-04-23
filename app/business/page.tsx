@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useBusinessIntakeStore } from '@/lib/business-intake-store';
-import { FONT, t as tokens } from '@/components/business/ui/tokens';
+import { FONT } from '@/components/business/ui/tokens';
+import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Badge } from '@/components/business/ui/Badge';
 import { Icon } from '@/components/business/ui/Icon';
 
 export default function BusinessIndexPage() {
-  const t = tokens;
+  const t = useBusinessTheme();
   const intakes = useBusinessIntakeStore((s) => s.intakes);
   const entries = Object.values(intakes);
   const completed = entries.filter((i) => i.completedAt !== null);

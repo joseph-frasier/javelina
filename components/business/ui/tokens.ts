@@ -58,5 +58,30 @@ export const lightTokens: Tokens = {
   shadowLg: '0 24px 60px rgba(15,20,25,0.12), 0 2px 8px rgba(15,20,25,0.06)',
 };
 
+export const darkTokens: Tokens = {
+  bg: '#0b0d10',
+  surface: '#14181d',
+  surfaceAlt: '#181d23',
+  surfaceHover: '#1d242b',
+  border: '#232a32',
+  borderStrong: '#303944',
+  text: '#eef2f7',
+  textMuted: '#9aa4b2',
+  textFaint: '#6b7684',
+  accent: ACCENT[500],
+  accentHover: ACCENT[600],
+  // In dark mode, translucent accents read better than a light tint.
+  accentSoft: 'rgba(239,114,21,0.12)',
+  accentSoftStrong: 'rgba(239,114,21,0.2)',
+  ring: ACCENT.ring,
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  shadowSm: '0 1px 2px rgba(0,0,0,0.3)',
+  shadowMd: '0 8px 24px rgba(0,0,0,0.35)',
+  shadowLg: '0 24px 60px rgba(0,0,0,0.5)',
+};
+
 // Exported as default so wizard/dashboard components can import one symbol.
+// For surfaces that adopt light/dark mode, use useBusinessTheme() instead.
 export const t: Tokens = lightTokens;

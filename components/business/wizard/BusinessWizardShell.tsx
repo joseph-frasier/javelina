@@ -1,7 +1,8 @@
 // components/business/wizard/BusinessWizardShell.tsx
 'use client';
 import { useRouter } from 'next/navigation';
-import { t as tokens, FONT } from '@/components/business/ui/tokens';
+import { FONT } from '@/components/business/ui/tokens';
+import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
@@ -21,7 +22,7 @@ interface Props {
 
 export function BusinessWizardShell({ orgId }: Props) {
   const router = useRouter();
-  const t = tokens;
+  const t = useBusinessTheme();
   const data = useBusinessIntakeStore((s) => s.intakes[orgId]);
   const update = useBusinessIntakeStore((s) => s.update);
   const setStep = useBusinessIntakeStore((s) => s.setStep);

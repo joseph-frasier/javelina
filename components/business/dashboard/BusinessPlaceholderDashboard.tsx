@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
-import { FONT, t as tokens } from '@/components/business/ui/tokens';
+import { FONT } from '@/components/business/ui/tokens';
+import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
 import { Card } from '@/components/business/ui/Card';
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export function BusinessPlaceholderDashboard({ data }: Props) {
-  const t = tokens;
+  const t = useBusinessTheme();
   const firstName = data.contact.firstName || data.website.bizName || 'there';
 
   return (

@@ -6,7 +6,8 @@ export type IconName =
   | 'check' | 'arrowRight' | 'arrowLeft' | 'plus' | 'external'
   | 'globe' | 'server' | 'shield' | 'chart' | 'credit' | 'edit'
   | 'dots' | 'search' | 'copy' | 'bell' | 'sparkle' | 'x'
-  | 'info' | 'lock' | 'rocket' | 'refresh' | 'activity' | 'users';
+  | 'info' | 'lock' | 'rocket' | 'refresh' | 'activity' | 'users'
+  | 'sun' | 'moon';
 
 interface IconProps {
   name: IconName;
@@ -91,6 +92,20 @@ const PATHS: Record<IconName, JSX.Element> = {
       <path d="M10 9.5c2 0 4 1 4 3" />
     </g>
   ),
+  sun: (
+    <g>
+      <circle cx="8" cy="8" r="3" />
+      <line x1="8" y1="1.5" x2="8" y2="3" />
+      <line x1="8" y1="13" x2="8" y2="14.5" />
+      <line x1="1.5" y1="8" x2="3" y2="8" />
+      <line x1="13" y1="8" x2="14.5" y2="8" />
+      <line x1="3.4" y1="3.4" x2="4.5" y2="4.5" />
+      <line x1="11.5" y1="11.5" x2="12.6" y2="12.6" />
+      <line x1="3.4" y1="12.6" x2="4.5" y2="11.5" />
+      <line x1="11.5" y1="4.5" x2="12.6" y2="3.4" />
+    </g>
+  ),
+  moon: <path d="M13 9.5A5 5 0 017.5 3a1 1 0 00-1.2 1.2A5.5 5.5 0 0011.8 10.7a1 1 0 001.2-1.2z" />,
 };
 
 export function Icon({ name, size = 16, color = 'currentColor', style }: IconProps) {
