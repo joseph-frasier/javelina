@@ -60,7 +60,7 @@ export function SideNav({ t, data, active = 'overview' }: SideNavProps) {
             fontFamily: FONT,
           }}
         >
-          Workspace
+          Business
         </div>
         <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div

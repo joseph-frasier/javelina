@@ -47,7 +47,7 @@ export function BusinessPlaceholderDashboard({ data }: Props) {
                 fontFamily: FONT,
               }}
             >
-              Your workspace
+              Your business
             </h1>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

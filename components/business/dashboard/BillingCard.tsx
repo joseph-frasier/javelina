@@ -13,8 +13,9 @@ interface BillingCardProps {
 }
 
 export function BillingCard({ t, data }: BillingCardProps) {
-  const planLabel = data.planCode === 'business_pro' ? 'Business Pro' : 'Business Starter';
-  const planPrice = data.planCode === 'business_pro' ? '$89.00' : '$49.00';
+  const planLabel =
+    data.planCode === 'business_pro' ? 'Javelina Business Pro' : 'Javelina Business Starter';
+  const planPrice = data.planCode === 'business_pro' ? '$199.88' : '$99.88';
 
   return (
     <Card t={t}>
