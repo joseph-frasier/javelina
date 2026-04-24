@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { adminApi } from '@/lib/api-client';
+import type { MailboxPricingAdminTier } from '@/types/mailbox';
 import { useToastStore } from '@/lib/toast-store';
 import Dropdown from '@/components/ui/Dropdown';
 
@@ -54,6 +55,7 @@ type SortDirection = 'asc' | 'desc';
 const TABS = [
   { id: 'transaction-log', label: 'Transaction Log' },
   { id: 'tld-pricing', label: 'TLD Pricing' },
+  { id: 'mailbox-pricing', label: 'Mailbox Pricing' },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -178,6 +180,17 @@ export default function AdminOpenSRSPage() {
     sale_renewal: string;
     sale_transfer: string;
   }>({ margin_override: '', sale_registration: '', sale_renewal: '', sale_transfer: '' });
+
+  // Mailbox Pricing state
+  const [mailboxTiers, setMailboxTiers] = useState<MailboxPricingAdminTier[]>([]);
+  const [mailboxLoading, setMailboxLoading] = useState(false);
+  const [editingTier, setEditingTier] = useState<string | null>(null);
+  const [tierEdits, setTierEdits] = useState<{
+    margin_percent: number;
+    sale_price_override: string;
+    mailbox_limit: number;
+    is_active: boolean;
+  }>({ margin_percent: 50, sale_price_override: '', mailbox_limit: 0, is_active: true });
   const [seeding, setSeeding] = useState(false);
   const tldPageSize = 10;
 
@@ -215,6 +228,62 @@ export default function AdminOpenSRSPage() {
       fetchTldPricing();
     }
   }, [activeTab, tldPricingData.length, tldLoading, fetchTldPricing]);
+
+  // Mailbox pricing fetch
+  const fetchMailboxPricing = useCallback(async () => {
+    setMailboxLoading(true);
+    try {
+      const data = await adminApi.listMailboxPricing();
+      setMailboxTiers(data.tiers);
+    } catch (err: any) {
+      addToast('error', err.message || 'Failed to fetch mailbox pricing');
+    } finally {
+      setMailboxLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    if (activeTab === 'mailbox-pricing' && mailboxTiers.length === 0 && !mailboxLoading) {
+      fetchMailboxPricing();
+    }
+  }, [activeTab, mailboxTiers.length, mailboxLoading, fetchMailboxPricing]);
+
+  const handleStartTierEdit = (tier: MailboxPricingAdminTier) => {
+    setEditingTier(tier.id);
+    setTierEdits({
+      margin_percent: tier.margin_percent,
+      sale_price_override: tier.sale_price_override !== null ? tier.sale_price_override.toString() : '',
+      mailbox_limit: tier.mailbox_limit,
+      is_active: tier.is_active,
+    });
+  };
+
+  const handleSaveTierEdit = async () => {
+    if (!editingTier) return;
+    try {
+      await adminApi.updateMailboxPricing(editingTier, {
+        margin_percent: tierEdits.margin_percent,
+        sale_price_override: tierEdits.sale_price_override ? parseFloat(tierEdits.sale_price_override) : null,
+        mailbox_limit: tierEdits.mailbox_limit,
+        is_active: tierEdits.is_active,
+      });
+      addToast('success', 'Mailbox pricing updated.');
+      setEditingTier(null);
+      await fetchMailboxPricing();
+    } catch (err: any) {
+      addToast('error', err.message || 'Failed to update pricing');
+    }
+  };
+
+  const handleToggleTierActive = async (tierId: string, currentActive: boolean) => {
+    try {
+      await adminApi.updateMailboxPricing(tierId, { is_active: !currentActive });
+      addToast('success', `Tier ${currentActive ? 'deactivated' : 'activated'}.`);
+      await fetchMailboxPricing();
+    } catch (err: any) {
+      addToast('error', err.message || 'Failed to toggle tier');
+    }
+  };
 
   const handleSaveGlobalMargin = async () => {
     const margin = parseFloat(editingMargin);
@@ -793,6 +862,121 @@ export default function AdminOpenSRSPage() {
                   >
                     Next
                   </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'mailbox-pricing' && (
+            <div className="space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tier</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Storage</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">OpenSRS Cost</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Margin %</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sale Price</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mailbox Limit</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {mailboxLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <tr key={i}>
+                            {Array.from({ length: 8 }).map((_, j) => (
+                              <td key={j} className="px-4 py-3">
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      ) : (
+                        mailboxTiers.map((tier) => (
+                          <tr key={tier.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td className="px-4 py-3 text-sm font-medium text-orange-dark dark:text-white">{tier.tier_name}</td>
+                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{tier.storage_gb}GB</td>
+                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">${tier.opensrs_cost.toFixed(2)}</td>
+                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{tier.margin_percent}%</td>
+                            <td className="px-4 py-3 text-sm font-mono">
+                              <span className={tier.has_sale_override ? 'text-orange font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                                ${tier.computed_price.toFixed(2)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                              {tier.mailbox_limit === 0 ? 'Unlimited' : tier.mailbox_limit}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <button
+                                onClick={() => handleToggleTierActive(tier.id, tier.is_active)}
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  tier.is_active
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                }`}
+                              >
+                                {tier.is_active ? 'Yes' : 'No'}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {editingTier === tier.id ? (
+                                <div className="flex gap-1">
+                                  <button onClick={handleSaveTierEdit} className="text-green-600 text-xs font-medium hover:underline">Save</button>
+                                  <button onClick={() => setEditingTier(null)} className="text-gray-500 text-xs font-medium hover:underline">Cancel</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => handleStartTierEdit(tier)} className="text-orange text-xs font-medium hover:underline">Edit</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {editingTier && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Margin %</label>
+                      <input
+                        type="number"
+                        value={tierEdits.margin_percent}
+                        onChange={(e) => setTierEdits({ ...tierEdits, margin_percent: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Sale Price Override ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={tierEdits.sale_price_override}
+                        onChange={(e) => setTierEdits({ ...tierEdits, sale_price_override: e.target.value })}
+                        placeholder="Auto from margin"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Mailbox Limit (0 = unlimited)</label>
+                      <input
+                        type="number"
+                        value={tierEdits.mailbox_limit}
+                        onChange={(e) => setTierEdits({ ...tierEdits, mailbox_limit: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <button onClick={handleSaveTierEdit} className="px-4 py-2 text-sm font-medium rounded-lg bg-orange text-white hover:bg-orange/90 transition-colors">Save</button>
+                      <button onClick={() => setEditingTier(null)} className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

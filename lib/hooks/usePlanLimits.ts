@@ -47,22 +47,29 @@ const DEFAULT_LIMITS: Record<string, PlanLimits> = {
  */
 export function getPlanTier(planCode: string | null | undefined): string {
   if (!planCode) return 'starter';
-  
+  const lowerCode = planCode.toLowerCase();
+
+  // Business-line plans grant starter-tier org limits.
+  // Must be checked BEFORE the "business" substring branch below.
+  if (lowerCode === 'business_starter' || lowerCode === 'business_pro') {
+    return 'starter';
+  }
+
   // Handle enterprise plans
-  if (planCode.includes('enterprise')) {
+  if (lowerCode.includes('enterprise')) {
     return 'enterprise';
   }
-  
+
   // Handle business/premium lifetime (premium_lifetime maps to business)
-  if (planCode.includes('business') || planCode.includes('premium')) {
+  if (lowerCode.includes('business') || lowerCode.includes('premium')) {
     return 'business';
   }
-  
+
   // Handle pro plans
-  if (planCode.includes('pro')) {
+  if (lowerCode.includes('pro')) {
     return 'pro';
   }
-  
+
   // Default to starter
   return 'starter';
 }

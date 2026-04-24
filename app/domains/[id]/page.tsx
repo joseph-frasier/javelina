@@ -6,14 +6,17 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
 import { useToastStore } from '@/lib/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
+import { EditWhoisModal } from '@/components/modals/EditWhoisModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { Pagination } from '@/components/admin/Pagination';
 import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
+import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
+import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
 import type {
   Domain,
   DomainManagementResponse,
@@ -21,14 +24,7 @@ import type {
   DomainPricing,
 } from '@/types/domains';
 
-const US_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
-  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
-  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
-  'VA','WA','WV','WI','WY','DC',
-];
-
-const JAVELINA_NAMESERVERS = ['ns1.javelina.cc', 'ns2.javelina.me'];
+const ORG_PAGE_SIZE = 5;
 
 function extractErrorMessage(err: any, fallback: string): string {
   const raw = err?.details || err?.message;
@@ -108,7 +104,7 @@ export default function DomainDetailPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
-  const { hideSslCertificates } = useFeatureFlags();
+  const { hideSslCertificates, hideMailboxes } = useFeatureFlags();
   const domainId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -130,9 +126,10 @@ export default function DomainDetailPage() {
     first_name: '', last_name: '', org_name: '', email: '', phone: '',
     address1: '', address2: '', city: '', state: '', postal_code: '', country: 'US',
   });
-  const [isSavingContact, setIsSavingContact] = useState(false);
+  const [isWhoisModalOpen, setIsWhoisModalOpen] = useState(false);
 
   // Zone modal state
+  const [orgPage, setOrgPage] = useState(1);
   const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const [selectedOrgName, setSelectedOrgName] = useState('');
@@ -247,21 +244,8 @@ export default function DomainDetailPage() {
     }
   };
 
-  const handleSaveContact = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsSavingContact(true);
-    try {
-      await domainsApi.updateContacts(domainId, contact);
-      addToast('success', 'Contact information updated successfully.');
-    } catch (err: any) {
-      addToast('error', extractErrorMessage(err, 'Failed to update contacts'));
-    } finally {
-      setIsSavingContact(false);
-    }
-  };
-
-  const updateContact = (field: keyof DomainContact, value: string) => {
-    setContact(prev => ({ ...prev, [field]: value }));
+  const handleWhoisSuccess = (updated: DomainContact) => {
+    setContact(updated);
   };
 
   const addNameserverField = () => setNameservers(prev => [...prev, '']);
@@ -330,6 +314,10 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  const daysRemaining = domain.expires_at
+    ? Math.ceil((new Date(domain.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
   const renewalTotalPrice =
     renewalPricing && renewalPricing.price > 0
       ? (renewalPricing.price * selectedYears).toFixed(2)
@@ -353,117 +341,166 @@ export default function DomainDetailPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div>
-        <Link href="/domains?tab=my-domains" className="text-sm text-orange hover:text-orange/70 transition-colors">
-          &larr; Back to My Domains
+      {/* Hero Header */}
+      <div className="border-l-4 border-orange bg-white dark:bg-white/[0.03] rounded-xl p-6 shadow-sm">
+        <Link href="/domains?tab=my-domains" className="inline-flex items-center gap-1.5 text-sm font-medium text-orange hover:text-orange/70 transition-colors mb-4">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          Back to My Domains
         </Link>
-        <div className="mt-3 flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-orange-dark dark:text-white">
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold font-mono tracking-tight text-orange-dark dark:text-white">
             {domain.domain_name}
           </h1>
-          <StatusBadge status={domain.status} />
+          <span className="flex items-center gap-1.5">
+            <span className={`w-2.5 h-2.5 rounded-full ${
+              domain.status === 'active' ? 'bg-green-500 animate-pulse' :
+              domain.status === 'pending' || domain.status === 'processing' ? 'bg-yellow-500' :
+              domain.status === 'expired' || domain.status === 'failed' ? 'bg-red-500' :
+              domain.status === 'transferring' ? 'bg-purple-500' :
+              domain.status === 'cancelled' ? 'bg-gray-400' : 'bg-green-500'
+            }`} />
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
+              {domain.status === 'transfer_complete' ? 'Transferred' : domain.status}
+            </span>
+          </span>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {domain.registration_type === 'linked' ? 'Linked' : domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
-          {domain.registered_at && ` · Registered ${new Date(domain.registered_at).toLocaleDateString()}`}
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
+          {domain.registration_type === 'linked' ? 'Linked · ' : domain.registration_type === 'transfer' ? 'Transfer · ' : ''}
+          {domain.registered_at && `Registered ${new Date(domain.registered_at).toLocaleDateString()}`}
           {domain.expires_at && ` · Expires ${new Date(domain.expires_at).toLocaleDateString()}`}
         </p>
       </div>
 
-      {/* Domain Settings */}
-      <Card title="Domain Settings">
-        <div className="space-y-4">
+      {/* Combined Domain Settings + Renewal + Nameservers card */}
+      <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-gray-100 dark:divide-white/5">
+          {/* Left column: Domain Settings + Renewal */}
+          <div className="p-6 space-y-6">
+            {/* Domain Settings */}
+            <div>
+              <h3 className="text-base font-semibold text-orange mb-4">Domain Settings</h3>
+              <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 py-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-orange-dark dark:text-white">Auto-Renew</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Automatically renew this domain before it expires.
-              </p>
-            </div>
-            <button
-              onClick={handleToggleAutoRenew}
-              disabled={isTogglingAutoRenew}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-              } ${isTogglingAutoRenew ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                autoRenew ? 'translate-x-6' : 'translate-x-1'
-              }`} />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-orange-dark dark:text-white">Domain Lock</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Prevent unauthorized transfers of this domain. Changes may take a few minutes to propagate.
-              </p>
-            </div>
-            <button
-              onClick={handleToggleLock}
-              disabled={isTogglingLock}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                domainLocked ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-              } ${isTogglingLock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                domainLocked ? 'translate-x-6' : 'translate-x-1'
-              }`} />
-            </button>
-          </div>
-
-        </div>
-      </Card>
-
-      {/* Renewal */}
-      {domain.status === 'active' && domain.expires_at && (
-        <Card title="Renewal">
-          <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-              RENEWAL
-            </p>
-
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Current expiration</p>
-              <p className="text-sm font-medium text-orange-dark dark:text-white">
-                {new Date(domain.expires_at).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label htmlFor="renewal-years" className="text-sm text-gray-500 dark:text-gray-400">
-                Renew for
-              </label>
-              <select
-                id="renewal-years"
-                value={selectedYears}
-                onChange={(e) => setSelectedYears(Number(e.target.value))}
-                className="text-sm rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-orange-dark dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange/50"
-              >
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
-                  <option key={y} value={y}>
-                    {y} {y === 1 ? 'year' : 'years'}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {renewalTotalPrice && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Total</span>
-                <span className="font-semibold text-orange-dark dark:text-white">
-                  ${renewalTotalPrice} {renewalPricing?.currency?.toUpperCase() || 'USD'}
-                </span>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
               </div>
-            )}
+              <div>
+                <p className="text-sm font-medium text-orange-dark dark:text-white">Auto-Renew</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Automatically renew this domain before it expires.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={handleToggleAutoRenew}
+                disabled={isTogglingAutoRenew}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                  autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
+                } ${isTogglingAutoRenew ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  autoRenew ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+              <span className={`text-xs font-medium w-14 ${autoRenew ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`}>
+                {autoRenew ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+          </div>
 
-            <div className="pt-2">
+          <div className="flex items-center justify-between gap-4 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-orange-dark dark:text-white">Domain Lock</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Prevent unauthorized transfers of this domain.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={handleToggleLock}
+                disabled={isTogglingLock}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                  domainLocked ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
+                } ${isTogglingLock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  domainLocked ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+              <span className={`text-xs font-medium w-14 ${domainLocked ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`}>
+                {domainLocked ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+          </div>
+
+              </div>
+            </div>
+
+            {/* Renewal */}
+            {domain.status === 'active' && domain.expires_at && (
+              <div>
+                <h3 className="text-base font-semibold text-orange mb-4">Renewal</h3>
+                <div className="space-y-4">
+            <div className="text-center pb-4 mb-0">
+                    <span className={`text-3xl font-bold ${daysRemaining! < 30 ? 'text-red-500' : daysRemaining! < 90 ? 'text-yellow-500' : 'text-orange'}`}>
+                      {daysRemaining}
+                    </span>
+                    <span className="text-sm text-gray-400 dark:text-gray-500 ml-2">days remaining</span>
+            </div>
+            <div className="rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Current expiration</p>
+                <p className="text-sm font-medium text-orange-dark dark:text-white">
+                  {new Date(domain.expires_at).toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label htmlFor="renewal-years" className="text-sm text-gray-500 dark:text-gray-400">
+                  Renew for
+                </label>
+                <select
+                  id="renewal-years"
+                  value={selectedYears}
+                  onChange={(e) => setSelectedYears(Number(e.target.value))}
+                  className="text-sm rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-orange-dark dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange/50"
+                >
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
+                    <option key={y} value={y}>
+                      {y} {y === 1 ? 'year' : 'years'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {renewalTotalPrice && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Total</span>
+                  <span className="font-semibold text-orange-dark dark:text-white">
+                    ${renewalTotalPrice} {renewalPricing?.currency?.toUpperCase() || 'USD'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div>
               <Button
                 type="button"
                 variant="primary"
@@ -479,11 +516,13 @@ export default function DomainDetailPage() {
               </Button>
             </div>
           </div>
-        </Card>
-      )}
+              </div>
+            )}
+          </div>{/* end left column */}
 
-      {/* Nameservers */}
-      <Card title="Nameservers">
+          {/* Right column: Nameservers */}
+          <div className="p-6">
+            <h3 className="text-base font-semibold text-orange mb-4">Nameservers</h3>
         <div className="p-3 mb-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
             Using Javelina for DNS?
@@ -507,6 +546,7 @@ export default function DomainDetailPage() {
                   placeholder={`ns${i + 1}.example.com`}
                   value={ns}
                   onChange={(e) => updateNameserver(i, e.target.value)}
+                  className="font-mono"
                 />
               </div>
               {nameservers.length > 2 && (
@@ -538,50 +578,48 @@ export default function DomainDetailPage() {
           </div>
 
         </form>
-      </Card>
+          </div>{/* end right column */}
+        </div>{/* end inner grid */}
+      </div>{/* end combined card */}
 
-      {/* WHOIS Contact */}
-      <Card title="WHOIS Contact Information">
-        <form onSubmit={handleSaveContact} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="First Name" value={contact.first_name} onChange={(e) => updateContact('first_name', e.target.value)} required />
-            <Input label="Last Name" value={contact.last_name} onChange={(e) => updateContact('last_name', e.target.value)} required />
-            <Input label="Organization (optional)" value={contact.org_name || ''} onChange={(e) => updateContact('org_name', e.target.value)} className="md:col-span-2" />
-            <Input label="Email" type="email" value={contact.email} onChange={(e) => updateContact('email', e.target.value)} required />
-            <Input label="Phone" placeholder="(555) 123-4567" value={contact.phone} onChange={(e) => updateContact('phone', e.target.value)} required />
-            <Input label="Address" value={contact.address1} onChange={(e) => updateContact('address1', e.target.value)} required className="md:col-span-2" />
-            <Input label="Address Line 2 (optional)" value={contact.address2 || ''} onChange={(e) => updateContact('address2', e.target.value)} className="md:col-span-2" />
-            <Input label="City" value={contact.city} onChange={(e) => updateContact('city', e.target.value)} required />
-            <Dropdown
-              label="State"
-              value={contact.state}
-              onChange={(val) => updateContact('state', val)}
-              options={[
-                { value: '', label: 'Select state' },
-                ...US_STATES.map((s) => ({ value: s, label: s })),
-              ]}
-            />
-            <Input label="ZIP / Postal Code" value={contact.postal_code} onChange={(e) => updateContact('postal_code', e.target.value)} required />
-            <Dropdown
-              label="Country"
-              value={contact.country}
-              onChange={(val) => updateContact('country', val)}
-              options={[
-                { value: 'US', label: 'United States' },
-                { value: 'CA', label: 'Canada' },
-                { value: 'GB', label: 'United Kingdom' },
-                { value: 'AU', label: 'Australia' },
-              ]}
-            />
-          </div>
+      {/* Email */}
+      {!hideMailboxes && domain && domain.status === 'active' && (
+        <DomainEmailSection
+          domainId={domain.id}
+          domainName={domain.domain_name}
+        />
+      )}
 
-          <div className="flex justify-end pt-2">
-            <Button type="submit" variant="primary" size="sm" disabled={isSavingContact}>
-              {isSavingContact ? 'Saving...' : 'Save contact info'}
-            </Button>
-          </div>
-
-        </form>
+      {/* WHOIS Contact — read-only display with edit modal */}
+      <Card
+        title="WHOIS Contact Information"
+        action={
+          <Button variant="secondary" size="sm" onClick={() => setIsWhoisModalOpen(true)}>
+            Edit
+          </Button>
+        }
+      >
+        <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
+          {([
+            { label: 'First Name', value: contact.first_name },
+            { label: 'Last Name', value: contact.last_name },
+            { label: 'Email', value: contact.email },
+            { label: 'Phone', value: contact.phone },
+            { label: 'Address', value: [contact.address1, contact.address2].filter(Boolean).join(', '), fullRow: true },
+            { label: 'City', value: contact.city },
+            { label: 'State', value: contact.state },
+            { label: 'ZIP', value: contact.postal_code },
+            { label: 'Country', value: contact.country },
+            { label: 'Organization', value: contact.org_name },
+          ] as { label: string; value: string | undefined; fullRow?: boolean }[]).map(({ label, value, fullRow }) => (
+            <div key={label} className={fullRow ? 'md:col-span-4' : undefined}>
+              <dt className="text-xs text-gray-400 dark:text-gray-500">{label}</dt>
+              <dd className="text-sm font-medium text-orange-dark dark:text-white">
+                {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </Card>
 
       {/* DNS Zone */}
@@ -611,16 +649,30 @@ export default function DomainDetailPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
                   Select an organization
                 </p>
-                {userOrgs.map((org) => (
+                {userOrgs
+                  .slice((orgPage - 1) * ORG_PAGE_SIZE, orgPage * ORG_PAGE_SIZE)
+                  .map((org) => (
                   <button
                     key={org.id}
                     onClick={() => handleOpenZoneModal(org.id, org.name)}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-gray-light dark:border-gray-700 hover:border-orange dark:hover:border-orange hover:shadow-md transition-all flex items-center justify-between"
+                    className="w-full text-left px-4 py-3 rounded-lg border border-gray-light dark:border-gray-700 hover:border-orange dark:hover:border-orange hover:shadow-md transition-all flex items-center justify-between group"
                   >
-                    <span className="text-sm font-medium text-orange-dark dark:text-white">{org.name}</span>
-                    <span className="text-xs text-orange">Set up DNS &rarr;</span>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-orange/10 text-orange text-sm font-bold flex items-center justify-center flex-shrink-0">
+                        {org.name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="text-sm font-medium text-orange-dark dark:text-white">{org.name}</span>
+                    </span>
+                    <span className="text-xs font-medium text-orange group-hover:translate-x-0.5 transition-transform">Set up DNS &rarr;</span>
                   </button>
                 ))}
+                <Pagination
+                  currentPage={orgPage}
+                  totalPages={Math.ceil(userOrgs.length / ORG_PAGE_SIZE)}
+                  onPageChange={setOrgPage}
+                  totalItems={userOrgs.length}
+                  itemsPerPage={ORG_PAGE_SIZE}
+                />
               </div>
             ) : (
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -666,6 +718,15 @@ export default function DomainDetailPage() {
           />
         </div>
       )}
+
+      {/* WHOIS Edit Modal */}
+      <EditWhoisModal
+        isOpen={isWhoisModalOpen}
+        onClose={() => setIsWhoisModalOpen(false)}
+        domainId={domainId}
+        initialContact={contact}
+        onSuccess={handleWhoisSuccess}
+      />
 
       {/* Add Zone Modal */}
       {selectedOrgId && (

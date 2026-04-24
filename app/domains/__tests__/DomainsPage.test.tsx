@@ -42,7 +42,6 @@ vi.mock('@/components/domains/DomainsList', () => ({
 }));
 
 function setSearchParams(params: Record<string, string>) {
-  // Clear existing params
   for (const key of [...mockSearchParams.keys()]) {
     mockSearchParams.delete(key);
   }
@@ -56,65 +55,50 @@ describe('DomainsPage', () => {
     setSearchParams({});
   });
 
-  it('renders Register tab by default when no ?tab param', () => {
+  it('renders all sections on a single page without tabs', () => {
     render(<DomainsPage />);
 
-    // Register tab content should be visible
-    const panels = screen.getAllByTestId('domain-search-bar');
-    expect(panels).toHaveLength(1);
+    // Register section
+    expect(screen.getByTestId('domain-search-bar')).toBeInTheDocument();
+    expect(screen.getByText('Find a domain')).toBeInTheDocument();
 
-    // The register panel should not be hidden
-    const registerPanel = screen.getByTestId('domain-search-bar').closest('[class]');
-    expect(registerPanel?.className).not.toContain('hidden');
-  });
-
-  it('renders Transfer tab when ?tab=transfer', () => {
-    setSearchParams({ tab: 'transfer' });
-    render(<DomainsPage />);
-
-    // Transfer content should be visible (contains "Transfer a domain" card title)
+    // Transfer section
     expect(screen.getByText('Transfer a domain')).toBeInTheDocument();
 
-    // The transfer panel's parent should not be hidden
-    const transferText = screen.getByText('Transfer a domain');
-    const transferPanel = transferText.closest('.space-y-6')?.parentElement;
-    expect(transferPanel?.className).not.toContain('hidden');
-  });
-
-  it('renders My Domains tab when ?tab=my-domains', () => {
-    setSearchParams({ tab: 'my-domains' });
-    render(<DomainsPage />);
-
-    // My Domains content should be visible
+    // My Domains section
     expect(screen.getByTestId('domains-list')).toBeInTheDocument();
-
-    // The my-domains panel's parent should not be hidden
-    const domainsList = screen.getByTestId('domains-list');
-    const myDomainsPanel = domainsList.closest('.space-y-6')?.parentElement;
-    expect(myDomainsPanel?.className).not.toContain('hidden');
+    expect(screen.getByText('My Domains')).toBeInTheDocument();
   });
 
-  it('tab navigation links have correct hrefs', () => {
+  it('does not render tab navigation links', () => {
     render(<DomainsPage />);
 
     const links = screen.getAllByRole('link');
     const hrefs = links.map((link) => link.getAttribute('href'));
 
-    expect(hrefs).toContain('/domains');
-    expect(hrefs).toContain('/domains?tab=transfer');
-    expect(hrefs).toContain('/domains?tab=my-domains');
+    // No tab navigation links
+    expect(hrefs).not.toContain('/domains?tab=transfer');
+    expect(hrefs).not.toContain('/domains?tab=my-domains');
   });
 
-  it('all three tab panels are in the DOM (mounted but hidden)', () => {
+  it('renders the link domain callout', () => {
     render(<DomainsPage />);
 
-    // Register panel content (search bar)
-    expect(screen.getByTestId('domain-search-bar')).toBeInTheDocument();
+    expect(screen.getByText(/Already purchased or transferred a domain/)).toBeInTheDocument();
+    expect(screen.getByText('Link domain')).toBeInTheDocument();
+  });
 
-    // Transfer panel content
-    expect(screen.getByText('Transfer a domain')).toBeInTheDocument();
+  it('shows success banner when success param is present', () => {
+    setSearchParams({ success: 'true' });
+    render(<DomainsPage />);
 
-    // My Domains panel content
-    expect(screen.getByTestId('domains-list')).toBeInTheDocument();
+    expect(screen.getByText(/Payment successful/)).toBeInTheDocument();
+  });
+
+  it('shows cancelled banner when cancelled param is present', () => {
+    setSearchParams({ cancelled: 'true' });
+    render(<DomainsPage />);
+
+    expect(screen.getByText(/Checkout was cancelled/)).toBeInTheDocument();
   });
 });

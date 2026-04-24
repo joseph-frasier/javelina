@@ -587,7 +587,9 @@ function SettingsContent() {
 
               {/* Billing & Subscription */}
               {activeSection === 'billing' && (
-                <div ref={billingSectionRef}>
+                <div ref={billingSectionRef} className="space-y-6">
+
+                {/* Organization Subscriptions */}
                 <Card className="p-4 sm:p-6">
                   <div className="mb-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-orange-dark dark:text-orange mb-2">

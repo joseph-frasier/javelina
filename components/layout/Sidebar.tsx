@@ -531,6 +531,8 @@ function ZonesList({
   const { data: zones, isLoading } = useZones(organizationId);
   const { data: tagsData } = useTags(organizationId);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showAll, setShowAll] = useState(false);
+  const ZONES_PREVIEW_COUNT = 5;
 
   // Get tags and assignments from the hook
   const displayTags = tagsData?.tags || [];
@@ -587,7 +589,7 @@ function ZonesList({
 
       {/* Zones List */}
       <div className="space-y-1">
-      {sortedZones.map((zone) => {
+      {(showAll ? sortedZones : sortedZones.slice(0, ZONES_PREVIEW_COUNT)).map((zone) => {
         // Get tags assigned to this zone
         const assignment = displayAssignments.find(a => a.zone_id === zone.id);
         const zoneTagIds = assignment?.tag_ids || [];
@@ -635,6 +637,18 @@ function ZonesList({
         );
       })}
       </div>
+      {sortedZones.length > ZONES_PREVIEW_COUNT && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setShowAll(prev => !prev);
+          }}
+          className="flex items-center gap-1 px-2 py-1 mt-1 text-xs text-gray-slate hover:text-orange transition-colors"
+        >
+          <span>{showAll ? 'Show less' : 'Show all'}</span>
+        </button>
+      )}
     </div>
   );
 }

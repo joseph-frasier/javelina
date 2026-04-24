@@ -176,6 +176,42 @@ export default function PricingContent() {
           </p>
         </section>
 
+        {/* Business Services Section */}
+        <section className="mb-12" aria-labelledby="business-services-heading">
+          <div className="text-center mb-6">
+            <h2 id="business-services-heading" className="text-2xl font-bold text-orange-dark mb-2">
+              Business Services
+            </h2>
+            <p className="text-sm text-gray-slate font-light">
+              Complete managed service bundles: DNS, domain, email, website, and more.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {PLANS_CONFIG.filter((plan) => plan.productLine === 'business').map((plan) => {
+              const planForCard = {
+                id: plan.id,
+                name: plan.name,
+                price: plan.monthly?.amount || 0,
+                priceId: plan.monthly?.priceId || '',
+                interval: 'month' as const,
+                features: plan.features.filter((f) => f.included).map((f) => f.name),
+                description: plan.description,
+                popular: plan.popular,
+              };
+              return (
+                <PricingCard
+                  key={plan.id}
+                  plan={planForCard}
+                  highlighted={false}
+                  onSelect={handleSelectPlan}
+                  hidePrice={false}
+                  comingSoon={false}
+                />
+              );
+            })}
+          </div>
+        </section>
+
         {/* Monthly Subscription Plans Section */}
         <section className="mb-12" aria-labelledby="monthly-plans-heading">
           <div className="text-center mb-6">
@@ -190,6 +226,8 @@ export default function PricingContent() {
             {PLANS_CONFIG.filter(plan => {
               // Filter out enterprise
               if (plan.id === 'enterprise') return false;
+              // Exclude business-line plans (shown in the Business Services section above)
+              if (plan.productLine === 'business') return false;
               // Only include monthly subscription plans (not lifetime) - always show all 3: starter, pro, business
               if (plan.code.includes('_lifetime')) return false;
               return true;
