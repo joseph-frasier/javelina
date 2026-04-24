@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>JBP · Post-Purchase Setup + Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;550;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+         background: #f0eee9; color: #0f1419;
+         -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+  #root { height: 100%; }
+  /* Hide scrollbars inside artboard browser frames for a cleaner look */
+  [data-browser-scroll] { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
+  [data-browser-scroll]::-webkit-scrollbar { width: 8px; height: 8px; }
+  [data-browser-scroll]::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 8px; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="frames/browser-window.jsx"></script>
+<script type="text/babel" src="frames/design-canvas.jsx"></script>
+<script type="text/babel" src="components/tokens.jsx"></script>
+<script type="text/babel" src="components/wizard.jsx"></script>
+<script type="text/babel" src="components/dashboard.jsx"></script>
+<script type="text/babel" src="components/jbp-admin.jsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+  // ── App: prototype shell wrapped in a design canvas ───────
+  const initial = (() => {
+    try { return JSON.parse(localStorage.getItem('jbp-tweaks') || '{}'); }
+    catch { return {}; }
+  })();
+  const merged = { ...TWEAK_DEFAULTS, ...initial };
+
+  function App() {
+    const [accent, setAccent] = React.useState(merged.accent);
+    const [dark, setDark] = React.useState(!!merged.dark);
+    const [editMode, setEditMode] = React.useState(false);
+
+    const t = React.useMemo(() => themeTokens(accent, dark), [accent, dark]);
+
+    // Persist locally + announce to host (Tweaks protocol)
+    React.useEffect(() => {
+      localStorage.setItem('jbp-tweaks', JSON.stringify({ accent, dark }));
+      try {
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { accent, dark } }, '*');
+      } catch {}
+    }, [accent, dark]);
+
+    // Edit mode protocol — register listener before announcing availability
+    React.useEffect(() => {
+      const onMsg = (e) => {
+        const d = e.data || {};
+        if (d.type === '__activate_edit_mode') setEditMode(true);
+        if (d.type === '__deactivate_edit_mode') setEditMode(false);
+      };
+      window.addEventListener('message', onMsg);
+      try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch {}
+      return () => window.removeEventListener('message', onMsg);
+    }, []);
+
+    // Which screen to show inside the main clickable prototype
+    const [view, setView] = React.useState(
+      () => localStorage.getItem('jbp-view') || 'wizard'
+    );
+    React.useEffect(() => { localStorage.setItem('jbp-view', view); }, [view]);
+
+    // Artboard sizing
+    const W = 1280, H = 880;
+
+    const FramedBrowser = ({ url, children }) => (
+      <ChromeWindow width={W} height={H} url={url}
+        tabs={[{ title: 'JBP · keller.studio' }]}>
+        <div data-browser-scroll style={{ height: '100%', overflow: 'auto', background: t.bg }}>
+          {children}
+        </div>
+      </ChromeWindow>
+    );
+
+    return (
+      <>
+        <DesignCanvas>
+          <DCSection id="flow" title="Post-purchase flow"
+            subtitle="Clickable prototype — Screen 1 steps through to Screen 2 on completion. Use the buttons inside.">
+            <DCArtboard id="prototype" label="Live prototype · Screen 1 → Screen 2"
+              width={W} height={H}>
+              <FramedBrowser url={
+                view === 'wizard' ? 'jbp.app/setup' :
+                view === 'dashboard' ? 'jbp.app/keller-studio' :
+                'jbp.app/admin'
+              }>
+                {view === 'wizard'    && <SetupWizard t={t} onComplete={() => setView('dashboard')} />}
+                {view === 'dashboard' && <Dashboard   t={t} onJBP={() => setView('admin')} />}
+                {view === 'admin'     && <JBPAdmin    t={t} onExit={() => setView('dashboard')} />}
+              </FramedBrowser>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="screens" title="Individual screens"
+            subtitle="Each screen as a standalone artboard for review.">
+            <DCArtboard id="screen-1" label="Screen 1 · Post-purchase setup (wizard)"
+              width={W} height={H}>
+              <FramedBrowser url="jbp.app/setup">
+                <ScreenOneFrozen t={t} />
+              </FramedBrowser>
+            </DCArtboard>
+            <DCArtboard id="screen-2" label="Screen 2 · Customer dashboard"
+              width={W} height={H}>
+              <FramedBrowser url="jbp.app/keller-studio">
+                <Dashboard t={t} onJBP={() => {}} />
+              </FramedBrowser>
+            </DCArtboard>
+            <DCArtboard id="screen-jbp" label="JBP · Internal tenant list"
+              width={W} height={H}>
+              <FramedBrowser url="jbp.app/admin">
+                <JBPAdmin t={t} onExit={() => {}} />
+              </FramedBrowser>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="wizard-steps" title="Wizard steps — standalone"
+            subtitle="Each step frozen for review in isolation.">
+            <DCArtboard id="step-1" label="Step 1 · DNS management" width={W} height={H}>
+              <FramedBrowser url="jbp.app/setup"><WizardAtStep t={t} step={0} /></FramedBrowser>
+            </DCArtboard>
+            <DCArtboard id="step-2" label="Step 2 · Website content & aesthetic" width={W} height={1200}>
+              <FramedBrowser url="jbp.app/setup"><WizardAtStep t={t} step={1} /></FramedBrowser>
+            </DCArtboard>
+            <DCArtboard id="step-3" label="Step 3 · Domain" width={W} height={H}>
+              <FramedBrowser url="jbp.app/setup"><WizardAtStep t={t} step={2} /></FramedBrowser>
+            </DCArtboard>
+            <DCArtboard id="step-4" label="Step 4 · Registrar contact" width={W} height={H}>
+              <FramedBrowser url="jbp.app/setup"><WizardAtStep t={t} step={3} /></FramedBrowser>
+            </DCArtboard>
+            <DCArtboard id="step-5" label="Step 5 · Confirm" width={W} height={H}>
+              <FramedBrowser url="jbp.app/setup"><WizardAtStep t={t} step={4} /></FramedBrowser>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+
+        {editMode && <TweaksPanel
+          accent={accent} setAccent={setAccent}
+          dark={dark} setDark={setDark}
+          view={view} setView={setView}
+          t={t}
+        />}
+      </>
+    );
+  }
+
+  // Frozen/static version of Screen 1 — starts at step 0 each render,
+  // doesn't navigate (used in "individual screens" section)
+  function ScreenOneFrozen({ t }) {
+    return <SetupWizard t={t} onComplete={() => {}} />;
+  }
+
+  // Helper: render the wizard pre-set at a given step index.
+  // We use a small wrapper that pre-clicks through "Continue"
+  // by mounting SetupWizard and using refs — but simpler: fork
+  // a tiny component that ignores internal step state and renders
+  // a fixed step header + the correct slide. To keep this simple,
+  // we embed a mini version that just reuses the child step fns.
+  function WizardAtStep({ t, step }) {
+    const [data, setData] = React.useState({
+      dnsMode: 'jbp', dnsProvider: 'Cloudflare',
+      bizName: 'Keller Studio', bizType: 'Brand & interactive design studio',
+      tagline: 'Made with intention.',
+      description: 'Independent brand and interactive studio helping small teams ship products that feel considered. Based in San Francisco, working with clients across the US.',
+      logoName: 'keller-mark.svg', photoCount: 12,
+      tone: 'Friendly', aesthetic: 'simple', letUsWrite: true,
+      customColor: '#0284c7', customFont: 'Inter',
+      domainMode: 'transfer', domain: 'keller.studio', epp: 'A7F9-23KD-LMX8', registrar: 'Namecheap', unlocked: true,
+      search: 'mycompany',
+      firstName: 'Jordan', lastName: 'Keller', org: 'Keller Studio, LLC',
+      email: 'jordan@keller.studio', phone: '+1 (555) 010-0110',
+      address: '1148 Mission St', city: 'San Francisco', state: 'CA', zip: '94103',
+      whois: true,
+    });
+    const set = p => setData(d => ({ ...d, ...p }));
+
+    // Render the same chrome/stepper shell but frozen at `step`
+    return (
+      <div style={{ minHeight: '100%', background: t.bg, fontFamily: FONT }}>
+        <div style={{
+          height: 60, borderBottom: `1px solid ${t.border}`,
+          display: 'flex', alignItems: 'center', padding: '0 28px',
+          background: t.surface, justifyContent: 'space-between',
+        }}>
+          <Logo t={t} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 13, color: t.textMuted }}>Signed in as <span style={{ color: t.text, fontWeight: 500 }}>jordan@keller.studio</span></span>
+            <div style={{ width: 28, height: 28, borderRadius: 999, background: t.accent, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 600 }}>JK</div>
+          </div>
+        </div>
+        <div style={{ maxWidth: 760, margin: '0 auto', padding: '36px 32px 60px' }}>
+          <div style={{
+            background: t.surface, borderRadius: 14, padding: '18px 24px',
+            border: `1px solid ${t.border}`, boxShadow: t.shadowSm, marginBottom: 28,
+          }}>
+            <Stepper t={t} steps={['DNS','Website','Domain','Contact','Confirm']} current={step} />
+          </div>
+          <Card t={t} padding={36}>
+            {step === 0 && <StepDNS      t={t} data={data} set={set} />}
+            {step === 1 && <StepWebsite  t={t} data={data} set={set} />}
+            {step === 2 && <StepDomain   t={t} data={data} set={set} />}
+            {step === 3 && <StepOpenSRS  t={t} data={data} set={set} />}
+            {step === 4 && <StepConfirm  t={t} data={data} onEdit={() => {}} />}
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Tweaks panel ───────────────────────────────────────────
+  function TweaksPanel({ accent, setAccent, dark, setDark, view, setView, t }) {
+    const accents = Object.keys(ACCENTS);
+    return (
+      <div style={{
+        position: 'fixed', right: 20, bottom: 20, zIndex: 9999,
+        background: '#fff', color: '#0f1419',
+        borderRadius: 14, boxShadow: '0 24px 60px rgba(15,20,25,0.18), 0 0 0 1px rgba(15,20,25,0.06)',
+        padding: 18, width: 280, fontFamily: FONT,
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: '#8a94a3', marginBottom: 12 }}>
+          Tweaks
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#0f1419' }}>Accent</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {accents.map(k => (
+              <button key={k} onClick={() => setAccent(k)} title={k}
+                style={{
+                  width: 26, height: 26, borderRadius: 8, border: '2px solid',
+                  borderColor: accent === k ? '#0f1419' : 'transparent',
+                  background: ACCENTS[k][500], cursor: 'pointer', padding: 0,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                }} />
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#0f1419' }}>Dark mode</div>
+          <Toggle t={themeTokens('sky', false)} checked={dark} onChange={setDark} />
+        </div>
+
+        <div style={{ borderTop: '1px solid #e6e8ec', paddingTop: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#0f1419' }}>Jump to screen</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+            {[['wizard','Setup'], ['dashboard','Dashboard'], ['admin','JBP']].map(([k, label]) => (
+              <button key={k} onClick={() => setView(k)}
+                style={{
+                  padding: '7px 0', borderRadius: 7, border: '1px solid',
+                  borderColor: view === k ? ACCENTS[accent][500] : '#e6e8ec',
+                  background: view === k ? ACCENTS[accent][50] : '#fff',
+                  color: view === k ? ACCENTS[accent][600] : '#0f1419',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
+                }}>{label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Wait for all Babel scripts to transpile before mounting
+  requestAnimationFrame(() => {
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  });
+  </script>
+</body>
+</html>
