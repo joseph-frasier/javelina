@@ -209,7 +209,7 @@ export function CreateTagModal({
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Tag Name Input */}
         <div>
-          <label htmlFor="tag-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label htmlFor="tag-name" className="block text-sm font-medium text-text mb-2">
             Tag Name <span className="text-red-500">*</span>
           </label>
           <Input
@@ -225,14 +225,14 @@ export function CreateTagModal({
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
           )}
-          <p className="mt-1 text-xs text-gray-slate">
+          <p className="mt-1 text-xs text-text-muted">
             {name.length}/30 characters
           </p>
         </div>
 
         {/* Color Palette */}
         <div>
-          <label className="block text-sm font-medium text-orange-dark dark:text-white mb-3">
+          <label className="block text-sm font-medium text-text mb-3">
             Tag Color
           </label>
           <div className="grid grid-cols-8 gap-2">
@@ -244,7 +244,7 @@ export function CreateTagModal({
                 className={`
                   w-8 h-8 rounded-md transition-all duration-150
                   ${selectedColor === color.value 
-                    ? 'ring-2 ring-offset-2 ring-orange scale-110' 
+                    ? 'ring-2 ring-offset-2 ring-accent scale-110' 
                     : 'hover:scale-110'
                   }
                 `}
@@ -258,14 +258,14 @@ export function CreateTagModal({
 
         {/* Preview */}
         <div>
-          <label className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label className="block text-sm font-medium text-text mb-2">
             Preview
           </label>
-          <div className="p-4 bg-gray-light/30 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+          <div className="p-4 bg-surface-alt dark:bg-gray-800 rounded-lg flex items-center justify-center">
             {name.trim() ? (
               <TagBadge name={name.trim()} color={selectedColor} size="md" />
             ) : (
-              <span className="text-sm text-gray-slate italic">Enter a tag name to see preview</span>
+              <span className="text-sm text-text-muted italic">Enter a tag name to see preview</span>
             )}
           </div>
         </div>

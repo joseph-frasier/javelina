@@ -142,7 +142,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
             </button>
 
             <Link href="/" className="flex items-center shrink-0" aria-label="Go to home page">
-              <Logo width={160} height={40} priority className="h-9 w-auto" />
+              <Logo width={325} height={130} priority className="h-20 w-auto" />
             </Link>
           </div>
 
@@ -197,7 +197,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                 </svg>
                 Global search
               </span>
-              <kbd className="rounded bg-surface border border-border px-1.5 py-0.5 text-[10px] font-mono font-semibold text-text-muted">
+              <kbd className="rounded bg-surface border border-border px-2 py-0.5 text-[11px] font-sans font-semibold tracking-wide text-text-muted">
                 {search.shortcutBadge}
               </kbd>
             </button>

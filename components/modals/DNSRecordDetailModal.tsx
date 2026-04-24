@@ -84,7 +84,7 @@ export function DNSRecordDetailModal({
     <button
       type="button"
       onClick={() => void handleCopy(text, label)}
-      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors group border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
+      className="p-1.5 hover:bg-surface-hover rounded transition-colors group border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
       aria-label={`Copy ${label}`}
     >
       {copied === label ? (
@@ -108,7 +108,7 @@ export function DNSRecordDetailModal({
   }
 
   const DetailRow = ({ label, children, helper, copyText, copyLabel }: DetailRowProps) => (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40 p-3">
+    <div className="rounded-lg border border-border bg-surface/60 dark:bg-gray-900/40 p-3">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -140,7 +140,7 @@ export function DNSRecordDetailModal({
     >
       <div className="space-y-5">
         {/* Summary Header */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5">
+        <div className="rounded-xl border border-border bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3 min-w-0">
               <span className="px-3 py-1.5 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded-lg text-sm font-semibold flex-shrink-0">
@@ -162,7 +162,7 @@ export function DNSRecordDetailModal({
         </div>
 
         {/* Primary Details */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5 space-y-3">
+        <div className="rounded-xl border border-border bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5 space-y-3">
           <DetailRow
             label="Name"
             copyText={displayName}
@@ -186,7 +186,7 @@ export function DNSRecordDetailModal({
             copyText={displayRecord.value}
             copyLabel="value"
           >
-            <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2">
+            <div className="rounded-md border border-border bg-surface px-3 py-2">
               <code className={valueCodeClassName}>
                 {displayRecord.value}
                 {showZoneSuffix ? (
@@ -217,7 +217,7 @@ export function DNSRecordDetailModal({
         </div>
 
         {/* Technical Metadata (Collapsed by Default) */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5">
+        <div className="rounded-xl border border-border bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5">
           <button
             type="button"
             className="w-full flex items-center justify-between text-left"

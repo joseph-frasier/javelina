@@ -147,19 +147,19 @@ export function EditBillingInfoModal({
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
+          <div className="rounded-[22px] border border-accent/20 bg-accent-soft p-5 dark:border-accent/25 dark:bg-accent-soft">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange/20 bg-white/70 text-orange dark:bg-orange/15">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-accent/20 bg-surface/70 text-accent dark:bg-accent/15">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Billing record</p>
-                <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Billing record</p>
+                <h3 className="mt-2 text-lg font-semibold text-text dark:text-[#fff3ea]">
                   Keep invoices and owner contacts current
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/70">
+                <p className="mt-2 text-sm leading-6 text-text/70">
                   Changes here update the organization billing profile used for receipts, billing follow-up, and administrative account communication.
                 </p>
               </div>
@@ -168,7 +168,7 @@ export function EditBillingInfoModal({
 
           <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">What to update</p>
-            <ol className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
+            <ol className="mt-3 space-y-3 text-sm text-text/70">
               <li>1. Confirm the billing email, phone, and mailing address.</li>
               <li>2. Review the administrative contact or reuse the billing contact where it makes sense.</li>
               <li>3. Save changes to update the organization billing record.</li>
@@ -176,11 +176,11 @@ export function EditBillingInfoModal({
           </div>
         </div>
 
-        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+        <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm dark:border-white/10 dark:bg-surface/[0.04] dark:shadow-none">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 1</p>
-            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Billing contact</h3>
-            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Section 1</p>
+            <h3 className="mt-2 text-lg font-semibold text-text dark:text-[#fff3ea]">Billing contact</h3>
+            <p className="mt-1 text-sm text-text/60">
               These details are used for invoices, billing notices, and mailed correspondence.
             </p>
           </div>
@@ -258,7 +258,7 @@ export function EditBillingInfoModal({
               />
 
               <div>
-                <label htmlFor="edit-billing-state" className="mb-2 block text-sm font-medium text-orange-dark dark:text-white">
+                <label htmlFor="edit-billing-state" className="mb-2 block text-sm font-medium text-text">
                   State <span className="text-red-500">*</span>
                 </label>
                 <Dropdown
@@ -299,18 +299,18 @@ export function EditBillingInfoModal({
           </div>
         </section>
 
-        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+        <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm dark:border-white/10 dark:bg-surface/[0.04] dark:shadow-none">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 2</p>
-            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Administrative contact</h3>
-            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Section 2</p>
+            <h3 className="mt-2 text-lg font-semibold text-text dark:text-[#fff3ea]">Administrative contact</h3>
+            <p className="mt-1 text-sm text-text/60">
               Set the person who should receive account-level and operational follow-up.
             </p>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
-              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+            <div className="rounded-2xl border border-border bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
+              <label className="mb-3 flex items-center text-sm font-medium text-text/65">
                 <input
                   type="checkbox"
                   checked={copyBillingEmail}
@@ -339,8 +339,8 @@ export function EditBillingInfoModal({
               />
             </div>
 
-            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
-              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+            <div className="rounded-2xl border border-border bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
+              <label className="mb-3 flex items-center text-sm font-medium text-text/65">
                 <input
                   type="checkbox"
                   checked={copyBillingPhone}

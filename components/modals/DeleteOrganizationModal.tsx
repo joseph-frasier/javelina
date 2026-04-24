@@ -77,11 +77,11 @@ export function DeleteOrganizationModal({ isOpen, onClose, organization }: Delet
 
         {/* Title and Description */}
         <div className="text-center">
-          <h2 className="text-xl font-bold text-orange-dark mb-2">
+          <h2 className="text-xl font-bold text-text mb-2">
             Delete Organization
           </h2>
-          <p className="text-gray-slate mb-4">
-            Are you sure you want to delete <span className="font-bold text-orange-dark">{organization.name}</span>?
+          <p className="text-text-muted mb-4">
+            Are you sure you want to delete <span className="font-bold text-text">{organization.name}</span>?
           </p>
         </div>
 

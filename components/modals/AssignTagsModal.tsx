@@ -95,7 +95,7 @@ export function AssignTagsModal({
             placeholder="Search tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+            className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
           />
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
@@ -116,7 +116,7 @@ export function AssignTagsModal({
         <div className="min-h-[256px] max-h-64 overflow-y-auto space-y-1">
           {filteredTags.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-slate dark:text-gray-400 text-sm">
+              <p className="text-text-muted text-sm">
                 {searchQuery ? 'No tags match your search' : 'No tags available'}
               </p>
             </div>
@@ -127,8 +127,8 @@ export function AssignTagsModal({
                 className={`
                   flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors
                   ${selectedTagIds.includes(tag.id)
-                    ? 'bg-orange/10 border border-orange'
-                    : 'bg-gray-light/30 dark:bg-gray-800 border border-transparent hover:bg-gray-light/50 dark:hover:bg-gray-700'
+                    ? 'bg-accent-soft border border-accent'
+                    : 'bg-surface-alt dark:bg-gray-800 border border-transparent hover:bg-surface-hover dark:hover:bg-gray-700'
                   }
                 `}
                 onClick={() => toggleTag(tag.id)}
@@ -139,7 +139,7 @@ export function AssignTagsModal({
                     className={`
                       w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
                       ${selectedTagIds.includes(tag.id)
-                        ? 'bg-orange border-orange'
+                        ? 'bg-accent border-accent'
                         : 'border-gray-slate dark:border-gray-500'
                       }
                     `}
@@ -161,7 +161,7 @@ export function AssignTagsModal({
                     e.stopPropagation();
                     onToggleFavorite(tag.id);
                   }}
-                  className="p-1 rounded hover:bg-gray-light dark:hover:bg-gray-600 transition-colors"
+                  className="p-1 rounded hover:bg-surface-hover dark:hover:bg-gray-600 transition-colors"
                   title={tag.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
                   {tag.is_favorite ? (
@@ -182,7 +182,7 @@ export function AssignTagsModal({
         {/* Selected Tags Preview */}
         {selectedTagIds.length > 0 && (
           <div className="mt-2">
-            <p className="text-xs text-gray-slate dark:text-gray-400 mb-2">
+            <p className="text-xs text-text-muted mb-2">
               Selected tags ({selectedTagIds.length}):
             </p>
             <div className="flex flex-wrap gap-2">

@@ -146,7 +146,7 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             disabled={isLoading}
-            className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+            className="w-full px-3 py-2 rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none"
             maxLength={500}
           />
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -155,7 +155,7 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
         </div>
 
         {/* Billing Notice */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-border">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             <span className="font-medium text-gray-900 dark:text-gray-100">Billing Information</span>
             <br />

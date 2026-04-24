@@ -122,7 +122,7 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
         )}
 
         <div>
-          <label htmlFor="edit-org-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label htmlFor="edit-org-name" className="block text-sm font-medium text-text mb-2">
             Organization Name <span className="text-red-500">*</span>
           </label>
           <Input
@@ -138,13 +138,13 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
           )}
-          <p className="mt-1 text-xs text-gray-slate">
+          <p className="mt-1 text-xs text-text-muted">
             {name.length}/100 characters
           </p>
         </div>
 
         <div>
-          <label htmlFor="edit-org-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label htmlFor="edit-org-description" className="block text-sm font-medium text-text mb-2">
             Description
           </label>
           <textarea
@@ -155,9 +155,9 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
             disabled={isSubmitting}
             rows={3}
             maxLength={500}
-            className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:bg-surface-alt disabled:cursor-not-allowed"
           />
-          <p className="mt-1 text-xs text-gray-slate">
+          <p className="mt-1 text-xs text-text-muted">
             {description.length}/500 characters
           </p>
         </div>
