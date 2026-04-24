@@ -144,7 +144,7 @@ export function DomainCertificatesSection({ domainName }: DomainCertificatesSect
           </p>
           <Link
             href={`/certificates/new?domain=${encodeURIComponent(domainName)}`}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-md transition-colors"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors"
           >
             Purchase SSL Certificate
           </Link>
@@ -159,7 +159,7 @@ export function DomainCertificatesSection({ domainName }: DomainCertificatesSect
           <div className="flex justify-end pt-2">
             <Link
               href={`/certificates/new?domain=${encodeURIComponent(domainName)}`}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-md transition-colors"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors"
             >
               Purchase SSL Certificate
             </Link>
