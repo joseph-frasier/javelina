@@ -1086,7 +1086,7 @@ export function ManageDNSRecordModal({
               value={formData.comment}
               onChange={(e) => setFormData((prev) => ({ ...prev, comment: e.target.value }))}
               rows={2}
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-accent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
+              className="w-full rounded-md border border-border bg-surface-alt px-3 py-2 text-sm text-text placeholder:text-text-faint transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
               placeholder="Optional comment or notes about this record"
             />
           </div>

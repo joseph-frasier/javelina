@@ -146,10 +146,10 @@ export function ManageAccountModal({ isOpen, onClose }: ManageAccountModalProps)
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             disabled={isLoading}
-            className="w-full px-3 py-2 rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+            className="w-full px-3 py-2 rounded-md border border-border bg-surface-alt text-text placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-60 disabled:cursor-not-allowed resize-none"
             maxLength={500}
           />
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs text-text-muted mt-1">
             {formData.bio.length}/500 characters
           </p>
         </div>

@@ -87,7 +87,7 @@ export function EditZoneModal({
               placeholder="Zone description (optional)"
               rows={3}
               maxLength={500}
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-text placeholder:text-gray-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent focus:ring-offset-0 disabled:cursor-not-allowed disabled:bg-surface-alt dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
+              className="w-full rounded-md border border-border bg-surface-alt px-3 py-2 text-text placeholder:text-text-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
             />
             <p className="mt-1 text-xs text-text-muted">
               {formData.description.length}/500 characters

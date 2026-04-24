@@ -168,7 +168,7 @@ export function TicketCreationModal({
           <div>
             <label
               htmlFor="ticket-subject"
-              className="block text-sm font-medium text-gray-900 dark:text-white mb-2"
+              className="block text-sm font-medium text-text mb-2"
             >
               Subject
             </label>
@@ -188,7 +188,7 @@ export function TicketCreationModal({
           <div>
             <label
               htmlFor="ticket-description"
-              className="block text-sm font-medium text-gray-900 dark:text-white mb-2"
+              className="block text-sm font-medium text-text mb-2"
             >
               Description
             </label>
@@ -197,12 +197,12 @@ export function TicketCreationModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={10}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent transition-all resize-y"
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface-alt text-text placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-all resize-y disabled:opacity-60 disabled:cursor-not-allowed"
               placeholder="Provide details about your issue"
               required
               disabled={loading}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-text-muted mt-1">
               Please provide as much detail as possible to help us assist you better.
             </p>
           </div>
