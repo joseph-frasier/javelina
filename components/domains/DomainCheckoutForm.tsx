@@ -99,7 +99,7 @@ export default function DomainCheckoutForm({
   const formContent = (
     <>
       {/* Year & Price Row */}
-          <div className="flex items-center justify-end gap-3 pb-4 mb-5 border-b border-border">
+          <div className="flex items-center justify-end gap-3 mb-5">
             <select
               value={years}
               onChange={(e) => setYears(Number(e.target.value))}
