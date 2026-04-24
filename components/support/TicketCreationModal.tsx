@@ -314,7 +314,7 @@ export function TicketCreationModal({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-5 py-2.5 text-sm font-medium text-text bg-surface-alt hover:bg-surface-hover border border-border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+              className="px-5 py-2.5 text-sm font-medium text-accent bg-transparent hover:bg-accent-soft border border-accent rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
               disabled={loading}
             >
               Cancel

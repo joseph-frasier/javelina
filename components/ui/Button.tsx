@@ -17,7 +17,7 @@ const buttonVariants = cva(
         primary:
           'bg-accent text-white shadow-card hover:bg-accent-hover',
         secondary:
-          'bg-surface text-text border border-border shadow-card hover:bg-surface-hover hover:border-border-strong',
+          'bg-transparent text-accent border border-accent hover:bg-accent-soft',
         ghost:
           'bg-transparent text-text hover:bg-surface-hover',
         outline:
