@@ -657,12 +657,7 @@ export default function DomainDetailPage() {
                     onClick={() => handleOpenZoneModal(org.id, org.name)}
                     className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-accent dark:hover:border-accent hover:shadow-md transition-all flex items-center justify-between group"
                   >
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-accent/10 text-accent text-sm font-bold flex items-center justify-center flex-shrink-0">
-                        {org.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span className="text-sm font-medium text-text">{org.name}</span>
-                    </span>
+                    <span className="text-sm font-medium text-text">{org.name}</span>
                     <span className="text-xs font-medium text-accent group-hover:translate-x-0.5 transition-transform">Set up DNS &rarr;</span>
                   </button>
                 ))}
