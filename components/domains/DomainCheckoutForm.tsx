@@ -98,37 +98,20 @@ export default function DomainCheckoutForm({
 
   const formContent = (
     <>
-      {/* Order Summary Row */}
-          <div className="flex items-center justify-between gap-4 pb-4 mb-5 border-b border-border">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.22em] text-accent">
-                {type}
-              </span>
-              <span className="text-text-faint text-xs">·</span>
-              <span className="truncate font-semibold text-text text-sm">
-                {domain}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <select
-                value={years}
-                onChange={(e) => setYears(Number(e.target.value))}
-                className="px-2 py-1 rounded-md border border-border bg-surface-alt text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
-              >
-                {[1, 2, 3, 5, 10].map((y) => (
-                  <option key={y} value={y}>
-                    {y}yr
-                  </option>
-                ))}
-              </select>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xs text-text-faint line-through">
-                  ${price.toFixed(2)}/yr
-                </span>
-                <span className="font-black text-accent text-base">
-                  ${totalPrice.toFixed(2)}
-                </span>
-              </div>
+      {/* Year & Price Row */}
+          <div className="flex items-center justify-end gap-3 pb-4 mb-5 border-b border-border">
+            <select
+              value={years}
+              onChange={(e) => setYears(Number(e.target.value))}
+              className="px-2 py-1 rounded-md border border-border bg-surface-alt text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
+            >
+              {[1, 2, 3, 5, 10].map((y) => (
+                <option key={y} value={y}>{y}yr</option>
+              ))}
+            </select>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xs text-text-muted">${price.toFixed(2)}/yr</span>
+              <span className="font-black text-accent text-base">${totalPrice.toFixed(2)}</span>
             </div>
           </div>
 
