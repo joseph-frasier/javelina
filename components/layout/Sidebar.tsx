@@ -412,7 +412,7 @@ export function Sidebar({
 
       <aside
         className={clsx(
-          'hidden md:flex bg-surface border-r border-border transition-all duration-300 h-screen overflow-hidden sticky top-0 flex-col',
+          'hidden md:flex bg-surface border-r border-border transition-all duration-300 h-full overflow-hidden flex-col',
           isCollapsed ? 'w-16' : 'w-64'
         )}
       >

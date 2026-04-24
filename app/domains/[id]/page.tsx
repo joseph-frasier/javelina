@@ -53,16 +53,16 @@ function NsCopyButton({ ns, index }: { ns: string; index: number }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-gray-50 dark:bg-surface/5 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-surface/10 transition-colors cursor-pointer"
+      className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-surface-alt border border-border hover:bg-surface-hover transition-colors cursor-pointer"
       aria-label={`Copy ${ns}`}
     >
-      <span className="text-sm font-mono text-gray-800 dark:text-gray-200">{ns}</span>
+      <span className="text-sm font-mono text-text">{ns}</span>
       {copied ? (
-        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       ) : (
-        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       )}
@@ -361,12 +361,12 @@ export default function DomainDetailPage() {
               domain.status === 'transferring' ? 'bg-purple-500' :
               domain.status === 'cancelled' ? 'bg-gray-400' : 'bg-green-500'
             }`} />
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
+            <span className="text-sm font-medium text-text-muted capitalize">
               {domain.status === 'transfer_complete' ? 'Transferred' : domain.status}
             </span>
           </span>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
+        <p className="text-sm text-text-muted mt-2 font-medium">
           {domain.registration_type === 'linked' ? 'Linked · ' : domain.registration_type === 'transfer' ? 'Transfer · ' : ''}
           {domain.registered_at && `Registered ${new Date(domain.registered_at).toLocaleDateString()}`}
           {domain.expires_at && ` · Expires ${new Date(domain.expires_at).toLocaleDateString()}`}
@@ -391,7 +391,7 @@ export default function DomainDetailPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-text">Auto-Renew</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-text-muted">
                   Automatically renew this domain before it expires.
                 </p>
               </div>
@@ -423,7 +423,7 @@ export default function DomainDetailPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-text">Domain Lock</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-text-muted">
                   Prevent unauthorized transfers of this domain.
                 </p>
               </div>
@@ -458,11 +458,11 @@ export default function DomainDetailPage() {
                     <span className={`text-3xl font-bold ${daysRemaining! < 30 ? 'text-red-500' : daysRemaining! < 90 ? 'text-yellow-500' : 'text-accent'}`}>
                       {daysRemaining}
                     </span>
-                    <span className="text-sm text-gray-400 dark:text-gray-500 ml-2">days remaining</span>
+                    <span className="text-sm text-text-muted ml-2">days remaining</span>
             </div>
-            <div className="rounded-lg bg-gray-50 dark:bg-surface/5 border border-gray-100 dark:border-white/5 p-4 space-y-4">
+            <div className="rounded-lg bg-surface-alt border border-border p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Current expiration</p>
+                <p className="text-sm text-text-muted">Current expiration</p>
                 <p className="text-sm font-medium text-text">
                   {new Date(domain.expires_at).toLocaleDateString(undefined, {
                     year: 'numeric',
@@ -473,14 +473,14 @@ export default function DomainDetailPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label htmlFor="renewal-years" className="text-sm text-gray-500 dark:text-gray-400">
+                <label htmlFor="renewal-years" className="text-sm text-text-muted">
                   Renew for
                 </label>
                 <select
                   id="renewal-years"
                   value={selectedYears}
                   onChange={(e) => setSelectedYears(Number(e.target.value))}
-                  className="text-sm rounded-md border border-gray-200 dark:border-white/10 bg-surface dark:bg-surface/5 text-text px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  className="text-sm rounded-md border border-border bg-surface text-text px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent/50"
                 >
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
                     <option key={y} value={y}>
@@ -492,7 +492,7 @@ export default function DomainDetailPage() {
 
               {renewalTotalPrice && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Total</span>
+                  <span className="text-text-muted">Total</span>
                   <span className="font-semibold text-text">
                     ${renewalTotalPrice} {renewalPricing?.currency?.toUpperCase() || 'USD'}
                   </span>
@@ -613,7 +613,7 @@ export default function DomainDetailPage() {
             { label: 'Organization', value: contact.org_name },
           ] as { label: string; value: string | undefined; fullRow?: boolean }[]).map(({ label, value, fullRow }) => (
             <div key={label} className={fullRow ? 'md:col-span-4' : undefined}>
-              <dt className="text-xs text-gray-400 dark:text-gray-500">{label}</dt>
+              <dt className="text-xs text-text-muted">{label}</dt>
               <dd className="text-sm font-medium text-text">
                 {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
               </dd>
@@ -628,7 +628,7 @@ export default function DomainDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-text font-medium">{zone.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-text-muted">
                 Organization: {zone.organization_name}
               </p>
             </div>
@@ -641,12 +641,12 @@ export default function DomainDetailPage() {
           </div>
         ) : (
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-text-muted mb-4">
               No DNS zone exists for this domain yet. Create one to manage DNS records in Javelina.
             </p>
             {userOrgs.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
+                <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
                   Select an organization
                 </p>
                 {userOrgs
@@ -675,7 +675,7 @@ export default function DomainDetailPage() {
                 />
               </div>
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-text-muted">
                 You need to create an organization first to set up DNS.
               </p>
             )}
@@ -692,7 +692,7 @@ export default function DomainDetailPage() {
           <h3 className="text-base font-semibold text-red-700 dark:text-red-400">
             Remove Domain
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-text-muted mt-1">
             This domain was linked from the OpenSRS Storefront. Removing it will only detach it from
             your Javelina account&mdash;your domain registration with OpenSRS is not affected and you
             can re-link it at any time.

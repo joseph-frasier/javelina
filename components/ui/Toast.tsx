@@ -131,7 +131,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
   return (
-    <div className="fixed top-20 right-4 left-4 sm:left-auto z-50 flex flex-col items-end space-y-3">
+    <div className="fixed right-4 left-4 sm:left-auto z-50 flex flex-col items-end space-y-3" style={{ top: '68px' }}>
       {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onClose={onClose} />
       ))}

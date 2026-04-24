@@ -63,15 +63,15 @@ export function SearchResultList({
                 type="button"
                 onMouseEnter={() => onHover(index)}
                 onClick={() => onSelect(result)}
-                className={clsx(
-                  'w-full rounded-md px-3 py-2 text-left transition-colors',
-                  selectedIndex === index
-                    ? 'bg-accent/10 dark:bg-accent/20'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                )}
+                className="group w-full rounded-md px-3 py-2 text-left transition-colors"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-medium text-text">
+                  <p className={clsx(
+                    'truncate text-sm font-medium transition-colors',
+                    selectedIndex === index
+                      ? 'text-accent'
+                      : 'text-text group-hover:text-accent'
+                  )}>
                     {result.title}
                   </p>
                   {'badge' in result && result.badge ? (
