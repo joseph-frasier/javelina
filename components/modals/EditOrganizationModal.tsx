@@ -155,7 +155,7 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
             disabled={isSubmitting}
             rows={3}
             maxLength={500}
-            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:bg-surface-alt disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 border border-border rounded-md bg-surface-alt text-text placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
           />
           <p className="mt-1 text-xs text-text-muted">
             {description.length}/500 characters
