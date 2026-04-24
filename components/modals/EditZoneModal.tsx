@@ -61,7 +61,7 @@ export function EditZoneModal({
               htmlFor="edit-zone-name"
               className="mb-2 block text-sm font-medium text-text"
             >
-              Zone Name <span className="text-red-600">*</span>
+              Zone Name <span className="text-danger" aria-hidden="true">*</span>
             </label>
             <Input
               id="edit-zone-name"

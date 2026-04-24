@@ -18,7 +18,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             htmlFor={props.id}
             className="block text-sm font-medium text-text mb-1.5"
           >
-            {label}
+            {label.endsWith(' *') ? (
+              <>{label.slice(0, -2)} <span className="text-danger" aria-hidden="true">*</span></>
+            ) : label}
           </label>
         )}
         <textarea

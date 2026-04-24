@@ -123,7 +123,7 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
 
         <div>
           <label htmlFor="edit-org-name" className="block text-sm font-medium text-text mb-2">
-            Organization Name <span className="text-red-500">*</span>
+            Organization Name <span className="text-danger" aria-hidden="true">*</span>
           </label>
           <Input
             id="edit-org-name"

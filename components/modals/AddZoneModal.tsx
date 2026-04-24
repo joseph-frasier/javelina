@@ -344,7 +344,7 @@ export function AddZoneModal({
 
         <div>
           <label htmlFor="zone-name" className="block text-sm font-medium text-text mb-2">
-            Zone Name <span className="text-red-500">*</span>
+            Zone Name <span className="text-danger" aria-hidden="true">*</span>
           </label>
           <Input
             id="zone-name"
@@ -392,7 +392,7 @@ export function AddZoneModal({
           <div className="space-y-4">
             <div>
               <label htmlFor="admin-email" className="block text-sm font-medium text-text mb-2">
-                Admin Email <span className="text-red-500">*</span>
+                Admin Email <span className="text-danger" aria-hidden="true">*</span>
               </label>
               <Input
                 id="admin-email"
@@ -413,7 +413,7 @@ export function AddZoneModal({
 
             <div>
               <label htmlFor="negative-ttl" className="block text-sm font-medium text-text mb-2">
-                Negative Caching TTL (seconds) <span className="text-red-500">*</span>
+                Negative Caching TTL (seconds) <span className="text-danger" aria-hidden="true">*</span>
               </label>
               <Input
                 id="negative-ttl"

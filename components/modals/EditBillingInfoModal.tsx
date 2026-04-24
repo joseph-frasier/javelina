@@ -259,7 +259,7 @@ export function EditBillingInfoModal({
 
               <div>
                 <label htmlFor="edit-billing-state" className="mb-2 block text-sm font-medium text-text">
-                  State <span className="text-red-500">*</span>
+                  State <span className="text-danger" aria-hidden="true">*</span>
                 </label>
                 <Dropdown
                   value={billingState}

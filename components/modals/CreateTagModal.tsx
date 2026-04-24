@@ -210,7 +210,7 @@ export function CreateTagModal({
         {/* Tag Name Input */}
         <div>
           <label htmlFor="tag-name" className="block text-sm font-medium text-text mb-2">
-            Tag Name <span className="text-red-500">*</span>
+            Tag Name <span className="text-danger" aria-hidden="true">*</span>
           </label>
           <Input
             id="tag-name"
