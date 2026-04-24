@@ -224,9 +224,9 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[22px] border border-accent/20 bg-accent-soft p-5">
+          <div className="rounded-[22px] border border-accent bg-accent-soft p-5">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-accent/20 bg-accent-soft text-accent">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-accent bg-accent-soft text-accent">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>

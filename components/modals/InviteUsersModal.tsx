@@ -179,16 +179,16 @@ export function InviteUsersModal({
       }
     : isNearLimit
     ? {
-        card: 'border-accent/20 bg-accent-soft dark:border-accent/30 dark:bg-accent-soft',
-        badge: 'border-accent/20 bg-accent/15 text-text dark:border-accent/20 dark:bg-accent/15 dark:text-accent-100',
+        card: 'border-accent bg-accent-soft',
+        badge: 'border-accent bg-accent-soft text-accent',
         bar: 'bg-accent',
         accent: 'text-text-100',
       }
     : {
-        card: 'border-blue-200 bg-blue-50 dark:border-blue-electric/25 dark:bg-blue-electric/10',
-        badge: 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-electric/20 dark:bg-blue-electric/15 dark:text-blue-100',
-        bar: 'bg-blue-electric',
-        accent: 'text-blue-700 dark:text-blue-100',
+        card: 'border-info bg-surface-alt',
+        badge: 'border-info bg-surface-alt text-info',
+        bar: 'bg-info',
+        accent: 'text-info',
       };
 
   return (
@@ -345,8 +345,8 @@ export function InviteUsersModal({
                       onClick={() => setRole(option.value)}
                       className={`rounded-2xl border p-4 text-left transition-all ${
                         isSelected
-                          ? 'border-accent/50 bg-accent-soft shadow-[0_0_0_1px_rgba(239,114,21,0.12)] dark:border-accent/70 dark:bg-accent/12'
-                          : 'border-border bg-surface hover:border-accent/30 hover:bg-accent-soft dark:border-white/10 dark:bg-[#0f151d] dark:hover:border-white/25 dark:hover:bg-surface/[0.06]'
+                          ? 'border-accent bg-accent-soft shadow-sm'
+                          : 'border-border bg-surface-alt hover:border-accent hover:bg-accent-soft'
                       }`}
                     >
                       <p className={`text-sm font-semibold leading-none ${isSelected ? 'text-text dark:text-[#fff3ea]' : 'text-text'}`}>

@@ -97,7 +97,7 @@ export function ManageTeamMembersModal({
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-accent-soft text-accent border-accent/25';
+        return 'bg-accent-soft text-accent border-accent';
       case 'Admin':
         return 'bg-info/10 text-info border-info/25';
       case 'BillingContact':
@@ -315,7 +315,7 @@ export function ManageTeamMembersModal({
           {activeTab === 'members' && (
             <>
               <div className="grid gap-3 md:grid-cols-[1.3fr_1fr]">
-                <div className="rounded-xl border border-accent/20 bg-accent-soft p-5">
+                <div className="rounded-xl border border-accent bg-accent-soft p-5">
                   <div className="flex items-center gap-2 text-accent">
                     <svg
                       className="h-5 w-5"
@@ -364,7 +364,7 @@ export function ManageTeamMembersModal({
                 {users.map((user) => (
                   <div
                     key={user.user_id}
-                    className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent/25 hover:bg-accent-soft "
+                    className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent hover:bg-accent-soft "
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex items-center space-x-3 min-w-0">
@@ -377,7 +377,7 @@ export function ManageTeamMembersModal({
                             className="h-12 w-12 rounded-full"
                           />
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent/20 bg-accent/15">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent bg-accent-soft">
                             <span className="text-base font-bold text-accent">
                               {getInitials(user.name)}
                             </span>
@@ -480,7 +480,7 @@ export function ManageTeamMembersModal({
                   {invitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent/25 hover:bg-accent-soft "
+                      className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent hover:bg-accent-soft "
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center space-x-3 min-w-0">
