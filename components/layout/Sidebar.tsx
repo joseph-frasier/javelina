@@ -196,13 +196,23 @@ export function Sidebar({
                   className="flex items-center gap-2 px-1.5 py-1.5 rounded flex-1 min-w-0 text-text hover:text-text"
                   title={org.name}
                 >
-                  <span
+                  <svg
                     aria-hidden
                     className={clsx(
-                      'inline-block w-1.5 h-1.5 rounded-full shrink-0',
-                      hasPendingCheckout ? 'bg-warning' : 'bg-success'
+                      'w-4 h-4 shrink-0',
+                      hasPendingCheckout ? 'text-warning' : 'text-accent'
                     )}
-                  />
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.75}
+                      d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+                    />
+                  </svg>
                   <span className="text-sm font-medium truncate flex-1">
                     {truncateName(org.name)}
                   </span>

@@ -192,14 +192,14 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Change Diff" subtitle={changeTypeMessage} size="large">
       <div className="mb-4 flex items-center justify-end">
-        <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+        <div className="inline-flex items-center rounded-full bg-surface-alt border border-border p-1">
           <button
             type="button"
             onClick={() => handleModeChange('formatted')}
-            className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               mode === 'formatted'
-                ? 'bg-surface text-text shadow-sm dark:bg-gray-700 dark:text-accent'
-                : 'text-text-muted hover:text-text dark:text-gray-400 dark:hover:text-accent'
+                ? 'bg-accent text-[#ffffff] shadow-sm'
+                : 'text-text-muted hover:text-text'
             }`}
           >
             Formatted
@@ -207,10 +207,10 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
           <button
             type="button"
             onClick={() => handleModeChange('raw')}
-            className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               mode === 'raw'
-                ? 'bg-surface text-text shadow-sm dark:bg-gray-700 dark:text-accent'
-                : 'text-text-muted hover:text-text dark:text-gray-400 dark:hover:text-accent'
+                ? 'bg-accent text-[#ffffff] shadow-sm'
+                : 'text-text-muted hover:text-text'
             }`}
           >
             Raw JSON
