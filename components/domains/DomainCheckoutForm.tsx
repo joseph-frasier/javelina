@@ -241,20 +241,20 @@ export default function DomainCheckoutForm({
           )}
 
           {/* Buttons - inside card, side by side */}
-          <div className="flex items-center gap-3 pt-2">
-            <Button type="submit" variant="primary" size="lg" className="flex-1" loading={isSubmitting}>
-              {isSubmitting
-                ? 'Processing...'
-                : `Pay $${totalPrice.toFixed(2)} & ${type}`}
-            </Button>
+          <div className="flex items-center justify-end gap-3 pt-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="lg"
               onClick={onCancel}
               disabled={isSubmitting}
             >
               Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="lg" loading={isSubmitting}>
+              {isSubmitting
+                ? 'Processing...'
+                : `Pay $${totalPrice.toFixed(2)} & ${type}`}
             </Button>
           </div>
     </>
