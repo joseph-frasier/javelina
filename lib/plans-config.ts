@@ -27,6 +27,7 @@ export interface Plan {
   code: string;
   name: string;
   description: string;
+  productLine: 'dns' | 'business';
   popular?: boolean;
   monthly?: PlanPrice;
   annual?: PlanPrice;
@@ -59,6 +60,7 @@ interface DbPlan {
     price_id: string;
     description?: string;
     contact_sales?: boolean;
+    product_line?: 'dns' | 'business';
   };
   entitlements?: Array<{
     key: string;
@@ -95,6 +97,7 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
       code: dbPlan.code,
       name: dbPlan.name,
       description: dbPlan.metadata?.description || '',
+      productLine: dbPlan.metadata?.product_line ?? 'dns',
       popular: baseCode === 'pro_lifetime' || baseCode === 'pro', // Mark Pro plans as popular
       limits: {
         zones: hardcodedLimits.zones,
@@ -140,8 +143,10 @@ function convertDbPlanToPlan(dbPlans: DbPlan[]): Plan[] {
   const order = [
     // Lifetime plans first
     'starter_lifetime', 'pro_lifetime', 'premium_lifetime', 'enterprise_lifetime',
-    // Then subscription plans
-    'starter', 'pro', 'business', 'enterprise'
+    // Then DNS subscription plans
+    'starter', 'pro', 'business', 'enterprise',
+    // Business-line plans (cheapest first)
+    'business_starter', 'business_pro',
   ];
   plans.sort((a, b) => {
     const aIndex = order.indexOf(a.id);
@@ -225,9 +230,41 @@ const HARDCODED_PLAN_LIMITS: Record<string, {
 };
 
 /**
+ * Marketing feature bullets for business-line plans.
+ * These plans are sold as service bundles, so the card shows branded features
+ * rather than the auto-generated "1 Organization / 2 Zones / 200 records" lines
+ * derived from HARDCODED_PLAN_LIMITS. LaunchDarkly still enforces starter-tier
+ * limits at runtime (see getPlanTier in lib/hooks/usePlanLimits.ts).
+ */
+const BUSINESS_PLAN_FEATURES: Record<string, string[]> = {
+  business_starter: [
+    'Domain Registration',
+    'SSL Certificates',
+    'Javelina DNS',
+    'Website Hosting (1–3 page site)',
+    'Business Email',
+    'Fully Managed Business Website',
+  ],
+  business_pro: [
+    'Domain Registration',
+    'SSL Certificates',
+    'Javelina DNS',
+    'Microsoft 365 Email',
+    'Business Website (1–5 pages)',
+    'Custom AI Agent',
+  ],
+};
+
+/**
  * Build features list based on hardcoded limits
  */
 function buildFeaturesList(planId: string, entitlements: Map<string, string>): PlanFeature[] {
+  // Business-line plans use a curated marketing feature list instead of
+  // auto-generating from HARDCODED_PLAN_LIMITS.
+  if (BUSINESS_PLAN_FEATURES[planId]) {
+    return BUSINESS_PLAN_FEATURES[planId].map((name) => ({ name, included: true }));
+  }
+
   const features: PlanFeature[] = [];
   const limits = HARDCODED_PLAN_LIMITS[planId];
   
@@ -311,6 +348,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'starter_lifetime',
     name: 'Starter Lifetime',
     description: 'Perfect for small projects and testing',
+    productLine: 'dns',
     popular: false,
     monthly: {
       amount: 9.95,
@@ -345,6 +383,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'pro_lifetime',
     name: 'Pro Lifetime',
     description: 'For growing teams and production workloads',
+    productLine: 'dns',
     popular: true,
     monthly: {
       amount: 49.95,
@@ -379,6 +418,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'premium_lifetime',
     name: 'Business Lifetime',
     description: 'Advanced features for enterprise teams',
+    productLine: 'dns',
     popular: false,
     monthly: {
       amount: 199.95,
@@ -413,6 +453,7 @@ const FALLBACK_PLANS: Plan[] = [
     code: 'enterprise_lifetime',
     name: 'Enterprise Lifetime',
     description: 'Custom solutions for large organizations',
+    productLine: 'dns',
     popular: false,
     features: [
       { name: 'Organizations: Custom', included: true },
