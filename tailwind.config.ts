@@ -11,12 +11,63 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand Primary Palette
+        // ─── Javelina brand orange (accent) ─────────────────────
+        // Legacy tokens (orange.DEFAULT/light/dark) retained so existing
+        // consumers keep compiling while Phase 2 restyles them.
         orange: {
-          DEFAULT: '#EF7215', // Vibrant Orange (Main)
-          light: '#F2F2F2', // Light Gray Accent
-          dark: '#0B0C0D', // Charcoal Black
+          DEFAULT: '#EF7215',
+          50: '#FFF3E8',
+          100: '#FFE2C8',
+          200: '#FFC590',
+          300: '#FFA758',
+          400: '#FF8C3D',
+          500: '#EF7215',
+          600: '#D8640F',
+          700: '#B4500A',
+          800: '#7A3607',
+          900: '#3F1C03',
+          light: '#F2F2F2', // legacy
+          dark: '#0B0C0D',  // legacy
         },
+        // Semantic tokens
+        success: {
+          DEFAULT: '#059669',
+          soft: 'rgba(5,150,105,0.10)',
+        },
+        warning: {
+          DEFAULT: '#D97706',
+          soft: 'rgba(217,119,6,0.12)',
+        },
+        danger: {
+          DEFAULT: '#DC2626',
+          soft: 'rgba(220,38,38,0.10)',
+        },
+        info: {
+          DEFAULT: '#0284C7',
+          soft: 'rgba(2,132,199,0.10)',
+        },
+        // Surface / border / text tokens bound to CSS vars (see globals.css).
+        surface: {
+          DEFAULT: 'var(--surface)',
+          alt: 'var(--surface-alt)',
+          hover: 'var(--surface-hover)',
+        },
+        border: {
+          DEFAULT: 'var(--border-color)',
+          strong: 'var(--border-strong)',
+        },
+        text: {
+          DEFAULT: 'var(--text-primary)',
+          muted: 'var(--text-muted)',
+          faint: 'var(--text-faint)',
+        },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          soft: 'var(--accent-soft)',
+          'soft-strong': 'var(--accent-soft-strong)',
+        },
+        // Legacy palette (kept for back-compat)
         gray: {
           light: '#D9D9D9',
           slate: '#456173',
@@ -29,13 +80,16 @@ const config: Config = {
         foreground: 'var(--foreground)',
       },
       fontFamily: {
-        sans: ['Roboto', ...fontFamily.sans],
-        condensed: ['Roboto Condensed', 'sans-serif'],
+        // Populated by next/font/google in app/layout.tsx via CSS variables.
+        sans: ['var(--font-sans)', 'Inter', ...fontFamily.sans],
+        mono: ['var(--font-mono)', 'JetBrains Mono', ...fontFamily.mono],
+        condensed: ['Roboto Condensed', 'sans-serif'], // legacy
       },
       fontWeight: {
         light: '300',
         regular: '400',
         medium: '500',
+        semibold: '600',
         bold: '700',
         black: '900',
       },
@@ -43,7 +97,17 @@ const config: Config = {
         18: '4.5rem',
       },
       borderRadius: {
-        xl: '1rem',
+        sm: '6px',
+        md: '8px',
+        lg: '12px',
+        xl: '16px',
+        '2xl': '20px',
+      },
+      boxShadow: {
+        card: 'var(--shadow-sm)',
+        elevated: 'var(--shadow-md)',
+        popover: 'var(--shadow-lg)',
+        'focus-ring': '0 0 0 3px var(--ring)',
       },
       keyframes: {
         fadeIn: {

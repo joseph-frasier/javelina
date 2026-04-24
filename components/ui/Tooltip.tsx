@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { clsx } from 'clsx';
 
 interface TooltipProps {
   content: string;
@@ -11,7 +12,9 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({ visibility: 'hidden' });
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({
+    visibility: 'hidden',
+  });
   const [mounted, setMounted] = useState(false);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -27,65 +30,79 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
           const triggerRect = triggerRef.current.getBoundingClientRect();
           const tooltipRect = tooltipRef.current.getBoundingClientRect();
           const spacing = 8;
-          
+
           let top = 0;
           let left = 0;
 
           switch (position) {
             case 'top':
               top = triggerRect.top - tooltipRect.height - spacing;
-              left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+              left =
+                triggerRect.left +
+                triggerRect.width / 2 -
+                tooltipRect.width / 2;
               break;
             case 'bottom':
               top = triggerRect.bottom + spacing;
-              left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+              left =
+                triggerRect.left +
+                triggerRect.width / 2 -
+                tooltipRect.width / 2;
               break;
             case 'left':
-              top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+              top =
+                triggerRect.top +
+                triggerRect.height / 2 -
+                tooltipRect.height / 2;
               left = triggerRect.left - tooltipRect.width - spacing;
               break;
             case 'right':
-              top = triggerRect.top + (triggerRect.height / 2) - (tooltipRect.height / 2);
+              top =
+                triggerRect.top +
+                triggerRect.height / 2 -
+                tooltipRect.height / 2;
               left = triggerRect.right + spacing;
               break;
           }
 
-          setTooltipStyle({ 
-            top: `${top}px`, 
+          setTooltipStyle({
+            top: `${top}px`,
             left: `${left}px`,
             visibility: 'visible',
-            opacity: 1
+            opacity: 1,
           });
         }
       };
 
-      // Wait for tooltip to render, then position it
       requestAnimationFrame(() => {
         requestAnimationFrame(updatePosition);
       });
     }
   }, [isVisible, position]);
 
-  const arrowClasses = {
+  const arrowClasses: Record<NonNullable<TooltipProps['position']>, string> = {
     top: 'top-full left-1/2 -translate-x-1/2 -mt-1',
     bottom: 'bottom-full left-1/2 -translate-x-1/2 -mb-1',
     left: 'left-full top-1/2 -translate-y-1/2 -ml-1',
     right: 'right-full top-1/2 -translate-y-1/2 -mr-1',
   };
 
-  const tooltipElement = isVisible && mounted ? (
-    <div
-      ref={tooltipRef}
-      style={tooltipStyle}
-      className="fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-xl whitespace-nowrap pointer-events-none transition-opacity duration-100"
-    >
-      {content}
-      {/* Arrow */}
-      <span
-        className={`absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 ${arrowClasses[position]}`}
-      />
-    </div>
-  ) : null;
+  const tooltipElement =
+    isVisible && mounted ? (
+      <div
+        ref={tooltipRef}
+        style={tooltipStyle}
+        className="fixed z-[99999] px-2.5 py-1.5 text-xs font-medium text-white bg-[#0f1419] dark:bg-[#232a32] rounded-md shadow-popover whitespace-nowrap pointer-events-none transition-opacity duration-100"
+      >
+        {content}
+        <span
+          className={clsx(
+            'absolute w-2 h-2 bg-[#0f1419] dark:bg-[#232a32] rotate-45',
+            arrowClasses[position]
+          )}
+        />
+      </div>
+    ) : null;
 
   return (
     <>
@@ -104,11 +121,13 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   );
 }
 
-// Info icon component to use with Tooltip
 export function InfoIcon({ className = '' }: { className?: string }) {
   return (
     <svg
-      className={`w-4 h-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors ${className}`}
+      className={clsx(
+        'w-4 h-4 text-text-muted hover:text-text transition-colors',
+        className
+      )}
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -122,4 +141,3 @@ export function InfoIcon({ className = '' }: { className?: string }) {
     </svg>
   );
 }
-

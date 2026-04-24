@@ -30,7 +30,6 @@ export default function Dropdown({
 
   const selectedOption = options.find((opt) => opt.value === value);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -53,29 +52,35 @@ export default function Dropdown({
   return (
     <div ref={dropdownRef} className={clsx('relative', className)}>
       {label && (
-        <label className="block text-sm font-medium text-orange-dark mb-2">
+        <label className="block text-sm font-medium text-text mb-1.5">
           {label}
         </label>
       )}
 
-      {/* Dropdown Button */}
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         className={clsx(
-          "w-full px-4 py-2.5 rounded-md border bg-white dark:bg-gray-800 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-0 text-orange-dark dark:text-gray-100 flex items-center justify-between transition-colors",
+          'w-full h-10 px-3 rounded-md border bg-surface text-text text-sm',
+          'flex items-center justify-between gap-2 text-left',
+          'transition-[border-color,box-shadow] duration-150',
+          'focus-visible:outline-none focus-visible:shadow-focus-ring',
           isOpen
-            ? "border-orange"
-            : "border-gray-light dark:border-gray-600 hover:border-orange/50",
-          disabled && "opacity-50 cursor-not-allowed bg-gray-light dark:bg-gray-700"
+            ? 'border-accent'
+            : 'border-border hover:border-border-strong',
+          disabled && 'opacity-50 cursor-not-allowed bg-surface-alt'
         )}
       >
-        <span className="font-regular">{selectedOption?.label || 'Select...'}</span>
+        <span className="truncate font-normal">
+          {selectedOption?.label || 'Select...'}
+        </span>
         <svg
           className={clsx(
-            'w-5 h-5 text-gray-slate transition-transform',
-            isOpen && 'transform rotate-180'
+            'h-4 w-4 shrink-0 text-text-muted transition-transform duration-150',
+            isOpen && 'rotate-180'
           )}
           fill="none"
           stroke="currentColor"
@@ -90,25 +95,30 @@ export default function Dropdown({
         </svg>
       </button>
 
-      {/* Dropdown Menu - Positioned Below */}
       {isOpen && (
-        <div className="absolute z-[9999] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+        <ul
+          role="listbox"
+          className="absolute z-[9999] w-full mt-1 bg-surface border border-border rounded-md shadow-popover max-h-60 overflow-auto py-1"
+        >
           {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleSelect(option.value)}
-              className={clsx(
-                'w-full px-3 py-2 text-left hover:bg-orange-light/30 dark:hover:bg-orange-light/10 transition-colors',
-                option.value === value
-                  ? 'bg-orange-light text-orange font-medium'
-                  : 'text-orange-dark dark:text-gray-100'
-              )}
-            >
-              {option.label}
-            </button>
+            <li key={option.value}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                onClick={() => handleSelect(option.value)}
+                className={clsx(
+                  'w-full px-3 py-2 text-left text-sm transition-colors duration-100',
+                  option.value === value
+                    ? 'bg-accent-soft text-accent font-medium'
+                    : 'text-text hover:bg-surface-hover'
+                )}
+              >
+                {option.label}
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

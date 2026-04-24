@@ -40,80 +40,66 @@ export function Modal({
   const [mounted, setMounted] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
-  // Ensure we're on the client side
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
-  // Handle opening/closing with animation
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
     }
   }, [isOpen]);
 
-  // GSAP Animation
   useGSAP(() => {
     if (!mounted || !shouldRender) return;
 
     if (isOpen && modalRef.current && overlayRef.current) {
-      // Opening animation - Scale + Fade
       gsap.fromTo(
         overlayRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+        { opacity: 1, duration: 0.22, ease: 'power2.out' }
       );
 
       gsap.fromTo(
         modalRef.current,
-        { 
-          scale: 0.95, 
-          opacity: 0,
-          y: 20
-        },
-        { 
-          scale: 1, 
-          opacity: 1,
-          y: 0,
-          duration: 0.4, 
-          ease: 'power3.out'
-        }
+        { scale: 0.97, opacity: 0, y: 16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.3, ease: 'power3.out' }
       );
     }
   }, [isOpen, mounted, shouldRender]);
 
-  // Handle closing animation separately
   useEffect(() => {
     if (!mounted || !shouldRender) return;
-    if (isOpen) return; // Only handle closing
+    if (isOpen) return;
 
     if (modalRef.current && overlayRef.current) {
-      // Kill any existing animations
       gsap.killTweensOf([modalRef.current, overlayRef.current]);
 
-      // Closing animation
       const tl = gsap.timeline({
-        onComplete: () => setShouldRender(false)
+        onComplete: () => setShouldRender(false),
       });
 
       tl.to(overlayRef.current, {
         opacity: 0,
-        duration: 0.2,
-        ease: 'power2.in'
+        duration: 0.18,
+        ease: 'power2.in',
       });
 
-      tl.to(modalRef.current, {
-        scale: 0.95,
-        opacity: 0,
-        y: 20,
-        duration: 0.2,
-        ease: 'power2.in'
-      }, 0); // Start at same time as overlay
+      tl.to(
+        modalRef.current,
+        {
+          scale: 0.97,
+          opacity: 0,
+          y: 16,
+          duration: 0.18,
+          ease: 'power2.in',
+        },
+        0
+      );
     }
   }, [isOpen, mounted, shouldRender]);
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -125,7 +111,6 @@ export function Modal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -144,7 +129,7 @@ export function Modal({
     small: 'max-w-md',
     medium: 'max-w-lg',
     large: 'max-w-2xl',
-    xlarge: 'max-w-5xl'
+    xlarge: 'max-w-5xl',
   };
 
   const modalContent = (
@@ -153,29 +138,26 @@ export function Modal({
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
-      style={{ zIndex: 99999 }}
     >
-      {/* Overlay */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(0,176,255,0.06),transparent_28%),radial-gradient(circle_at_bottom,rgba(239,114,21,0.08),transparent_30%),rgba(15,23,42,0.18)] dark:bg-[radial-gradient(circle_at_top,rgba(0,176,255,0.08),transparent_28%),radial-gradient(circle_at_bottom,rgba(239,114,21,0.1),transparent_30%),rgba(6,10,15,0.52)] pointer-events-auto"
+        className="fixed inset-0 bg-[rgba(11,13,16,0.55)] backdrop-blur-[2px] pointer-events-auto"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
         aria-hidden="true"
-        style={{ zIndex: 99999, pointerEvents: 'auto' }}
       />
 
-      {/* Modal content */}
-      <div 
-        className="flex min-h-full items-center justify-center p-4 relative pointer-events-none" 
+      <div
+        className="flex min-h-full items-center justify-center p-4 relative pointer-events-none"
         style={{ zIndex: 100000 }}
       >
         <div
           ref={modalRef}
           className={clsx(
-            `relative w-full ${sizeClasses[size]} pointer-events-auto rounded-[24px] border border-gray-light bg-white text-orange-dark shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-[#0b0f14] dark:text-white dark:shadow-[0_30px_90px_rgba(0,0,0,0.45)]`,
+            'relative w-full pointer-events-auto rounded-2xl bg-surface border border-border shadow-popover',
+            sizeClasses[size],
             allowOverflow ? 'overflow-visible' : 'overflow-hidden',
             contentClassName
           )}
@@ -184,38 +166,34 @@ export function Modal({
             e.nativeEvent.stopImmediatePropagation();
           }}
         >
-          <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.08),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.08),transparent_32%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.12),transparent_32%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[24px] bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-white/40" />
-
-          {/* Header */}
-          <div className="relative border-b border-gray-light px-6 py-5 md:px-7 dark:border-white/10">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {eyebrow && (
-                  <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-blue-electric">
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-accent">
                     {eyebrow}
                   </p>
                 )}
                 <h3
                   id="modal-title"
-                  className="text-xl font-semibold tracking-tight text-orange-dark md:text-[1.7rem] dark:text-[#fff3ea]"
+                  className="text-lg font-semibold tracking-tight text-text leading-tight"
                 >
                   {title}
                 </h3>
                 {subtitle && (
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-slate dark:text-white/70">
+                  <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-text-muted">
                     {subtitle}
                   </p>
                 )}
-                {headerContent && <div className="mt-4">{headerContent}</div>}
+                {headerContent && <div className="mt-3">{headerContent}</div>}
               </div>
               <button
                 onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-light bg-white/80 text-gray-slate transition-colors hover:border-gray-slate/30 hover:bg-gray-50 hover:text-orange-dark dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:border-white/20 dark:hover:bg-white/10 dark:hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-text-muted transition-colors hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:shadow-focus-ring"
                 aria-label="Close modal"
               >
                 <svg
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -231,13 +209,10 @@ export function Modal({
             </div>
           </div>
 
-          {/* Body */}
-          <div className={clsx('relative px-6 py-6 md:px-7', bodyClassName)}>
-            {children}
-          </div>
+          <div className={clsx('px-6 py-5', bodyClassName)}>{children}</div>
 
           {footer && (
-            <div className="relative border-t border-gray-light px-6 py-4 md:px-7 dark:border-white/10">
+            <div className="border-t border-border px-6 py-4 bg-surface-alt">
               {footer}
             </div>
           )}
@@ -246,6 +221,5 @@ export function Modal({
     </div>
   );
 
-  // Render modal at document.body level using portal
   return createPortal(modalContent, document.body);
 }

@@ -40,12 +40,10 @@ export function DataTable<T extends Record<string, any>>({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortState, setSortState] = useState<SortState>({ key: null, direction: null });
 
-  // Debounced search
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
   }, []);
 
-  // Filter data based on search query
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
 
@@ -59,7 +57,6 @@ export function DataTable<T extends Record<string, any>>({
     });
   }, [data, searchQuery, columns]);
 
-  // Sort data
   const sortedData = useMemo(() => {
     if (!sortState.key || !sortState.direction) return filteredData;
 
@@ -67,17 +64,14 @@ export function DataTable<T extends Record<string, any>>({
       const aValue = a[sortState.key!];
       const bValue = b[sortState.key!];
 
-      // Handle null/undefined
       if (aValue == null && bValue == null) return 0;
       if (aValue == null) return 1;
       if (bValue == null) return -1;
 
-      // Handle numbers
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortState.direction === 'asc' ? aValue - bValue : bValue - aValue;
       }
 
-      // Handle dates
       const aDate = new Date(aValue);
       const bDate = new Date(bValue);
       if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
@@ -86,7 +80,6 @@ export function DataTable<T extends Record<string, any>>({
           : bDate.getTime() - aDate.getTime();
       }
 
-      // Handle strings
       const aStr = String(aValue).toLowerCase();
       const bStr = String(bValue).toLowerCase();
       if (sortState.direction === 'asc') {
@@ -98,24 +91,19 @@ export function DataTable<T extends Record<string, any>>({
     return sorted;
   }, [filteredData, sortState]);
 
-  // Handle column sort click
   const handleSort = useCallback((columnKey: string) => {
     setSortState((prev) => {
-      // If clicking same column
       if (prev.key === columnKey) {
-        // asc -> desc -> null -> asc
         if (prev.direction === 'asc') {
           return { key: columnKey, direction: 'desc' };
         } else if (prev.direction === 'desc') {
           return { key: null, direction: null };
         }
       }
-      // New column: start with asc
       return { key: columnKey, direction: 'asc' };
     });
   }, []);
 
-  // Get value from nested keys (e.g., "user.name")
   const getNestedValue = (obj: any, path: string) => {
     return path.split('.').reduce((curr, key) => curr?.[key], obj);
   };
@@ -123,10 +111,10 @@ export function DataTable<T extends Record<string, any>>({
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+        <div className="h-10 bg-surface-alt rounded-md mb-4"></div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div key={i} className="h-14 bg-surface-alt rounded-md"></div>
           ))}
         </div>
       </div>
@@ -135,7 +123,6 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className={clsx('w-full', className)}>
-      {/* Search Bar */}
       {searchable && (
         <div className="mb-4">
           <div className="relative">
@@ -144,10 +131,10 @@ export function DataTable<T extends Record<string, any>>({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+              className="w-full h-10 pl-10 pr-3 rounded-md border border-border bg-surface text-sm text-text placeholder:text-text-faint transition-[border-color,box-shadow] duration-150 hover:border-border-strong focus-visible:outline-none focus-visible:border-accent focus-visible:shadow-focus-ring"
             />
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-faint"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -163,28 +150,28 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Desktop Table View */}
-      <div className="hidden sm:block overflow-x-auto">
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-border bg-surface">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b-2 border-gray-light dark:border-gray-700">
+            <tr className="border-b border-border bg-surface-alt">
               {columns.map((column) => (
                 <th
                   key={column.key}
                   className={clsx(
-                    'text-left py-3 px-4 text-sm font-semibold transition-colors',
-                    column.sortable !== false && 'cursor-pointer select-none hover:text-orange dark:hover:text-orange',
+                    'text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider transition-colors',
+                    column.sortable !== false &&
+                      'cursor-pointer select-none hover:text-text',
                     sortState.key === column.key
-                      ? 'text-orange-dark dark:text-orange border-b-2 border-orange'
-                      : 'text-gray-700 dark:text-gray-300',
+                      ? 'text-accent'
+                      : 'text-text-muted',
                     column.className
                   )}
                   onClick={() => column.sortable !== false && handleSort(column.key)}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     {column.label}
                     {column.sortable !== false && sortState.key === column.key && (
-                      <span className="text-orange">
+                      <span className="text-accent">
                         {sortState.direction === 'asc' ? '↑' : '↓'}
                       </span>
                     )}
@@ -198,11 +185,11 @@ export function DataTable<T extends Record<string, any>>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="py-12 text-center text-gray-500 dark:text-gray-400"
+                  className="py-12 text-center text-text-muted"
                 >
                   <div className="flex flex-col items-center gap-2">
                     <svg
-                      className="w-12 h-12 text-gray-300 dark:text-gray-600"
+                      className="w-10 h-10 text-text-faint"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -214,7 +201,7 @@ export function DataTable<T extends Record<string, any>>({
                         d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                       />
                     </svg>
-                    <p className="font-medium">{emptyMessage}</p>
+                    <p className="text-sm font-medium">{emptyMessage}</p>
                   </div>
                 </td>
               </tr>
@@ -222,7 +209,7 @@ export function DataTable<T extends Record<string, any>>({
               sortedData.map((row, index) => (
                 <tr
                   key={index}
-                  className="border-b border-gray-light dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  className="border-b border-border last:border-0 hover:bg-surface-hover transition-colors"
                 >
                   {columns.map((column) => {
                     const value = getNestedValue(row, column.key);
@@ -230,7 +217,7 @@ export function DataTable<T extends Record<string, any>>({
                       <td
                         key={column.key}
                         className={clsx(
-                          'py-3 px-4 text-sm text-gray-900 dark:text-gray-100',
+                          'py-3 px-4 text-sm text-text',
                           column.className
                         )}
                       >
@@ -245,14 +232,13 @@ export function DataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Mobile Card View */}
       {renderMobileCard && (
-        <div className="sm:hidden space-y-4">
+        <div className="sm:hidden space-y-3">
           {sortedData.length === 0 ? (
-            <div className="py-12 text-center text-gray-500 dark:text-gray-400">
+            <div className="py-12 text-center text-text-muted">
               <div className="flex flex-col items-center gap-2">
                 <svg
-                  className="w-12 h-12 text-gray-300 dark:text-gray-600"
+                  className="w-10 h-10 text-text-faint"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -264,7 +250,7 @@ export function DataTable<T extends Record<string, any>>({
                     d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                   />
                 </svg>
-                <p className="font-medium">{emptyMessage}</p>
+                <p className="text-sm font-medium">{emptyMessage}</p>
               </div>
             </div>
           ) : (
@@ -277,4 +263,3 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
-

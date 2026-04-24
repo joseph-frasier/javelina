@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card';
 interface CollapsibleCardProps {
   title: string;
   children: ReactNode;
-  storageKey: string; // Unique key for localStorage persistence (e.g., "zone-{zoneId}-changeHistory")
+  storageKey: string;
   className?: string;
   defaultExpanded?: boolean;
 }
@@ -24,7 +24,6 @@ export function CollapsibleCard({
   const contentRef = useRef<HTMLDivElement>(null);
   const chevronRef = useRef<SVGSVGElement>(null);
 
-  // Load saved preference from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved !== null) {
@@ -33,51 +32,45 @@ export function CollapsibleCard({
     setIsInitialized(true);
   }, [storageKey]);
 
-  // Save preference to localStorage when it changes
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem(storageKey, String(isExpanded));
     }
   }, [isExpanded, storageKey, isInitialized]);
 
-  // Animate expand/collapse
   useEffect(() => {
     if (!isInitialized || !contentRef.current || !chevronRef.current) return;
 
     if (isExpanded) {
-      // Expand animation
       gsap.to(contentRef.current, {
         height: 'auto',
         opacity: 1,
-        duration: 0.3,
+        duration: 0.25,
         ease: 'power2.out',
       });
       gsap.to(chevronRef.current, {
         rotation: 0,
-        duration: 0.3,
+        duration: 0.25,
         ease: 'power2.out',
       });
     } else {
-      // Collapse animation
       gsap.to(contentRef.current, {
         height: 0,
         opacity: 0,
-        duration: 0.3,
+        duration: 0.2,
         ease: 'power2.in',
       });
       gsap.to(chevronRef.current, {
         rotation: -90,
-        duration: 0.3,
+        duration: 0.2,
         ease: 'power2.in',
       });
     }
   }, [isExpanded, isInitialized]);
 
-  // Set initial state without animation
   useEffect(() => {
     if (!isInitialized || !contentRef.current || !chevronRef.current) return;
 
-    // Set initial state immediately without animation
     gsap.set(contentRef.current, {
       height: isExpanded ? 'auto' : 0,
       opacity: isExpanded ? 1 : 0,
@@ -86,7 +79,7 @@ export function CollapsibleCard({
       rotation: isExpanded ? 0 : -90,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized]); // Only run once when initialized - isExpanded intentionally excluded
+  }, [isInitialized]);
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -99,12 +92,12 @@ export function CollapsibleCard({
       action={
         <button
           onClick={toggleExpanded}
-          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-500"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-text-muted transition-colors hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:shadow-focus-ring"
           aria-label={isExpanded ? 'Collapse' : 'Expand'}
         >
           <svg
             ref={chevronRef}
-            className="w-8 h-8 text-orange dark:text-orange"
+            className="w-4 h-4"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
@@ -116,11 +109,12 @@ export function CollapsibleCard({
       <div
         ref={contentRef}
         className="overflow-hidden"
-        style={{ height: isInitialized ? undefined : (defaultExpanded ? 'auto' : 0) }}
+        style={{
+          height: isInitialized ? undefined : defaultExpanded ? 'auto' : 0,
+        }}
       >
         {children}
       </div>
     </Card>
   );
 }
-

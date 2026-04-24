@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { clsx } from 'clsx';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -16,6 +17,25 @@ interface ToastProps {
   onClose: (id: string) => void;
 }
 
+const toneStyles: Record<ToastType, { wrap: string; icon: string }> = {
+  success: {
+    wrap: 'bg-success-soft border-success/30 text-text',
+    icon: 'text-success',
+  },
+  error: {
+    wrap: 'bg-danger-soft border-danger/30 text-text',
+    icon: 'text-danger',
+  },
+  warning: {
+    wrap: 'bg-warning-soft border-warning/30 text-text',
+    icon: 'text-warning',
+  },
+  info: {
+    wrap: 'bg-accent-soft border-accent/30 text-text',
+    icon: 'text-accent',
+  },
+};
+
 function Toast({ toast, onClose }: ToastProps) {
   useEffect(() => {
     const duration = toast.duration || 5000;
@@ -25,21 +45,6 @@ function Toast({ toast, onClose }: ToastProps) {
 
     return () => clearTimeout(timer);
   }, [toast, onClose]);
-
-  const getToastStyles = () => {
-    switch (toast.type) {
-      case 'success':
-        return 'bg-green-50 border-green-500 text-green-800';
-      case 'error':
-        return 'bg-red-50 border-red-500 text-red-800';
-      case 'warning':
-        return 'bg-yellow-50 border-yellow-500 text-yellow-800';
-      case 'info':
-        return 'bg-blue-50 border-blue-500 text-blue-800';
-      default:
-        return 'bg-gray-50 border-gray-500 text-gray-800';
-    }
-  };
 
   const getIcon = () => {
     switch (toast.type) {
@@ -86,19 +91,28 @@ function Toast({ toast, onClose }: ToastProps) {
     }
   };
 
+  const tone = toneStyles[toast.type];
+
   return (
     <div
-      className={`flex items-start p-3 sm:p-4 rounded-lg border-l-4 shadow-lg min-w-[280px] max-w-full sm:max-w-md ${getToastStyles()} animate-slide-in-right`}
+      className={clsx(
+        'flex items-start gap-3 p-3.5 rounded-lg border shadow-elevated min-w-[280px] max-w-md',
+        'bg-surface',
+        tone.wrap,
+        'animate-slide-in-right'
+      )}
       role="alert"
     >
-      <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
-      <div className="ml-2 sm:ml-3 text-xs sm:text-sm font-medium break-words flex-1">{toast.message}</div>
+      <div className={clsx('flex-shrink-0 mt-0.5', tone.icon)}>{getIcon()}</div>
+      <div className="text-sm font-medium break-words flex-1 leading-relaxed">
+        {toast.message}
+      </div>
       <button
         onClick={() => onClose(toast.id)}
-        className="ml-2 sm:ml-3 rounded-lg p-1.5 inline-flex h-8 w-8 hover:bg-white/50 transition-colors flex-shrink-0"
+        className="shrink-0 rounded-md p-1 inline-flex text-text-muted hover:text-text hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:shadow-focus-ring"
         aria-label="Close"
       >
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path
             fillRule="evenodd"
             d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -124,4 +138,3 @@ export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
     </div>
   );
 }
-
