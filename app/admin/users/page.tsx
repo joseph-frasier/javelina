@@ -388,8 +388,8 @@ function AdminUsersPageContent() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Users</h1>
-              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">Manage all system users</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text">Users</h1>
+              <p className="text-sm sm:text-base text-text-muted mt-1 sm:mt-2">Manage all system users</p>
             </div>
             <div className="flex-shrink-0">
               <ExportButton 
@@ -449,12 +449,12 @@ function AdminUsersPageContent() {
           <Card className="p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Users List</h2>
+                <h2 className="text-lg font-semibold text-text">Users List</h2>
                 <Tooltip content="All registered users">
                   <InfoIcon />
                 </Tooltip>
                 {selectedIds.size > 0 && (
-                  <span className="ml-2 text-sm text-gray-slate dark:text-gray-400">
+                  <span className="ml-2 text-sm text-text-muted">
                     {selectedIds.size} selected
                   </span>
                 )}
@@ -479,7 +479,7 @@ function AdminUsersPageContent() {
                   placeholder="Search across all fields..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+                  className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
                 />
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
@@ -514,7 +514,7 @@ function AdminUsersPageContent() {
                         </div>
                         <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                       </div>
-                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                      <div className="space-y-2 pt-3 border-t border-border">
                         <div className="flex justify-between">
                           <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
                           <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
@@ -532,7 +532,7 @@ function AdminUsersPageContent() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-light dark:border-gray-700">
+                      <tr className="border-b border-border">
                         <th className="text-left py-3 px-4 w-12">
                           <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                         </th>
@@ -546,7 +546,7 @@ function AdminUsersPageContent() {
                     </thead>
                     <tbody>
                       {[...Array(8)].map((_, i) => (
-                        <tr key={i} className="border-b border-gray-light dark:border-gray-700">
+                        <tr key={i} className="border-b border-border">
                           <td className="py-3 px-4">
                             <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                           </td>
@@ -580,7 +580,7 @@ function AdminUsersPageContent() {
                 <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p className="text-gray-slate dark:text-gray-300 text-lg font-medium">No users found</p>
+                <p className="text-text-muted text-lg font-medium">No users found</p>
                 <p className="text-gray-400 text-sm mt-2">
                   {searchQuery ? 'Try adjusting your search query.' : 'No users have been registered yet.'}
                 </p>
@@ -603,9 +603,9 @@ function AdminUsersPageContent() {
                             type="checkbox"
                             checked={selectedIds.has(user.id)}
                             onChange={() => toggleSelect(user.id)}
-                            className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 flex-shrink-0"
+                            className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500 flex-shrink-0"
                           />
-                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange text-white flex items-center justify-center text-sm font-semibold">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold">
                             {userInitial}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -619,7 +619,7 @@ function AdminUsersPageContent() {
                         <QuickActionsDropdown actions={getQuickActions(user)} align="right" />
                       </div>
 
-                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                      <div className="space-y-2 pt-3 border-t border-border">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600 dark:text-gray-400">Activity:</span>
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${activityBadge.color}`}>
@@ -654,7 +654,7 @@ function AdminUsersPageContent() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-light">
+                      <tr className="border-b border-border">
                         <th className="text-left py-3 px-4 w-12">
                           <SelectAllCheckbox
                             selectedCount={selectedIds.size}
@@ -667,28 +667,28 @@ function AdminUsersPageContent() {
                           />
                         </th>
                       <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                          sortKey === 'name' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
+                          sortKey === 'name' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
                         }`}
                         onClick={() => handleSort('name')}
                       >
                         <div className="flex items-center gap-2">
                           Name
                           {sortKey === 'name' && (
-                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                           )}
                         </div>
                       </th>
                       <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                          sortKey === 'email' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
+                          sortKey === 'email' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
                         }`}
                         onClick={() => handleSort('email')}
                       >
                         <div className="flex items-center gap-2">
                           Email
                           {sortKey === 'email' && (
-                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                           )}
                         </div>
                       </th>
@@ -701,8 +701,8 @@ function AdminUsersPageContent() {
                         </div>
                       </th>
                       <th 
-                        className={`text-center py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                          sortKey === 'status' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        className={`text-center py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
+                          sortKey === 'status' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
                         }`}
                         onClick={() => handleSort('status')}
                       >
@@ -714,20 +714,20 @@ function AdminUsersPageContent() {
                             </Tooltip>
                           </div>
                           {sortKey === 'status' && (
-                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                           )}
                         </div>
                       </th>
                       <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-orange dark:hover:text-orange ${
-                          sortKey === 'last_login' ? 'text-orange-dark dark:text-orange border-b-2 border-orange' : 'text-gray-900 dark:text-gray-100'
+                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
+                          sortKey === 'last_login' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
                         }`}
                         onClick={() => handleSort('last_login')}
                       >
                         <div className="flex items-center gap-2">
                           Last Login
                           {sortKey === 'last_login' && (
-                            <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                           )}
                         </div>
                       </th>
@@ -775,13 +775,13 @@ function AdminUsersPageContent() {
                       const activityBadge = getActivityBadge(activityStatus);
                       
                       return (
-                        <tr key={user.id} className="border-b border-gray-light dark:border-gray-700">
+                        <tr key={user.id} className="border-b border-border">
                           <td className="py-3 px-4">
                             <input
                               type="checkbox"
                               checked={selectedIds.has(user.id)}
                               onChange={() => toggleSelect(user.id)}
-                              className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                              className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500"
                             />
                           </td>
                           <td className="py-3 px-4">
@@ -848,7 +848,7 @@ function AdminUsersPageContent() {
 
           {/* Summary */}
           {!loading && filteredUsers.length <= itemsPerPage && (
-            <p className="text-sm text-gray-slate dark:text-gray-400">
+            <p className="text-sm text-text-muted">
               Showing {filteredUsers.length} of {users.length} users
             </p>
           )}

@@ -118,16 +118,16 @@ export default function EmailVerifiedPage() {
   // Show loading state while checking
   if (isChecking) {
     return (
-      <div className="min-h-screen bg-orange-light flex items-center justify-center px-4 py-12">
+      <div className="min-h-screen bg-accent-light flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-[520px]">
           <div className="flex flex-col items-center mb-8">
             <Logo width={300} height={120} priority />
           </div>
-          <div className="bg-white rounded-xl shadow-lg border border-gray-light p-8">
+          <div className="bg-surface rounded-xl shadow-lg border border-border p-8">
             <div className="text-center">
               <div className="mb-6">
                 <svg
-                  className="animate-spin w-20 h-20 mx-auto text-orange"
+                  className="animate-spin w-20 h-20 mx-auto text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -146,10 +146,10 @@ export default function EmailVerifiedPage() {
                   />
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-orange-dark mb-3">
+              <h1 className="text-2xl font-bold text-text mb-3">
                 Verifying your email...
               </h1>
-              <p className="text-gray-slate">Please wait while we complete your verification.</p>
+              <p className="text-text-muted">Please wait while we complete your verification.</p>
             </div>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function EmailVerifiedPage() {
 
   // Show success message if not authenticated (rare case - user should be auto-redirected)
   return (
-    <div className="min-h-screen bg-orange-light flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-accent-light flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-[520px]">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
@@ -167,7 +167,7 @@ export default function EmailVerifiedPage() {
         </div>
 
         {/* Success Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-light p-8">
+        <div className="bg-surface rounded-xl shadow-lg border border-border p-8">
           <div className="text-center">
             {/* Success Icon */}
             <div className="mb-6">
@@ -187,12 +187,12 @@ export default function EmailVerifiedPage() {
             </div>
 
             {/* Heading */}
-            <h1 className="text-3xl font-bold text-orange-dark mb-3">
+            <h1 className="text-3xl font-bold text-text mb-3">
               Email Verified!
             </h1>
 
             {/* Message */}
-            <p className="text-gray-slate mb-6 leading-relaxed">
+            <p className="text-text-muted mb-6 leading-relaxed">
               Your email has been successfully verified. Click below to continue to your dashboard.
             </p>
 
@@ -209,7 +209,7 @@ export default function EmailVerifiedPage() {
         </div>
 
         {/* Footer Note */}
-        <p className="mt-6 text-center text-sm text-gray-slate">
+        <p className="mt-6 text-center text-sm text-text-muted">
           You can close this tab if you prefer, or click the button above to continue.
         </p>
       </div>

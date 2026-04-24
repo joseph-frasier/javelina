@@ -27,10 +27,10 @@ function ProtectedRouteContent({ children }: ProtectedRouteProps) {
   // Show loading spinner while initializing
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+      <div className="min-h-screen flex items-center justify-center bg-accent-light">
         <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Loading...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <span className="text-text">Loading...</span>
         </div>
       </div>
     );
@@ -49,10 +49,10 @@ function ProtectedRouteContent({ children }: ProtectedRouteProps) {
   // Show loading spinner if authenticated but profile not ready yet
   if (isAuthenticated && !profileReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+      <div className="min-h-screen flex items-center justify-center bg-accent-light">
         <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Loading profile...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <span className="text-text">Loading profile...</span>
         </div>
       </div>
     );
@@ -65,10 +65,10 @@ function ProtectedRouteContent({ children }: ProtectedRouteProps) {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+      <div className="min-h-screen flex items-center justify-center bg-accent-light">
         <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Loading...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <span className="text-text">Loading...</span>
         </div>
       </div>
     }>

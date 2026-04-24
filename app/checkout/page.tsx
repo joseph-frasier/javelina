@@ -199,8 +199,8 @@ function CheckoutContent() {
 
   if (!checkoutData) {
     return (
-      <div className="min-h-screen bg-orange-light flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange"></div>
+      <div className="min-h-screen bg-accent-light flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -212,9 +212,9 @@ function CheckoutContent() {
     : checkoutData.plan_price || 0;
 
   return (
-    <div className="min-h-screen bg-orange-light dark:bg-gray-900">
+    <div className="min-h-screen bg-accent-light dark:bg-gray-900">
       {/* Header */}
-      <div className="border-b border-gray-light dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="border-b border-border bg-surface">
         <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
           <Logo width={150} height={60} />
           <Breadcrumb 
@@ -231,10 +231,10 @@ function CheckoutContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-orange-dark dark:text-white mb-2">
+          <h1 className="text-3xl font-black text-text mb-2">
             {isUpgrade ? 'Complete Your Upgrade' : 'Complete Your Purchase'}
           </h1>
-          <p className="text-base text-gray-slate dark:text-gray-400 font-light">
+          <p className="text-base text-text-muted font-light">
             {isUpgrade 
               ? 'You\'re upgrading to a lifetime plan with enhanced features'
               : 'You\'re one step away from unlocking powerful DNS management'}
@@ -245,8 +245,8 @@ function CheckoutContent() {
         {isUpgrade && isCreatingSubscription && (
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-              <span className="text-orange-dark dark:text-white">Loading payment form...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+              <span className="text-text">Loading payment form...</span>
             </div>
           </div>
         )}
@@ -254,8 +254,8 @@ function CheckoutContent() {
         {/* Review Step - Show order summary and discount input */}
         {checkoutStep === 'review' && !isUpgrade && (
           <div className="max-w-xl mx-auto">
-            <div className="bg-white rounded-xl border border-gray-light shadow-lg p-8">
-              <h2 className="text-xl font-bold text-orange-dark mb-6">
+            <div className="bg-surface rounded-xl border border-border shadow-lg p-8">
+              <h2 className="text-xl font-bold text-text mb-6">
                 Order Summary
               </h2>
 
@@ -263,7 +263,7 @@ function CheckoutContent() {
                 {/* Plan Details */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-bold text-orange-dark">
+                    <h3 className="font-bold text-text">
                       {checkoutData.plan_name}
                     </h3>
                     {isLifetime && (
@@ -272,17 +272,17 @@ function CheckoutContent() {
                       </span>
                     )}
                     {!isLifetime && (
-                      <p className="text-sm text-gray-slate font-light mt-1">
+                      <p className="text-sm text-text-muted font-light mt-1">
                         Billed {checkoutData.billing_interval}ly
                       </p>
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-orange-dark">
+                    <p className="font-bold text-text">
                       ${Number(checkoutData.plan_price).toFixed(2)}
                     </p>
                     {!isLifetime && (
-                      <p className="text-sm text-gray-slate font-light">
+                      <p className="text-sm text-text-muted font-light">
                         /{checkoutData.billing_interval}
                       </p>
                     )}
@@ -293,7 +293,7 @@ function CheckoutContent() {
                 {!isLifetime && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-orange-dark mb-2">
+                      <label className="block text-sm font-medium text-text mb-2">
                         Have a discount code?
                       </label>
                       {appliedDiscount ? (
@@ -336,7 +336,7 @@ function CheckoutContent() {
                               }
                             }}
                             placeholder="Enter code"
-                            className="flex-1 px-3 py-2 border border-gray-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                            className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                             disabled={isValidatingDiscount}
                           />
                           <button
@@ -361,9 +361,9 @@ function CheckoutContent() {
 
                     {/* Discount Breakdown */}
                     {appliedDiscount && (
-                      <div className="space-y-2 py-3 border-t border-gray-light">
+                      <div className="space-y-2 py-3 border-t border-border">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate">Subtotal</span>
+                          <span className="text-text-muted">Subtotal</span>
                           <span className="text-gray-700">${Number(checkoutData.plan_price).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
@@ -377,10 +377,10 @@ function CheckoutContent() {
 
                 {/* Total */}
                 <div className="flex justify-between items-center pt-4">
-                  <span className="text-lg font-bold text-orange-dark">
+                  <span className="text-lg font-bold text-text">
                     Total due today
                   </span>
-                  <span className="text-2xl font-black text-orange-dark">
+                  <span className="text-2xl font-black text-text">
                     ${finalPrice.toFixed(2)}
                   </span>
                 </div>
@@ -404,14 +404,14 @@ function CheckoutContent() {
                 </Button>
 
                 {/* Fine Print */}
-                <div className="pt-4 -mx-8 px-8 border-t border-gray-light">
+                <div className="pt-4 -mx-8 px-8 border-t border-border">
                   {isLifetime ? (
-                    <p className="text-xs text-gray-slate font-light text-center">
+                    <p className="text-xs text-text-muted font-light text-center">
                       This is a one-time payment for lifetime access. 
                       No recurring charges will be made.
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-slate font-light text-center">
+                    <p className="text-xs text-text-muted font-light text-center">
                       Your subscription will automatically renew every{' '}
                       {checkoutData.billing_interval}. You can cancel anytime from your
                       account settings.
@@ -428,8 +428,8 @@ function CheckoutContent() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Payment Form - 2 columns */}
             <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-light dark:border-gray-700 shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-orange-dark dark:text-white mb-6">
+              <div className="bg-surface rounded-xl border border-border shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-text mb-6">
                   Payment Details
                 </h2>
                 <StripeProvider clientSecret={clientSecret}>
@@ -445,8 +445,8 @@ function CheckoutContent() {
 
             {/* Order Summary - 1 column */}
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-light dark:border-gray-700 shadow-lg p-8 sticky top-8">
-                <h2 className="text-xl font-bold text-orange-dark dark:text-white mb-6">
+              <div className="bg-surface rounded-xl border border-border shadow-lg p-8 sticky top-8">
+                <h2 className="text-xl font-bold text-text mb-6">
                   {isUpgrade ? 'Upgrade Summary' : 'Order Summary'}
                 </h2>
 
@@ -455,7 +455,7 @@ function CheckoutContent() {
                   <div>
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-bold text-orange-dark dark:text-orange">
+                        <h3 className="font-bold text-text">
                           {checkoutData.plan_name}
                         </h3>
                         {isLifetime && (
@@ -466,11 +466,11 @@ function CheckoutContent() {
                       </div>
                       {!isUpgrade && (
                         <div className="text-right">
-                          <p className="font-bold text-orange-dark dark:text-orange">
+                          <p className="font-bold text-text">
                             ${Number(checkoutData.plan_price).toFixed(2)}
                           </p>
                           {!isLifetime && (
-                            <p className="text-sm text-gray-slate dark:text-gray-400 font-light">
+                            <p className="text-sm text-text-muted font-light">
                               /{checkoutData.billing_interval}
                             </p>
                           )}
@@ -483,7 +483,7 @@ function CheckoutContent() {
                   {isUpgrade && checkoutData.original_price !== undefined && (
                     <div className="space-y-3 py-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-slate dark:text-gray-400">
+                        <span className="text-text-muted">
                           {checkoutData.plan_name} Price
                         </span>
                         <span className="font-medium text-gray-700 dark:text-gray-200">
@@ -493,7 +493,7 @@ function CheckoutContent() {
                       
                       {checkoutData.credit_amount !== undefined && checkoutData.credit_amount > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate dark:text-gray-400">
+                          <span className="text-text-muted">
                             {checkoutData.upgrade_type === 'lifetime-to-lifetime' 
                               ? 'Current Plan Credit'
                               : 'Subscription Credit'}
@@ -508,9 +508,9 @@ function CheckoutContent() {
 
                   {/* Discount Applied Badge - Hidden for lifetime plans */}
                   {appliedDiscount && !isUpgrade && !isLifetime && (
-                    <div className="space-y-2 py-3 border-t border-gray-light dark:border-gray-700">
+                    <div className="space-y-2 py-3 border-t border-border">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-slate dark:text-gray-400">Subtotal</span>
+                        <span className="text-text-muted">Subtotal</span>
                         <span className="text-gray-700 dark:text-gray-300">${Number(checkoutData.plan_price).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
@@ -522,10 +522,10 @@ function CheckoutContent() {
 
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2">
-                    <span className="text-lg font-bold text-orange-dark dark:text-white">
+                    <span className="text-lg font-bold text-text">
                       {isUpgrade ? 'Upgrade Cost' : 'Total due today'}
                     </span>
-                    <span className="text-2xl font-black text-orange-dark dark:text-orange">
+                    <span className="text-2xl font-black text-text">
                       ${finalPrice.toFixed(2)}
                     </span>
                   </div>
@@ -533,7 +533,7 @@ function CheckoutContent() {
                   {/* Fine Print */}
                   <div className="pt-4">
                     {isLifetime ? (
-                      <p className="text-xs text-gray-slate dark:text-gray-400 font-light">
+                      <p className="text-xs text-text-muted font-light">
                         This is a one-time payment for lifetime access. 
                         No recurring charges will be made.
                         {isUpgrade && checkoutData.upgrade_type === 'subscription-to-lifetime' && (
@@ -543,7 +543,7 @@ function CheckoutContent() {
                         )}
                       </p>
                     ) : (
-                      <p className="text-xs text-gray-slate dark:text-gray-400 font-light">
+                      <p className="text-xs text-text-muted font-light">
                         Your subscription will automatically renew every{' '}
                         {checkoutData.billing_interval}. You can cancel anytime from your
                         account settings.
@@ -554,7 +554,7 @@ function CheckoutContent() {
                   {/* Upgrade Benefits */}
                   {isUpgrade && (
                     <div className="pt-4">
-                      <h4 className="text-sm font-bold text-orange-dark dark:text-white mb-3">
+                      <h4 className="text-sm font-bold text-text mb-3">
                         What you get:
                       </h4>
                       <ul className="space-y-2">
@@ -562,19 +562,19 @@ function CheckoutContent() {
                           <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className="text-gray-slate dark:text-gray-400">Lifetime access - no recurring fees</span>
+                          <span className="text-text-muted">Lifetime access - no recurring fees</span>
                         </li>
                         <li className="flex items-start text-xs">
                           <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className="text-gray-slate dark:text-gray-400">All future updates included</span>
+                          <span className="text-text-muted">All future updates included</span>
                         </li>
                         <li className="flex items-start text-xs">
                           <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className="text-gray-slate dark:text-gray-400">Priority support</span>
+                          <span className="text-text-muted">Priority support</span>
                         </li>
                       </ul>
                     </div>
@@ -592,8 +592,8 @@ function CheckoutContent() {
 export default function CheckoutPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-orange-light dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange"></div>
+      <div className="min-h-screen bg-accent-light dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
       </div>
     }>
       <CheckoutContent />

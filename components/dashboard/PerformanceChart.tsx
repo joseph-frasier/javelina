@@ -44,8 +44,8 @@ export function PerformanceChart() {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-700 rounded-lg p-3 shadow-lg">
-          <p className="text-sm font-semibold text-orange-dark mb-2">{payload[0].payload.day}</p>
+        <div className="bg-surface border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-semibold text-text mb-2">{payload[0].payload.day}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-xs" style={{ color: entry.color }}>
               {entry.name}: {entry.value}{entry.name === 'Response Time' ? 'ms' : entry.name === 'Error Rate' ? '%' : entry.name === 'Requests' ? '' : '%'}

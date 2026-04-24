@@ -134,7 +134,7 @@ function SortableHeader({
   const isActive = currentSortKey === key;
   return (
     <th
-      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-orange transition-colors select-none"
+      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-accent transition-colors select-none"
       onClick={() => onSort(key)}
     >
       <div className="flex items-center gap-1">
@@ -450,10 +450,10 @@ export default function AdminOpenSRSPage() {
     <AdminProtectedRoute>
       <AdminLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold text-orange-dark dark:text-white">OpenSRS Config</h1>
+          <h1 className="text-3xl font-bold text-text">OpenSRS Config</h1>
 
           {/* Tab Navigation */}
-          <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="border-b border-border">
             <nav className="flex gap-4">
               {TABS.map((tab) => (
                 <button
@@ -461,7 +461,7 @@ export default function AdminOpenSRSPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
-                      ? 'border-orange text-orange'
+                      ? 'border-accent text-accent'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
                   }`}
                 >
@@ -482,7 +482,7 @@ export default function AdminOpenSRSPage() {
                     placeholder="Search domains, users, order IDs..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-surface text-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   />
                 </div>
                 <Dropdown
@@ -515,7 +515,7 @@ export default function AdminOpenSRSPage() {
               </p>
 
               {/* Table */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-900/50">
@@ -551,8 +551,8 @@ export default function AdminOpenSRSPage() {
                         </tr>
                       ) : (
                         paginatedDomains.map((domain) => (
-                          <tr key={domain.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td className="px-4 py-3 text-sm font-medium text-orange-dark dark:text-white">
+                          <tr key={domain.id} className="hover:bg-surface-hover/50 transition-colors">
+                            <td className="px-4 py-3 text-sm font-medium text-text">
                               {domain.domain_name}
                             </td>
                             <td className="px-4 py-3 text-sm">
@@ -601,7 +601,7 @@ export default function AdminOpenSRSPage() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-surface text-text disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-hover transition-colors"
                   >
                     Previous
                   </button>
@@ -611,7 +611,7 @@ export default function AdminOpenSRSPage() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-surface text-text disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-hover transition-colors"
                   >
                     Next
                   </button>
@@ -624,10 +624,10 @@ export default function AdminOpenSRSPage() {
           {activeTab === 'tld-pricing' && (
             <div className="space-y-4">
               {/* Global Margin Control */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+              <div className="bg-surface rounded-xl shadow-sm border border-border p-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div>
-                    <h3 className="text-sm font-medium text-orange-dark dark:text-white">Global Margin</h3>
+                    <h3 className="text-sm font-medium text-text">Global Margin</h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Applied to all TLDs without a per-TLD override</p>
                   </div>
                   <div className="flex items-center gap-2 sm:ml-auto">
@@ -635,7 +635,7 @@ export default function AdminOpenSRSPage() {
                       type="number"
                       value={editingMargin}
                       onChange={(e) => setEditingMargin(e.target.value)}
-                      className="w-24 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                      className="w-24 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-surface dark:bg-gray-700 text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                       min="0"
                       max="1000"
                       step="0.1"
@@ -643,7 +643,7 @@ export default function AdminOpenSRSPage() {
                     <span className="text-sm text-gray-500 dark:text-gray-400">%</span>
                     <button
                       onClick={handleSaveGlobalMargin}
-                      className="px-3 py-1.5 text-sm font-medium rounded-lg bg-orange text-white hover:bg-orange/90 transition-colors"
+                      className="px-3 py-1.5 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors"
                     >
                       Save
                     </button>
@@ -659,13 +659,13 @@ export default function AdminOpenSRSPage() {
                     placeholder="Search TLDs..."
                     value={tldSearch}
                     onChange={(e) => setTldSearch(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-surface text-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   />
                 </div>
                 <button
                   onClick={handleSeedPricing}
                   disabled={seeding}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-surface text-text hover:bg-surface-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {seeding ? 'Fetching Prices...' : 'Refresh Wholesale Prices'}
                 </button>
@@ -677,7 +677,7 @@ export default function AdminOpenSRSPage() {
               </p>
 
               {/* TLD Table */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-900/50">
@@ -709,31 +709,31 @@ export default function AdminOpenSRSPage() {
                         </tr>
                       ) : (
                         paginatedTlds.map((tld) => (
-                          <tr key={tld.tld} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td className="px-4 py-3 text-sm font-medium text-orange-dark dark:text-white">
+                          <tr key={tld.tld} className="hover:bg-surface-hover/50 transition-colors">
+                            <td className="px-4 py-3 text-sm font-medium text-text">
                               {tld.tld}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">
                               ${tld.wholesale_registration.toFixed(2)} / ${tld.wholesale_renewal.toFixed(2)} / ${tld.wholesale_transfer.toFixed(2)}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              <span className={tld.has_margin_override ? 'text-orange font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                              <span className={tld.has_margin_override ? 'text-accent font-medium' : 'text-gray-700 dark:text-gray-300'}>
                                 {tld.effective_margin}%
                               </span>
                               {tld.has_margin_override && (
-                                <span className="ml-1 text-xs text-orange">(override)</span>
+                                <span className="ml-1 text-xs text-accent">(override)</span>
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm font-mono">
-                              <span className={tld.has_sale_override_registration ? 'text-orange font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                              <span className={tld.has_sale_override_registration ? 'text-accent font-medium' : 'text-gray-700 dark:text-gray-300'}>
                                 ${tld.computed_registration.toFixed(2)}
                               </span>
                               {' / '}
-                              <span className={tld.has_sale_override_renewal ? 'text-orange font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                              <span className={tld.has_sale_override_renewal ? 'text-accent font-medium' : 'text-gray-700 dark:text-gray-300'}>
                                 ${tld.computed_renewal.toFixed(2)}
                               </span>
                               {' / '}
-                              <span className={tld.has_sale_override_transfer ? 'text-orange font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                              <span className={tld.has_sale_override_transfer ? 'text-accent font-medium' : 'text-gray-700 dark:text-gray-300'}>
                                 ${tld.computed_transfer.toFixed(2)}
                               </span>
                             </td>
@@ -758,7 +758,7 @@ export default function AdminOpenSRSPage() {
                               ) : (
                                 <button
                                   onClick={() => handleStartEdit(tld)}
-                                  className="text-orange hover:text-orange/80 text-xs font-medium"
+                                  className="text-accent hover:text-accent/80 text-xs font-medium"
                                 >
                                   Edit
                                 </button>
@@ -774,8 +774,8 @@ export default function AdminOpenSRSPage() {
 
               {/* Edit Panel */}
               {editingTld && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-orange/50 p-4">
-                  <h3 className="text-sm font-medium text-orange-dark dark:text-white mb-3">Editing {editingTld}</h3>
+                <div className="bg-surface rounded-xl shadow-sm border border-accent/50 p-4">
+                  <h3 className="text-sm font-medium text-text mb-3">Editing {editingTld}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Margin Override (%)</label>
@@ -784,7 +784,7 @@ export default function AdminOpenSRSPage() {
                         value={editForm.margin_override}
                         onChange={(e) => setEditForm({ ...editForm, margin_override: e.target.value })}
                         placeholder={`Global: ${globalMargin}%`}
-                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-surface dark:bg-gray-700 text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         step="0.1"
                       />
                     </div>
@@ -795,7 +795,7 @@ export default function AdminOpenSRSPage() {
                         value={editForm.sale_registration}
                         onChange={(e) => setEditForm({ ...editForm, sale_registration: e.target.value })}
                         placeholder="Auto from margin"
-                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-surface dark:bg-gray-700 text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         step="0.01"
                       />
                     </div>
@@ -806,7 +806,7 @@ export default function AdminOpenSRSPage() {
                         value={editForm.sale_renewal}
                         onChange={(e) => setEditForm({ ...editForm, sale_renewal: e.target.value })}
                         placeholder="Auto from margin"
-                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-surface dark:bg-gray-700 text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         step="0.01"
                       />
                     </div>
@@ -817,7 +817,7 @@ export default function AdminOpenSRSPage() {
                         value={editForm.sale_transfer}
                         onChange={(e) => setEditForm({ ...editForm, sale_transfer: e.target.value })}
                         placeholder="Auto from margin"
-                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-orange-dark dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-surface dark:bg-gray-700 text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                         step="0.01"
                       />
                     </div>
@@ -828,13 +828,13 @@ export default function AdminOpenSRSPage() {
                   <div className="mt-3 flex gap-2">
                     <button
                       onClick={handleSaveTld}
-                      className="px-4 py-1.5 text-sm font-medium rounded-lg bg-orange text-white hover:bg-orange/90 transition-colors"
+                      className="px-4 py-1.5 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors"
                     >
                       Save Changes
                     </button>
                     <button
                       onClick={() => setEditingTld(null)}
-                      className="px-4 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="px-4 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-surface-hover transition-colors"
                     >
                       Cancel
                     </button>
@@ -848,7 +848,7 @@ export default function AdminOpenSRSPage() {
                   <button
                     onClick={() => setTldPage((p) => Math.max(1, p - 1))}
                     disabled={tldPage === 1}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-surface text-text disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-hover transition-colors"
                   >
                     Previous
                   </button>
@@ -858,7 +858,7 @@ export default function AdminOpenSRSPage() {
                   <button
                     onClick={() => setTldPage((p) => Math.min(tldTotalPages, p + 1))}
                     disabled={tldPage === tldTotalPages}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-surface text-text disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-hover transition-colors"
                   >
                     Next
                   </button>
@@ -869,7 +869,7 @@ export default function AdminOpenSRSPage() {
 
           {activeTab === 'mailbox-pricing' && (
             <div className="space-y-4">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-900/50">
@@ -897,13 +897,13 @@ export default function AdminOpenSRSPage() {
                         ))
                       ) : (
                         mailboxTiers.map((tier) => (
-                          <tr key={tier.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td className="px-4 py-3 text-sm font-medium text-orange-dark dark:text-white">{tier.tier_name}</td>
+                          <tr key={tier.id} className="hover:bg-surface-hover/50 transition-colors">
+                            <td className="px-4 py-3 text-sm font-medium text-text">{tier.tier_name}</td>
                             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{tier.storage_gb}GB</td>
                             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 font-mono">${tier.opensrs_cost.toFixed(2)}</td>
                             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{tier.margin_percent}%</td>
                             <td className="px-4 py-3 text-sm font-mono">
-                              <span className={tier.has_sale_override ? 'text-orange font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                              <span className={tier.has_sale_override ? 'text-accent font-medium' : 'text-gray-700 dark:text-gray-300'}>
                                 ${tier.computed_price.toFixed(2)}
                               </span>
                             </td>
@@ -929,7 +929,7 @@ export default function AdminOpenSRSPage() {
                                   <button onClick={() => setEditingTier(null)} className="text-gray-500 text-xs font-medium hover:underline">Cancel</button>
                                 </div>
                               ) : (
-                                <button onClick={() => handleStartTierEdit(tier)} className="text-orange text-xs font-medium hover:underline">Edit</button>
+                                <button onClick={() => handleStartTierEdit(tier)} className="text-accent text-xs font-medium hover:underline">Edit</button>
                               )}
                             </td>
                           </tr>
@@ -941,7 +941,7 @@ export default function AdminOpenSRSPage() {
               </div>
 
               {editingTier && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-surface rounded-xl shadow-sm border border-border p-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Margin %</label>
@@ -973,8 +973,8 @@ export default function AdminOpenSRSPage() {
                       />
                     </div>
                     <div className="flex items-end gap-2">
-                      <button onClick={handleSaveTierEdit} className="px-4 py-2 text-sm font-medium rounded-lg bg-orange text-white hover:bg-orange/90 transition-colors">Save</button>
-                      <button onClick={() => setEditingTier(null)} className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                      <button onClick={handleSaveTierEdit} className="px-4 py-2 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors">Save</button>
+                      <button onClick={() => setEditingTier(null)} className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-surface-hover transition-colors">Cancel</button>
                     </div>
                   </div>
                 </div>

@@ -115,8 +115,8 @@ export default function AdminZonesPage() {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold text-orange-dark">Flagged Zones</h1>
-            <p className="text-gray-slate dark:text-gray-300 mt-2">
+            <h1 className="text-3xl font-bold text-text">Flagged Zones</h1>
+            <p className="text-text-muted mt-2">
               Review and manage zones that have been flagged for duplicate names
             </p>
           </div>
@@ -154,7 +154,7 @@ export default function AdminZonesPage() {
 
             {loading ? (
               <div className="text-center py-12">
-                <p className="text-gray-slate dark:text-gray-300">Loading flagged zones...</p>
+                <p className="text-text-muted">Loading flagged zones...</p>
               </div>
             ) : zones.length === 0 ? (
               <div className="text-center py-12">
@@ -173,7 +173,7 @@ export default function AdminZonesPage() {
                     />
                   </svg>
                 </div>
-                <p className="text-gray-slate dark:text-gray-200 text-lg font-medium">All zones are approved!</p>
+                <p className="text-text-muted dark:text-gray-200 text-lg font-medium">All zones are approved!</p>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
                   No flagged zones found. All zones have unique names.
                 </p>
@@ -183,7 +183,7 @@ export default function AdminZonesPage() {
                 {zones.map((zone) => (
                   <div
                     key={zone.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-orange transition-colors"
+                    className="border border-gray-200 rounded-lg p-4 hover:border-accent transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">

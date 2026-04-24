@@ -143,16 +143,16 @@ export function PlanComparisonModal({
                 key={plan.code}
                 className={`relative rounded-lg border-2 p-4 transition-all flex flex-col ${
                   isCurrent
-                    ? 'border-orange bg-orange-light'
+                    ? 'border-accent bg-accent-light'
                     : plan.isPopular
-                    ? 'border-orange/50 bg-white'
-                    : 'border-gray-light bg-white hover:border-orange/30'
+                    ? 'border-accent/50 bg-surface'
+                    : 'border-border bg-surface hover:border-accent/30'
                 } ${isComingSoon ? 'opacity-60' : ''}`}
               >
                 {/* Popular Badge */}
                 {plan.isPopular && !isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="px-3 py-1 bg-orange text-white text-xs font-bold rounded-full">
+                    <span className="px-3 py-1 bg-accent text-white text-xs font-bold rounded-full">
                       POPULAR
                     </span>
                   </div>
@@ -169,11 +169,11 @@ export function PlanComparisonModal({
 
                 {/* Plan Header */}
                 <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-orange-dark">
+                  <h3 className="text-lg font-bold text-text">
                     {plan.name}
                   </h3>
                   <div className="mt-2">
-                    <p className="text-2xl font-bold text-gray-slate">
+                    <p className="text-2xl font-bold text-text-muted">
                       ${plan.price.toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-400 uppercase">ONE-TIME</p>
@@ -197,7 +197,7 @@ export function PlanComparisonModal({
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      <span className="text-gray-slate">{feature}</span>
+                      <span className="text-text-muted">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -206,7 +206,7 @@ export function PlanComparisonModal({
                 {isCurrent ? (
                   <button
                     disabled
-                    className="w-full mt-auto px-4 py-2 text-base rounded-md font-medium border-2 border-orange text-orange-dark cursor-not-allowed opacity-60"
+                    className="w-full mt-auto px-4 py-2 text-base rounded-md font-medium border-2 border-accent text-text cursor-not-allowed opacity-60"
                   >
                     Current Plan
                   </button>
@@ -246,15 +246,15 @@ export function PlanComparisonModal({
           const isUpgrade = plan.price > (visiblePlans.find(p => p.code === currentPlanCode)?.price || 0);
 
           return (
-            <div className="border-2 border-gray-light dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
+            <div className="border-2 border-border rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 {/* Left Side - Plan Info */}
                 <div className="flex-1">
                   <div className="mb-3">
-                    <h3 className="text-xl font-bold text-orange-dark dark:text-orange mb-1">
+                    <h3 className="text-xl font-bold text-text mb-1">
                       {plan.name}
                     </h3>
-                    <p className="text-xs text-gray-slate dark:text-gray-400">
+                    <p className="text-xs text-text-muted">
                       For large-scale applications running Internet scale workloads.
                     </p>
                   </div>
@@ -276,7 +276,7 @@ export function PlanComparisonModal({
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
-                        <span className="text-gray-slate dark:text-gray-300">{feature}</span>
+                        <span className="text-text-muted">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -287,7 +287,7 @@ export function PlanComparisonModal({
                   {isCurrent ? (
                     <button
                       disabled
-                      className="w-full px-4 py-2 text-base rounded-md font-medium border-2 border-orange text-orange-dark dark:text-orange cursor-not-allowed opacity-60"
+                      className="w-full px-4 py-2 text-base rounded-md font-medium border-2 border-accent text-text cursor-not-allowed opacity-60"
                     >
                       Current Plan
                     </button>

@@ -39,7 +39,7 @@ export default function Switch({
     >
       <span
         className={clsx(
-          'inline-block h-5 w-5 rounded-full bg-white shadow-sm',
+          'inline-block h-5 w-5 rounded-full bg-[#ffffff] shadow-sm',
           'transition-transform duration-200 ease-[cubic-bezier(.3,.6,.3,1)]',
           checked ? 'translate-x-[18px]' : 'translate-x-[2px]'
         )}

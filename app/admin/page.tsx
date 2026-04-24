@@ -213,8 +213,8 @@ export default function AdminDashboard() {
         <div className="space-y-8">
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold text-orange-dark">Dashboard</h1>
-            <p className="text-gray-slate mt-2">System overview and recent activity</p>
+            <h1 className="text-3xl font-bold text-text">Dashboard</h1>
+            <p className="text-text-muted mt-2">System overview and recent activity</p>
           </div>
 
           {/* KPI Grid */}
@@ -228,10 +228,10 @@ export default function AdminDashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   </div>
-                  <p className="text-gray-slate dark:text-gray-400 text-sm font-medium">Total Users</p>
+                  <p className="text-text-muted text-sm font-medium">Total Users</p>
                 </div>
               </div>
-              <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">
+              <p className="text-3xl font-bold text-text mb-2">
                 {loading ? '—' : kpis.totalUsers.toLocaleString()}
               </p>
               {/* Placeholder to match subtitle */}
@@ -255,10 +255,10 @@ export default function AdminDashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <p className="text-gray-slate dark:text-gray-400 text-sm font-medium">Total Organizations</p>
+                  <p className="text-text-muted text-sm font-medium">Total Organizations</p>
                 </div>
               </div>
-              <p className="text-3xl font-bold text-orange-dark dark:text-orange mb-2">
+              <p className="text-3xl font-bold text-text mb-2">
                 {loading ? '—' : kpis.totalOrganizations.toLocaleString()}
               </p>
               {/* Placeholder to match subtitle */}
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                   </div>
-                  <p className="text-gray-slate dark:text-gray-400 text-sm font-medium">Discount Codes</p>
+                  <p className="text-text-muted text-sm font-medium">Discount Codes</p>
                 </div>
               </div>
               <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <p className="text-gray-slate dark:text-gray-400 text-sm font-medium">Audit Logs</p>
+                  <p className="text-text-muted text-sm font-medium">Audit Logs</p>
                 </div>
               </div>
               {/* Placeholder to match height of cards with counts */}
@@ -334,7 +334,7 @@ export default function AdminDashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
-                  <p className="text-gray-slate dark:text-gray-400 text-sm font-medium">Flagged Zones</p>
+                  <p className="text-text-muted text-sm font-medium">Flagged Zones</p>
                 </div>
                 {!loading && kpis.flaggedZones > 0 && (
                   <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 text-xs font-semibold rounded-full">
@@ -361,8 +361,8 @@ export default function AdminDashboard() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-bold text-orange-dark dark:text-orange">Recent Actions</h2>
-                <p className="text-gray-slate dark:text-gray-400 text-sm mt-1">Latest administrative activity</p>
+                <h2 className="text-xl font-bold text-text">Recent Actions</h2>
+                <p className="text-text-muted text-sm mt-1">Latest administrative activity</p>
               </div>
               <Button
                 size="sm"
@@ -380,11 +380,11 @@ export default function AdminDashboard() {
                 </div>
               ) : recentLogs.length === 0 ? (
                 <div className="text-center py-8">
-                  <svg className="mx-auto h-12 w-12 text-gray-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="mx-auto h-12 w-12 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <h3 className="mt-2 text-sm font-medium text-orange-dark dark:text-orange">No recent actions</h3>
-                  <p className="mt-1 text-sm text-gray-slate dark:text-gray-400">
+                  <h3 className="mt-2 text-sm font-medium text-text">No recent actions</h3>
+                  <p className="mt-1 text-sm text-text-muted">
                     Administrative actions will appear here
                   </p>
                 </div>
@@ -407,11 +407,11 @@ export default function AdminDashboard() {
                                 {log.profiles?.name || 'Unknown Admin'}
                               </span>
                               <span className="text-gray-900 dark:text-gray-100"> {description.action} </span>
-                              <span className="font-semibold text-orange-600 dark:text-orange-400">
+                              <span className="font-semibold text-accent-600 dark:text-accent-400">
                                 {description.targetName}
                               </span>
                               {description.targetEmail && (
-                                <span className="text-sm text-gray-slate dark:text-gray-400">
+                                <span className="text-sm text-text-muted">
                                   {' '}({description.targetEmail})
                                 </span>
                               )}
@@ -419,12 +419,12 @@ export default function AdminDashboard() {
                             
                             {/* Metadata */}
                             <div className="flex items-center gap-2 text-sm flex-wrap">
-                              <span className="px-2 py-0.5 bg-orange-light dark:bg-orange-900/30 text-orange-dark dark:text-orange-400 text-xs rounded">
+                              <span className="px-2 py-0.5 bg-accent-light dark:bg-accent-900/30 text-text-400 text-xs rounded">
                                 {log.table_name}
                               </span>
-                              <span className="text-gray-slate dark:text-gray-400">•</span>
+                              <span className="text-text-muted">•</span>
                               <Tooltip content={logDate.absolute}>
-                                <span className="text-gray-slate dark:text-gray-400 cursor-help">{logDate.relative}</span>
+                                <span className="text-text-muted cursor-help">{logDate.relative}</span>
                               </Tooltip>
                             </div>
                           </div>

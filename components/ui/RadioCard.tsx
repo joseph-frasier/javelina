@@ -55,7 +55,7 @@ export default function RadioCard({
             : 'bg-surface border-border-strong'
         )}
       >
-        {checked && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+        {checked && <span className="h-1.5 w-1.5 rounded-full bg-[#ffffff]" />}
       </span>
       <span className="flex-1 min-w-0">
         <span className="flex items-center gap-2">

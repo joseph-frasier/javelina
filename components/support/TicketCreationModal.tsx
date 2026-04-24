@@ -177,7 +177,7 @@ export function TicketCreationModal({
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange transition-all"
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent transition-all"
               placeholder="Enter a brief subject for your ticket"
               required
               disabled={loading}
@@ -197,7 +197,7 @@ export function TicketCreationModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={10}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange transition-all resize-y"
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-surface text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent transition-all resize-y"
               placeholder="Provide details about your issue"
               required
               disabled={loading}
@@ -209,11 +209,11 @@ export function TicketCreationModal({
 
           {/* Technical Details (Collapsible) */}
           {(snapshot || sessionId || orgId) && (
-            <div className="border border-gray-light dark:border-gray-600 rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden">
               <button
                 type="button"
                 onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 hover:bg-surface-hover transition-colors"
                 disabled={loading}
               >
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -237,7 +237,7 @@ export function TicketCreationModal({
               </button>
 
               {showTechnicalDetails && (
-                <div className="p-4 bg-white dark:bg-gray-900">
+                <div className="p-4 bg-surface">
                   <div className="space-y-3">
                     {sessionId && (
                       <div>
@@ -321,7 +321,7 @@ export function TicketCreationModal({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-5 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               disabled={loading}
             >
               {loading ? (

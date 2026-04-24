@@ -29,7 +29,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-100 dark:bg-surface/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-surface/20 transition-colors"
       aria-label="Copy to clipboard"
     >
       {copied ? (
@@ -60,7 +60,7 @@ function CopyableCodeBlock({ label, value }: { label: string; value: string }) {
         </span>
         <CopyButton text={value} />
       </div>
-      <pre className="p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-mono text-gray-800 dark:text-gray-200 overflow-x-auto whitespace-pre-wrap break-all">
+      <pre className="p-3 rounded-lg bg-gray-50 dark:bg-surface/5 border border-gray-200 dark:border-white/10 text-xs font-mono text-gray-800 dark:text-gray-200 overflow-x-auto whitespace-pre-wrap break-all">
         {value}
       </pre>
     </div>
@@ -83,7 +83,7 @@ function DvAuthMethodBadge({ method }: { method: DvAuthMethod }) {
 function DnsInstructions({ details }: { details: Record<string, any> }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-slate dark:text-gray-300">
+      <p className="text-sm text-text-muted">
         Add the following DNS record to your domain to verify ownership.
         Changes may take up to 48 hours to propagate.
       </p>
@@ -115,7 +115,7 @@ function DnsInstructions({ details }: { details: Record<string, any> }) {
 function FileInstructions({ details }: { details: Record<string, any> }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-slate dark:text-gray-300">
+      <p className="text-sm text-text-muted">
         Upload a file at the specified path on your web server to verify domain ownership.
       </p>
       {details.filename && (
@@ -158,11 +158,11 @@ function EmailInstructions({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-slate dark:text-gray-300">
+      <p className="text-sm text-text-muted">
         An approval email has been sent to the address below. Check your inbox and click the
         approval link to complete domain validation.
       </p>
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+      <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-surface/5 border border-gray-200 dark:border-white/10">
         <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
@@ -232,7 +232,7 @@ function ChangeValidationMethod({
         {METHOD_OPTIONS.map((option) => (
           <label
             key={option.value}
-            className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors hover:border-orange/50 dark:hover:border-orange/50"
+            className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors hover:border-accent/50 dark:hover:border-accent/50"
             style={{
               borderColor: selectedMethod === option.value ? undefined : undefined,
             }}
@@ -246,7 +246,7 @@ function ChangeValidationMethod({
               className="mt-0.5 accent-orange"
             />
             <div>
-              <p className="text-sm font-medium text-orange-dark dark:text-white">{option.label}</p>
+              <p className="text-sm font-medium text-text">{option.label}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{option.description}</p>
             </div>
           </label>
@@ -286,7 +286,7 @@ export default function DomainValidationStatus({
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-medium text-orange-dark dark:text-white">
+              <p className="text-sm font-medium text-text">
                 Awaiting Domain Validation
               </p>
               {method && <DvAuthMethodBadge method={method} />}

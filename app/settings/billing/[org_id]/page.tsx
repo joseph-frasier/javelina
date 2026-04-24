@@ -187,7 +187,7 @@ export default function OrganizationBillingPage() {
         onSectionChange={(sectionId) => router.push(`/settings?section=${sectionId}`)}
       >
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
         </div>
       </SettingsLayout>
       </ProtectedRoute>
@@ -205,7 +205,7 @@ export default function OrganizationBillingPage() {
           <div className="mb-6">
             <button
               onClick={() => router.push('/settings?section=billing')}
-              className="flex items-center text-gray-slate hover:text-orange-dark mb-4 transition-colors"
+              className="flex items-center text-text-muted hover:text-text mb-4 transition-colors"
             >
               <svg
                 className="w-5 h-5 mr-2"
@@ -222,10 +222,10 @@ export default function OrganizationBillingPage() {
               </svg>
               Back to Billing
             </button>
-            <h2 className="text-2xl font-semibold text-orange-dark mb-1">
+            <h2 className="text-2xl font-semibold text-text mb-1">
               {organizationName}
             </h2>
-            <p className="text-sm text-gray-slate">
+            <p className="text-sm text-text-muted">
               Manage subscription and billing information
             </p>
           </div>
@@ -242,17 +242,17 @@ export default function OrganizationBillingPage() {
           )}
 
           {/* Billing Contact Information Section */}
-          <div className="mt-6 bg-white rounded-xl border border-gray-light shadow-sm p-6">
+          <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-xl font-bold text-orange-dark">Billing Contact Information</h3>
-                <p className="text-sm text-gray-slate mt-1">
+                <h3 className="text-xl font-bold text-text">Billing Contact Information</h3>
+                <p className="text-sm text-text-muted mt-1">
                   Contact details for billing and administrative purposes
                 </p>
               </div>
               <button
                 onClick={() => setShowEditBillingModal(true)}
-                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-[#d46410] transition-colors"
+                className="px-4 py-2 bg-accent text-white rounded-md font-medium hover:bg-accent-hover transition-colors"
               >
                 Edit Billing Info
               </button>
@@ -289,23 +289,23 @@ export default function OrganizationBillingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Billing Contact */}
               <div>
-                <h4 className="text-sm font-semibold text-orange-dark mb-3">Billing Contact</h4>
+                <h4 className="text-sm font-semibold text-text mb-3">Billing Contact</h4>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-gray-slate">Email</p>
-                    <p className="text-sm text-orange-dark font-medium">
+                    <p className="text-xs text-text-muted">Email</p>
+                    <p className="text-sm text-text font-medium">
                       {organizationData?.billing_email || 'Not set'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-slate">Phone</p>
-                    <p className="text-sm text-orange-dark font-medium">
+                    <p className="text-xs text-text-muted">Phone</p>
+                    <p className="text-sm text-text font-medium">
                       {organizationData?.billing_phone || 'Not set'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-slate">Address</p>
-                    <p className="text-sm text-orange-dark font-medium">
+                    <p className="text-xs text-text-muted">Address</p>
+                    <p className="text-sm text-text font-medium">
                       {organizationData?.billing_address ? (
                         <>
                           {organizationData.billing_address}<br />
@@ -321,17 +321,17 @@ export default function OrganizationBillingPage() {
 
               {/* Admin Contact */}
               <div>
-                <h4 className="text-sm font-semibold text-orange-dark mb-3">Administrative Contact</h4>
+                <h4 className="text-sm font-semibold text-text mb-3">Administrative Contact</h4>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-gray-slate">Email</p>
-                    <p className="text-sm text-orange-dark font-medium">
+                    <p className="text-xs text-text-muted">Email</p>
+                    <p className="text-sm text-text font-medium">
                       {organizationData?.admin_contact_email || 'Not set'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-slate">Phone</p>
-                    <p className="text-sm text-orange-dark font-medium">
+                    <p className="text-xs text-text-muted">Phone</p>
+                    <p className="text-sm text-text font-medium">
                       {organizationData?.admin_contact_phone || 'Not set'}
                     </p>
                   </div>

@@ -32,8 +32,8 @@ export default async function OrganizationPage({
   if (!sessionCookie) {
     return (
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
-        <h1 className="text-3xl font-bold text-orange-dark mb-4">Not Authenticated</h1>
-        <p className="text-gray-slate">Please log in to view this organization.</p>
+        <h1 className="text-3xl font-bold text-text mb-4">Not Authenticated</h1>
+        <p className="text-text-muted">Please log in to view this organization.</p>
       </div>
     );
   }
@@ -54,8 +54,8 @@ export default async function OrganizationPage({
     if (orgResponse.status === 404) {
       return (
         <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
-          <h1 className="text-3xl font-bold text-orange-dark mb-4">Organization Not Found</h1>
-          <p className="text-gray-slate">The organization does not exist or you don&apos;t have access to it.</p>
+          <h1 className="text-3xl font-bold text-text mb-4">Organization Not Found</h1>
+          <p className="text-text-muted">The organization does not exist or you don&apos;t have access to it.</p>
         </div>
       );
     }
@@ -63,8 +63,8 @@ export default async function OrganizationPage({
     if (orgResponse.status === 403) {
       return (
         <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
-          <h1 className="text-3xl font-bold text-orange-dark mb-4">Access Denied</h1>
-          <p className="text-gray-slate">You don&apos;t have access to this organization.</p>
+          <h1 className="text-3xl font-bold text-text mb-4">Access Denied</h1>
+          <p className="text-text-muted">You don&apos;t have access to this organization.</p>
         </div>
       );
     }
@@ -72,8 +72,8 @@ export default async function OrganizationPage({
     // Generic error
     return (
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
-        <h1 className="text-3xl font-bold text-orange-dark mb-4">Error Loading Organization</h1>
-        <p className="text-gray-slate">{errorData.error || 'An unexpected error occurred.'}</p>
+        <h1 className="text-3xl font-bold text-text mb-4">Error Loading Organization</h1>
+        <p className="text-text-muted">{errorData.error || 'An unexpected error occurred.'}</p>
       </div>
     );
   }
@@ -87,8 +87,8 @@ export default async function OrganizationPage({
   if (!userRole) {
     return (
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
-        <h1 className="text-3xl font-bold text-orange-dark mb-4">Access Denied</h1>
-        <p className="text-gray-slate">You don&apos;t have access to this organization.</p>
+        <h1 className="text-3xl font-bold text-text mb-4">Access Denied</h1>
+        <p className="text-text-muted">You don&apos;t have access to this organization.</p>
       </div>
     );
   }

@@ -43,7 +43,7 @@ export function SearchResultList({
 
   if (results.length === 0) {
     return (
-      <div className="py-10 text-center text-sm text-gray-slate dark:text-gray-300">
+      <div className="py-10 text-center text-sm text-text-muted">
         No results found
       </div>
     );
@@ -53,7 +53,7 @@ export function SearchResultList({
     <div className="max-h-[55vh] overflow-y-auto pr-1">
       {Array.from(grouped.entries()).map(([type, items]) => (
         <div key={type} className="mb-4">
-          <h4 className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-slate dark:text-gray-400">
+          <h4 className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
             {TYPE_LABELS[type] || type}
           </h4>
           <div className="space-y-1">
@@ -66,12 +66,12 @@ export function SearchResultList({
                 className={clsx(
                   'w-full rounded-md px-3 py-2 text-left transition-colors',
                   selectedIndex === index
-                    ? 'bg-orange/10 dark:bg-orange/20'
+                    ? 'bg-accent/10 dark:bg-accent/20'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-medium text-orange-dark dark:text-gray-100">
+                  <p className="truncate text-sm font-medium text-text">
                     {result.title}
                   </p>
                   {'badge' in result && result.badge ? (
@@ -80,7 +80,7 @@ export function SearchResultList({
                     </span>
                   ) : null}
                 </div>
-                <p className="truncate text-xs text-gray-slate dark:text-gray-400">{result.subtitle}</p>
+                <p className="truncate text-xs text-text-muted">{result.subtitle}</p>
               </button>
             ))}
           </div>

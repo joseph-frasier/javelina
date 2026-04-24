@@ -86,9 +86,9 @@ export function StripePaymentForm({
       </div>
 
       {/* Security Notice */}
-      <div className="flex items-start space-x-2 p-4 bg-orange-light rounded-lg border border-orange/20">
+      <div className="flex items-start space-x-2 p-4 bg-accent-light rounded-lg border border-accent/20">
         <svg
-          className="w-5 h-5 text-orange flex-shrink-0 mt-0.5"
+          className="w-5 h-5 text-accent flex-shrink-0 mt-0.5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -100,7 +100,7 @@ export function StripePaymentForm({
             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
           />
         </svg>
-        <div className="text-sm text-gray-slate font-regular">
+        <div className="text-sm text-text-muted font-regular">
           Your payment information is secure and encrypted by Stripe. We never
           store your card details.
         </div>

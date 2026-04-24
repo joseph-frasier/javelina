@@ -72,7 +72,7 @@ export function SubscriptionManager({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -113,13 +113,13 @@ export function SubscriptionManager({
   return (
     <div className="space-y-6">
       {/* Current Plan Card */}
-      <div className="bg-white rounded-xl border border-gray-light shadow-sm p-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-xl font-bold text-orange-dark">
+            <h3 className="text-xl font-bold text-text">
               {subscription?.plan?.name || 'Current Plan'}
             </h3>
-            <p className="text-sm text-gray-slate mt-1">
+            <p className="text-sm text-text-muted mt-1">
               {subscription?.plan?.metadata?.description || 'Loading plan details...'}
             </p>
           </div>
@@ -130,12 +130,12 @@ export function SubscriptionManager({
 
         {/* Price */}
         {subscription?.plan?.metadata?.price && (
-          <div className="mb-4 pb-4 border-b border-gray-light -mx-6 px-6">
+          <div className="mb-4 pb-4 border-b border-border -mx-6 px-6">
             <div className="flex flex-col">
-              <span className="text-3xl font-black text-orange-dark">
+              <span className="text-3xl font-black text-text">
                 ${Number(subscription.plan.metadata.price).toFixed(2)}
               </span>
-              <span className="text-xs text-gray-slate font-light uppercase tracking-wide mt-1">
+              <span className="text-xs text-text-muted font-light uppercase tracking-wide mt-1">
                 {subscription.plan.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
               </span>
             </div>
@@ -146,8 +146,8 @@ export function SubscriptionManager({
         {subscription?.subscription?.current_period_end && (
           <div className="mb-4 space-y-2">
             <div className="text-sm">
-              <span className="text-gray-slate">Next billing date: </span>
-              <span className="font-medium text-orange-dark">
+              <span className="text-text-muted">Next billing date: </span>
+              <span className="font-medium text-text">
                 {new Date(subscription.subscription.current_period_end).toLocaleDateString()}
               </span>
             </div>
@@ -168,14 +168,14 @@ export function SubscriptionManager({
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleChangePlan}
-                className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-[#d46410] transition-colors"
+                className="px-4 py-2 bg-accent text-white rounded-md font-medium hover:bg-accent-hover transition-colors"
               >
                 Change Plan
               </button>
               {onManageBilling && (
                 <button
                   onClick={onManageBilling}
-                  className="px-4 py-2 bg-white text-orange border border-orange rounded-md font-medium hover:bg-orange-light transition-colors"
+                  className="px-4 py-2 bg-surface text-accent border border-accent rounded-md font-medium hover:bg-accent-light transition-colors"
                 >
                   Manage Billing
                 </button>
@@ -190,7 +190,7 @@ export function SubscriptionManager({
               )}
               <button
                 onClick={() => router.push(`/organization/${orgId}`)}
-                className="ml-auto px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-[#d46410] transition-colors flex items-center gap-2"
+                className="ml-auto px-4 py-2 bg-accent text-white rounded-md font-medium hover:bg-accent-hover transition-colors flex items-center gap-2"
               >
                 <svg
                   className="w-4 h-4"
@@ -221,13 +221,13 @@ export function SubscriptionManager({
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleChangePlan}
-                  className="px-4 py-2 bg-orange text-white rounded-md font-medium hover:bg-[#d46410] transition-colors"
+                  className="px-4 py-2 bg-accent text-white rounded-md font-medium hover:bg-accent-hover transition-colors"
                 >
                   Upgrade Plan
                 </button>
                 <button
                   onClick={() => router.push(`/organization/${orgId}`)}
-                  className="ml-auto px-4 py-2 bg-white text-orange border border-orange rounded-md font-medium hover:bg-orange-light transition-colors flex items-center gap-2"
+                  className="ml-auto px-4 py-2 bg-surface text-accent border border-accent rounded-md font-medium hover:bg-accent-light transition-colors flex items-center gap-2"
                 >
                   <svg
                     className="w-4 h-4"
@@ -253,8 +253,8 @@ export function SubscriptionManager({
       {/* TODO: Uncomment when integrating Launch Darkly for feature-based resource limits */}
       {/* Usage Meters - Currently showing unlimited for all resources */}
       {/* {usage && (
-        <div className="bg-white rounded-xl border border-gray-light shadow-sm p-6">
-          <h3 className="text-lg font-bold text-orange-dark mb-4">Resource Usage</h3>
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
+          <h3 className="text-lg font-bold text-text mb-4">Resource Usage</h3>
           <div className="space-y-4">
             <UsageMeter
               current={usage.environments_count}

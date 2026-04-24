@@ -231,7 +231,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   // Loading skeleton
   if (loading) {
     return (
-      <Card title="Email" icon={<Mail className="w-5 h-5 text-orange" />}>
+      <Card title="Email" icon={<Mail className="w-5 h-5 text-accent" />}>
         <div className="animate-pulse space-y-3">
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
@@ -246,7 +246,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
       <Card
         title="Email"
         description="Add email mailboxes to your domain"
-        icon={<Mail className="w-5 h-5 text-orange" />}
+        icon={<Mail className="w-5 h-5 text-accent" />}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -261,8 +261,8 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 onClick={() => setSelectedTier(tier.id)}
                 className={`p-4 rounded-lg border-2 text-left transition-all ${
                   selectedTier === tier.id
-                    ? 'border-orange bg-orange/5'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'border-accent bg-accent/5'
+                    : 'border-border hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <div className="font-semibold text-sm text-gray-900 dark:text-white">
@@ -271,7 +271,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {tier.storage_gb}GB storage
                 </div>
-                <div className="text-lg font-bold text-orange mt-2">
+                <div className="text-lg font-bold text-accent mt-2">
                   ${tier.price.toFixed(2)}
                   <span className="text-xs font-normal text-gray-500">/mo per mailbox</span>
                 </div>
@@ -299,14 +299,14 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   return (
     <Card
       title="Email"
-      icon={<Mail className="w-5 h-5 text-orange" />}
+      icon={<Mail className="w-5 h-5 text-accent" />}
       action={
         emailStatus.webmail_url ? (
           <a
             href={emailStatus.webmail_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1"
+            className="text-sm text-accent hover:text-text flex items-center gap-1"
           >
             Open Webmail <ExternalLink className="w-3.5 h-3.5" />
           </a>
@@ -317,7 +317,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
         {/* Current Plan */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-orange/10 text-orange text-sm font-medium rounded-full">
+            <span className="px-3 py-1 bg-accent/10 text-accent text-sm font-medium rounded-full">
               {emailStatus.tier?.tier_name}
             </span>
             <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -343,13 +343,13 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 disabled={changingPlan || tier.id === emailStatus.tier?.id}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   tier.id === emailStatus.tier?.id
-                    ? 'border-orange bg-orange/5 opacity-50'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-orange'
+                    ? 'border-accent bg-accent/5 opacity-50'
+                    : 'border-border hover:border-accent'
                 }`}
               >
                 <div className="font-semibold text-sm">{tier.tier_name}</div>
                 <div className="text-xs text-gray-500 mt-1">{tier.storage_gb}GB</div>
-                <div className="text-sm font-bold text-orange mt-1">
+                <div className="text-sm font-bold text-accent mt-1">
                   ${tier.price.toFixed(2)}/mo
                 </div>
               </button>
@@ -431,7 +431,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {mailboxes.map((mb) => (
-                    <tr key={mb.user} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <tr key={mb.user} className="hover:bg-surface-hover/50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                         {mb.user}@{mb.domain}
                       </td>
@@ -448,7 +448,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => { setShowResetPassword(mb.user); setResetPasswordValue(''); }}
-                            className="text-gray-500 hover:text-orange"
+                            className="text-gray-500 hover:text-accent"
                             title="Reset password"
                           >
                             <Key className="w-4 h-4" />
@@ -476,7 +476,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
             <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
               <p className="text-sm font-medium">
                 Reset password for{' '}
-                <span className="text-orange">{showResetPassword}@{domainName}</span>
+                <span className="text-accent">{showResetPassword}@{domainName}</span>
               </p>
               <Input
                 type="password"
@@ -546,7 +546,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
         </div>
 
         {/* Disable Email */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="pt-4 border-t border-border">
           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-red-700 dark:text-red-400">Disable Email</h4>
             <p className="text-xs text-red-600 dark:text-red-400 mt-1 mb-3">

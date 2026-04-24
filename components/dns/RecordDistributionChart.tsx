@@ -37,13 +37,13 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
               if (active && payload && payload.length) {
                 const data = payload[0].payload as RecordTypeCount;
                 return (
-                  <div className="bg-white dark:bg-gray-slate border border-gray-light rounded-lg shadow-lg p-3">
-                    <p className="font-semibold text-orange-dark">{data.type} Records</p>
-                    <p className="text-sm text-gray-slate">
-                      Count: <span className="font-medium text-orange-dark">{data.count}</span>
+                  <div className="bg-surface border border-border rounded-lg shadow-lg p-3">
+                    <p className="font-semibold text-text">{data.type} Records</p>
+                    <p className="text-sm text-text-muted">
+                      Count: <span className="font-medium text-text">{data.count}</span>
                     </p>
-                    <p className="text-sm text-gray-slate">
-                      Percentage: <span className="font-medium text-orange-dark">
+                    <p className="text-sm text-text-muted">
+                      Percentage: <span className="font-medium text-text">
                         {((data.count / total) * 100).toFixed(1)}%
                       </span>
                     </p>
@@ -66,7 +66,7 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: entry.color }}
                       />
-                      <span className="text-xs text-gray-slate font-medium">
+                      <span className="text-xs text-text-muted font-medium">
                         {dataItem?.type}: {dataItem?.count ?? 0}
                       </span>
                     </div>
@@ -81,8 +81,8 @@ export function RecordDistributionChart({ data }: RecordDistributionChartProps) 
       {/* Center label */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
         <div className="text-center -mt-4">
-          <p className="text-3xl font-bold text-orange-dark">{total}</p>
-          <p className="text-sm text-gray-slate">Total Records</p>
+          <p className="text-3xl font-bold text-text">{total}</p>
+          <p className="text-sm text-text-muted">Total Records</p>
         </div>
       </div>
     </div>

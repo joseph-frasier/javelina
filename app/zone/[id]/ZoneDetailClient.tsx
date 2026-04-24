@@ -350,11 +350,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <svg className="animate-spin h-8 w-8 text-orange mx-auto" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-accent mx-auto" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <p className="mt-4 text-gray-slate">Loading zone data...</p>
+            <p className="mt-4 text-text-muted">Loading zone data...</p>
           </div>
         </div>
       </div>
@@ -377,7 +377,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-3 break-words">{zone.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-text mb-3 break-words">{zone.name}</h1>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* SOA Serial Badge */}
               <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
@@ -420,8 +420,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card title="Total Records" className="p-4 sm:p-6">
-          <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{zoneSummary.totalRecords}</p>
-          <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
+          <p className="text-2xl sm:text-3xl font-bold text-accent dark:text-accent">{zoneSummary.totalRecords}</p>
+          <p className="text-sm text-text-muted mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
         </Card>
         <Card title="Deployment Status" className="p-4 sm:p-6">
           <div className="space-y-2">

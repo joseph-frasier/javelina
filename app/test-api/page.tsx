@@ -151,7 +151,7 @@ export default function TestApiPage() {
         <h1 className="text-3xl font-bold mb-8">API Client Test Suite</h1>
 
         {/* Auth Status */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-surface rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Authentication Status</h2>
           <div className="space-y-2">
             <p>
@@ -174,7 +174,7 @@ export default function TestApiPage() {
         </div>
 
         {/* Configuration */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-surface rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Test Configuration</h2>
           <div className="space-y-4">
             <div>
@@ -202,7 +202,7 @@ export default function TestApiPage() {
         </div>
 
         {/* Test Controls */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-surface rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Test Controls</h2>
           <div className="flex gap-4">
             <button
@@ -231,7 +231,7 @@ export default function TestApiPage() {
 
         {/* Test Results */}
         {results.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-surface rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Test Results</h2>
             <div className="space-y-4">
               {results.map((result, index) => (

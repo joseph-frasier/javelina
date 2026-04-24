@@ -52,9 +52,9 @@ export default function TransferDomainContent({ onCheckout }: TransferDomainCont
   };
 
   return (
-    <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow p-6 lg:p-8 space-y-6 max-w-5xl w-full">
+    <div className="rounded-xl bg-surface shadow-md border border-border hover:shadow-lg transition-shadow p-6 lg:p-8 space-y-6 max-w-5xl w-full">
       <div>
-        <h2 className="text-2xl font-bold text-orange">Transfer a domain</h2>
+        <h2 className="text-2xl font-bold text-accent">Transfer a domain</h2>
         <p className="text-base text-gray-500 dark:text-gray-400 mt-2">
           Transfer a domain you own from another registrar.
         </p>
@@ -129,7 +129,7 @@ export default function TransferDomainContent({ onCheckout }: TransferDomainCont
               'Transfers typically complete within 5-7 days',
             ].map((tip) => (
               <li key={tip} className="flex items-start gap-3 text-sm text-gray-500 dark:text-gray-400">
-                <svg className="w-5 h-5 text-orange mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <svg className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
                 <span>{tip}</span>

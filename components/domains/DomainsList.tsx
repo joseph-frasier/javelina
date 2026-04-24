@@ -76,13 +76,13 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
           <Link
             key={domain.id}
             href={`/domains/${domain.id}`}
-            className="flex items-center justify-between p-5 rounded-xl border-l-2 border-l-transparent border border-gray-light dark:border-gray-700 bg-white dark:bg-white/[0.02] hover:border-l-orange hover:shadow-md hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all"
+            className="flex items-center justify-between p-5 rounded-xl border-l-2 border-l-transparent border border-border bg-surface dark:bg-surface/[0.02] hover:border-l-orange hover:shadow-md hover:bg-surface-hover dark:hover:bg-surface/[0.04] transition-all"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="min-w-0">
                 <p className="text-base">
-                  <span className="font-semibold text-orange-dark dark:text-white">{name}</span>
-                  <span className="text-orange font-mono font-semibold">{tld}</span>
+                  <span className="font-semibold text-text">{name}</span>
+                  <span className="text-accent font-mono font-semibold">{tld}</span>
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   {domain.registration_type === 'linked' ? 'Linked' : domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
@@ -97,7 +97,7 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
                 </span>
               )}
               {domain.amount_paid != null && (
-                <span className="font-mono text-xs bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 px-2 py-1 rounded">
+                <span className="font-mono text-xs bg-gray-100 dark:bg-surface/5 text-gray-500 dark:text-gray-400 px-2 py-1 rounded">
                   ${(domain.amount_paid / 100).toFixed(2)}
                 </span>
               )}

@@ -198,8 +198,8 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
             onClick={() => handleModeChange('formatted')}
             className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
               mode === 'formatted'
-                ? 'bg-white text-orange-dark shadow-sm dark:bg-gray-700 dark:text-orange'
-                : 'text-gray-slate hover:text-orange-dark dark:text-gray-400 dark:hover:text-orange'
+                ? 'bg-surface text-text shadow-sm dark:bg-gray-700 dark:text-accent'
+                : 'text-text-muted hover:text-text dark:text-gray-400 dark:hover:text-accent'
             }`}
           >
             Formatted
@@ -209,8 +209,8 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
             onClick={() => handleModeChange('raw')}
             className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
               mode === 'raw'
-                ? 'bg-white text-orange-dark shadow-sm dark:bg-gray-700 dark:text-orange'
-                : 'text-gray-slate hover:text-orange-dark dark:text-gray-400 dark:hover:text-orange'
+                ? 'bg-surface text-text shadow-sm dark:bg-gray-700 dark:text-accent'
+                : 'text-text-muted hover:text-text dark:text-gray-400 dark:hover:text-accent'
             }`}
           >
             Raw JSON
@@ -224,12 +224,12 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
             <div className="space-y-4">
               <div className="space-y-3">
                 {changedFields.length === 0 ? (
-                  <div className="rounded-lg border border-gray-light/70 bg-gray-50 py-8 text-center text-gray-slate dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
+                  <div className="rounded-lg border border-border/70 bg-gray-50 py-8 text-center text-text-muted dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
                     No changes detected
                   </div>
                 ) : (
                   changedFields.map((change) => (
-                    <div key={change.field} className="rounded-lg border border-gray-light/70 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                    <div key={change.field} className="rounded-lg border border-border/70 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
                       <div className="mb-3 flex items-center">
                         <h4 className="font-semibold text-gray-900 dark:text-gray-100">{change.fieldName}</h4>
                         {changeType === 'updated' && (
@@ -260,7 +260,7 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
 
               {(displayOldData?.updated_at || displayNewData?.updated_at) && (
                 <div className="pt-1">
-                  <p className="text-xs text-gray-slate dark:text-gray-400">
+                  <p className="text-xs text-text-muted">
                     Last updated: {formatTimestamp(displayNewData?.updated_at || displayOldData?.updated_at)}
                   </p>
                 </div>
@@ -278,7 +278,7 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
                       <button
                         type="button"
                         onClick={() => void handleCopy(formatJSON(displayOldData), 'before')}
-                        className="text-xs text-gray-slate transition-colors hover:text-orange-dark dark:text-gray-400 dark:hover:text-orange"
+                        className="text-xs text-text-muted transition-colors hover:text-text dark:text-gray-400 dark:hover:text-accent"
                         aria-label="Copy before JSON"
                         data-testid="copy-before-json"
                       >
@@ -301,7 +301,7 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
                       <button
                         type="button"
                         onClick={() => void handleCopy(formatJSON(displayNewData), 'after')}
-                        className="text-xs text-gray-slate transition-colors hover:text-orange-dark dark:text-gray-400 dark:hover:text-orange"
+                        className="text-xs text-text-muted transition-colors hover:text-text dark:text-gray-400 dark:hover:text-accent"
                         aria-label="Copy after JSON"
                         data-testid="copy-after-json"
                       >
@@ -320,7 +320,7 @@ export function DiffViewer({ oldData, newData, tableName = 'zone_records', onClo
 
               {(displayOldData?.updated_at || displayNewData?.updated_at) && (
                 <div className="pt-1">
-                  <p className="text-xs text-gray-slate dark:text-gray-400">
+                  <p className="text-xs text-text-muted">
                     Last updated: {formatTimestamp(displayNewData?.updated_at || displayOldData?.updated_at)}
                   </p>
                 </div>

@@ -275,8 +275,8 @@ function AdminAuditPageContent() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Audit Log</h1>
-              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">View all admin actions</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text">Audit Log</h1>
+              <p className="text-sm sm:text-base text-text-muted mt-1 sm:mt-2">View all admin actions</p>
             </div>
             <div className="flex-shrink-0">
               <ExportButton data={filteredLogs} filename="audit-log" />
@@ -322,7 +322,7 @@ function AdminAuditPageContent() {
           {/* Audit Log Table */}
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Audit Entries</h2>
+              <h2 className="text-lg font-semibold text-text">Audit Entries</h2>
               <Tooltip content="Admin action log">
                 <InfoIcon />
               </Tooltip>
@@ -336,7 +336,7 @@ function AdminAuditPageContent() {
                   placeholder="Search across all fields..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+                  className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
                 />
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
@@ -393,7 +393,7 @@ function AdminAuditPageContent() {
                 <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p className="text-gray-slate text-lg font-medium">No audit entries found</p>
+                <p className="text-text-muted text-lg font-medium">No audit entries found</p>
                 <p className="text-gray-400 text-sm mt-2">
                   {searchQuery ? 'Try adjusting your search query.' : 'No administrative actions have been recorded yet.'}
                 </p>
@@ -418,11 +418,11 @@ function AdminAuditPageContent() {
                                 {log.profiles?.name || 'Unknown Admin'}
                               </span>
                               <span className="text-gray-900 dark:text-gray-100"> {description.action} </span>
-                              <span className="font-semibold text-orange-600 dark:text-orange-400">
+                              <span className="font-semibold text-accent-600 dark:text-accent-400">
                                 {description.targetName}
                               </span>
                               {description.targetEmail && (
-                                <span className="text-sm text-gray-slate dark:text-gray-400">
+                                <span className="text-sm text-text-muted">
                                   {' '}({description.targetEmail})
                                 </span>
                               )}
@@ -430,12 +430,12 @@ function AdminAuditPageContent() {
                             
                             {/* Metadata */}
                             <div className="flex items-center gap-2 text-sm flex-wrap">
-                              <span className="px-2 py-0.5 bg-orange-light dark:bg-orange-900/30 text-orange-dark dark:text-orange-400 text-xs rounded">
+                              <span className="px-2 py-0.5 bg-accent-light dark:bg-accent-900/30 text-text-400 text-xs rounded">
                                 {log.table_name}
                               </span>
-                              <span className="text-gray-slate dark:text-gray-400">•</span>
+                              <span className="text-text-muted">•</span>
                               <Tooltip content={logDate.absolute}>
-                                <span className="text-gray-slate dark:text-gray-400 cursor-help">{logDate.relative}</span>
+                                <span className="text-text-muted cursor-help">{logDate.relative}</span>
                               </Tooltip>
                             </div>
                           </div>
@@ -446,67 +446,67 @@ function AdminAuditPageContent() {
                       </button>
 
                       {expandedId === log.id && (
-                        <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border-t border-orange-100 dark:border-orange-900/30 rounded-b-lg mt-1">
+                        <div className="p-4 bg-accent-50 dark:bg-accent-900/10 border-t border-orange-100 dark:border-orange-900/30 rounded-b-lg mt-1">
                           <div className="space-y-4 text-sm">
                             {/* Admin Info */}
                             <div>
-                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Admin</p>
+                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Admin</p>
                               <p className="text-gray-900 dark:text-gray-100">
                                 {log.profiles?.name || 'Unknown'} 
                                 {log.profiles?.email && (
-                                  <span className="text-gray-slate dark:text-gray-400"> ({log.profiles.email})</span>
+                                  <span className="text-text-muted"> ({log.profiles.email})</span>
                                 )}
                               </p>
                             </div>
 
                             {/* Action */}
                             <div>
-                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Action</p>
+                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Action</p>
                               <p className="text-gray-900 dark:text-gray-100 capitalize">{description.action}</p>
                             </div>
 
                             {/* Target */}
                             <div>
-                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Target</p>
+                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Target</p>
                               <p className="text-gray-900 dark:text-gray-100">
                                 {description.targetName}
                                 {description.targetEmail && (
-                                  <span className="text-gray-slate dark:text-gray-400"> ({description.targetEmail})</span>
+                                  <span className="text-text-muted"> ({description.targetEmail})</span>
                                 )}
                               </p>
                             </div>
 
                             {/* Changes */}
                             <div>
-                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-1">Changes</p>
-                              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-gray-light dark:border-gray-600">
+                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Changes</p>
+                              <div className="bg-surface p-3 rounded border border-border">
                                 <p className="text-gray-900 dark:text-gray-100">{description.details}</p>
                               </div>
                             </div>
 
                             {/* Technical Details */}
                             <div className="pt-3">
-                              <p className="text-xs font-semibold text-gray-slate dark:text-gray-400 uppercase mb-2">Technical Details</p>
+                              <p className="text-xs font-semibold text-text-muted uppercase mb-2">Technical Details</p>
                               <div className="space-y-2">
                                 {log.record_id && (
                                   <div>
-                                    <p className="text-xs text-gray-slate dark:text-gray-400">Record ID</p>
+                                    <p className="text-xs text-text-muted">Record ID</p>
                                     <p className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all">
                                       {log.record_id}
                                     </p>
                                   </div>
                                 )}
                                 <div>
-                                  <p className="text-xs text-gray-slate dark:text-gray-400">Table</p>
+                                  <p className="text-xs text-text-muted">Table</p>
                                   <p className="text-xs text-gray-900 dark:text-gray-100">{log.table_name}</p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-gray-slate dark:text-gray-400">Timestamp</p>
+                                  <p className="text-xs text-text-muted">Timestamp</p>
                                   <p className="text-xs text-gray-900 dark:text-gray-100">{logDate.absolute}</p>
                                 </div>
                                 {log.ip_address && (
                                   <div>
-                                    <p className="text-xs text-gray-slate dark:text-gray-400">IP Address</p>
+                                    <p className="text-xs text-text-muted">IP Address</p>
                                     <p className="text-xs text-gray-900 dark:text-gray-100">{log.ip_address}</p>
                                   </div>
                                 )}
@@ -524,7 +524,7 @@ function AdminAuditPageContent() {
 
           {/* Summary */}
           {!loading && (
-            <p className="text-sm text-gray-slate dark:text-gray-400">
+            <p className="text-sm text-text-muted">
               Showing {filteredLogs.length} of {logs.length} audit entries
             </p>
           )}

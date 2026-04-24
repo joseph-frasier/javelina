@@ -24,15 +24,15 @@ function MetricCard({ label, value, icon, status = 'neutral', subtitle }: Metric
   const statusColors = {
     success: 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400',
     warning: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
-    neutral: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+    neutral: 'bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400',
   };
 
   return (
     <Card className="p-6">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-slate dark:text-gray-400">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-orange-dark dark:text-gray-100">
+          <p className="text-sm font-medium text-text-muted">{label}</p>
+          <p className="mt-2 text-3xl font-bold text-text">
             {value}
           </p>
           {subtitle && (
@@ -66,8 +66,8 @@ function StatusBadge({ status }: StatusBadgeProps) {
     },
     escalated: {
       label: 'Escalated',
-      classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-      dotClasses: 'bg-orange-600 dark:bg-orange-400',
+      classes: 'bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400',
+      dotClasses: 'bg-accent-600 dark:bg-accent-400',
     },
     failed: {
       label: 'Failed',
@@ -164,10 +164,10 @@ export default function SupportReviewPage() {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">
+            <h1 className="text-2xl sm:text-3xl font-bold text-text">
               Support Review Dashboard
             </h1>
-            <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">
+            <p className="text-sm sm:text-base text-text-muted mt-1 sm:mt-2">
               Monitor AI support assistant performance and user feedback
             </p>
           </div>
@@ -190,7 +190,7 @@ export default function SupportReviewPage() {
                       }}
                       className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                         daysFilter === days
-                          ? 'bg-orange text-white'
+                          ? 'bg-accent text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                       }`}
                     >
@@ -211,7 +211,7 @@ export default function SupportReviewPage() {
                     setStatusFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-4 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+                  className="w-full px-4 py-2 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
                 >
                   <option value="all">All Conversations</option>
                   <option value="open">Open</option>
@@ -277,7 +277,7 @@ export default function SupportReviewPage() {
           {/* Conversations Table */}
           <Card className="p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
-              <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">
+              <h2 className="text-lg font-semibold text-text">
                 Conversations
               </h2>
               {totalPages > 1 && (
@@ -294,15 +294,15 @@ export default function SupportReviewPage() {
 
             {conversationsLoading ? (
               <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-                <p className="text-gray-slate dark:text-gray-300 mt-4">Loading conversations...</p>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+                <p className="text-text-muted mt-4">Loading conversations...</p>
               </div>
             ) : conversations.length === 0 ? (
               <div className="text-center py-12">
                 <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <p className="text-gray-slate dark:text-gray-300 text-lg font-medium">No conversations found</p>
+                <p className="text-text-muted text-lg font-medium">No conversations found</p>
                 <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                   {statusFilter !== 'all' ? 'Try adjusting your filters.' : 'Conversations will appear here as users interact with the support assistant.'}
                 </p>
@@ -363,7 +363,7 @@ export default function SupportReviewPage() {
 
                           <Link
                             href={`/admin/support-review/${conv.id}`}
-                            className="block w-full text-center px-3 py-2 text-sm font-medium text-orange hover:text-orange-dark dark:text-orange dark:hover:text-orange-light bg-orange-light dark:bg-orange-900/30 rounded-md transition-colors"
+                            className="block w-full text-center px-3 py-2 text-sm font-medium text-accent hover:text-text dark:hover:text-accent-light bg-accent-light dark:bg-accent-900/30 rounded-md transition-colors"
                           >
                             View Details
                           </Link>
@@ -377,7 +377,7 @@ export default function SupportReviewPage() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-light dark:border-gray-700">
+                      <tr className="border-b border-border">
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Date</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">User</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Organization</th>
@@ -391,7 +391,7 @@ export default function SupportReviewPage() {
                       {conversations.map((conv: SupportConversation) => {
                         const createdDate = formatDateWithRelative(conv.created_at);
                         return (
-                          <tr key={conv.id} className="border-b border-gray-light dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                          <tr key={conv.id} className="border-b border-border hover:bg-surface-hover/50 transition-colors">
                             <td className="py-3 px-4">
                               <p className="text-sm text-gray-900 dark:text-white">
                                 {createdDate.relative}
@@ -440,7 +440,7 @@ export default function SupportReviewPage() {
                             <td className="py-3 px-4 text-right">
                               <Link
                                 href={`/admin/support-review/${conv.id}`}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-orange hover:text-orange-dark dark:text-orange dark:hover:text-orange-light hover:bg-orange-light dark:hover:bg-orange-900/30 rounded-md transition-colors"
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-accent hover:text-text dark:hover:text-accent-light hover:bg-accent-light dark:hover:bg-accent-900/30 rounded-md transition-colors"
                               >
                                 View
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -474,7 +474,7 @@ export default function SupportReviewPage() {
 
           {/* Summary */}
           {!conversationsLoading && conversations.length > 0 && (
-            <p className="text-sm text-gray-slate dark:text-gray-400">
+            <p className="text-sm text-text-muted">
               Showing {conversations.length} of {totalConversations} conversations
             </p>
           )}

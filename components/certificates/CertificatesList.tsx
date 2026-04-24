@@ -122,11 +122,11 @@ function CertificatesListItems({
         <Link
           key={cert.id}
           href={`/certificates/${cert.id}`}
-          className="flex items-center justify-between p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md hover:border-orange/50 transition-all cursor-pointer"
+          className="flex items-center justify-between p-4 rounded-lg border border-border bg-surface/50 hover:shadow-md hover:border-accent/50 transition-all cursor-pointer"
         >
           <div className="flex items-center gap-4">
             <div>
-              <p className="font-medium text-orange-dark dark:text-white">{cert.domain}</p>
+              <p className="font-medium text-text">{cert.domain}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatProductType(cert.product_type)}
                 {cert.expires_at &&

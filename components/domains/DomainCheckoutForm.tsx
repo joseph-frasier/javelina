@@ -21,7 +21,7 @@ interface DomainCheckoutFormProps {
 import { US_STATES, COUNTRY_OPTIONS } from '@/lib/domain-constants';
 
 const selectClasses =
-  'w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors';
+  'w-full px-4 py-2.5 rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-accent hover:border-accent/50 transition-colors';
 
 export default function DomainCheckoutForm({
   domain,
@@ -99,12 +99,12 @@ export default function DomainCheckoutForm({
   const formContent = (
     <>
       {/* Order Summary Strip */}
-          <div className="flex items-center justify-between gap-4 rounded-lg bg-orange/5 dark:bg-orange/10 px-4 py-3 mb-5">
+          <div className="flex items-center justify-between gap-4 rounded-lg bg-accent/5 dark:bg-accent/10 px-4 py-3 mb-5">
             <div className="flex items-center gap-3 min-w-0">
-              <span className="shrink-0 text-xs font-medium uppercase tracking-[0.22em] text-orange">
+              <span className="shrink-0 text-xs font-medium uppercase tracking-[0.22em] text-accent">
                 {type}
               </span>
-              <span className="truncate font-bold text-orange-dark dark:text-white text-sm">
+              <span className="truncate font-bold text-text text-sm">
                 {domain}
               </span>
             </div>
@@ -112,7 +112,7 @@ export default function DomainCheckoutForm({
               <select
                 value={years}
                 onChange={(e) => setYears(Number(e.target.value))}
-                className="px-2 py-1 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors"
+                className="px-2 py-1 rounded-md border border-border bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-accent hover:border-accent/50 transition-colors"
               >
                 {[1, 2, 3, 5, 10].map((y) => (
                   <option key={y} value={y}>
@@ -123,7 +123,7 @@ export default function DomainCheckoutForm({
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 ${price.toFixed(2)}/yr
               </span>
-              <span className="font-black text-orange text-lg">
+              <span className="font-black text-accent text-lg">
                 ${totalPrice.toFixed(2)}
               </span>
             </div>
@@ -144,7 +144,7 @@ export default function DomainCheckoutForm({
           )}
 
           {/* Contact */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Contact</p>
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Contact</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <Input
               label="First Name"
@@ -179,7 +179,7 @@ export default function DomainCheckoutForm({
           </div>
 
           {/* Address */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Address</p>
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Address</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <div className="md:col-span-2">
               <Input

@@ -122,14 +122,14 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   });
 
   return (
-    <header className="bg-white border-b border-gray-light">
+    <header className="bg-surface border-b border-border">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             {/* Hamburger Menu Button - Mobile Only */}
             <button
               onClick={onMenuToggle}
-              className="md:hidden p-2 rounded-md text-gray-slate hover:text-orange hover:bg-gray-light/30 transition-colors"
+              className="md:hidden p-2 rounded-md text-text-muted hover:text-accent hover:bg-surface-hover transition-colors"
               aria-label="Toggle menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +152,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
             <div className="relative" ref={notificationRef}>
               <button 
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
+                className="p-2 text-text-muted hover:text-accent transition-colors focus:outline-none"
               >
                 <svg
                   className="w-5 h-5"
@@ -170,15 +170,15 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
               </button>
 
               {isNotificationOpen && (
-                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="p-4 border-b border-gray-light flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Notifications</h3>
-                    <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
+                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-surface rounded-xl shadow-lg border border-border overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-text">Notifications</h3>
+                    <button className="text-xs text-accent hover:text-text transition-colors font-medium">
                       Clear All
                     </button>
                   </div>
                   <div className="p-8 text-center">
-                    <p className="text-sm text-gray-slate dark:text-gray-300">No new notifications</p>
+                    <p className="text-sm text-text-muted">No new notifications</p>
                   </div>
                 </div>
               )}
@@ -188,7 +188,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
             <div className="relative" ref={supportRef}>
               <button 
                 onClick={() => setIsSupportOpen(!isSupportOpen)}
-                className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
+                className="p-2 text-text-muted hover:text-accent transition-colors focus:outline-none"
                 title="Support"
               >
                 <svg
@@ -207,17 +207,17 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
               </button>
 
               {isSupportOpen && (
-                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="p-4 border-b border-gray-light">
-                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Need help or have feedback?</h3>
-                    <p className="text-xs text-gray-slate dark:text-gray-300 mt-1">We&apos;d love to hear from you</p>
+                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-surface rounded-xl shadow-lg border border-border overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="p-4 border-b border-border">
+                    <h3 className="text-sm font-semibold text-text">Need help or have feedback?</h3>
+                    <p className="text-xs text-text-muted mt-1">We&apos;d love to hear from you</p>
                   </div>
                   <div className="p-4">
                     <div className="flex items-center justify-between gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-                      <span className="text-sm text-gray-slate dark:text-gray-300 truncate">{supportEmail}</span>
+                      <span className="text-sm text-text-muted truncate">{supportEmail}</span>
                       <button
                         onClick={handleCopyEmail}
-                        className="flex-shrink-0 p-1.5 text-gray-slate hover:text-orange transition-colors rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="flex-shrink-0 p-1.5 text-text-muted hover:text-accent transition-colors rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
                         title={copied ? 'Copied!' : 'Copy email'}
                       >
                         {copied ? (
@@ -233,7 +233,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                     </div>
                     <a
                       href={`mailto:${supportEmail}`}
-                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-lg transition-colors"
+                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-lg transition-colors"
                     >
                       Send Email
                     </a>
@@ -245,7 +245,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
             {/* Theme Toggle */}
             <button
               onClick={cycleTheme}
-              className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 rounded-md"
+              className="p-2 text-text-muted hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-md"
               aria-label={`Theme: ${general.theme} (press to change)`}
               title={`Current theme: ${general.theme}`}
             >
@@ -255,7 +255,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
             <button
               type="button"
               onClick={search.openSearch}
-              className="hidden md:flex w-72 items-center justify-between rounded-md border border-gray-light bg-gray-50 px-4 py-2 text-left text-sm text-gray-slate transition-colors hover:border-orange hover:bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              className="hidden md:flex w-72 items-center justify-between rounded-md border border-border bg-gray-50 px-4 py-2 text-left text-sm text-text-muted transition-colors hover:border-accent hover:bg-surface dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
               aria-label="Open global search"
             >
               <span className="flex items-center gap-2">
@@ -284,7 +284,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-[#d46410] transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2"
+                className="w-8 h-8 bg-accent rounded-full flex items-center justify-center hover:bg-accent-hover transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
               >
                 <span className="text-white font-bold text-base">
                   {adminInitial}
@@ -292,22 +292,22 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="p-4 border-b border-gray-light">
+                <div className="absolute right-0 mt-2 w-64 bg-surface rounded-xl shadow-lg border border-border overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="p-4 border-b border-border">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-lg">
                           {adminInitial}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-orange-dark truncate">
+                        <p className="text-sm font-medium text-text truncate">
                           {adminName}
                         </p>
-                        <p className="text-xs text-gray-slate truncate">
+                        <p className="text-xs text-text-muted truncate">
                           {adminEmail}
                         </p>
-                        <p className="text-xs font-semibold text-orange truncate">
+                        <p className="text-xs font-semibold text-accent truncate">
                           Administrator
                         </p>
                       </div>
@@ -315,7 +315,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                   </div>
                   <div className="py-2">
                     <button
-                      className="w-full text-left px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
+                      className="w-full text-left px-4 py-2 text-sm text-text-muted hover:bg-surface-hover hover:text-accent transition-colors"
                       onClick={handleLogout}
                     >
                       Sign out

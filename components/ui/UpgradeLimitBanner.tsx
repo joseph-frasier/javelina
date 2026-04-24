@@ -190,7 +190,7 @@ export function UpgradeLimitBanner({
               <span className={textColor}>{currentCount} / {maxCount} {labels.plural}</span>
               <span className={textColor}>{Math.round(percentUsed)}% used</span>
             </div>
-            <div className="w-full bg-white/50 dark:bg-black/20 rounded-full h-2">
+            <div className="w-full bg-surface/50 dark:bg-black/20 rounded-full h-2">
               <div 
                 className={`h-2 rounded-full transition-all ${isAtLimit ? 'bg-red-500' : 'bg-amber-500'}`}
                 style={{ width: `${Math.min(100, percentUsed)}%` }}
@@ -228,7 +228,7 @@ export function UsageIndicator({
   
   if (maxCount === -1) {
     return (
-      <span className="text-sm text-gray-slate">
+      <span className="text-sm text-text-muted">
         {currentCount} {currentCount === 1 ? labels.singular : labels.plural} (unlimited)
       </span>
     );
@@ -239,7 +239,7 @@ export function UsageIndicator({
     ? 'text-red-600' 
     : percentUsed >= 80 
       ? 'text-amber-600' 
-      : 'text-gray-slate';
+      : 'text-text-muted';
   
   return (
     <span className={`text-sm ${colorClass}`}>

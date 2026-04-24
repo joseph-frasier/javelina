@@ -290,7 +290,7 @@ function SettingsContent() {
     <ProtectedRoute>
       <div className="p-4 sm:p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-4 sm:mb-6 md:mb-8">Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text mb-4 sm:mb-6 md:mb-8">Settings</h1>
           
           {/* Mobile: Horizontal Scrolling Tabs */}
           <div className="md:hidden mb-6 -mx-4 px-4 overflow-x-auto">
@@ -301,8 +301,8 @@ function SettingsContent() {
                   onClick={() => setActiveSection(section.id)}
                   className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap text-sm ${
                     activeSection === section.id
-                      ? 'bg-orange text-white'
-                      : 'text-gray-slate dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-light/30'
+                      ? 'bg-accent text-white'
+                      : 'text-text-muted bg-surface hover:bg-surface-hover'
                   }`}
                 >
                   <span>{section.icon}</span>
@@ -322,8 +322,8 @@ function SettingsContent() {
                     onClick={() => handleSectionClick(section.id, (section as any).externalLink)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center whitespace-nowrap ${
                       activeSection === section.id
-                        ? 'bg-orange text-white'
-                        : 'text-gray-slate dark:text-gray-300 hover:bg-gray-light/30 dark:hover:bg-gray-800'
+                        ? 'bg-accent text-white'
+                        : 'text-text-muted hover:bg-surface-hover dark:hover:bg-gray-800'
                     }`}
                   >
                     <span className="mr-3">{section.icon}</span>
@@ -346,7 +346,7 @@ function SettingsContent() {
                   <div className="space-y-6">
                     {/* Theme Selection */}
                     <div>
-                      <label className="block text-sm font-medium text-orange-dark dark:text-orange mb-2">Theme</label>
+                      <label className="block text-sm font-medium text-text mb-2">Theme</label>
                       <div className="flex flex-wrap gap-4">
                         <label className="flex items-center">
                           <input
@@ -420,14 +420,14 @@ function SettingsContent() {
                     {/* Organization Members */}
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-medium text-orange-dark">Organization Members</h3>
+                        <h3 className="text-lg font-medium text-text">Organization Members</h3>
                         <Button variant="primary" size="sm">
                           Invite User
                         </Button>
                       </div>
                       <div className="space-y-3">
                         {access.members.length === 0 ? (
-                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                          <div className="py-8 flex items-center justify-center border border-border rounded-lg">
                             <div className="text-center">
                               <svg
                                 className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
@@ -449,14 +449,14 @@ function SettingsContent() {
                           </div>
                         ) : (
                           access.members.map((member, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                            <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
                               <div>
                                 <p className="font-medium">{member.name}</p>
-                                <p className="text-sm text-gray-slate">{member.email}</p>
-                                <p className="text-xs text-gray-slate">Last active: {formatDate(member.last_active)}</p>
+                                <p className="text-sm text-text-muted">{member.email}</p>
+                                <p className="text-xs text-text-muted">Last active: {formatDate(member.last_active)}</p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                                <span className="text-xs px-2 py-1 rounded-full bg-accent-100 text-accent-800">
                                   {member.role}
                                 </span>
                                 <Button variant="outline" size="sm">
@@ -471,10 +471,10 @@ function SettingsContent() {
 
                     {/* Environment Overrides */}
                     <div>
-                      <h3 className="text-lg font-medium text-orange-dark mb-4">Environment-Level Overrides</h3>
+                      <h3 className="text-lg font-medium text-text mb-4">Environment-Level Overrides</h3>
                       <div className="space-y-3">
                         {Object.keys(access.environment_overrides).length === 0 ? (
-                          <div className="py-8 flex items-center justify-center border border-gray-light dark:border-gray-700 rounded-lg">
+                          <div className="py-8 flex items-center justify-center border border-border rounded-lg">
                             <div className="text-center">
                               <svg
                                 className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-600 mb-2"
@@ -496,13 +496,13 @@ function SettingsContent() {
                           </div>
                         ) : (
                           Object.entries(access.environment_overrides).map(([environment, override]) => (
-                            <div key={environment} className="flex items-center justify-between p-4 border border-gray-light rounded-lg">
+                            <div key={environment} className="flex items-center justify-between p-4 border border-border rounded-lg">
                               <div>
                                 <p className="font-medium capitalize">{environment}</p>
-                                <p className="text-sm text-gray-slate">Role override</p>
+                                <p className="text-sm text-text-muted">Role override</p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                                <span className="text-xs px-2 py-1 rounded-full bg-accent-100 text-accent-800">
                                   {override.role}
                                 </span>
                                 <Button variant="outline" size="sm">
@@ -558,8 +558,8 @@ function SettingsContent() {
                   ) : (
                     <div className="space-y-4">
                       {auditLogs.map((log, index) => (
-                        <div key={index} className="flex items-start gap-4 p-4 border border-gray-light rounded-lg">
-                          <div className="w-2 h-2 bg-orange rounded-full mt-2"></div>
+                        <div key={index} className="flex items-start gap-4 p-4 border border-border rounded-lg">
+                          <div className="w-2 h-2 bg-accent rounded-full mt-2"></div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <p className="font-medium">{log.action}</p>
@@ -570,13 +570,13 @@ function SettingsContent() {
                                   ? 'bg-blue-100 text-blue-800'
                                   : log.category === 'Integrations'
                                   ? 'bg-green-100 text-green-800'
-                                  : 'bg-orange-100 text-orange-800'
+                                  : 'bg-accent-100 text-accent-800'
                               }`}>
                                 {log.category}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-slate">{log.user}</p>
-                            <p className="text-xs text-gray-slate">{formatDate(log.timestamp)}</p>
+                            <p className="text-sm text-text-muted">{log.user}</p>
+                            <p className="text-xs text-text-muted">{formatDate(log.timestamp)}</p>
                           </div>
                         </div>
                       ))}
@@ -592,17 +592,17 @@ function SettingsContent() {
                 {/* Organization Subscriptions */}
                 <Card className="p-4 sm:p-6">
                   <div className="mb-6">
-                    <h2 className="text-xl sm:text-2xl font-semibold text-orange-dark dark:text-orange mb-2">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-text mb-2">
                       Billing & Subscription
                     </h2>
-                    <p className="text-sm text-gray-slate dark:text-gray-400">
+                    <p className="text-sm text-text-muted">
                       Manage billing for your organizations
                     </p>
                   </div>
 
                   {billingLoading ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
                     </div>
                   ) : billingOrgs.length === 0 ? (
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 text-center">
@@ -631,11 +631,11 @@ function SettingsContent() {
                       {paginatedBillingOrgs.map((org) => (
                         <div
                           key={org.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border border-gray-light dark:border-gray-700 rounded-lg hover:border-orange/50 dark:hover:border-orange/50 transition-colors gap-4"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border border-border rounded-lg hover:border-accent/50 dark:hover:border-accent/50 transition-colors gap-4"
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
-                              <h3 className="text-base sm:text-lg font-bold text-orange-dark dark:text-orange">
+                              <h3 className="text-base sm:text-lg font-bold text-text">
                                 {org.name}
                               </h3>
                               <span
@@ -646,10 +646,10 @@ function SettingsContent() {
                                 {org.plan_status}
                               </span>
                             </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm text-gray-slate dark:text-gray-400">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm text-text-muted">
                               <div>
                                 <span className="font-medium">Plan:</span>{' '}
-                                <span className="text-orange-dark dark:text-orange font-semibold">
+                                <span className="text-text font-semibold">
                                   {org.current_plan}
                                 </span>
                               </div>
@@ -676,7 +676,7 @@ function SettingsContent() {
 
                   {/* Pagination Controls */}
                   {!billingLoading && billingTotalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-light dark:border-gray-700">
+                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-border">
                       <Button
                         variant="outline"
                         size="sm"
@@ -709,9 +709,9 @@ function SettingsContent() {
               {/* Password & Authentication - commented out until Auth0 password reset & OAuth are implemented */}
               {/* {activeSection === 'password' && (
                 <Card className="p-4 sm:p-6">
-                  <h2 className="text-xl font-semibold text-orange-dark dark:text-orange mb-6">Sign in methods</h2>
+                  <h2 className="text-xl font-semibold text-text mb-6">Sign in methods</h2>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                    <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-surface">
                       ...
                     </div>
                     ...
@@ -740,7 +740,7 @@ export default function SettingsPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     }>
       <SettingsContent />

@@ -61,7 +61,7 @@ export function SettingsLayout({ children, activeSection = 'general', onSectionC
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-4 sm:mb-6 md:mb-8">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-text mb-4 sm:mb-6 md:mb-8">Settings</h1>
         
         {/* Mobile: Horizontal Scrolling Tabs */}
         <div className="md:hidden mb-6 -mx-4 px-4 overflow-x-auto">
@@ -72,8 +72,8 @@ export function SettingsLayout({ children, activeSection = 'general', onSectionC
                 onClick={() => onSectionChange?.(section.id)}
                 className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap text-sm ${
                   activeSection === section.id
-                    ? 'bg-orange text-white'
-                    : 'text-gray-slate dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-light/30'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted bg-surface hover:bg-surface-hover'
                 }`}
               >
                 <span>{section.icon}</span>
@@ -93,8 +93,8 @@ export function SettingsLayout({ children, activeSection = 'general', onSectionC
                   onClick={() => onSectionChange?.(section.id)}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center whitespace-nowrap ${
                     activeSection === section.id
-                      ? 'bg-orange text-white'
-                      : 'text-gray-slate dark:text-gray-300 hover:bg-gray-light/30 dark:hover:bg-gray-700'
+                      ? 'bg-accent text-white'
+                      : 'text-text-muted hover:bg-surface-hover dark:hover:bg-gray-700'
                   }`}
                 >
                   <span className="mr-3 flex-shrink-0">{section.icon}</span>

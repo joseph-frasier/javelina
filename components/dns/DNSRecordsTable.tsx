@@ -262,7 +262,7 @@ export function DNSRecordsTable({
           placeholder="Search records by name, type, or value..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange transition-colors"
+          className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
         />
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -276,15 +276,15 @@ export function DNSRecordsTable({
             className={clsx(
               'px-3 py-1 rounded-full text-xs font-semibold transition-all border',
               activeTypeFilter === 'all'
-                ? 'bg-orange text-white border-orange shadow-sm'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-light dark:border-gray-600 hover:border-orange dark:hover:border-orange hover:text-orange dark:hover:text-orange'
+                ? 'bg-accent text-white border-accent shadow-sm'
+                : 'bg-surface text-gray-600 dark:text-gray-300 border-border hover:border-accent dark:hover:border-accent hover:text-accent dark:hover:text-accent'
             )}
           >
             All
             <span className={clsx(
               'ml-1.5 px-1.5 py-0.5 rounded-full text-xs',
               activeTypeFilter === 'all'
-                ? 'bg-white/20 text-white'
+                ? 'bg-surface/20 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
             )}>
               {filteredRecords.length}
@@ -300,15 +300,15 @@ export function DNSRecordsTable({
                 className={clsx(
                   'px-3 py-1 rounded-full text-xs font-semibold transition-all border',
                   isActive
-                    ? 'bg-orange text-white border-orange shadow-sm'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-light dark:border-gray-600 hover:border-orange dark:hover:border-orange hover:text-orange dark:hover:text-orange'
+                    ? 'bg-accent text-white border-accent shadow-sm'
+                    : 'bg-surface text-gray-600 dark:text-gray-300 border-border hover:border-accent dark:hover:border-accent hover:text-accent dark:hover:text-accent'
                 )}
               >
                 {type}
                 <span className={clsx(
                   'ml-1.5 px-1.5 py-0.5 rounded-full text-xs',
                   isActive
-                    ? 'bg-white/20 text-white'
+                    ? 'bg-surface/20 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                 )}>
                   {groupedRecords.get(type)?.length ?? 0}
@@ -333,7 +333,7 @@ export function DNSRecordsTable({
       </div>
 
       {filteredAndSortedRecords.length === 0 && (
-        <div className="text-center py-12 border border-dashed border-gray-light dark:border-gray-700 rounded-lg">
+        <div className="text-center py-12 border border-dashed border-border rounded-lg">
           <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -342,7 +342,7 @@ export function DNSRecordsTable({
           {searchQuery.trim() && (
             <button
               onClick={() => setSearchQuery('')}
-              className="mt-4 inline-flex items-center rounded-md border border-gray-light dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="mt-4 inline-flex items-center rounded-md border border-border px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-surface-hover transition-colors"
             >
               Clear search
             </button>
@@ -360,12 +360,12 @@ export function DNSRecordsTable({
         const someSectionSelected = sectionRecords.some(r => selectedRecords.includes(r.id)) && !allSectionSelected;
 
         return (
-          <div key={type} className="border border-gray-light dark:border-gray-700 rounded-lg overflow-hidden">
+          <div key={type} className="border border-border rounded-lg overflow-hidden">
 
             <div
               className={clsx(
                 'flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/60',
-                !isSingleTypeView && 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors'
+                !isSingleTypeView && 'cursor-pointer hover:bg-surface-hover/60 transition-colors'
               )}
               onClick={() => !isSingleTypeView && toggleSection(type)}
             >
@@ -376,7 +376,7 @@ export function DNSRecordsTable({
                     checked={allSectionSelected}
                     ref={el => { if (el) el.indeterminate = someSectionSelected; }}
                     onChange={e => handleSectionSelectAll(sectionRecords, e.target.checked)}
-                    className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
+                    className="w-4 h-4 text-accent bg-surface border-gray-300 dark:border-gray-600 rounded focus:ring-accent focus:ring-2 cursor-pointer"
                   />
                 </div>
                 <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded text-xs font-semibold">
@@ -385,7 +385,7 @@ export function DNSRecordsTable({
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   {info.description}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange/10 text-orange-dark dark:text-orange">
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-text">
                   {sectionRecords.length} {sectionRecords.length === 1 ? 'record' : 'records'}
                 </span>
               </div>
@@ -409,7 +409,7 @@ export function DNSRecordsTable({
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b border-gray-light dark:border-gray-700 bg-white dark:bg-gray-900/30">
+                    <tr className="border-b border-border bg-surface/30">
                       <th className="py-2 px-4 w-12" />
                       {([
                         { key: 'name' as keyof DNSRecord, label: 'Name' },
@@ -420,9 +420,9 @@ export function DNSRecordsTable({
                         <th
                           key={col.key}
                           className={clsx(
-                            'text-left py-2 px-4 text-xs font-semibold uppercase tracking-wider transition-colors select-none cursor-pointer hover:text-orange dark:hover:text-orange',
+                            'text-left py-2 px-4 text-xs font-semibold uppercase tracking-wider transition-colors select-none cursor-pointer hover:text-accent dark:hover:text-accent',
                             sortKey === col.key
-                              ? 'text-orange-dark dark:text-orange'
+                              ? 'text-text'
                               : 'text-gray-500 dark:text-gray-400'
                           )}
                           onClick={() => handleSort(col.key)}
@@ -430,7 +430,7 @@ export function DNSRecordsTable({
                           <div className="flex items-center gap-1.5">
                             {col.label}
                             {sortKey === col.key && (
-                              <span className="text-orange">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                              <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                             )}
                           </div>
                         </th>
@@ -449,8 +449,8 @@ export function DNSRecordsTable({
                           className={clsx(
                             'transition-colors cursor-pointer',
                             isSelected
-                              ? 'bg-orange/10 dark:bg-orange/20'
-                              : 'bg-white dark:bg-gray-900/20 hover:bg-gray-light/30 dark:hover:bg-gray-700/30'
+                              ? 'bg-accent/10 dark:bg-accent/20'
+                              : 'bg-surface/20 hover:bg-surface-hover dark:hover:bg-gray-700/30'
                           )}
                           onClick={() => onRecordClick(record)}
                         >
@@ -459,12 +459,12 @@ export function DNSRecordsTable({
                               type="checkbox"
                               checked={isSelected}
                               onChange={e => handleSelectRecord(record.id, e.target.checked)}
-                              className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
+                              className="w-4 h-4 text-accent bg-surface border-gray-300 dark:border-gray-600 rounded focus:ring-accent focus:ring-2 cursor-pointer"
                             />
                           </td>
                           <td className="py-3 px-4">
                             <Tooltip content={fqdn}>
-                              <span className="text-sm font-medium text-orange-dark dark:text-orange">
+                              <span className="text-sm font-medium text-text">
                                 {record.name || '@'}
                               </span>
                             </Tooltip>
@@ -476,7 +476,7 @@ export function DNSRecordsTable({
                           </td>
                           <td className="py-3 px-4">
                             <Tooltip content={showZoneSuffix ? `${record.value}.${zoneName}.` : record.value}>
-                              <span className="text-sm text-gray-slate dark:text-gray-300 font-mono truncate block max-w-md">
+                              <span className="text-sm text-text-muted font-mono truncate block max-w-md">
                                 {record.value}
                                 {showZoneSuffix && (
                                   <span className="text-gray-400 dark:text-gray-600">.{zoneName}.</span>
@@ -484,7 +484,7 @@ export function DNSRecordsTable({
                               </span>
                             </Tooltip>
                           </td>
-                          <td className="py-3 px-4 text-sm text-gray-slate dark:text-gray-300">
+                          <td className="py-3 px-4 text-sm text-text-muted">
                             {record.ttl}s
                           </td>
                         </tr>
@@ -506,8 +506,8 @@ export function DNSRecordsTable({
                       className={clsx(
                         'p-4 transition-colors cursor-pointer',
                         isSelected
-                          ? 'bg-orange/10 dark:bg-orange/20'
-                          : 'bg-white dark:bg-gray-900/20 hover:bg-gray-light/30 dark:hover:bg-gray-700/30'
+                          ? 'bg-accent/10 dark:bg-accent/20'
+                          : 'bg-surface/20 hover:bg-surface-hover dark:hover:bg-gray-700/30'
                       )}
                       onClick={() => onRecordClick(record)}
                     >
@@ -517,10 +517,10 @@ export function DNSRecordsTable({
                             type="checkbox"
                             checked={isSelected}
                             onChange={e => handleSelectRecord(record.id, e.target.checked)}
-                            className="w-4 h-4 text-orange bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-orange focus:ring-2 cursor-pointer"
+                            className="w-4 h-4 text-accent bg-surface border-gray-300 dark:border-gray-600 rounded focus:ring-accent focus:ring-2 cursor-pointer"
                           />
                           <div>
-                            <div className="text-sm font-medium text-orange-dark dark:text-orange">{record.name || '@'}</div>
+                            <div className="text-sm font-medium text-text">{record.name || '@'}</div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">{fqdn}</div>
                           </div>
                         </div>

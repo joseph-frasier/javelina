@@ -31,8 +31,8 @@ function StatusBadge({ status }: StatusBadgeProps) {
     },
     escalated: {
       label: 'Escalated',
-      classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-      dotClasses: 'bg-orange-600 dark:bg-orange-400',
+      classes: 'bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400',
+      dotClasses: 'bg-accent-600 dark:bg-accent-400',
     },
     failed: {
       label: 'Failed',
@@ -108,8 +108,8 @@ export default function ConversationDetailPage() {
       <AdminProtectedRoute>
         <AdminLayout>
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-            <p className="text-gray-slate dark:text-gray-300 mt-4">Loading conversation...</p>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+            <p className="text-text-muted mt-4">Loading conversation...</p>
           </div>
         </AdminLayout>
       </AdminProtectedRoute>
@@ -138,10 +138,10 @@ export default function ConversationDetailPage() {
                 Back
               </Button>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">
+                <h1 className="text-2xl sm:text-3xl font-bold text-text">
                   Conversation Details
                 </h1>
-                <p className="text-sm text-gray-slate dark:text-gray-300 mt-1">
+                <p className="text-sm text-text-muted mt-1">
                   ID: {conversationId}
                 </p>
               </div>
@@ -285,7 +285,7 @@ export default function ConversationDetailPage() {
                       <div
                         className={`px-4 py-3 rounded-lg ${
                           isUser
-                            ? 'bg-orange text-white'
+                            ? 'bg-accent text-white'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
                         }`}
                       >
@@ -317,7 +317,7 @@ export default function ConversationDetailPage() {
                                       href={citation.javelinaUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-orange hover:text-orange-dark dark:text-orange-light dark:hover:text-orange hover:underline"
+                                      className="text-accent hover:text-text-light dark:hover:text-accent hover:underline"
                                     >
                                       {citation.title}
                                     </a>

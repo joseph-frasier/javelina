@@ -199,10 +199,10 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
       {/* Modal */}
       <div 
         ref={modalRef}
-        className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4"
+        className="relative bg-surface rounded-xl shadow-xl w-full max-w-md mx-4"
       >
-        <div className="p-6 border-b border-gray-light dark:border-gray-700">
-          <h2 className="text-xl font-bold text-orange-dark dark:text-orange">
+        <div className="p-6 border-b border-border">
+          <h2 className="text-xl font-bold text-text">
             Create Discount Code
           </h2>
         </div>
@@ -218,7 +218,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
               placeholder="e.g., SAVE20"
-              className="w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent dark:bg-gray-700 dark:text-white"
             />
             {errors.code && (
               <p className="mt-1 text-sm text-red-600">{errors.code}</p>
@@ -233,7 +233,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
             <select
               value={formData.discount_type}
               onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percent_off' | 'amount_off' })}
-              className="w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent dark:bg-gray-700 dark:text-white"
             >
               <option value="percent_off">Percentage Off</option>
               <option value="amount_off">Fixed Amount Off</option>
@@ -257,7 +257,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
                 value={formData.discount_value}
                 onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
                 placeholder={formData.discount_type === 'percent_off' ? 'e.g., 20' : 'e.g., 10.00'}
-                className={`w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange dark:bg-gray-700 dark:text-white ${
+                className={`w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent dark:bg-gray-700 dark:text-white ${
                   formData.discount_type === 'amount_off' ? 'pl-7' : ''
                 }`}
               />
@@ -282,7 +282,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
               value={formData.max_redemptions}
               onChange={(e) => setFormData({ ...formData, max_redemptions: e.target.value })}
               placeholder="Unlimited"
-              className="w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent dark:bg-gray-700 dark:text-white"
             />
             {errors.max_redemptions && (
               <p className="mt-1 text-sm text-red-600">{errors.max_redemptions}</p>
@@ -299,7 +299,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
               type="datetime-local"
               value={formData.expires_at}
               onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-light dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent dark:bg-gray-700 dark:text-white"
             />
             <p className="mt-1 text-xs text-gray-400">
               Enter time in your local timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone})
@@ -502,8 +502,8 @@ function AdminDiscountsPageContent() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange">Discount Codes</h1>
-              <p className="text-sm sm:text-base text-gray-slate dark:text-gray-300 mt-1 sm:mt-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-text">Discount Codes</h1>
+              <p className="text-sm sm:text-base text-text-muted mt-1 sm:mt-2">
                 Manage promotion codes for checkout discounts
               </p>
             </div>
@@ -565,7 +565,7 @@ function AdminDiscountsPageContent() {
           <Card className="p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-orange-dark dark:text-orange">Discount Codes</h2>
+                <h2 className="text-lg font-semibold text-text">Discount Codes</h2>
                 <Tooltip content="Promotion codes synced with Stripe">
                   <InfoIcon />
                 </Tooltip>
@@ -593,7 +593,7 @@ function AdminDiscountsPageContent() {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-4 py-2 pl-10 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange"
+                  className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -613,7 +613,7 @@ function AdminDiscountsPageContent() {
                     setShowActiveOnly(e.target.checked);
                     setCurrentPage(1);
                   }}
-                  className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                  className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500"
                 />
                 Active only
               </label>
@@ -636,7 +636,7 @@ function AdminDiscountsPageContent() {
                         </div>
                         <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                       </div>
-                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700">
+                      <div className="space-y-2 pt-3 border-t border-border">
                         <div className="flex justify-between">
                           <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
                           <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
@@ -654,7 +654,7 @@ function AdminDiscountsPageContent() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-light dark:border-gray-700">
+                      <tr className="border-b border-border">
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Code</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Discount</th>
                         <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Uses</th>
@@ -665,7 +665,7 @@ function AdminDiscountsPageContent() {
                     </thead>
                     <tbody>
                       {[...Array(8)].map((_, i) => (
-                        <tr key={i} className="border-b border-gray-light dark:border-gray-700">
+                        <tr key={i} className="border-b border-border">
                           <td className="py-3 px-4">
                             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
                           </td>
@@ -695,7 +695,7 @@ function AdminDiscountsPageContent() {
                 <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
-                <p className="text-gray-slate dark:text-gray-300 text-lg font-medium">No discount codes found</p>
+                <p className="text-text-muted text-lg font-medium">No discount codes found</p>
                 <p className="text-gray-400 text-sm mt-2">
                   {searchQuery ? 'Try adjusting your search.' : 'Create your first discount code to get started.'}
                 </p>
@@ -713,7 +713,7 @@ function AdminDiscountsPageContent() {
                     <Card key={code.id} className="p-4">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div>
-                          <p className="font-mono font-bold text-orange-dark dark:text-orange text-lg">
+                          <p className="font-mono font-bold text-text text-lg">
                             {code.code}
                           </p>
                           <p className="text-sm text-green-600 font-medium">
@@ -722,7 +722,7 @@ function AdminDiscountsPageContent() {
                         </div>
                         {getStatusBadge(code)}
                       </div>
-                      <div className="space-y-2 pt-3 border-t border-gray-light dark:border-gray-700 text-sm">
+                      <div className="space-y-2 pt-3 border-t border-border text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-500">Redemptions:</span>
                           <span className="text-gray-900 dark:text-white">
@@ -746,7 +746,7 @@ function AdminDiscountsPageContent() {
                         </div>
                       </div>
                       {code.is_active && (
-                        <div className="mt-3 pt-3 border-t border-gray-light dark:border-gray-700">
+                        <div className="mt-3 pt-3 border-t border-border">
                           <Button
                             variant="outline"
                             size="sm"
@@ -765,7 +765,7 @@ function AdminDiscountsPageContent() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-light dark:border-gray-700">
+                      <tr className="border-b border-border">
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Code</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Discount</th>
                         <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Redemptions</th>
@@ -778,9 +778,9 @@ function AdminDiscountsPageContent() {
                     </thead>
                     <tbody>
                       {paginatedCodes.map((code) => (
-                        <tr key={code.id} className="border-b border-gray-light dark:border-gray-700">
+                        <tr key={code.id} className="border-b border-border">
                           <td className="py-3 px-4">
-                            <p className="font-mono font-bold text-orange-dark dark:text-orange">
+                            <p className="font-mono font-bold text-text">
                               {code.code}
                             </p>
                           </td>
@@ -866,7 +866,7 @@ function AdminDiscountsPageContent() {
 
           {/* Summary */}
           {!loading && filteredCodes.length > 0 && filteredCodes.length <= itemsPerPage && (
-            <p className="text-sm text-gray-slate dark:text-gray-400">
+            <p className="text-sm text-text-muted">
               Showing {filteredCodes.length} of {promotionCodes.length} discount codes
             </p>
           )}

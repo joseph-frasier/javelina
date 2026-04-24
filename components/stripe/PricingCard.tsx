@@ -26,10 +26,10 @@ export function PricingCard({
   return (
     <div
       className={clsx(
-        'relative rounded-xl border-2 bg-white p-5 shadow-lg transition-all flex flex-col',
+        'relative rounded-xl border-2 bg-surface p-5 shadow-lg transition-all flex flex-col',
         highlighted
-          ? 'border-orange'
-          : 'border-gray-light hover:border-orange/50',
+          ? 'border-accent'
+          : 'border-border hover:border-accent/50',
         !comingSoon && 'hover:shadow-xl',
         (disabled || comingSoon) && 'opacity-60',
         comingSoon && 'cursor-not-allowed'
@@ -37,27 +37,27 @@ export function PricingCard({
     >
       {highlighted && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center rounded-full bg-orange px-3 py-0.5 text-xs font-medium text-white">
+          <span className="inline-flex items-center rounded-full bg-accent px-3 py-0.5 text-xs font-medium text-white">
             Most Popular
           </span>
         </div>
       )}
 
       <div className="mb-4">
-        <h3 className="text-xl font-bold text-orange-dark mb-1">
+        <h3 className="text-xl font-bold text-text mb-1">
           {plan.name}
         </h3>
-        <p className="text-xs text-gray-slate font-light">{plan.description}</p>
+        <p className="text-xs text-text-muted font-light">{plan.description}</p>
       </div>
 
       {!hidePrice && (
         <div className="mb-4">
           <div className="flex flex-col">
-            <span className="text-4xl font-black text-orange-dark">
+            <span className="text-4xl font-black text-text">
               {plan.price === 0 ? '$0.00' : `$${Number(plan.price).toFixed(2)}`}
             </span>
             {plan.price > 0 && (
-              <span className="text-xs text-gray-slate font-light uppercase tracking-wide mt-1">
+              <span className="text-xs text-text-muted font-light uppercase tracking-wide mt-1">
                 {plan.interval === 'lifetime' ? 'ONE-TIME' : `/${plan.interval}`}
               </span>
             )}
@@ -66,13 +66,13 @@ export function PricingCard({
       )}
 
       <div className="space-y-2.5">
-        <p className="text-xs font-medium text-orange-dark mb-3">
+        <p className="text-xs font-medium text-text mb-3">
           What&apos;s included:
         </p>
         {plan.features.map((feature, index) => (
           <div key={index} className="flex items-start">
             <svg
-              className="w-4 h-4 text-orange mr-2 flex-shrink-0 mt-0.5"
+              className="w-4 h-4 text-accent mr-2 flex-shrink-0 mt-0.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -84,7 +84,7 @@ export function PricingCard({
                 d="M5 13l4 4L19 7"
               />
             </svg>
-            <span className="text-xs text-gray-slate font-regular">
+            <span className="text-xs text-text-muted font-regular">
               {feature}
             </span>
           </div>

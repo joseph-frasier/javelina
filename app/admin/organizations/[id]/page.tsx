@@ -90,7 +90,7 @@ export default function AdminOrganizationDetailPage() {
       <AdminProtectedRoute>
         <AdminLayout>
           <div className="text-center py-12">
-            <p className="text-gray-slate">Loading organization...</p>
+            <p className="text-text-muted">Loading organization...</p>
           </div>
         </AdminLayout>
       </AdminProtectedRoute>
@@ -102,7 +102,7 @@ export default function AdminOrganizationDetailPage() {
       <AdminProtectedRoute>
         <AdminLayout>
           <div className="text-center py-12">
-            <p className="text-gray-slate">Organization not found</p>
+            <p className="text-text-muted">Organization not found</p>
           </div>
         </AdminLayout>
       </AdminProtectedRoute>
@@ -121,9 +121,9 @@ export default function AdminOrganizationDetailPage() {
           </Link>
 
           <div>
-            <h1 className="text-3xl font-bold text-orange-dark dark:text-orange">{org.name}</h1>
+            <h1 className="text-3xl font-bold text-text">{org.name}</h1>
             {org.description && (
-              <p className="text-gray-slate dark:text-gray-300 mt-2">{org.description}</p>
+              <p className="text-text-muted mt-2">{org.description}</p>
             )}
           </div>
 
@@ -158,15 +158,15 @@ export default function AdminOrganizationDetailPage() {
 
           {/* Tabs */}
           <Card className="p-6">
-            <div className="flex gap-4 mb-6 border-b border-gray-light dark:border-gray-700 pb-4">
+            <div className="flex gap-4 mb-6 border-b border-border pb-4">
               {['overview', 'members'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-4 py-2 font-medium ${
                     activeTab === tab
-                      ? 'text-orange-dark border-b-2 border-orange'
-                      : 'text-gray-slate'
+                      ? 'text-text border-b-2 border-accent'
+                      : 'text-text-muted'
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -178,7 +178,7 @@ export default function AdminOrganizationDetailPage() {
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+                  <h3 className="text-lg font-semibold text-text mb-4">
                     Basic Information
                   </h3>
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
@@ -204,24 +204,24 @@ export default function AdminOrganizationDetailPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+                  <h3 className="text-lg font-semibold text-text mb-4">
                     Usage Statistics
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-orange-dark dark:text-orange">
+                      <p className="text-3xl font-bold text-text">
                         {org.member_count || 0}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Members</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-orange-dark dark:text-orange">
+                      <p className="text-3xl font-bold text-text">
                         {org.zone_count || 0}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Zones</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-orange-dark dark:text-orange">
+                      <p className="text-3xl font-bold text-text">
                         {org.record_count || 0}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Records</p>
@@ -239,12 +239,12 @@ export default function AdminOrganizationDetailPage() {
                 </p>
 
                 {members.length === 0 ? (
-                  <p className="text-center py-8 text-gray-slate dark:text-gray-300">No members</p>
+                  <p className="text-center py-8 text-text-muted">No members</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-light dark:border-gray-700">
+                        <tr className="border-b border-border">
                           <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
                           <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Email</th>
                           <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Role</th>
@@ -252,7 +252,7 @@ export default function AdminOrganizationDetailPage() {
                       </thead>
                       <tbody>
                         {members.map((member) => (
-                          <tr key={member.user_id} className="border-b border-gray-light dark:border-gray-700">
+                          <tr key={member.user_id} className="border-b border-border">
                             <td className="py-3 px-4 text-gray-900 dark:text-white">{member.profiles?.name}</td>
                             <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{member.profiles?.email}</td>
                             <td className="py-3 px-4">
@@ -264,7 +264,7 @@ export default function AdminOrganizationDetailPage() {
                                   : member.role === 'Editor'
                                   ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                   : member.role === 'BillingContact'
-                                  ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                  ? 'bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400'
                                   : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                               }`}>
                                 {member.role === 'BillingContact' ? 'Billing Contact' : member.role === 'SuperAdmin' ? 'Super Admin' : member.role}

@@ -45,13 +45,13 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
               if (active && payload && payload.length) {
                 const data = payload[0].payload as TTLBucket;
                 return (
-                  <div className="bg-white dark:bg-gray-slate border border-gray-light rounded-lg shadow-lg p-3">
-                    <p className="font-semibold text-orange-dark">{data.bucket}</p>
-                    <p className="text-sm text-gray-slate">
-                      Records: <span className="font-medium text-orange-dark">{data.count}</span>
+                  <div className="bg-surface border border-border rounded-lg shadow-lg p-3">
+                    <p className="font-semibold text-text">{data.bucket}</p>
+                    <p className="text-sm text-text-muted">
+                      Records: <span className="font-medium text-text">{data.count}</span>
                     </p>
-                    <p className="text-sm text-gray-slate">
-                      Percentage: <span className="font-medium text-orange-dark">{data.percentage}%</span>
+                    <p className="text-sm text-text-muted">
+                      Percentage: <span className="font-medium text-text">{data.percentage}%</span>
                     </p>
                   </div>
                 );
@@ -72,15 +72,15 @@ export function TTLHeatmap({ data }: TTLHeatmapProps) {
       <div className="mt-1 flex justify-center items-center space-x-6 text-xs">
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: '#A8DADC' }} />
-          <span className="text-gray-slate">Low (&lt;10%)</span>
+          <span className="text-text-muted">Low (&lt;10%)</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: '#457B9D' }} />
-          <span className="text-gray-slate">Medium (10-50%)</span>
+          <span className="text-text-muted">Medium (10-50%)</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 rounded" style={{ backgroundColor: '#E63946' }} />
-          <span className="text-gray-slate">High (&gt;50%)</span>
+          <span className="text-text-muted">High (&gt;50%)</span>
         </div>
       </div>
     </div>

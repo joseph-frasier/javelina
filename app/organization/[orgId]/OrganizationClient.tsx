@@ -331,11 +331,11 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
         {/* Hero Section - Custom Greeting */}
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
+            <h1 className="font-black font-sans text-4xl text-text mb-2">
               Welcome back, {greetingName}!
             </h1>
             <div className="flex items-center gap-3">
-              <p className="font-light text-gray-slate text-lg">{org.name}</p>
+              <p className="font-light text-text-muted text-lg">{org.name}</p>
               {!isLoadingPlan && planName && (
                 <span className={`${getPlanBadgeColor(planName)} text-white text-xs font-semibold px-3 py-1 rounded-full`}>
                   {planName}
@@ -355,7 +355,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               variant="secondary" 
               size="sm" 
               onClick={() => router.push(`/settings/billing/${org.id}?openModal=true`)} 
-              className="justify-center !bg-orange hover:!bg-orange-dark !text-white"
+              className="justify-center !bg-accent hover:!bg-accent-dark !text-white"
               disabled={isOrgBlocked}
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,7 +364,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               Upgrade Plan
             </Button>
             {canEditOrg && (
-              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-orange hover:!bg-orange-dark !text-white justify-center" disabled={isOrgBlocked}>
+              <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-accent hover:!bg-accent-dark !text-white justify-center" disabled={isOrgBlocked}>
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
