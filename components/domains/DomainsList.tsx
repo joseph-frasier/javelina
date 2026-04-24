@@ -76,7 +76,7 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
           <Link
             key={domain.id}
             href={`/domains/${domain.id}`}
-            className="flex items-center justify-between p-5 rounded-xl border-l-2 border-l-transparent border border-border bg-surface dark:bg-surface/[0.02] hover:border-l-orange hover:shadow-md hover:bg-surface-hover dark:hover:bg-surface/[0.04] transition-all"
+            className="flex items-center justify-between p-5 rounded-xl border border-border bg-surface hover:border-accent hover:shadow-md hover:bg-surface-hover transition-all"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="min-w-0">
@@ -84,7 +84,7 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
                   <span className="font-semibold text-text">{name}</span>
                   <span className="text-accent font-mono font-semibold">{tld}</span>
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-xs text-text-muted mt-0.5">
                   {domain.registration_type === 'linked' ? 'Linked' : domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
                   {domain.registered_at && ` · ${new Date(domain.registered_at).toLocaleDateString()}`}
                 </p>
@@ -97,15 +97,15 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
                 </span>
               )}
               {domain.amount_paid != null && (
-                <span className="font-mono text-xs bg-gray-100 dark:bg-surface/5 text-gray-500 dark:text-gray-400 px-2 py-1 rounded">
+                <span className="font-mono text-xs bg-surface-alt border border-border text-text-muted px-2.5 py-1 rounded-md">
                   ${(domain.amount_paid / 100).toFixed(2)}
                 </span>
               )}
               <span className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${statusConf.dotColor} ${statusConf.pulse ? 'animate-pulse' : ''}`} />
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{statusConf.label}</span>
+                <span className="text-xs font-medium text-text-muted">{statusConf.label}</span>
               </span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <svg className="w-4 h-4 text-text-faint" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
             </div>
