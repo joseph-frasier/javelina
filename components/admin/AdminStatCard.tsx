@@ -78,44 +78,15 @@ export function AdminStatCard({
   return (
     <div
       className={clsx(
-        'rounded-xl bg-surface border border-border shadow-card p-5',
+        'h-full flex flex-col rounded-xl bg-surface border border-border shadow-card p-5',
         'transition-shadow duration-200',
         className
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
-            {label}
-          </p>
-          <p
-            className={clsx(
-              'mt-2 text-2xl sm:text-3xl font-bold tracking-tight',
-              styles.valueText
-            )}
-          >
-            {value}
-          </p>
-          {(description || delta) && (
-            <div className="mt-2 flex items-center gap-2 text-xs">
-              {delta && (
-                <span
-                  className={clsx(
-                    'inline-flex items-center gap-0.5 font-medium',
-                    DELTA_STYLES[delta.direction ?? 'flat']
-                  )}
-                >
-                  {delta.direction === 'up' && '↑'}
-                  {delta.direction === 'down' && '↓'}
-                  {delta.value}
-                </span>
-              )}
-              {description && (
-                <span className="text-text-muted">{description}</span>
-              )}
-            </div>
-          )}
-        </div>
+        <p className="text-xs font-medium uppercase tracking-wide text-text-muted min-w-0 flex-1">
+          {label}
+        </p>
         {icon && (
           <div
             className={clsx(
@@ -127,6 +98,31 @@ export function AdminStatCard({
             {icon}
           </div>
         )}
+      </div>
+
+      <p
+        className={clsx(
+          'mt-3 text-2xl sm:text-3xl font-bold tracking-tight leading-none min-h-[2rem] sm:min-h-[2.25rem]',
+          styles.valueText
+        )}
+      >
+        {value || <span aria-hidden="true">&nbsp;</span>}
+      </p>
+
+      <div className="mt-auto pt-3 flex items-center gap-2 text-xs min-h-[1rem]">
+        {delta && (
+          <span
+            className={clsx(
+              'inline-flex items-center gap-0.5 font-medium',
+              DELTA_STYLES[delta.direction ?? 'flat']
+            )}
+          >
+            {delta.direction === 'up' && '↑'}
+            {delta.direction === 'down' && '↓'}
+            {delta.value}
+          </span>
+        )}
+        {description && <span className="text-text-muted">{description}</span>}
       </div>
     </div>
   );

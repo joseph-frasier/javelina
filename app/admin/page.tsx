@@ -108,7 +108,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => router.push('/admin/users')}
-              className="text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
+              className="text-left h-full transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
               aria-label="View all users"
             >
               <AdminStatCard
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => router.push('/admin/organizations')}
-              className="text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
+              className="text-left h-full transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
               aria-label="View all organizations"
             >
               <AdminStatCard
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => router.push('/admin/discounts')}
-              className="text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
+              className="text-left h-full transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
               aria-label="View discount codes"
             >
               <AdminStatCard
@@ -165,13 +165,13 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => router.push('/admin/audit')}
-              className="text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
+              className="text-left h-full transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
               aria-label="View audit logs"
             >
               <AdminStatCard
                 label="Audit Logs"
                 tone="neutral"
-                value=""
+                value={loading ? '—' : (kpis.totalAuditLogs ?? 0).toLocaleString()}
                 description="View audit logs →"
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => router.push('/admin/zones')}
-              className="text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
+              className="text-left h-full transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-xl"
               aria-label="Review flagged zones"
             >
               <AdminStatCard
@@ -193,8 +193,8 @@ export default function AdminDashboard() {
                 value={loading ? '—' : kpis.flaggedZones.toLocaleString()}
                 description={
                   !loading && kpis.flaggedZones > 0
-                    ? 'Duplicate zone names — review →'
-                    : 'Duplicate zone names'
+                    ? 'Review duplicates →'
+                    : 'Review zones →'
                 }
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -336,7 +336,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main ref={containerRef} className="flex-1 overflow-auto bg-surface-alt">
+        <main ref={containerRef} className="flex-1 overflow-auto bg-background">
           <div ref={contentRef} className="p-4 sm:p-6 md:p-8 w-full">
             {children}
           </div>
