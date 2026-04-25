@@ -612,7 +612,7 @@ function AdminUsersPageContent() {
                             <p className="font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
                             <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</p>
                             {user.role && (
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{user.role}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">{user.role}</p>
                             )}
                           </div>
                         </div>

@@ -247,7 +247,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
             </label>
             <div className="relative">
               {formData.discount_type === 'amount_off' && (
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">$</span>
               )}
               <input
                 type="number"
@@ -262,7 +262,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
                 }`}
               />
               {formData.discount_type === 'percent_off' && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">%</span>
               )}
             </div>
             {errors.discount_value && (
@@ -274,7 +274,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Max Redemptions
-              <span className="text-gray-400 font-normal ml-1">(optional)</span>
+              <span className="text-gray-500 dark:text-gray-400 font-normal ml-1">(optional)</span>
             </label>
             <input
               type="number"
@@ -293,7 +293,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Expiration Date
-              <span className="text-gray-400 font-normal ml-1">(optional)</span>
+              <span className="text-gray-500 dark:text-gray-400 font-normal ml-1">(optional)</span>
             </label>
             <input
               type="datetime-local"
@@ -301,7 +301,7 @@ function CreateDiscountModal({ isOpen, onClose, onSuccess }: CreateDiscountModal
               onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
               className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent dark:bg-gray-700 dark:text-white"
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Enter time in your local timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone})
             </p>
           </div>
@@ -508,7 +508,7 @@ function AdminDiscountsPageContent() {
               </p>
             </div>
             <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Create Code
