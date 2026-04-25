@@ -1,15 +1,16 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
-import { StatCard } from '@/components/ui/StatCard';
-import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Dropdown from '@/components/ui/Dropdown';
+import { Modal } from '@/components/ui/Modal';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
+import { AdminStatCard } from '@/components/admin/AdminStatCard';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -23,33 +24,11 @@ function AdminAuditPageContent() {
   const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  
-  // Sorting
-  const [sortKey, setSortKey] = useState<string | null>('created_at');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('desc');
-
-  // Handle column sorting
-  const handleSort = (key: string) => {
-    if (sortKey === key) {
-      // Same column: cycle through asc -> desc -> null
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortKey(null);
-        setSortDirection(null);
-      }
-    } else {
-      // New column: start with asc
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  };
+  const [searchQuery, setSearchQuery] = useState('');
+  const [detailLog, setDetailLog] = useState<AuditLog | null>(null);
 
   const fetchAuditLogs = useCallback(async () => {
     try {
-      // Only fetch admin actions (actor_type = 'admin')
       const data = await adminApi.getAuditLogs({ actor_type: 'admin' });
       setLogs((data || []) as AuditLog[]);
     } catch (error) {
@@ -60,13 +39,15 @@ function AdminAuditPageContent() {
     }
   }, [addToast]);
 
-  const filterLogs = useCallback(() => {
-    let filtered = logs;
-
-    // Search across all columns
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((log) => {
+  // Apply search filter — preserves the original cross-column matching semantics
+  const applyFilter = useCallback(() => {
+    if (!searchQuery.trim()) {
+      setFilteredLogs(logs);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    setFilteredLogs(
+      logs.filter((log) => {
         return (
           log.action?.toLowerCase().includes(query) ||
           log.table_name?.toLowerCase().includes(query) ||
@@ -76,49 +57,9 @@ function AdminAuditPageContent() {
           log.ip_address?.toLowerCase().includes(query) ||
           JSON.stringify(log.metadata).toLowerCase().includes(query)
         );
-      });
-    }
-
-    // Apply sorting
-    if (sortKey && sortDirection) {
-      filtered = [...filtered].sort((a, b) => {
-        let aValue: any;
-        let bValue: any;
-
-        if (sortKey === 'profiles') {
-          aValue = a.profiles?.name || '';
-          bValue = b.profiles?.name || '';
-        } else {
-          aValue = a[sortKey as keyof AuditLog];
-          bValue = b[sortKey as keyof AuditLog];
-        }
-
-        // Handle null/undefined
-        if (aValue == null && bValue == null) return 0;
-        if (aValue == null) return 1;
-        if (bValue == null) return -1;
-
-        // Handle dates
-        if (sortKey === 'created_at') {
-          const aDate = new Date(aValue);
-          const bDate = new Date(bValue);
-          return sortDirection === 'asc'
-            ? aDate.getTime() - bDate.getTime()
-            : bDate.getTime() - aDate.getTime();
-        }
-
-        // Handle strings
-        const aStr = String(aValue).toLowerCase();
-        const bStr = String(bValue).toLowerCase();
-        if (sortDirection === 'asc') {
-          return aStr.localeCompare(bStr);
-        }
-        return bStr.localeCompare(aStr);
-      });
-    }
-
-    setFilteredLogs(filtered);
-  }, [logs, searchQuery, sortKey, sortDirection]);
+      })
+    );
+  }, [logs, searchQuery]);
 
   useEffect(() => {
     fetchAuditLogs();
@@ -132,10 +73,9 @@ function AdminAuditPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    filterLogs();
-  }, [filterLogs]);
+    applyFilter();
+  }, [applyFilter]);
 
-  // Delay showing skeleton to avoid flash for quick loads
   useEffect(() => {
     if (loading) {
       const timer = setTimeout(() => setShowSkeleton(true), 150);
@@ -145,7 +85,6 @@ function AdminAuditPageContent() {
     }
   }, [loading]);
 
-  // Calculate stats
   const stats = {
     total: logs.length,
     today: logs.filter((log) => {
@@ -161,269 +100,257 @@ function AdminAuditPageContent() {
     }).length,
   };
 
+  const columns: AdminDataTableColumn<AuditLog>[] = useMemo(
+    () => [
+      {
+        key: 'admin',
+        header: 'Admin',
+        sortValue: (log) => (log.profiles?.name ?? '').toLowerCase(),
+        render: (log) => (
+          <span className="font-medium text-text">
+            {log.profiles?.name || 'Unknown Admin'}
+          </span>
+        ),
+      },
+      {
+        key: 'action',
+        header: 'Action',
+        sortable: false,
+        render: (log) => {
+          const description = getActionDescription(log);
+          return (
+            <div>
+              <span className="text-text">{description.action} </span>
+              <span className="font-semibold text-accent">
+                {description.targetName}
+              </span>
+              {description.targetEmail && (
+                <span className="text-text-muted text-xs"> ({description.targetEmail})</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        key: 'table_name',
+        header: 'Table',
+        sortValue: (log) => (log.table_name ?? '').toLowerCase(),
+        render: (log) => (
+          <AdminStatusBadge variant="accent" label={log.table_name} dot={false} />
+        ),
+      },
+      {
+        key: 'created_at',
+        header: 'When',
+        sortValue: (log) => (log.created_at ? new Date(log.created_at) : null),
+        render: (log) => {
+          const d = formatDateWithRelative(log.created_at);
+          return (
+            <Tooltip content={d.absolute}>
+              <span className="text-sm text-text-muted cursor-help">{d.relative}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        key: 'detail',
+        header: '',
+        align: 'right',
+        sortable: false,
+        render: () => (
+          <span className="text-text-faint text-xs">View →</span>
+        ),
+      },
+    ],
+    []
+  );
+
   return (
     <AdminProtectedRoute>
       <AdminLayout>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text">Audit Log</h1>
-              <p className="text-sm sm:text-base text-text-muted mt-1 sm:mt-2">View all admin actions</p>
-            </div>
-            <div className="flex-shrink-0">
-              <ExportButton data={filteredLogs} filename="audit-log" />
+        <AdminPageHeader
+          title="Audit Log"
+          subtitle="View all admin actions"
+          actions={<ExportButton data={filteredLogs} filename="audit-log" />}
+        />
+
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <AdminStatCard
+              label="Total Events"
+              tone="info"
+              value={stats.total}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="Today"
+              tone="accent"
+              value={stats.today}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="This Week"
+              tone="success"
+              value={stats.thisWeek}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              }
+            />
+          </div>
+        )}
+
+        <Card title="Audit Entries" description="Admin action log">
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search across all fields..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 pl-10 pr-3 rounded-md border border-border bg-surface-alt text-sm text-text placeholder:text-text-faint transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:border-accent focus-visible:shadow-focus-ring"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-faint pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
           </div>
 
-          {/* Stat Cards */}
-          {!loading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatCard
-                label="Total Events"
-                value={stats.total}
-                color="blue"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <AdminDataTable<AuditLog>
+            data={filteredLogs}
+            columns={columns}
+            getRowId={(l) => l.id}
+            onRowClick={(log) => setDetailLog(log)}
+            defaultSort={{ key: 'created_at', direction: 'desc' }}
+            pageSize={25}
+            loading={showSkeleton}
+            loadingRows={8}
+            emptyState={
+              <div className="py-12 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="mx-auto h-12 w-12 text-text-faint mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                }
-              />
-              <StatCard
-                label="Today"
-                value={stats.today}
-                color="orange"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                }
-              />
-              <StatCard
-                label="This Week"
-                value={stats.thisWeek}
-                color="green"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                }
-              />
-            </div>
-          )}
-
-          {/* Audit Log Table */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-lg font-semibold text-text">Audit Entries</h2>
-              <Tooltip content="Admin action log">
-                <InfoIcon />
-              </Tooltip>
-            </div>
-
-            {/* Search */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="search"
-                  placeholder="Search across all fields..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                  <p className="text-text font-medium">No audit entries found</p>
+                  <p className="text-text-muted text-sm mt-1">
+                    {searchQuery ? 'Try adjusting your search query.' : 'No administrative actions have been recorded yet.'}
+                  </p>
+                </div>
               </div>
-            </div>
+            }
+          />
+        </Card>
 
-            {showSkeleton ? (
-              <div className="space-y-4">
-                {[...Array(8)].map((_, i) => (
-                  <Card key={i} className="p-6">
-                    <div className="flex items-start gap-4">
-                      {/* Timeline dot placeholder */}
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
-                      </div>
-                      
-                      <div className="flex-1 space-y-3">
-                        {/* Header */}
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-2">
-                            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse" />
-                          </div>
-                          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20 animate-pulse" />
-                        </div>
+        {!loading && (
+          <p className="text-sm text-text-muted mt-4">
+            Showing {filteredLogs.length} of {logs.length} audit entries
+          </p>
+        )}
 
-                        {/* Metadata */}
-                        <div className="flex flex-wrap gap-4">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse" />
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28 animate-pulse" />
-                        </div>
-
-                        {/* Details box */}
-                        <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : filteredLogs.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="text-text-muted text-lg font-medium">No audit entries found</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  {searchQuery ? 'Try adjusting your search query.' : 'No administrative actions have been recorded yet.'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2 animate-fadeIn">
-                {filteredLogs.map((log) => {
-                  const logDate = formatDateWithRelative(log.created_at);
-                  const description = getActionDescription(log);
-                  
-                  return (
-                    <div key={log.id}>
-                      <button
-                        onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
-                        className="w-full text-left p-4 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            {/* Main action description */}
-                            <div className="mb-2">
-                              <span className="font-semibold text-gray-900 dark:text-gray-100">
-                                {log.profiles?.name || 'Unknown Admin'}
-                              </span>
-                              <span className="text-gray-900 dark:text-gray-100"> {description.action} </span>
-                              <span className="font-semibold text-accent-600 dark:text-accent-400">
-                                {description.targetName}
-                              </span>
-                              {description.targetEmail && (
-                                <span className="text-sm text-text-muted">
-                                  {' '}({description.targetEmail})
-                                </span>
-                              )}
-                            </div>
-                            
-                            {/* Metadata */}
-                            <div className="flex items-center gap-2 text-sm flex-wrap">
-                              <span className="px-2 py-0.5 bg-accent-light dark:bg-accent-900/30 text-text-400 text-xs rounded">
-                                {log.table_name}
-                              </span>
-                              <span className="text-text-muted">•</span>
-                              <Tooltip content={logDate.absolute}>
-                                <span className="text-text-muted cursor-help">{logDate.relative}</span>
-                              </Tooltip>
-                            </div>
-                          </div>
-                          <div className="text-gray-400 dark:text-gray-500 ml-4">
-                            {expandedId === log.id ? '▼' : '▶'}
-                          </div>
-                        </div>
-                      </button>
-
-                      {expandedId === log.id && (
-                        <div className="p-4 bg-accent-50 dark:bg-accent-900/10 border-t border-orange-100 dark:border-orange-900/30 rounded-b-lg mt-1">
-                          <div className="space-y-4 text-sm">
-                            {/* Admin Info */}
-                            <div>
-                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Admin</p>
-                              <p className="text-gray-900 dark:text-gray-100">
-                                {log.profiles?.name || 'Unknown'} 
-                                {log.profiles?.email && (
-                                  <span className="text-text-muted"> ({log.profiles.email})</span>
-                                )}
-                              </p>
-                            </div>
-
-                            {/* Action */}
-                            <div>
-                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Action</p>
-                              <p className="text-gray-900 dark:text-gray-100 capitalize">{description.action}</p>
-                            </div>
-
-                            {/* Target */}
-                            <div>
-                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Target</p>
-                              <p className="text-gray-900 dark:text-gray-100">
-                                {description.targetName}
-                                {description.targetEmail && (
-                                  <span className="text-text-muted"> ({description.targetEmail})</span>
-                                )}
-                              </p>
-                            </div>
-
-                            {/* Changes */}
-                            <div>
-                              <p className="text-xs font-semibold text-text-muted uppercase mb-1">Changes</p>
-                              <div className="bg-surface p-3 rounded border border-border">
-                                <p className="text-gray-900 dark:text-gray-100">{description.details}</p>
-                              </div>
-                            </div>
-
-                            {/* Technical Details */}
-                            <div className="pt-3">
-                              <p className="text-xs font-semibold text-text-muted uppercase mb-2">Technical Details</p>
-                              <div className="space-y-2">
-                                {log.record_id && (
-                                  <div>
-                                    <p className="text-xs text-text-muted">Record ID</p>
-                                    <p className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all">
-                                      {log.record_id}
-                                    </p>
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="text-xs text-text-muted">Table</p>
-                                  <p className="text-xs text-gray-900 dark:text-gray-100">{log.table_name}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-text-muted">Timestamp</p>
-                                  <p className="text-xs text-gray-900 dark:text-gray-100">{logDate.absolute}</p>
-                                </div>
-                                {log.ip_address && (
-                                  <div>
-                                    <p className="text-xs text-text-muted">IP Address</p>
-                                    <p className="text-xs text-gray-900 dark:text-gray-100">{log.ip_address}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-
-          {/* Summary */}
-          {!loading && (
-            <p className="text-sm text-text-muted">
-              Showing {filteredLogs.length} of {logs.length} audit entries
-            </p>
-          )}
-        </div>
+        <AuditLogDetailModal log={detailLog} onClose={() => setDetailLog(null)} />
       </AdminLayout>
     </AdminProtectedRoute>
+  );
+}
+
+interface AuditLogDetailModalProps {
+  log: AuditLog | null;
+  onClose: () => void;
+}
+
+function AuditLogDetailModal({ log, onClose }: AuditLogDetailModalProps) {
+  // Keep last log in state so closing animation has data to render
+  const [displayLog, setDisplayLog] = useState<AuditLog | null>(null);
+  useEffect(() => {
+    if (log) setDisplayLog(log);
+  }, [log]);
+
+  if (!displayLog) return null;
+  const description = getActionDescription(displayLog);
+  const logDate = formatDateWithRelative(displayLog.created_at);
+
+  return (
+    <Modal
+      isOpen={!!log}
+      onClose={onClose}
+      title="Audit Entry"
+      eyebrow={displayLog.table_name}
+      size="medium"
+    >
+      <div className="space-y-4 text-sm">
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-1">Admin</p>
+          <p className="text-text">
+            {displayLog.profiles?.name || 'Unknown'}
+            {displayLog.profiles?.email && (
+              <span className="text-text-muted"> ({displayLog.profiles.email})</span>
+            )}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-1">Action</p>
+          <p className="text-text capitalize">{description.action}</p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-1">Target</p>
+          <p className="text-text">
+            {description.targetName}
+            {description.targetEmail && (
+              <span className="text-text-muted"> ({description.targetEmail})</span>
+            )}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-1">Changes</p>
+          <div className="bg-surface-alt p-3 rounded border border-border">
+            <p className="text-text">{description.details}</p>
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-border">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Technical Details</p>
+          <div className="space-y-2">
+            {displayLog.record_id && (
+              <div>
+                <p className="text-xs text-text-muted">Record ID</p>
+                <p className="font-mono text-xs text-text break-all">{displayLog.record_id}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-text-muted">Table</p>
+              <p className="text-xs text-text">{displayLog.table_name}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-muted">Timestamp</p>
+              <p className="text-xs text-text">{logDate.absolute}</p>
+            </div>
+            {displayLog.ip_address && (
+              <div>
+                <p className="text-xs text-text-muted">IP Address</p>
+                <p className="text-xs text-text">{displayLog.ip_address}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
