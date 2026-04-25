@@ -111,7 +111,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
             onClick={() => setIsManageModalOpen(true)}
           >
             <svg
-              className="w-4 h-4 mr-1"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -160,7 +160,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
               onClick={() => setIsInviteModalOpen(true)}
             >
               <svg
-                className="w-4 h-4 mr-1"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
