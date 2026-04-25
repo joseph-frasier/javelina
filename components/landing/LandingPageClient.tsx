@@ -146,7 +146,7 @@ export default function LandingPageClient() {
                 </button>
                 <button
                   onClick={signup}
-                  className="inline-flex items-center bg-accent-500 text-white hover:brightness-110 rounded-full px-4 sm:px-5 py-2 text-sm font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all"
+                  className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-4 sm:px-5 py-2 text-sm font-semibold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all"
                 >
                   Get Started
                 </button>
@@ -239,7 +239,7 @@ export default function LandingPageClient() {
                             <div className={`w-2 h-2 rounded-full ${zone.status}`} />
                             <span className="text-sm font-medium text-gray-300">{zone.name}</span>
                           </div>
-                          <span className="text-xs bg-accent/15 text-accent px-2 py-1 rounded-md font-medium">
+                          <span className="text-xs bg-orange/15 text-orange px-2 py-1 rounded-md font-medium">
                             {zone.records} records
                           </span>
                         </div>
@@ -397,7 +397,7 @@ export default function LandingPageClient() {
                   One IP address maps to one physical server. The farther your users are from that server, the more latency and risk you inherit before any content loads.
                 </p>
               </div>
-              <div className="feature-card rounded-2xl p-6 sm:p-8 border border-accent/30 bg-accent/[0.04] shadow-lg shadow-orange-500/25">
+              <div className="feature-card rounded-2xl p-6 sm:p-8 border border-orange/30 bg-orange/[0.04] shadow-lg shadow-orange-500/25">
                 <h3 className="text-lg font-bold text-accent mb-3">Anycast (Javelina DNS)</h3>
                 <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
                   The same IP address is announced from many locations, and BGP routes queries to the nearest available node in real time. Local resolution, failover at the routing layer automatically, and distributed resilience under load.
@@ -434,7 +434,7 @@ export default function LandingPageClient() {
                 {/* Left: text + chips + CTA */}
                 <div className="flex-1 text-center lg:text-left max-w-xl">
                   <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight mb-4">
-                    Global Anycast <span className="text-accent-400">Network</span>
+                    Global Anycast <span className="text-orange-400">Network</span>
                   </h2>
                   <p className="text-gray-400 text-base sm:text-lg font-light mb-8 leading-relaxed">
                     A single IP address announced from 31 PoPs across 6 continents and 19 countries. BGP routes every query to the nearest node for low-latency resolution and automatic failover.
@@ -486,8 +486,8 @@ export default function LandingPageClient() {
                       <div className="flex items-center gap-2">
                         {/* Orange glowing dot */}
                         <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-500 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-500 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
                         </span>
                         <span className="text-xs font-mono text-white/30 uppercase tracking-widest">
                           Live Network Status
@@ -514,7 +514,7 @@ export default function LandingPageClient() {
                         className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
                       >
                         <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-accent-500" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
                           <span className="text-sm text-gray-400">{r.region}</span>
                         </div>
                         <span className="text-xs font-semibold text-white/60">{r.count} PoPs</span>
@@ -660,7 +660,7 @@ export default function LandingPageClient() {
           <div className="absolute inset-0 bg-[#0B0C0D]" />
           {/* Orange glow in the middle */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-500/[0.12] rounded-full blur-3xl" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/[0.12] rounded-full blur-3xl" />
           </div>
 
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative cta-content">
@@ -673,7 +673,7 @@ export default function LandingPageClient() {
             </p>
             <button
               onClick={signup}
-              className="inline-flex items-center bg-accent-500 text-white hover:brightness-110 rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group"
+              className="inline-flex items-center bg-orange-500 text-white hover:brightness-110 rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all group"
             >
               Get started
               <svg className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
