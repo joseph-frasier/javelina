@@ -1,10 +1,143 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
 import { Pagination } from '@/components/admin/Pagination';
 import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
-import { BulkActionBar } from '@/components/admin/BulkActionBar';
+
+interface BulkActionsMenuProps {
+  selectedCount: number;
+  bulkActions?: AdminDataTableBulkActions;
+  onClearSelection: () => void;
+}
+
+function BulkActionsMenu({
+  selectedCount,
+  bulkActions,
+  onClearSelection,
+}: BulkActionsMenuProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [open]);
+
+  if (!bulkActions || selectedCount === 0) return null;
+
+  const close = () => setOpen(false);
+  const fire = (handler?: () => void) => {
+    if (handler) handler();
+    close();
+  };
+
+  const items: Array<{
+    label: string;
+    onClick?: () => void;
+    tone: 'success' | 'warning' | 'danger';
+    icon: React.ReactNode;
+  }> = [];
+
+  if (bulkActions.onEnable) {
+    items.push({
+      label: 'Enable',
+      onClick: bulkActions.onEnable,
+      tone: 'success',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    });
+  }
+  if (bulkActions.onSuspend) {
+    items.push({
+      label: 'Suspend',
+      onClick: bulkActions.onSuspend,
+      tone: 'warning',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    });
+  }
+  if (bulkActions.onDelete) {
+    items.push({
+      label: 'Delete',
+      onClick: bulkActions.onDelete,
+      tone: 'danger',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      ),
+    });
+  }
+
+  if (items.length === 0) return null;
+
+  const toneClass = {
+    success: 'text-green-600 dark:text-green-400',
+    warning: 'text-yellow-600 dark:text-yellow-400',
+    danger: 'text-red-600 dark:text-red-400',
+  };
+
+  return (
+    <div className="flex items-center gap-3" ref={ref}>
+      <span className="text-sm text-text-muted">
+        <span className="font-medium text-text">{selectedCount}</span> selected
+      </span>
+      <button
+        type="button"
+        onClick={onClearSelection}
+        className="text-xs text-text-muted hover:text-text transition-colors focus-visible:outline-none focus-visible:shadow-focus-ring rounded px-1"
+      >
+        Clear
+      </button>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface-alt text-sm font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:shadow-focus-ring"
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          Bulk actions
+          <svg className={clsx('w-3.5 h-3.5 transition-transform', open && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {open && (
+          <div
+            className="absolute right-0 mt-2 w-48 bg-surface rounded-md shadow-popover border border-border overflow-hidden z-30"
+            role="menu"
+          >
+            {items.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => fire(item.onClick)}
+                className={clsx(
+                  'w-full text-left px-3 py-2 text-sm transition-colors hover:bg-surface-hover focus:bg-surface-hover focus:outline-none flex items-center gap-2',
+                  toneClass[item.tone]
+                )}
+                role="menuitem"
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 type SortDirection = 'asc' | 'desc' | null;
 
@@ -226,7 +359,18 @@ export function AdminDataTable<T>({
     );
   };
 
-  const showToolbar = Boolean(searchKeys) || Boolean(toolbarLeft) || Boolean(toolbarRight);
+  const hasBulkActionsMenu =
+    selectable &&
+    selectedIds.size > 0 &&
+    !!bulkActions &&
+    Boolean(bulkActions.onEnable || bulkActions.onSuspend || bulkActions.onDelete);
+
+  const showToolbar =
+    Boolean(searchKeys) ||
+    Boolean(toolbarLeft) ||
+    Boolean(toolbarRight) ||
+    hasBulkActionsMenu;
+
   const totalCount = sortedData.length;
 
   return (
@@ -261,7 +405,16 @@ export function AdminDataTable<T>({
             )}
             {toolbarLeft}
           </div>
-          {toolbarRight && <div className="flex items-center gap-2">{toolbarRight}</div>}
+          <div className="flex items-center gap-3">
+            {hasBulkActionsMenu && (
+              <BulkActionsMenu
+                selectedCount={selectedIds.size}
+                bulkActions={bulkActions}
+                onClearSelection={clearSelection}
+              />
+            )}
+            {toolbarRight}
+          </div>
         </div>
       )}
 
@@ -400,17 +553,6 @@ export function AdminDataTable<T>({
         </div>
       )}
 
-      {selectable && bulkActions && (
-        <BulkActionBar
-          selectedCount={selectedIds.size}
-          totalCount={totalCount}
-          onSelectAll={selectAll}
-          onClearSelection={clearSelection}
-          onDelete={bulkActions.onDelete}
-          onSuspend={bulkActions.onSuspend}
-          onEnable={bulkActions.onEnable}
-        />
-      )}
     </div>
   );
 }
