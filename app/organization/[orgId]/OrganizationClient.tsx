@@ -346,26 +346,26 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Create Tag Button (Mockup) */}
             <Button variant="secondary" size="sm" onClick={() => setIsCreateTagModalOpen(true)} className="justify-center" disabled={isOrgBlocked}>
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
               Create Tag
             </Button>
             <Button
-              variant="secondary" 
-              size="sm" 
-              onClick={() => router.push(`/settings/billing/${org.id}?openModal=true`)} 
+              variant="secondary"
+              size="sm"
+              onClick={() => router.push(`/settings/billing/${org.id}?openModal=true`)}
               className="justify-center !bg-accent hover:!bg-accent-hover !text-white"
               disabled={isOrgBlocked}
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
               Upgrade Plan
             </Button>
             {canEditOrg && (
               <Button variant="secondary" size="sm" onClick={() => setIsEditModalOpen(true)} className="!bg-accent hover:!bg-accent-hover !text-white justify-center" disabled={isOrgBlocked}>
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Edit
