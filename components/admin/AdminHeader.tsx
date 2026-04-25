@@ -255,12 +255,12 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
             <button
               type="button"
               onClick={search.openSearch}
-              className="hidden md:flex w-72 items-center justify-between rounded-md border border-border bg-gray-50 px-4 py-2 text-left text-sm text-text-muted transition-colors hover:border-accent hover:bg-surface dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              className="hidden md:flex w-72 items-center justify-between rounded-md border border-border bg-surface-alt px-4 py-2 text-left text-sm text-text-muted transition-colors hover:border-accent hover:bg-surface-hover"
               aria-label="Open global search"
             >
               <span className="flex items-center gap-2">
                 <svg
-                  className="h-4 w-4 text-gray-400"
+                  className="h-4 w-4 text-text-faint"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -275,7 +275,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                 </svg>
                 Global Search
               </span>
-              <span className="rounded bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              <span className="rounded bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                 {search.shortcutBadge}
               </span>
             </button>
