@@ -35,6 +35,7 @@ export interface AdminDataTableProps<T> {
   onSearchChange?: (query: string) => void;
   selectable?: boolean;
   bulkActions?: AdminDataTableBulkActions;
+  onSelectionChange?: (ids: Set<string>) => void;
   onRowClick?: (row: T) => void;
   rowClassName?: (row: T) => string | undefined;
   emptyState?: React.ReactNode;
@@ -88,6 +89,7 @@ export function AdminDataTable<T>({
   onSearchChange,
   selectable = false,
   bulkActions,
+  onSelectionChange,
   onRowClick,
   rowClassName,
   emptyState,
@@ -108,6 +110,10 @@ export function AdminDataTable<T>({
   useEffect(() => {
     if (onSearchChange) onSearchChange(searchQuery);
   }, [searchQuery, onSearchChange]);
+
+  useEffect(() => {
+    if (onSelectionChange) onSelectionChange(selectedIds);
+  }, [selectedIds, onSelectionChange]);
 
   const filteredData = useMemo(() => {
     if (!searchKeys || !searchQuery.trim()) return data;

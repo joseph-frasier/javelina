@@ -1,18 +1,18 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
-import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Dropdown from '@/components/ui/Dropdown';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
+import { AdminStatCard } from '@/components/admin/AdminStatCard';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
 import { ExportButton } from '@/components/admin/ExportButton';
-import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
 import { ViewUserDetailsModal } from '@/components/modals/ViewUserDetailsModal';
@@ -20,6 +20,15 @@ import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { getActivityStatus, getActivityBadge } from '@/lib/utils/activity';
+
+type ActivityVariant = 'success' | 'info' | 'neutral' | 'accent';
+
+const ACTIVITY_VARIANT_MAP: Record<string, ActivityVariant> = {
+  online: 'success',
+  active: 'info',
+  recent: 'neutral',
+  inactive: 'neutral',
+};
 interface User {
   id: string;
   name: string;
@@ -40,17 +49,13 @@ function AdminUsersPageContent() {
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
   
-  // Filters
-  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
-  
-  // Sorting
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
-  
-  // Bulk selection
+  // Search across all columns (URL-synced)
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Bulk selection — mirrored from AdminDataTable so we can pass it to ExportButton
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
-  // Pagination
+
+  // Mobile-only pagination state (desktop pagination is inside AdminDataTable)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
   
@@ -100,13 +105,15 @@ function AdminUsersPageContent() {
     }
   }, [addToast]);
 
-  const filterUsers = useCallback(() => {
-    let filtered = users;
-
-    // Search across all columns
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((user) => {
+  // Apply search filter — preserves the original cross-column matching semantics
+  const applyFilter = useCallback(() => {
+    if (!searchQuery.trim()) {
+      setFilteredUsers(users);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    setFilteredUsers(
+      users.filter((user) => {
         return (
           user.name?.toLowerCase().includes(query) ||
           user.email?.toLowerCase().includes(query) ||
@@ -114,41 +121,9 @@ function AdminUsersPageContent() {
           user.status?.toLowerCase().includes(query) ||
           getActivityStatus(user.last_login)?.toLowerCase().includes(query)
         );
-      });
-    }
-
-    // Apply sorting
-    if (sortKey && sortDirection) {
-      filtered = [...filtered].sort((a, b) => {
-        let aValue: any = a[sortKey as keyof User];
-        let bValue: any = b[sortKey as keyof User];
-
-        // Handle null/undefined
-        if (aValue == null && bValue == null) return 0;
-        if (aValue == null) return 1;
-        if (bValue == null) return -1;
-
-        // Handle dates (last_login, created_at)
-        if (sortKey === 'last_login' || sortKey === 'created_at') {
-          const aDate = new Date(aValue);
-          const bDate = new Date(bValue);
-          return sortDirection === 'asc'
-            ? aDate.getTime() - bDate.getTime()
-            : bDate.getTime() - aDate.getTime();
-        }
-
-        // Handle strings
-        const aStr = String(aValue).toLowerCase();
-        const bStr = String(bValue).toLowerCase();
-        if (sortDirection === 'asc') {
-          return aStr.localeCompare(bStr);
-        }
-        return bStr.localeCompare(aStr);
-      });
-    }
-
-    setFilteredUsers(filtered);
-  }, [users, searchQuery, sortKey, sortDirection]);
+      })
+    );
+  }, [users, searchQuery]);
 
   useEffect(() => {
     fetchUsers();
@@ -162,10 +137,9 @@ function AdminUsersPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    filterUsers();
-    // Reset to page 1 when filters change
+    applyFilter();
     setCurrentPage(1);
-  }, [filterUsers]);
+  }, [applyFilter]);
 
   // Delay showing skeleton to avoid flash for quick loads
   useEffect(() => {
@@ -177,50 +151,17 @@ function AdminUsersPageContent() {
     }
   }, [loading]);
 
-  // Handle column sorting
-  const handleSort = (key: string) => {
-    if (sortKey === key) {
-      // Same column: cycle through asc -> desc -> null
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortKey(null);
-        setSortDirection(null);
-      }
-    } else {
-      // New column: start with asc
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  };
-
-  // Bulk selection functions
   const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const selectAll = () => {
-    setSelectedIds(new Set(filteredUsers.map(u => u.id)));
-  };
-
-  const selectPage = () => {
-    const newSelected = new Set(selectedIds);
-    paginatedUsers.forEach(user => newSelected.add(user.id));
-    setSelectedIds(newSelected);
-  };
-
-  const clearSelection = () => {
-    setSelectedIds(new Set());
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const getSelectedUsers = () => {
-    return users.filter(u => selectedIds.has(u.id));
+    return users.filter((u) => selectedIds.has(u.id));
   };
 
   // Bulk actions (not yet wired to backend endpoints)
@@ -371,7 +312,103 @@ function AdminUsersPageContent() {
     online: users.filter((u) => getActivityStatus(u.last_login) === 'online').length,
   };
 
-  // Pagination calculations
+  // Build column definitions for AdminDataTable (desktop only).
+  const columns: AdminDataTableColumn<User>[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        header: 'Name',
+        sortValue: (u) => (u.name ?? '').toLowerCase(),
+        render: (u) => (
+          <div>
+            <p className="font-medium text-text">{u.name}</p>
+            {u.role && <p className="text-xs text-text-muted mt-0.5">{u.role}</p>}
+          </div>
+        ),
+      },
+      {
+        key: 'email',
+        header: 'Email',
+        sortValue: (u) => (u.email ?? '').toLowerCase(),
+        render: (u) => <span className="text-sm text-text-muted">{u.email}</span>,
+      },
+      {
+        key: 'activity',
+        header: (
+          <span className="inline-flex items-center justify-center gap-1">
+            Activity
+            <Tooltip content="User activity status">
+              <InfoIcon />
+            </Tooltip>
+          </span>
+        ),
+        align: 'center',
+        sortable: false,
+        render: (u) => {
+          const status = getActivityStatus(u.last_login);
+          const badge = getActivityBadge(status);
+          const variant = ACTIVITY_VARIANT_MAP[status] ?? 'neutral';
+          return (
+            <AdminStatusBadge
+              variant={variant}
+              label={badge.label}
+              animate={badge.animate}
+            />
+          );
+        },
+      },
+      {
+        key: 'status',
+        header: (
+          <span className="inline-flex items-center justify-center gap-1">
+            Status
+            <Tooltip content="Account status">
+              <InfoIcon />
+            </Tooltip>
+          </span>
+        ),
+        align: 'center',
+        sortValue: (u) => (u.status ?? 'active').toLowerCase(),
+        render: (u) => {
+          const isActive = (u.status || 'active') === 'active';
+          return (
+            <AdminStatusBadge
+              variant={isActive ? 'success' : 'danger'}
+              label={isActive ? 'Active' : 'Disabled'}
+            />
+          );
+        },
+      },
+      {
+        key: 'last_login',
+        header: 'Last Login',
+        sortValue: (u) => (u.last_login ? new Date(u.last_login) : null),
+        render: (u) => {
+          const d = formatDateWithRelative(u.last_login);
+          return (
+            <Tooltip content={d.absolute}>
+              <span className="text-sm text-text-muted cursor-help">{d.relative}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        align: 'right',
+        sortable: false,
+        render: (u) => (
+          <div onClick={(e) => e.stopPropagation()}>
+            <QuickActionsDropdown actions={getQuickActions(u)} align="right" />
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  // Pagination calculations for the mobile card view (desktop pagination is inside AdminDataTable)
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -381,238 +418,146 @@ function AdminUsersPageContent() {
     setCurrentPage(page);
   };
 
+  const exportData = selectedIds.size > 0 ? getSelectedUsers() : filteredUsers;
+
   return (
     <AdminProtectedRoute>
       <AdminLayout>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text">Users</h1>
-              <p className="text-sm sm:text-base text-text-muted mt-1 sm:mt-2">Manage all system users</p>
-            </div>
-            <div className="flex-shrink-0">
-              <ExportButton 
-                data={selectedIds.size > 0 ? getSelectedUsers() : paginatedUsers} 
-                filename="users" 
+        <AdminPageHeader
+          title="Users"
+          subtitle="Manage all system users"
+          actions={<ExportButton data={exportData} filename="users" />}
+        />
+
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <AdminStatCard
+              label="Total Users"
+              tone="info"
+              value={stats.total}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="Active Users"
+              tone="success"
+              value={stats.active}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="Online Now"
+              tone="success"
+              value={stats.online}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="Disabled Users"
+              tone="danger"
+              value={stats.disabled}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              }
+            />
+          </div>
+        )}
+
+        <Card title="Users List" description="All registered users">
+          {/* Lifted search input — preserves URL ?search= sync from searchParams effect */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search across all fields..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 pl-10 pr-3 rounded-md border border-border bg-surface-alt text-sm text-text placeholder:text-text-faint transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:border-accent focus-visible:shadow-focus-ring"
               />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-faint pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
           </div>
 
-          {/* Stat Cards */}
-          {!loading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                label="Total Users"
-                value={stats.total}
-                color="blue"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                }
-              />
-              <StatCard
-                label="Active Users"
-                value={stats.active}
-                color="green"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                }
-              />
-              <StatCard
-                label="Online Now"
-                value={stats.online}
-                color="green"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
-                  </svg>
-                }
-              />
-              <StatCard
-                label="Disabled Users"
-                value={stats.disabled}
-                color="red"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                }
-              />
-            </div>
-          )}
-
-          {/* Users Table */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-text">Users List</h2>
-                <Tooltip content="All registered users">
-                  <InfoIcon />
-                </Tooltip>
-                {selectedIds.size > 0 && (
-                  <span className="ml-2 text-sm text-text-muted">
-                    {selectedIds.size} selected
-                  </span>
-                )}
-              </div>
-              {filteredUsers.length > itemsPerPage && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  totalItems={filteredUsers.length}
-                  itemsPerPage={itemsPerPage}
-                  position="top"
-                />
-              )}
-            </div>
-
-            {/* Search */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="search"
-                  placeholder="Search across all fields..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-
+          {/* Mobile card view (sm:hidden) — paginated by page-level state */}
+          <div className="sm:hidden">
             {showSkeleton ? (
-              <>
-                {/* Mobile Skeleton */}
-                <div className="sm:hidden space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Card key={i} className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
-                          <div className="flex-1 space-y-2">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
-                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse" />
-                          </div>
-                        </div>
-                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                      </div>
-                      <div className="space-y-2 pt-3 border-t border-border">
-                        <div className="flex justify-between">
-                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
-                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
-                        </div>
-                        <div className="flex justify-between">
-                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
-                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="rounded-lg border border-border p-4 bg-surface">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-4 h-4 bg-surface-alt rounded animate-pulse" />
+                        <div className="w-10 h-10 bg-surface-alt rounded-full animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-surface-alt rounded w-3/4 animate-pulse" />
+                          <div className="h-3 bg-surface-alt rounded w-1/2 animate-pulse" />
                         </div>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Desktop Skeleton */}
-                <div className="hidden sm:block overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 w-12">
-                          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                        </th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Email</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Activity</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Status</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Last Login</th>
-                        <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...Array(8)].map((_, i) => (
-                        <tr key={i} className="border-b border-border">
-                          <td className="py-3 px-4">
-                            <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse" />
-                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 mt-1 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="mx-auto h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="mx-auto h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <div className="ml-auto h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <p className="text-text-muted text-lg font-medium">No users found</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  {searchQuery ? 'Try adjusting your search query.' : 'No users have been registered yet.'}
-                </p>
+              <div className="py-10 flex items-center justify-center border border-border rounded-lg">
+                <div className="text-center">
+                  <svg className="mx-auto h-10 w-10 text-text-faint mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <p className="text-sm font-medium text-text">No users found</p>
+                  <p className="text-xs text-text-muted mt-1">
+                    {searchQuery ? 'Try adjusting your search query.' : 'No users have been registered yet.'}
+                  </p>
+                </div>
               </div>
             ) : (
-              <div className="animate-fadeIn">
-              {/* Mobile Card View - Below 640px */}
-              <div className="sm:hidden space-y-3">
+              <div className="space-y-3">
                 {paginatedUsers.map((user) => {
                   const lastLoginDate = formatDateWithRelative(user.last_login);
                   const activityStatus = getActivityStatus(user.last_login);
                   const activityBadge = getActivityBadge(activityStatus);
+                  const activityVariant = ACTIVITY_VARIANT_MAP[activityStatus] ?? 'neutral';
                   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                  const isActive = (user.status || 'active') === 'active';
 
                   return (
-                    <Card key={user.id} className="p-4">
+                    <div
+                      key={user.id}
+                      className="rounded-lg border border-border bg-surface p-4"
+                    >
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <input
                             type="checkbox"
                             checked={selectedIds.has(user.id)}
                             onChange={() => toggleSelect(user.id)}
-                            className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500 flex-shrink-0"
+                            className="w-4 h-4 text-accent border-border rounded focus:ring-accent flex-shrink-0"
                           />
                           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold">
                             {userInitial}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 dark:text-white truncate">{user.name}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</p>
+                            <p className="font-semibold text-text truncate">{user.name}</p>
+                            <p className="text-xs text-text-muted truncate">{user.email}</p>
                             {user.role && (
-                              <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">{user.role}</p>
+                              <p className="text-xs text-text-muted mt-0.5">{user.role}</p>
                             )}
                           </div>
                         </div>
@@ -621,238 +566,85 @@ function AdminUsersPageContent() {
 
                       <div className="space-y-2 pt-3 border-t border-border">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Activity:</span>
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${activityBadge.color}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${activityBadge.dotColor} ${activityBadge.animate ? 'animate-pulse' : ''}`} />
-                            {activityBadge.label}
-                          </span>
+                          <span className="text-text-muted">Activity:</span>
+                          <AdminStatusBadge
+                            variant={activityVariant}
+                            label={activityBadge.label}
+                            animate={activityBadge.animate}
+                          />
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            user.status === 'active'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          }`}>
-                            {user.status === 'active' ? 'Active' : 'Disabled'}
-                          </span>
+                          <span className="text-text-muted">Status:</span>
+                          <AdminStatusBadge
+                            variant={isActive ? 'success' : 'danger'}
+                            label={isActive ? 'Active' : 'Disabled'}
+                          />
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Last Login:</span>
-                          <span className="text-gray-900 dark:text-gray-100 text-xs">{lastLoginDate.relative}</span>
+                          <span className="text-text-muted">Last Login:</span>
+                          <span className="text-text text-xs">{lastLoginDate.relative}</span>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   );
                 })}
-              </div>
-
-              {/* Desktop Table - 640px+ */}
-              <div className="hidden sm:block">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 w-12">
-                          <SelectAllCheckbox
-                            selectedCount={selectedIds.size}
-                            pageCount={paginatedUsers.length}
-                            totalCount={filteredUsers.length}
-                            pageSelectedCount={paginatedUsers.filter(u => selectedIds.has(u.id)).length}
-                            onSelectPage={selectPage}
-                            onSelectAll={selectAll}
-                            onSelectNone={clearSelection}
-                          />
-                        </th>
-                      <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
-                          sortKey === 'name' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                        onClick={() => handleSort('name')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Name
-                          {sortKey === 'name' && (
-                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
-                          sortKey === 'email' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                        onClick={() => handleSort('email')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Email
-                          {sortKey === 'email' && (
-                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
-                        <div className="flex items-center justify-center gap-1">
-                          Activity
-                          <Tooltip content="User activity status">
-                            <InfoIcon />
-                          </Tooltip>
-                        </div>
-                      </th>
-                      <th 
-                        className={`text-center py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
-                          sortKey === 'status' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="flex items-center gap-1">
-                            Status
-                            <Tooltip content="Account status">
-                              <InfoIcon />
-                            </Tooltip>
-                          </div>
-                          {sortKey === 'status' && (
-                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
-                          sortKey === 'last_login' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                        onClick={() => handleSort('last_login')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Last Login
-                          {sortKey === 'last_login' && (
-                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
-                        {selectedIds.size > 0 ? (
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={handleBulkEnable}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              Enable
-                            </button>
-                            <button
-                              onClick={handleBulkSuspend}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded transition-colors"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              Suspend
-                            </button>
-                            <button
-                              onClick={handleBulkDelete}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Delete
-                            </button>
-                          </div>
-                        ) : (
-                          'Actions'
-                        )}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedUsers.map((user) => {
-                      const lastLoginDate = formatDateWithRelative(user.last_login);
-                      const activityStatus = getActivityStatus(user.last_login);
-                      const activityBadge = getActivityBadge(activityStatus);
-                      
-                      return (
-                        <tr key={user.id} className="border-b border-border">
-                          <td className="py-3 px-4">
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.has(user.id)}
-                              onChange={() => toggleSelect(user.id)}
-                              className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500"
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
-                            {user.role && (
-                              <p className="text-xs text-gray-500 dark:text-gray-100">{user.role}</p>
-                            )}
-                          </td>
-                          <td className="py-3 px-4">
-                            <p className="text-sm text-gray-600 dark:text-gray-100">{user.email}</p>
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${activityBadge.color}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${activityBadge.dotColor} ${activityBadge.animate ? 'animate-pulse' : ''}`} />
-                              {activityBadge.label}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                                (user.status || 'active') === 'active'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                              }`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full ${
-                                (user.status || 'active') === 'active' ? 'bg-green-600' : 'bg-red-600'
-                              }`} />
-                              {(user.status || 'active') === 'active' ? 'Active' : 'Disabled'}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Tooltip content={lastLoginDate.absolute}>
-                              <p className="text-sm text-gray-600 dark:text-gray-100 cursor-help">
-                                {lastLoginDate.relative}
-                              </p>
-                            </Tooltip>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <QuickActionsDropdown actions={getQuickActions(user)} align="right" />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                </div>
-                
-                {/* Bottom Pagination */}
                 {filteredUsers.length > itemsPerPage && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                    totalItems={filteredUsers.length}
-                    itemsPerPage={itemsPerPage}
-                    position="bottom"
-                  />
+                  <div className="pt-2">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                      totalItems={filteredUsers.length}
+                      itemsPerPage={itemsPerPage}
+                      position="bottom"
+                    />
+                  </div>
                 )}
               </div>
-              </div>
             )}
-          </Card>
+          </div>
 
-          {/* Summary */}
-          {!loading && filteredUsers.length <= itemsPerPage && (
-            <p className="text-sm text-text-muted">
-              Showing {filteredUsers.length} of {users.length} users
-            </p>
-          )}
-        </div>
+          {/* Desktop table — AdminDataTable owns sort/pagination/selection */}
+          <div className="hidden sm:block">
+            <AdminDataTable<User>
+              data={filteredUsers}
+              columns={columns}
+              getRowId={(u) => u.id}
+              selectable
+              onSelectionChange={setSelectedIds}
+              bulkActions={{
+                onEnable: handleBulkEnable,
+                onSuspend: handleBulkSuspend,
+                onDelete: handleBulkDelete,
+              }}
+              pageSize={itemsPerPage}
+              loading={showSkeleton}
+              loadingRows={8}
+              emptyState={
+                <div className="py-12 flex items-center justify-center">
+                  <div className="text-center">
+                    <svg className="mx-auto h-12 w-12 text-text-faint mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <p className="text-text font-medium">No users found</p>
+                    <p className="text-text-muted text-sm mt-1">
+                      {searchQuery ? 'Try adjusting your search query.' : 'No users have been registered yet.'}
+                    </p>
+                  </div>
+                </div>
+              }
+            />
+          </div>
+        </Card>
+
+        {/* Summary */}
+        {!loading && filteredUsers.length <= itemsPerPage && (
+          <p className="text-sm text-text-muted mt-4">
+            Showing {filteredUsers.length} of {users.length} users
+          </p>
+        )}
 
         {/* Confirmation Modal */}
         <ConfirmationModal
@@ -871,10 +663,9 @@ function AdminUsersPageContent() {
             isOpen={viewUserModalOpen}
             onClose={() => {
               setViewUserModalOpen(false);
-              // Clear data after animation completes
               setTimeout(() => {
-              setViewUserId(null);
-              setViewUserName('');
+                setViewUserId(null);
+                setViewUserName('');
                 setViewUserData(null);
               }, 300);
             }}
@@ -887,6 +678,7 @@ function AdminUsersPageContent() {
     </AdminProtectedRoute>
   );
 }
+
 
 export default function AdminUsersPage() {
   return (
