@@ -1,16 +1,17 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
-import { StatCard } from '@/components/ui/StatCard';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
-import Button from '@/components/ui/Button';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
+import { AdminStatCard } from '@/components/admin/AdminStatCard';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
 import { ExportButton } from '@/components/admin/ExportButton';
-import { SelectAllCheckbox } from '@/components/admin/SelectAllCheckbox';
 import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActionsDropdown';
 import { Pagination } from '@/components/admin/Pagination';
 import { ViewOrganizationDetailsModal } from '@/components/modals/ViewOrganizationDetailsModal';
@@ -19,7 +20,6 @@ import { ConfirmDisableOrganizationModal } from '@/components/modals/ConfirmDisa
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
-import Link from 'next/link';
 
 interface Organization {
   id: string;
@@ -51,17 +51,13 @@ function AdminOrganizationsPageContent() {
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
   
-  // Search
-  const [searchQuery, setSearchQuery] = useState(''); // Search across all columns
-  
-  // Sorting
-  const [sortKey, setSortKey] = useState<string | null>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('asc');
-  
-  // Bulk selection
+  // Search across all columns (URL-synced)
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Bulk selection — mirrored from AdminDataTable
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
-  // Pagination
+
+  // Mobile-only pagination state (desktop pagination is inside AdminDataTable)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
   
@@ -114,13 +110,14 @@ function AdminOrganizationsPageContent() {
     }
   }, [addToast]);
 
-  const filterOrganizations = useCallback(() => {
-    let filtered = orgs;
-
-    // Search across all columns
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((org) => {
+  const applyFilter = useCallback(() => {
+    if (!searchQuery.trim()) {
+      setFilteredOrgs(orgs);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    setFilteredOrgs(
+      orgs.filter((org) => {
         const memberCount = getMemberCount(org).toString();
         const status = org.deleted_at ? 'deleted' : 'active';
         return (
@@ -129,47 +126,9 @@ function AdminOrganizationsPageContent() {
           memberCount.includes(query) ||
           status.includes(query)
         );
-      });
-    }
-
-    // Apply sorting
-    if (sortKey && sortDirection) {
-      filtered = [...filtered].sort((a, b) => {
-        let aValue: any;
-        let bValue: any;
-
-        if (sortKey === 'members') {
-          aValue = getMemberCount(a);
-          bValue = getMemberCount(b);
-        } else if (sortKey === 'created_at') {
-          aValue = new Date(a.created_at).getTime();
-          bValue = new Date(b.created_at).getTime();
-        } else {
-          aValue = a[sortKey as keyof Organization];
-          bValue = b[sortKey as keyof Organization];
-        }
-
-        // Handle null/undefined
-        if (aValue == null && bValue == null) return 0;
-        if (aValue == null) return 1;
-        if (bValue == null) return -1;
-
-        // Compare
-        if (typeof aValue === 'number' && typeof bValue === 'number') {
-          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-        }
-
-        const aStr = String(aValue).toLowerCase();
-        const bStr = String(bValue).toLowerCase();
-        if (sortDirection === 'asc') {
-          return aStr.localeCompare(bStr);
-        }
-        return bStr.localeCompare(aStr);
-      });
-    }
-
-    setFilteredOrgs(filtered);
-  }, [orgs, searchQuery, sortKey, sortDirection]);
+      })
+    );
+  }, [orgs, searchQuery]);
 
   useEffect(() => {
     fetchOrganizations();
@@ -183,10 +142,9 @@ function AdminOrganizationsPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    filterOrganizations();
-    // Reset to page 1 when filters change
+    applyFilter();
     setCurrentPage(1);
-  }, [filterOrganizations]);
+  }, [applyFilter]);
 
   // Delay showing skeleton to avoid flash for quick loads
   useEffect(() => {
@@ -198,50 +156,13 @@ function AdminOrganizationsPageContent() {
     }
   }, [loading]);
 
-  // Handle column sorting
-  const handleSort = (key: string) => {
-    if (sortKey === key) {
-      // Same column: cycle through asc -> desc -> null
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortKey(null);
-        setSortDirection(null);
-      }
-    } else {
-      // New column: start with asc
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  };
-
-  // Bulk selection functions
   const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const selectAll = () => {
-    setSelectedIds(new Set(filteredOrgs.map(o => o.id)));
-  };
-
-  const selectPage = () => {
-    const newSelected = new Set(selectedIds);
-    paginatedOrgs.forEach(org => newSelected.add(org.id));
-    setSelectedIds(newSelected);
-  };
-
-  const clearSelection = () => {
-    setSelectedIds(new Set());
-  };
-
-  const getSelectedOrgs = () => {
-    return orgs.filter(o => selectedIds.has(o.id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   // Bulk actions (not yet wired to backend endpoints)
@@ -383,7 +304,7 @@ function AdminOrganizationsPageContent() {
     totalMembers: orgs.reduce((sum, org) => sum + getMemberCount(org), 0),
   };
 
-  // Pagination calculations
+  // Mobile-only pagination calculations (desktop pagination is inside AdminDataTable)
   const totalPages = Math.ceil(filteredOrgs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -393,236 +314,210 @@ function AdminOrganizationsPageContent() {
     setCurrentPage(page);
   };
 
+  const columns: AdminDataTableColumn<Organization>[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        header: 'Name',
+        sortValue: (o) => (o.name ?? '').toLowerCase(),
+        render: (o) => (
+          <div>
+            <p className="font-medium text-text">{o.name}</p>
+            {o.description && (
+              <p className="text-sm text-text-muted truncate max-w-xs">{o.description}</p>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: 'members',
+        header: (
+          <span className="inline-flex items-center justify-center gap-1">
+            Members
+            <Tooltip content="Member count">
+              <InfoIcon />
+            </Tooltip>
+          </span>
+        ),
+        align: 'center',
+        sortValue: (o) => getMemberCount(o),
+        render: (o) => (
+          <span className="text-sm font-semibold text-text">{getMemberCount(o)}</span>
+        ),
+      },
+      {
+        key: 'status',
+        header: (
+          <span className="inline-flex items-center justify-center gap-1">
+            Status
+            <Tooltip content="Organization status">
+              <InfoIcon />
+            </Tooltip>
+          </span>
+        ),
+        align: 'center',
+        sortable: false,
+        render: (o) => {
+          if (o.deleted_at) return <AdminStatusBadge variant="neutral" label="Deleted" />;
+          if (o.is_active === false) return <AdminStatusBadge variant="danger" label="Disabled" />;
+          return <AdminStatusBadge variant="success" label="Active" />;
+        },
+      },
+      {
+        key: 'created_at',
+        header: 'Created',
+        sortValue: (o) => (o.created_at ? new Date(o.created_at) : null),
+        render: (o) => {
+          const d = formatDateWithRelative(o.created_at);
+          return (
+            <Tooltip content={d.absolute}>
+              <span className="text-sm text-text-muted cursor-help">{d.relative}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        align: 'right',
+        sortable: false,
+        render: (o) => (
+          <div onClick={(e) => e.stopPropagation()}>
+            <QuickActionsDropdown actions={getQuickActions(o)} align="right" />
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const exportData =
+    selectedIds.size > 0
+      ? filteredOrgs.filter((o) => selectedIds.has(o.id))
+      : filteredOrgs;
+
   return (
     <AdminProtectedRoute>
       <AdminLayout>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text">Organizations</h1>
-              <p className="text-sm sm:text-base text-text-muted mt-1 sm:mt-2">Manage all organizations</p>
-            </div>
-            
-            {/* Export Button */}
-            <div className="flex-shrink-0">
-              <ExportButton 
-                data={selectedIds.size > 0 
-                  ? filteredOrgs.filter(o => selectedIds.has(o.id))
-                  : filteredOrgs
-                } 
-                filename="organizations" 
+        <AdminPageHeader
+          title="Organizations"
+          subtitle="Manage all organizations"
+          actions={<ExportButton data={exportData} filename="organizations" />}
+        />
+
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <AdminStatCard
+              label="Total Organizations"
+              tone="info"
+              value={stats.total}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="Active"
+              tone="success"
+              value={stats.active}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="Disabled Organizations"
+              tone="danger"
+              value={stats.disabled}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              }
+            />
+            <AdminStatCard
+              label="Total Members"
+              tone="accent"
+              value={stats.totalMembers}
+              icon={
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              }
+            />
+          </div>
+        )}
+
+        <Card title="Organizations List" description="User groups">
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search across all fields..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 pl-10 pr-3 rounded-md border border-border bg-surface-alt text-sm text-text placeholder:text-text-faint transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:border-accent focus-visible:shadow-focus-ring"
               />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-faint pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
           </div>
 
-          {/* Stat Cards */}
-          {!loading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                label="Total Organizations"
-                value={stats.total}
-                color="blue"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                }
-              />
-              <StatCard
-                label="Active"
-                value={stats.active}
-                color="green"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                }
-              />
-              <StatCard
-                label="Disabled Organizations"
-                value={stats.disabled}
-                color="red"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                }
-              />
-              <StatCard
-                label="Total Members"
-                value={stats.totalMembers}
-                color="orange"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                }
-              />
-            </div>
-          )}
-
-          {/* Organizations Table */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-text">Organizations List</h2>
-                <Tooltip content="User groups">
-                  <InfoIcon />
-                </Tooltip>
-                {selectedIds.size > 0 && (
-                  <span className="ml-2 text-sm text-text-muted">
-                    {selectedIds.size} selected
-                  </span>
-                )}
-              </div>
-              {filteredOrgs.length > itemsPerPage && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  totalItems={filteredOrgs.length}
-                  itemsPerPage={itemsPerPage}
-                  position="top"
-                />
-              )}
-            </div>
-
-            {/* Search */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="search"
-                  placeholder="Search across all fields..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 rounded-md border border-border bg-surface text-gray-900 dark:text-gray-100 placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-
+          <div className="sm:hidden">
             {showSkeleton ? (
-              <>
-                {/* Mobile Skeleton */}
-                <div className="sm:hidden space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Card key={i} className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
-                          <div className="flex-1 space-y-2">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
-                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse" />
-                          </div>
-                        </div>
-                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                      </div>
-                      <div className="space-y-2 pt-3 border-t border-border">
-                        <div className="flex justify-between">
-                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse" />
-                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
-                        </div>
-                        <div className="flex justify-between">
-                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
-                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse" />
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Desktop Skeleton */}
-                <div className="hidden sm:block overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 w-12">
-                          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                        </th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Name</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Members</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Zones</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Status</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Created</th>
-                        <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...Array(8)].map((_, i) => (
-                        <tr key={i} className="border-b border-border">
-                          <td className="py-3 px-4">
-                            <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse" />
-                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-40 mt-1 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8 mx-auto animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8 mx-auto animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="mx-auto h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <div className="ml-auto h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="rounded-lg border border-border p-4 bg-surface">
+                    <div className="h-4 bg-surface-alt rounded w-3/4 animate-pulse" />
+                    <div className="h-3 bg-surface-alt rounded w-1/2 mt-2 animate-pulse" />
+                  </div>
+                ))}
+              </div>
             ) : filteredOrgs.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                <p className="text-text-muted text-lg font-medium">No organizations found</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  {searchQuery ? 'Try adjusting your search query.' : 'Click "Create Organization" above to get started.'}
-                </p>
+              <div className="py-10 flex items-center justify-center border border-border rounded-lg">
+                <div className="text-center">
+                  <svg className="mx-auto h-10 w-10 text-text-faint mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+                  </svg>
+                  <p className="text-sm font-medium text-text">No organizations found</p>
+                  <p className="text-xs text-text-muted mt-1">
+                    {searchQuery ? 'Try adjusting your search query.' : 'No organizations yet.'}
+                  </p>
+                </div>
               </div>
             ) : (
-              <div className="animate-fadeIn">
-              {/* Mobile Card View - Below 640px */}
-              <div className="sm:hidden space-y-3">
+              <div className="space-y-3">
                 {paginatedOrgs.map((org) => {
                   const createdDate = formatDateWithRelative(org.created_at);
+                  const isDeleted = !!org.deleted_at;
+                  const isDisabled = org.is_active === false;
 
                   return (
-                    <Card key={org.id} className="p-4">
+                    <div
+                      key={org.id}
+                      className="rounded-lg border border-border bg-surface p-4"
+                    >
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <input
                             type="checkbox"
                             checked={selectedIds.has(org.id)}
                             onChange={() => toggleSelect(org.id)}
-                            className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500 flex-shrink-0"
+                            className="w-4 h-4 text-accent border-border rounded focus:ring-accent flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 dark:text-white truncate">{org.name}</p>
+                            <p className="font-semibold text-text truncate">{org.name}</p>
                             {org.description && (
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{org.description}</p>
+                              <p className="text-xs text-text-muted mt-1 line-clamp-2">{org.description}</p>
                             )}
                           </div>
                         </div>
@@ -631,199 +526,78 @@ function AdminOrganizationsPageContent() {
 
                       <div className="space-y-2 pt-3 border-t border-border">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Members:</span>
-                          <span className="text-gray-900 dark:text-gray-100 font-medium">{getMemberCount(org)}</span>
+                          <span className="text-text-muted">Members:</span>
+                          <span className="text-text font-medium">{getMemberCount(org)}</span>
                         </div>
-
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            getStatus(org) === 'active'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : getStatus(org) === 'disabled'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                              : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                          }`}>
-                            {getStatus(org) === 'active' ? 'Active' : getStatus(org) === 'disabled' ? 'Disabled' : 'Deleted'}
-                          </span>
+                          <span className="text-text-muted">Status:</span>
+                          {isDeleted ? (
+                            <AdminStatusBadge variant="neutral" label="Deleted" />
+                          ) : isDisabled ? (
+                            <AdminStatusBadge variant="danger" label="Disabled" />
+                          ) : (
+                            <AdminStatusBadge variant="success" label="Active" />
+                          )}
                         </div>
-
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Created:</span>
-                          <span className="text-gray-900 dark:text-gray-100 text-xs">{createdDate.relative}</span>
+                          <span className="text-text-muted">Created:</span>
+                          <span className="text-text text-xs">{createdDate.relative}</span>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   );
                 })}
-              </div>
-
-              {/* Desktop Table - 640px+ */}
-              <div className="hidden sm:block">
-                <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 w-12">
-                        <SelectAllCheckbox
-                          selectedCount={selectedIds.size}
-                          pageCount={paginatedOrgs.length}
-                          totalCount={filteredOrgs.length}
-                          pageSelectedCount={paginatedOrgs.filter(o => selectedIds.has(o.id)).length}
-                          onSelectPage={selectPage}
-                          onSelectAll={selectAll}
-                          onSelectNone={clearSelection}
-                        />
-                      </th>
-                      <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
-                          sortKey === 'name' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                        onClick={() => handleSort('name')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Name
-                          {sortKey === 'name' && (
-                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className={`text-center py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
-                          sortKey === 'members' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                        onClick={() => handleSort('members')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="flex items-center gap-1">
-                            Members
-                            <Tooltip content="Member count">
-                              <InfoIcon />
-                            </Tooltip>
-                          </div>
-                          {sortKey === 'members' && (
-                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
-                        <div className="flex items-center justify-center gap-1">
-                          Status
-                          <Tooltip content="Organization status">
-                            <InfoIcon />
-                          </Tooltip>
-                        </div>
-                      </th>
-                      <th 
-                        className={`text-left py-3 px-4 font-semibold cursor-pointer select-none transition-colors hover:text-accent dark:hover:text-accent ${
-                          sortKey === 'created_at' ? 'text-text border-b-2 border-accent' : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                        onClick={() => handleSort('created_at')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Created
-                          {sortKey === 'created_at' && (
-                            <span className="text-accent">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
-                        {selectedIds.size > 0 ? (
-                          <button
-                            onClick={handleBulkDelete}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Delete ({selectedIds.size})
-                          </button>
-                        ) : (
-                          'Actions'
-                        )}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedOrgs.map((org) => {
-                      const createdDate = formatDateWithRelative(org.created_at);
-                      return (
-                        <tr key={org.id} className="border-b border-border">
-                          <td className="py-3 px-4">
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.has(org.id)}
-                              onChange={() => toggleSelect(org.id)}
-                              className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500"
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <p className="font-medium text-gray-900 dark:text-white">{org.name}</p>
-                            {org.description && (
-                              <p className="text-sm text-gray-600 dark:text-gray-100 truncate max-w-xs">{org.description}</p>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <p className="text-sm text-gray-900 dark:text-white font-semibold">{getMemberCount(org)}</p>
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                                org.deleted_at
-                                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                                  : org.is_active === false
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                  : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              }`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full ${
-                                org.deleted_at ? 'bg-gray-600' : org.is_active === false ? 'bg-red-600' : 'bg-green-600'
-                              }`} />
-                              {org.deleted_at ? 'Deleted' : org.is_active === false ? 'Disabled' : 'Active'}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Tooltip content={createdDate.absolute}>
-                              <p className="text-sm text-gray-600 dark:text-gray-100 cursor-help">
-                                {createdDate.relative}
-                              </p>
-                            </Tooltip>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <QuickActionsDropdown actions={getQuickActions(org)} align="right" />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                </div>
-                
-                {/* Bottom Pagination */}
                 {filteredOrgs.length > itemsPerPage && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                    totalItems={filteredOrgs.length}
-                    itemsPerPage={itemsPerPage}
-                    position="bottom"
-                  />
+                  <div className="pt-2">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                      totalItems={filteredOrgs.length}
+                      itemsPerPage={itemsPerPage}
+                      position="bottom"
+                    />
+                  </div>
                 )}
               </div>
-              </div>
             )}
-          </Card>
+          </div>
 
-          {/* Summary */}
-          {!loading && filteredOrgs.length <= itemsPerPage && (
-            <p className="text-sm text-text-muted">
-              Showing {filteredOrgs.length} of {orgs.length} organizations
-            </p>
-          )}
-        </div>
+          <div className="hidden sm:block">
+            <AdminDataTable<Organization>
+              data={filteredOrgs}
+              columns={columns}
+              getRowId={(o) => o.id}
+              selectable
+              onSelectionChange={setSelectedIds}
+              bulkActions={{ onDelete: handleBulkDelete }}
+              defaultSort={{ key: 'name', direction: 'asc' }}
+              pageSize={itemsPerPage}
+              loading={showSkeleton}
+              loadingRows={8}
+              emptyState={
+                <div className="py-12 flex items-center justify-center">
+                  <div className="text-center">
+                    <svg className="mx-auto h-12 w-12 text-text-faint mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+                    </svg>
+                    <p className="text-text font-medium">No organizations found</p>
+                    <p className="text-text-muted text-sm mt-1">
+                      {searchQuery ? 'Try adjusting your search query.' : 'No organizations yet.'}
+                    </p>
+                  </div>
+                </div>
+              }
+            />
+          </div>
+        </Card>
 
-        {/* Confirmation Modal */}
+        {!loading && filteredOrgs.length <= itemsPerPage && (
+          <p className="text-sm text-text-muted mt-4">
+            Showing {filteredOrgs.length} of {orgs.length} organizations
+          </p>
+        )}
+
         <ConfirmationModal
           isOpen={confirmModal.isOpen}
           onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
@@ -834,7 +608,6 @@ function AdminOrganizationsPageContent() {
           isLoading={actioningOrgId !== null}
         />
 
-        {/* View Organization Details Modal */}
         <ViewOrganizationDetailsModal
           isOpen={viewDetailsOrgId !== null}
           onClose={() => {
@@ -847,7 +620,6 @@ function AdminOrganizationsPageContent() {
           organizationData={viewDetailsOrgData}
         />
 
-        {/* View Organization Members Modal */}
         <ViewOrganizationMembersModal
           isOpen={viewMembersOrgId !== null}
           onClose={() => setViewMembersOrgId(null)}
@@ -855,7 +627,6 @@ function AdminOrganizationsPageContent() {
           organizationName={viewMembersOrgName}
         />
 
-        {/* Confirm Disable/Enable Organization Modal */}
         <ConfirmDisableOrganizationModal
           isOpen={disableOrgId !== null}
           onClose={() => setDisableOrgId(null)}
