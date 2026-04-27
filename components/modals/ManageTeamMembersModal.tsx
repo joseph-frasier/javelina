@@ -371,7 +371,7 @@ export function ManageTeamMembersModal({
                 {users.map((user) => (
                   <div
                     key={user.user_id}
-                    className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent hover:bg-accent-soft "
+                    className="rounded-xl border border-border bg-surface p-4 shadow-sm"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex items-center space-x-3 min-w-0">
@@ -487,7 +487,7 @@ export function ManageTeamMembersModal({
                   {invitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent hover:bg-accent-soft "
+                      className="rounded-xl border border-border bg-surface p-4 shadow-sm"
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center space-x-3 min-w-0">
