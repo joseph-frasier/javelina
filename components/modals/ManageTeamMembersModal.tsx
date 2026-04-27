@@ -94,22 +94,25 @@ export function ManageTeamMembersModal({
     }
   }, [isOpen, fetchInvitations]);
 
-  const getRoleColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-accent-soft text-accent border-accent';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-info/10 text-info border-info/25';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-info/10 text-info border-info/25';
+        return 'bg-blue-500';
       case 'Editor':
-        return 'bg-success/10 text-success border-success/25';
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-surface-alt text-text-muted border-border';
+        return 'bg-gray-slate';
       default:
-        return 'bg-surface-alt text-text-muted border-border';
+        return 'bg-text-muted';
     }
   };
+
+  const ROLE_PILL_CLASSES =
+    'inline-flex items-center gap-1.5 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text';
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -347,8 +350,12 @@ export function ManageTeamMembersModal({
                       topRoleDistribution.map(([roleName, count]) => (
                         <span
                           key={roleName}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium ${getRoleColor(roleName)}`}
+                          className={`${ROLE_PILL_CLASSES} px-3 py-1 text-xs`}
                         >
+                          <span
+                            aria-hidden="true"
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(roleName)}`}
+                          />
                           {roleName} {count}
                         </span>
                       ))
@@ -364,7 +371,7 @@ export function ManageTeamMembersModal({
                 {users.map((user) => (
                   <div
                     key={user.user_id}
-                    className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent hover:bg-accent-soft "
+                    className="rounded-xl border border-border bg-surface p-4 shadow-sm"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex items-center space-x-3 min-w-0">
@@ -432,11 +439,11 @@ export function ManageTeamMembersModal({
                           </div>
                         ) : (
                           <>
-                            <span
-                              className={`text-xs px-3 py-1 rounded-full border font-medium ${getRoleColor(
-                                user.role
-                              )}`}
-                            >
+                            <span className={`${ROLE_PILL_CLASSES} text-xs px-3 py-1`}>
+                              <span
+                                aria-hidden="true"
+                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(user.role)}`}
+                              />
                               {user.role}
                             </span>
                             <Button
@@ -480,7 +487,7 @@ export function ManageTeamMembersModal({
                   {invitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent hover:bg-accent-soft "
+                      className="rounded-xl border border-border bg-surface p-4 shadow-sm"
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center space-x-3 min-w-0">
@@ -536,11 +543,11 @@ export function ManageTeamMembersModal({
                             >
                               {getStatusLabel(invitation.status)}
                             </span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full border font-medium ${getRoleColor(
-                                invitation.role
-                              )}`}
-                            >
+                            <span className={`${ROLE_PILL_CLASSES} text-xs px-2 py-1`}>
+                              <span
+                                aria-hidden="true"
+                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(invitation.role)}`}
+                              />
                               {invitation.role}
                             </span>
                           </div>

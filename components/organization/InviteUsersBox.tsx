@@ -73,20 +73,20 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
     fetchSubscription();
   }, [organizationId, fetchMembers, fetchSubscription]);
 
-  const getRoleColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-accent/10 text-accent border-accent/20';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-blue-electric/10 text-blue-electric border-blue-electric/20';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+        return 'bg-blue-500';
       case 'Editor':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-gray-slate/10 text-text-muted border-gray-slate/20';
+        return 'bg-gray-slate';
       default:
-        return 'bg-surface-alt/10 text-text-muted border-border/20';
+        return 'bg-text-muted';
     }
   };
 
@@ -218,11 +218,11 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
 
                     {/* Role Badge */}
                     <div className="flex-shrink-0">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full border font-medium ${getRoleColor(
-                          member.role
-                        )}`}
-                      >
+                      <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
+                        <span
+                          aria-hidden="true"
+                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(member.role)}`}
+                        />
                         {member.role}
                       </span>
                     </div>

@@ -48,22 +48,25 @@ export function ViewOrganizationMembersModal({
     }
   }, [isOpen, organizationId, fetchMembers]);
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'Editor':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400';
+        return 'bg-blue-500';
+      case 'Editor':
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-gray-slate';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-text-muted';
     }
   };
+
+  const ROLE_PILL_CLASSES =
+    'inline-flex items-center gap-1.5 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text';
 
   const formatRoleName = (role: string) => {
     if (role === 'BillingContact') return 'Billing Contact';
@@ -129,7 +132,11 @@ export function ViewOrganizationMembersModal({
                         {member.email}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getRoleBadgeColor(member.role)}`}>
+                    <span className={`${ROLE_PILL_CLASSES} px-2 py-1 text-xs whitespace-nowrap`}>
+                      <span
+                        aria-hidden="true"
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(member.role)}`}
+                      />
                       {formatRoleName(member.role)}
                     </span>
                   </div>
@@ -170,7 +177,11 @@ export function ViewOrganizationMembersModal({
                         </p>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(member.role)}`}>
+                        <span className={`${ROLE_PILL_CLASSES} px-2 py-1 text-xs`}>
+                          <span
+                            aria-hidden="true"
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(member.role)}`}
+                          />
                           {formatRoleName(member.role)}
                         </span>
                       </td>
