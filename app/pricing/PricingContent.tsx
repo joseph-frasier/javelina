@@ -102,7 +102,7 @@ export default function PricingContent() {
     setShowOrgModal(true);
   };
 
-  const handleOrgCreated = (orgId: string) => {
+  const handleOrgCreated = (orgId: string, orgName: string) => {
     // Organization created successfully
     if (!selectedPlanForOrg) return;
 
@@ -118,10 +118,10 @@ export default function PricingContent() {
       // Determine billing interval based on plan code
       const isLifetime = planConfig.code.includes('_lifetime');
       const billingInterval = isLifetime ? 'lifetime' : planConfig.monthly.interval;
-      
+
       const intakeSuffix = planConfig.productLine === 'business' ? '&intake=business' : '';
-      const orgNameSuffix = planConfig.productLine === 'business'
-        ? `&org_name=${encodeURIComponent(orgId)}` // org_id as a stable fallback; real name resolved later
+      const orgNameSuffix = planConfig.productLine === 'business' && orgName
+        ? `&org_name=${encodeURIComponent(orgName)}`
         : '';
       router.push(
         `/checkout?org_id=${orgId}&plan_code=${planConfig.code}&price_id=${planConfig.monthly.priceId}&plan_name=${encodeURIComponent(planConfig.name)}&plan_price=${planConfig.monthly.amount}&billing_interval=${billingInterval}${intakeSuffix}${orgNameSuffix}`

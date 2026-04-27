@@ -1,8 +1,8 @@
 'use client';
+import { useEffect } from 'react';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { StepHeader } from '@/components/business/ui/StepHeader';
-import { FieldLabel } from '@/components/business/ui/FieldLabel';
 import { Radio } from '@/components/business/ui/Radio';
 import { Icon } from '@/components/business/ui/Icon';
 
@@ -14,9 +14,15 @@ interface Props {
   set: (patch: Patch) => void;
 }
 
-const PROVIDERS = ['Cloudflare', 'Route 53', 'Google', 'Other'] as const;
-
 export function StepDNS({ t, data, set }: Props) {
+  // 'self' is no longer a supported option; coerce any persisted state to 'jbp'.
+  useEffect(() => {
+    if (data.dns.mode === 'self') {
+      set({ dns: { mode: 'jbp' } });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div>
       <StepHeader
@@ -33,14 +39,6 @@ export function StepDNS({ t, data, set }: Props) {
           icon={<Icon name="sparkle" size={18} />}
           label="Let Javelina manage it (recommended)"
           description="We'll point your domain at our nameservers and wire up everything — A, AAAA, CNAME, MX — automatically."
-        />
-        <Radio
-          t={t}
-          checked={data.dns.mode === 'self'}
-          onChange={() => set({ dns: { mode: 'self' } })}
-          icon={<Icon name="server" size={18} />}
-          label="I'll manage my own DNS"
-          description="Keep your current DNS provider (Cloudflare, Route 53, etc). We'll give you the records to add."
         />
         <Radio
           t={t}
@@ -88,33 +86,6 @@ export function StepDNS({ t, data, set }: Props) {
         </div>
       )}
 
-      {data.dns.mode === 'self' && (
-        <div style={{ marginTop: 20 }}>
-          <FieldLabel t={t}>Current DNS provider</FieldLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-            {PROVIDERS.map((p) => {
-              const on = data.dns.provider === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => set({ dns: { provider: p } })}
-                  style={{
-                    padding: '10px 12px', borderRadius: 8,
-                    fontFamily: FONT, fontSize: 13,
-                    background: on ? t.accentSoft : t.surface,
-                    border: `1.5px solid ${on ? t.accent : t.border}`,
-                    color: on ? t.accent : t.text,
-                    cursor: 'pointer', fontWeight: 550,
-                  }}
-                >
-                  {p}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -10,13 +10,12 @@ describe('StepDNS', () => {
   it('calls set with new dns mode when a different radio is clicked', () => {
     const set = vi.fn();
     render(<StepDNS t={t} data={base as BusinessIntakeData} set={set} />);
-    fireEvent.click(screen.getByText(/I'll manage my own DNS/));
-    expect(set).toHaveBeenCalledWith({ dns: { mode: 'self' } });
+    fireEvent.click(screen.getByText(/Skip for now/));
+    expect(set).toHaveBeenCalledWith({ dns: { mode: 'skip' } });
   });
 
-  it('shows the provider picker when mode is self', () => {
-    render(<StepDNS t={t} data={{ dns: { mode: 'self' } } as BusinessIntakeData} set={() => {}} />);
-    expect(screen.getByText('Cloudflare')).toBeTruthy();
-    expect(screen.getByText('Route 53')).toBeTruthy();
+  it('does not render the removed self-managed option', () => {
+    render(<StepDNS t={t} data={base as BusinessIntakeData} set={() => {}} />);
+    expect(screen.queryByText(/I'll manage my own DNS/)).toBeNull();
   });
 });
