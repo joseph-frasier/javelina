@@ -11,8 +11,11 @@ export interface BusinessIntakeData {
   website: {
     bizName: string;
     bizType: string;
+    industry: string;
     tagline: string;
     description: string;
+    services: string;
+    pages: string[];
     logoName: string | null;
     photoCount: number;
     tone: string;
@@ -64,8 +67,11 @@ function defaults(orgId: string, planCode: BusinessPlanCode, bizName: string): B
     website: {
       bizName,
       bizType: '',
+      industry: '',
       tagline: '',
       description: '',
+      services: '',
+      pages: ['Home', 'Services', 'About', 'Contact'],
       logoName: null,
       photoCount: 0,
       tone: 'Friendly',

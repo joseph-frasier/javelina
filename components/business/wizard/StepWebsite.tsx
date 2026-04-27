@@ -20,6 +20,32 @@ interface Props {
 
 const TONES = ['Friendly', 'Professional', 'Playful', 'Direct', 'Warm', 'Technical'] as const;
 
+const INDUSTRIES = [
+  'Home Services',
+  'Professional Services',
+  'Retail & E-commerce',
+  'Food & Beverage',
+  'Health & Wellness',
+  'Creative & Media',
+  'Technology & Software',
+  'Real Estate',
+  'Education',
+  'Nonprofit',
+  'Other',
+] as const;
+
+const PAGE_OPTIONS = [
+  { id: 'Home', required: true },
+  { id: 'Services', required: false },
+  { id: 'About', required: false },
+  { id: 'Contact', required: false },
+  { id: 'Gallery', required: false },
+  { id: 'Blog', required: false },
+  { id: 'Team', required: false },
+  { id: 'FAQs', required: false },
+  { id: 'Pricing', required: false },
+] as const;
+
 const AESTHETICS: Array<{
   id: 'bold' | 'simple' | 'choose';
   title: string;
@@ -111,6 +137,31 @@ export function StepWebsite({ t, data, set }: Props) {
         </div>
 
         <div>
+          <FieldLabel t={t}>Industry</FieldLabel>
+          <select
+            value={w.industry || ''}
+            onChange={(e) => update({ industry: e.target.value })}
+            style={{
+              width: '100%', padding: '10px 12px',
+              fontSize: 14, fontFamily: FONT,
+              borderRadius: 8, border: `1px solid ${t.border}`,
+              background: t.surface, color: w.industry ? t.text : t.textMuted,
+              outline: 'none', boxShadow: t.shadowSm,
+              appearance: 'none',
+              backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(t.textMuted)}' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              paddingRight: 32,
+            }}
+          >
+            <option value="" disabled>Pick the closest fit…</option>
+            {INDUSTRIES.map((ind) => (
+              <option key={ind} value={ind}>{ind}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <FieldLabel t={t} hint={`${(w.description || '').length}/280`}>
             Describe your business in a few sentences
           </FieldLabel>
@@ -127,6 +178,28 @@ export function StepWebsite({ t, data, set }: Props) {
               outline: 'none', lineHeight: 1.5, boxShadow: t.shadowSm,
             }}
           />
+        </div>
+
+        <div>
+          <FieldLabel t={t} optional hint={`${(w.services || '').length}/500`}>
+            What services or products do you offer?
+          </FieldLabel>
+          <textarea
+            value={w.services || ''}
+            onChange={(e) => update({ services: e.target.value.slice(0, 500) })}
+            placeholder="Brand identity, web design, packaging. We typically work with early-stage product teams."
+            rows={4}
+            style={{
+              width: '100%', padding: '10px 12px',
+              fontSize: 14, fontFamily: FONT,
+              borderRadius: 8, border: `1px solid ${t.border}`,
+              background: t.surface, color: t.text, resize: 'vertical',
+              outline: 'none', lineHeight: 1.5, boxShadow: t.shadowSm,
+            }}
+          />
+          <div style={{ marginTop: 6, fontSize: 12, color: t.textMuted }}>
+            We&apos;ll use this to draft your Services page and homepage copy.
+          </div>
         </div>
 
         <div>
@@ -220,6 +293,56 @@ export function StepWebsite({ t, data, set }: Props) {
             >
               Browse files
             </Button>
+          </div>
+        </div>
+
+        <div>
+          <FieldLabel t={t} hint={`${w.pages?.length || 0} selected`}>
+            Pages to include
+          </FieldLabel>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            {PAGE_OPTIONS.map((p) => {
+              const selected = (w.pages || []).includes(p.id);
+              const locked = p.required;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={locked}
+                  onClick={() => {
+                    if (locked) return;
+                    const curr = w.pages || [];
+                    const next = selected
+                      ? curr.filter((x) => x !== p.id)
+                      : [...curr, p.id];
+                    update({ pages: next });
+                  }}
+                  style={{
+                    padding: '10px 12px', borderRadius: 8,
+                    fontFamily: FONT, fontSize: 13, fontWeight: 550,
+                    background: selected ? t.accentSoft : t.surface,
+                    border: `1.5px solid ${selected ? t.accent : t.border}`,
+                    color: selected ? t.accent : t.text,
+                    cursor: locked ? 'default' : 'pointer',
+                    opacity: locked ? 0.85 : 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: 6,
+                  }}
+                >
+                  <span>{p.id}</span>
+                  {locked ? (
+                    <span style={{ fontSize: 10, fontFamily: MONO, color: t.textMuted }}>
+                      required
+                    </span>
+                  ) : selected ? (
+                    <Icon name="check" size={13} />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 12, color: t.textMuted }}>
+            Pick 3–7. You can add more after launch.
           </div>
         </div>
 

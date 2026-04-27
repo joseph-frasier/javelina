@@ -9,7 +9,9 @@ const data: BusinessIntakeData = {
   currentStep: 4,
   dns: { mode: 'jbp' },
   website: {
-    bizName: 'Acme', bizType: '', tagline: '', description: '',
+    bizName: 'Acme', bizType: '', industry: '',
+    tagline: '', description: '', services: '',
+    pages: ['Home', 'Services', 'About', 'Contact'],
     logoName: null, photoCount: 0,
     tone: 'Friendly', aesthetic: 'simple', letUsWrite: true,
   },

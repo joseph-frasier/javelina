@@ -70,6 +70,12 @@ export function StepConfirm({ t, data }: Props) {
           <SummaryRow t={t} label="DNS management" value={dnsLabel} />
           <SummaryRow t={t} label="Business" value={data.website.bizName || '—'} />
           <SummaryRow t={t} label="What you do" value={data.website.bizType || '—'} />
+          <SummaryRow t={t} label="Industry" value={data.website.industry || '—'} />
+          <SummaryRow
+            t={t}
+            label="Pages"
+            value={(data.website.pages || []).join(', ') || '—'}
+          />
           <SummaryRow t={t} label="Aesthetic" value={AESTHETIC_LABEL[data.website.aesthetic]} />
           <SummaryRow t={t} label="Tone" value={data.website.tone || '—'} />
           <SummaryRow
