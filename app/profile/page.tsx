@@ -84,20 +84,20 @@ export default function ProfilePage() {
     router.push('/settings?section=billing');
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-accent-100 text-accent-800 border-orange-200 dark:bg-accent-900/30 dark:text-accent-400 dark:border-orange-700';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-accent-100 text-accent-800 border-orange-200 dark:bg-accent-900/30 dark:text-accent-400 dark:border-orange-700';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700';
+        return 'bg-blue-500';
       case 'Editor':
-        return 'bg-accent-100 text-accent-800 border-orange-200 dark:bg-accent-900/30 dark:text-accent-400 dark:border-orange-700';
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
+        return 'bg-gray-slate';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
+        return 'bg-text-muted';
     }
   };
 
@@ -168,7 +168,8 @@ export default function ProfilePage() {
                     </p>
                   )}
                   {user.role === 'superuser' && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
+                      <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-accent" />
                       SuperUser
                     </span>
                   )}
@@ -296,7 +297,11 @@ export default function ProfilePage() {
                         <h4 className="font-medium text-text break-words">
                           {org.name}
                         </h4>
-                        <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)} flex-shrink-0 self-start sm:self-auto`}>
+                        <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text flex-shrink-0 self-start sm:self-auto">
+                          <span
+                            aria-hidden="true"
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(org.role)}`}
+                          />
                           {getRoleDisplayText(org.role)}
                         </span>
                       </div>
