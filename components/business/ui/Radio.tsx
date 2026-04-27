@@ -9,19 +9,24 @@ interface RadioProps {
   label: string;
   description?: string;
   icon?: ReactNode;
+  disabled?: boolean;
 }
 
-export function Radio({ t, checked, onChange, label, description, icon }: RadioProps) {
+export function Radio({ t, checked, onChange, label, description, icon, disabled }: RadioProps) {
   return (
     <label
-      onClick={() => onChange?.()}
+      onClick={() => {
+        if (disabled) return;
+        onChange?.();
+      }}
       style={{
         display: 'flex', alignItems: 'flex-start', gap: 14, padding: 16,
-        borderRadius: 12, cursor: 'pointer',
+        borderRadius: 12, cursor: disabled ? 'not-allowed' : 'pointer',
         background: checked ? t.accentSoft : t.surface,
         border: `1.5px solid ${checked ? t.accent : t.border}`,
         boxShadow: checked ? `0 0 0 3px ${t.ring}` : 'none',
         transition: 'border-color .12s, box-shadow .12s, background .12s',
+        opacity: disabled ? 0.55 : 1,
       }}
     >
       <div

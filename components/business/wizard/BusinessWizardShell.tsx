@@ -1,5 +1,6 @@
 // components/business/wizard/BusinessWizardShell.tsx
 'use client';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
@@ -9,10 +10,11 @@ import { Icon } from '@/components/business/ui/Icon';
 import { Stepper } from './Stepper';
 import { StepDNS } from './StepDNS';
 import { StepWebsite } from './StepWebsite';
-import { StepDomain } from './StepDomain';
+import { StepDomain, type BundledDomainStatus } from './StepDomain';
 import { StepContact } from './StepContact';
 import { StepConfirm } from './StepConfirm';
 import { useBusinessIntakeStore } from '@/lib/business-intake-store';
+import { organizationsApi } from '@/lib/api-client';
 
 const STEP_LABELS = ['DNS', 'Website', 'Domain', 'Contact', 'Confirm'] as const;
 
@@ -27,6 +29,24 @@ export function BusinessWizardShell({ orgId }: Props) {
   const update = useBusinessIntakeStore((s) => s.update);
   const setStep = useBusinessIntakeStore((s) => s.setStep);
   const complete = useBusinessIntakeStore((s) => s.complete);
+
+  const [entitlement, setEntitlement] = useState<BundledDomainStatus | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    organizationsApi
+      .getBundledDomainStatus(orgId)
+      .then((res) => {
+        if (!cancelled) setEntitlement(res);
+      })
+      .catch(() => {
+        // Non-fatal: wizard still works, but mode-gating won't apply.
+        if (!cancelled) setEntitlement(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId]);
 
   if (!data) {
     return (
@@ -49,7 +69,7 @@ export function BusinessWizardShell({ orgId }: Props) {
   const stepContent =
     step === 0 ? <StepDNS t={t} data={data} set={set} /> :
     step === 1 ? <StepWebsite t={t} data={data} set={set} /> :
-    step === 2 ? <StepDomain t={t} data={data} set={set} /> :
+    step === 2 ? <StepDomain t={t} data={data} set={set} entitlement={entitlement} /> :
     step === 3 ? <StepContact t={t} data={data} set={set} /> :
                  <StepConfirm t={t} data={data} />;
 

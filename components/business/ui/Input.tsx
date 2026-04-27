@@ -6,6 +6,7 @@ interface InputProps {
   t: Tokens;
   value: string | number | undefined;
   onChange?: (v: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   prefix?: ReactNode;
   suffix?: ReactNode;
@@ -14,7 +15,7 @@ interface InputProps {
   readOnly?: boolean;
 }
 
-export function Input({ t, value, onChange, placeholder, prefix, suffix, style, type = 'text', readOnly }: InputProps) {
+export function Input({ t, value, onChange, onBlur, placeholder, prefix, suffix, style, type = 'text', readOnly }: InputProps) {
   const [focus, setFocus] = useState(false);
   return (
     <div
@@ -51,7 +52,10 @@ export function Input({ t, value, onChange, placeholder, prefix, suffix, style, 
         readOnly={readOnly}
         onChange={(e) => onChange?.(e.target.value)}
         onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onBlur={() => {
+          setFocus(false);
+          onBlur?.();
+        }}
         placeholder={placeholder}
         style={{
           flex: 1, border: 'none', outline: 'none',
