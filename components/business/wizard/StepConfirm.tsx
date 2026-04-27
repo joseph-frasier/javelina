@@ -52,7 +52,7 @@ export function StepConfirm({ t, data }: Props) {
       ? `Transfer · ${data.domain.domain || '—'}`
       : data.domain.mode === 'connect'
       ? `Connect · ${data.domain.domain || '—'}`
-      : `Register · ${data.domain.search || '—'}.com`;
+      : `Register · ${data.domain.domain || '—'}`;
 
   const features = PLAN_FEATURES[data.planCode];
 

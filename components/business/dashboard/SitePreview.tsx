@@ -13,9 +13,6 @@ interface SitePreviewProps {
 }
 
 function resolveDomain(data: BusinessIntakeData): string {
-  if (data.domain.mode === 'register') {
-    return `${data.domain.search || 'your-domain'}.com`;
-  }
   return data.domain.domain || 'your-domain.com';
 }
 

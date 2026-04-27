@@ -21,6 +21,7 @@ export interface BusinessIntakeData {
     tone: string;
     aesthetic: 'bold' | 'simple' | 'choose';
     customColor?: string;
+    customSecondaryColor?: string;
     customFont?: string;
     letUsWrite: boolean;
   };
@@ -71,7 +72,7 @@ function defaults(orgId: string, planCode: BusinessPlanCode, bizName: string): B
       tagline: '',
       description: '',
       services: '',
-      pages: ['Home', 'Services', 'About', 'Contact'],
+      pages: ['Home', 'Services', 'Contact'],
       logoName: null,
       photoCount: 0,
       tone: 'Friendly',

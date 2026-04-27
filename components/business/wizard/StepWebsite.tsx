@@ -40,11 +40,15 @@ const PAGE_OPTIONS = [
   { id: 'About', required: false },
   { id: 'Contact', required: false },
   { id: 'Gallery', required: false },
-  { id: 'Blog', required: false },
-  { id: 'Team', required: false },
   { id: 'FAQs', required: false },
-  { id: 'Pricing', required: false },
 ] as const;
+
+// Per-plan caps (mirrors the marketing copy on Confirm step):
+// business_starter -> 1-3 pages, business_pro -> 1-5 pages.
+const PAGE_CAPS: Record<BusinessIntakeData['planCode'], number> = {
+  business_starter: 3,
+  business_pro: 5,
+};
 
 const AESTHETICS: Array<{
   id: 'bold' | 'simple' | 'choose';
@@ -297,53 +301,67 @@ export function StepWebsite({ t, data, set }: Props) {
         </div>
 
         <div>
-          <FieldLabel t={t} hint={`${w.pages?.length || 0} selected`}>
-            Pages to include
-          </FieldLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {PAGE_OPTIONS.map((p) => {
-              const selected = (w.pages || []).includes(p.id);
-              const locked = p.required;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={locked}
-                  onClick={() => {
-                    if (locked) return;
-                    const curr = w.pages || [];
-                    const next = selected
-                      ? curr.filter((x) => x !== p.id)
-                      : [...curr, p.id];
-                    update({ pages: next });
-                  }}
-                  style={{
-                    padding: '10px 12px', borderRadius: 8,
-                    fontFamily: FONT, fontSize: 13, fontWeight: 550,
-                    background: selected ? t.accentSoft : t.surface,
-                    border: `1.5px solid ${selected ? t.accent : t.border}`,
-                    color: selected ? t.accent : t.text,
-                    cursor: locked ? 'default' : 'pointer',
-                    opacity: locked ? 0.85 : 1,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    gap: 6,
-                  }}
-                >
-                  <span>{p.id}</span>
-                  {locked ? (
-                    <span style={{ fontSize: 10, fontFamily: MONO, color: t.textMuted }}>
-                      required
-                    </span>
-                  ) : selected ? (
-                    <Icon name="check" size={13} />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-          <div style={{ marginTop: 6, fontSize: 12, color: t.textMuted }}>
-            Pick 3–7. You can add more after launch.
-          </div>
+          {(() => {
+            const cap = PAGE_CAPS[data.planCode] ?? 3;
+            const selectedCount = (w.pages || []).length;
+            const atCap = selectedCount >= cap;
+            const planLabel =
+              data.planCode === 'business_pro' ? 'Business Pro' : 'Business Starter';
+            return (
+              <>
+                <FieldLabel t={t} hint={`${selectedCount} of ${cap} selected`}>
+                  Pages to include
+                </FieldLabel>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {PAGE_OPTIONS.map((p) => {
+                    const selected = (w.pages || []).includes(p.id);
+                    const locked = p.required;
+                    const blockedByCap = !selected && !locked && atCap;
+                    const interactive = !locked && !blockedByCap;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        disabled={locked || blockedByCap}
+                        onClick={() => {
+                          if (!interactive) return;
+                          const curr = w.pages || [];
+                          const next = selected
+                            ? curr.filter((x) => x !== p.id)
+                            : [...curr, p.id];
+                          update({ pages: next });
+                        }}
+                        style={{
+                          padding: '10px 12px', borderRadius: 8,
+                          fontFamily: FONT, fontSize: 13, fontWeight: 550,
+                          background: selected ? t.accentSoft : t.surface,
+                          border: `1.5px solid ${selected ? t.accent : t.border}`,
+                          color: selected ? t.accent : t.text,
+                          cursor: interactive ? 'pointer' : 'not-allowed',
+                          opacity: locked ? 0.85 : blockedByCap ? 0.45 : 1,
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          gap: 6,
+                        }}
+                      >
+                        <span>{p.id}</span>
+                        {locked ? (
+                          <span style={{ fontSize: 10, fontFamily: MONO, color: t.textMuted }}>
+                            required
+                          </span>
+                        ) : selected ? (
+                          <Icon name="check" size={13} />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 12, color: t.textMuted }}>
+                  {planLabel} includes up to {cap} pages.
+                  {atCap ? ' Deselect one to swap.' : ''}
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         <div>
@@ -401,24 +419,44 @@ export function StepWebsite({ t, data, set }: Props) {
               background: t.surfaceAlt, border: `1px solid ${t.border}`,
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <FieldLabel t={t}>Primary color</FieldLabel>
-                <Input
-                  t={t}
-                  value={w.customColor}
-                  onChange={(v) => update({ customColor: v })}
-                  placeholder="#EF7215"
-                  prefix={
-                    <div
-                      style={{
-                        width: 14, height: 14, borderRadius: 4,
-                        background: w.customColor || t.accent,
-                        border: `1px solid ${t.border}`,
-                      }}
-                    />
-                  }
-                />
+            <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <FieldLabel t={t}>Primary color</FieldLabel>
+                  <Input
+                    t={t}
+                    value={w.customColor}
+                    onChange={(v) => update({ customColor: v })}
+                    placeholder="#EF7215"
+                    prefix={
+                      <div
+                        style={{
+                          width: 14, height: 14, borderRadius: 4,
+                          background: w.customColor || t.accent,
+                          border: `1px solid ${t.border}`,
+                        }}
+                      />
+                    }
+                  />
+                </div>
+                <div>
+                  <FieldLabel t={t} optional>Secondary color</FieldLabel>
+                  <Input
+                    t={t}
+                    value={w.customSecondaryColor}
+                    onChange={(v) => update({ customSecondaryColor: v })}
+                    placeholder="#1E4620"
+                    prefix={
+                      <div
+                        style={{
+                          width: 14, height: 14, borderRadius: 4,
+                          background: w.customSecondaryColor || t.surfaceAlt,
+                          border: `1px solid ${t.border}`,
+                        }}
+                      />
+                    }
+                  />
+                </div>
               </div>
               <div>
                 <FieldLabel t={t}>Font family</FieldLabel>
