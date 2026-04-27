@@ -291,18 +291,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
   }, [org.id]);
 
   // Get plan badge color based on plan name
-  const getPlanDotColor = (plan: string | null) => {
-    if (!plan) return 'bg-gray-slate';
-    const planLower = plan.toLowerCase();
-    if (planLower.includes('premium') || planLower.includes('lifetime')) {
-      return 'bg-accent';
-    } else if (planLower.includes('pro') || planLower.includes('professional')) {
-      return 'bg-blue-electric';
-    } else if (planLower.includes('basic') || planLower.includes('starter')) {
-      return 'bg-gray-slate';
-    }
-    return 'bg-blue-electric';
-  };
 
   return (
     <>
@@ -337,7 +325,6 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               <p className="font-light text-text-muted text-lg">{org.name}</p>
               {!isLoadingPlan && planName && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
-                  <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getPlanDotColor(planName)}`} />
                   {planName}
                 </span>
               )}
