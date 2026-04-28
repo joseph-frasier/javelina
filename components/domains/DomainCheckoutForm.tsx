@@ -6,7 +6,14 @@ import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
-import { normalizePhoneInput } from '@/lib/utils/billing-validation';
+
+const formatPhoneNumber = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+};
 import type { DomainContact, DomainRegistrationType } from '@/types/domains';
 
 interface DomainCheckoutFormProps {
@@ -159,7 +166,7 @@ export default function DomainCheckoutForm({
               label="Phone"
               placeholder="(555) 123-4567"
               value={contact.phone}
-              onChange={(e) => updateContact('phone', normalizePhoneInput(e.target.value))}
+              onChange={(e) => updateContact('phone', formatPhoneNumber(e.target.value))}
               maxLength={20}
               required
             />
