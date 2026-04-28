@@ -11,6 +11,7 @@ import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useGlobalSearch } from '@/components/search/useGlobalSearch';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
+import { useBusinessIntakeStore } from '@/lib/business-intake-store';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -23,6 +24,9 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
   const { general, setTheme } = useSettingsStore();
   const { currentOrgId } = useHierarchyStore();
   const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
+  const hasBusinessIntakes = useBusinessIntakeStore(
+    (s) => Object.keys(s.intakes).length > 0,
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -171,6 +175,14 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                 >
                   Purchase Domain
                 </a>
+              )}
+              {hasBusinessIntakes && (
+                <Link
+                  href="/business"
+                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
+                >
+                  My Business
+                </Link>
               )}
             </nav>
 

@@ -23,7 +23,7 @@ import {
 interface AddOrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (organizationId: string) => void;
+  onSuccess?: (organizationId: string, organizationName: string) => void;
   selectedPlan?: Plan | null; // Optional plan for billing integration
 }
 
@@ -166,9 +166,9 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
       setName('');
       setDescription('');
       
-      // Call success callback with organization ID
+      // Call success callback with organization ID and name
       if (onSuccess) {
-        onSuccess(organizationId);
+        onSuccess(organizationId, organizationName);
       }
       
       // Close modal

@@ -309,6 +309,20 @@ export const organizationsApi = {
   },
 
   /**
+   * Get the bundled-domain entitlement status for an org.
+   * Returns { eligible, redeemed, redeemed_at, available } where `available`
+   * means the org's plan includes a bundled domain AND it hasn't been used yet.
+   */
+  getBundledDomainStatus: (id: string): Promise<{
+    eligible: boolean;
+    redeemed: boolean;
+    redeemed_at: string | null;
+    available: boolean;
+  }> => {
+    return apiClient.get(`/organizations/${id}/bundled-domain-status`);
+  },
+
+  /**
    * Create a new organization
    */
   create: (data: { 

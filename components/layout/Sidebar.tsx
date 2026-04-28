@@ -89,7 +89,7 @@ export function Sidebar({
     }
   }, [isMobileMenuOpen]);
 
-  const handleOrganizationSuccess = (organizationId: string) => {
+  const handleOrganizationSuccess = (organizationId: string, _organizationName: string) => {
     selectAndExpand(organizationId);
     router.push(`/organization/${organizationId}`);
     if (onMobileMenuClose) {
