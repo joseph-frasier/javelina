@@ -114,14 +114,14 @@ export function ManageTeamMembersModal({
   const ROLE_PILL_CLASSES =
     'inline-flex items-center gap-1.5 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text';
 
-  const getStatusColor = (status: string) => {
+  const getStatusDotColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-warning/10 text-warning border-warning/25';
+        return 'bg-yellow-500';
       case 'awaiting_verification':
-        return 'bg-info/10 text-info border-info/25';
+        return 'bg-blue-electric';
       default:
-        return 'bg-surface-alt text-text-muted border-border';
+        return 'bg-gray-slate';
     }
   };
 
@@ -307,7 +307,7 @@ export function ManageTeamMembersModal({
             >
               Pending Invitations
               {invitations.length > 0 && (
-                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'invitations' ? 'bg-[#ffffff]/20 text-[#ffffff]' : 'bg-warning/15 text-warning'}`}>
+                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'invitations' ? 'bg-[#ffffff]/20 text-[#ffffff]' : 'bg-surface text-text-muted'}`}>
                   {invitations.length}
                 </span>
               )}
@@ -318,8 +318,8 @@ export function ManageTeamMembersModal({
           {activeTab === 'members' && (
             <>
               <div className="grid gap-3 md:grid-cols-[1.3fr_1fr]">
-                <div className="rounded-xl border border-accent bg-accent-soft p-5">
-                  <div className="flex items-center gap-2 text-accent">
+                <div className="rounded-xl border border-border bg-surface-alt p-5">
+                  <div className="flex items-center gap-2 text-text-muted">
                     <svg
                       className="h-5 w-5"
                       fill="none"
@@ -384,8 +384,8 @@ export function ManageTeamMembersModal({
                             className="h-12 w-12 rounded-full"
                           />
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent bg-accent-soft">
-                            <span className="text-base font-bold text-accent">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface-alt">
+                            <span className="text-base font-bold text-text">
                               {getInitials(user.name)}
                             </span>
                           </div>
@@ -406,7 +406,7 @@ export function ManageTeamMembersModal({
                       {/* Role Management */}
                       <div className="flex items-center gap-2 self-end lg:self-auto">
                         {editingUserId === user.user_id ? (
-                          <div className="flex w-full flex-col gap-2 rounded-2xl border border-border bg-gray-50 p-2 sm:w-auto sm:flex-row sm:items-center dark:border-white/10 dark:bg-black/20">
+                          <div className="flex w-full flex-col gap-2 rounded-2xl border border-border bg-surface-alt p-2 sm:w-auto sm:flex-row sm:items-center">
                             <div className="relative z-[100] sm:w-48">
                               <Dropdown
                                 value={editingRole}
@@ -493,9 +493,9 @@ export function ManageTeamMembersModal({
                         <div className="flex items-center space-x-3 min-w-0">
                         {/* Envelope Icon */}
                         <div className="flex-shrink-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-200 bg-amber-100 dark:border-amber-500/20 dark:bg-amber-500/15">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface-alt">
                             <svg
-                              className="h-6 w-6 text-amber-600 dark:text-amber-300"
+                              className="h-6 w-6 text-text-muted"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -536,11 +536,11 @@ export function ManageTeamMembersModal({
                         {/* Status + Role Badges + Revoke */}
                         <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full border font-medium ${getStatusColor(
-                                invitation.status
-                              )}`}
-                            >
+                            <span className={`${ROLE_PILL_CLASSES} text-xs px-2 py-1`}>
+                              <span
+                                aria-hidden="true"
+                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusDotColor(invitation.status)}`}
+                              />
                               {getStatusLabel(invitation.status)}
                             </span>
                             <span className={`${ROLE_PILL_CLASSES} text-xs px-2 py-1`}>
