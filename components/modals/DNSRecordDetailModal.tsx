@@ -108,7 +108,7 @@ export function DNSRecordDetailModal({
     <div className="py-3">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1.5">
             {label}
           </p>
           <div>{children}</div>
@@ -123,8 +123,8 @@ export function DNSRecordDetailModal({
 
   const valueCodeClassName =
     displayRecord.type === 'TXT'
-      ? 'text-sm text-text whitespace-pre-wrap break-words'
-      : 'text-sm text-text break-all';
+      ? 'text-base text-text whitespace-pre-wrap break-words'
+      : 'text-base text-text break-all';
 
   return (
     <Modal
@@ -169,7 +169,7 @@ export function DNSRecordDetailModal({
               </>
             }
           >
-            <span className="text-sm font-mono text-text break-all">{displayName}</span>
+            <span className="text-base font-mono text-text break-all">{displayName}</span>
           </DetailRow>
 
           <DetailRow
@@ -193,7 +193,7 @@ export function DNSRecordDetailModal({
             copyLabel="ttl"
             helper={ttlHint}
           >
-            <span className="text-sm text-text">{displayRecord.ttl} seconds</span>
+            <span className="text-base text-text">{displayRecord.ttl} seconds</span>
           </DetailRow>
 
           {displayRecord.comment ? (
@@ -242,23 +242,23 @@ export function DNSRecordDetailModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-text-muted text-xs">Record ID</span>
-                <div className="font-mono text-xs text-text break-all mt-1">{displayRecord.id}</div>
+                <div className="font-mono text-sm text-text break-all mt-1">{displayRecord.id}</div>
               </div>
               <div>
                 <span className="text-text-muted text-xs">Zone ID</span>
-                <div className="font-mono text-xs text-text break-all mt-1">{displayRecord.zone_id}</div>
+                <div className="font-mono text-sm text-text break-all mt-1">{displayRecord.zone_id}</div>
               </div>
               <div>
                 <Tooltip content={createdDate.absolute}>
                   <span className="text-text-muted text-xs">Created</span>
                 </Tooltip>
-                <div className="text-text mt-1">{createdDate.relative}</div>
+                <div className="text-sm text-text mt-1">{createdDate.relative}</div>
               </div>
               <div>
                 <Tooltip content={updatedDate.absolute}>
                   <span className="text-text-muted text-xs">Last Updated</span>
                 </Tooltip>
-                <div className="text-text mt-1">{updatedDate.relative}</div>
+                <div className="text-sm text-text mt-1">{updatedDate.relative}</div>
               </div>
             </div>
           </div>
