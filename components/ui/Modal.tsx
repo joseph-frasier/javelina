@@ -212,7 +212,7 @@ export function Modal({
           <div className={clsx('px-6 py-5', bodyClassName)}>{children}</div>
 
           {footer && (
-            <div className="border-t border-border px-6 py-4 bg-surface rounded-b-2xl">
+            <div className="px-6 py-4 bg-surface rounded-b-2xl">
               {footer}
             </div>
           )}
