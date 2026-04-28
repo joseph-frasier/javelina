@@ -676,7 +676,7 @@ function SettingsContent() {
 
                   {/* Pagination Controls */}
                   {!billingLoading && billingTotalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-border">
+                    <div className="flex items-center justify-center gap-2 mt-6">
                       <Button
                         variant="outline"
                         size="sm"
