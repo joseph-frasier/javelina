@@ -125,8 +125,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
-                        <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getActionDotColor(log.action)}`} />
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
                         {log.action === 'INSERT' && 'Created'}
                         {log.action === 'UPDATE' && 'Updated'}
                         {log.action === 'DELETE' && 'Deleted'}
