@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
+import { normalizePhoneInput } from '@/lib/utils/billing-validation';
 import type { DomainContact, DomainRegistrationType } from '@/types/domains';
 
 interface DomainCheckoutFormProps {
@@ -158,7 +159,7 @@ export default function DomainCheckoutForm({
               label="Phone"
               placeholder="(555) 123-4567"
               value={contact.phone}
-              onChange={(e) => updateContact('phone', e.target.value)}
+              onChange={(e) => updateContact('phone', normalizePhoneInput(e.target.value))}
               maxLength={20}
               required
             />
