@@ -7,7 +7,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminStatCard } from '@/components/admin/AdminStatCard';
-import { AdminStatusBadge, type AdminStatusBadgeVariant } from '@/components/admin/AdminStatusBadge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
@@ -40,12 +40,12 @@ interface Member {
   profiles: { name: string; email: string };
 }
 
-const ROLE_VARIANT_MAP: Record<string, AdminStatusBadgeVariant> = {
-  SuperAdmin: 'accent',
-  Admin: 'info',
-  Editor: 'success',
-  BillingContact: 'accent',
-  Viewer: 'neutral',
+const ROLE_DOT_COLOR: Record<string, string> = {
+  SuperAdmin: 'bg-accent',
+  Admin: 'bg-blue-electric',
+  BillingContact: 'bg-blue-500',
+  Editor: 'bg-green-500',
+  Viewer: 'bg-gray-slate',
 };
 
 const ROLE_LABEL_MAP: Record<string, string> = {
@@ -112,11 +112,13 @@ export default function AdminOrganizationDetailPage() {
         header: 'Role',
         sortValue: (m) => (m.role ?? '').toLowerCase(),
         render: (m) => (
-          <AdminStatusBadge
-            variant={ROLE_VARIANT_MAP[m.role] ?? 'neutral'}
-            label={ROLE_LABEL_MAP[m.role] ?? m.role}
-            dot={false}
-          />
+          <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
+            <span
+              aria-hidden="true"
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ROLE_DOT_COLOR[m.role] ?? 'bg-text-muted'}`}
+            />
+            {ROLE_LABEL_MAP[m.role] ?? m.role}
+          </span>
         ),
       },
     ],

@@ -379,7 +379,7 @@ export function DNSRecordsTable({
                     className="w-4 h-4 text-accent bg-surface border-gray-300 dark:border-gray-600 rounded focus:ring-accent focus:ring-2 cursor-pointer"
                   />
                 </div>
-                <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded text-xs font-semibold">
+                <span className="px-2 py-1 bg-white dark:bg-gray-700 border border-border-strong dark:border-gray-600 text-text rounded text-xs font-semibold">
                   {type}
                 </span>
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -470,7 +470,7 @@ export function DNSRecordsTable({
                             </Tooltip>
                           </td>
                           <td className="py-3 px-4">
-                            <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded text-xs font-medium">
+                            <span className="px-2 py-1 bg-white dark:bg-gray-700 border border-border-strong dark:border-gray-600 text-text rounded text-xs font-medium">
                               {record.type}
                             </span>
                           </td>
@@ -524,7 +524,7 @@ export function DNSRecordsTable({
                             <div className="text-xs text-gray-500 dark:text-gray-400">{fqdn}</div>
                           </div>
                         </div>
-                        <span className="px-2 py-1 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded text-xs font-medium">
+                        <span className="px-2 py-1 bg-white dark:bg-gray-700 border border-border-strong dark:border-gray-600 text-text rounded text-xs font-medium">
                           {record.type}
                         </span>
                       </div>

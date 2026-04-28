@@ -203,10 +203,10 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-semibold text-text mb-3">
                   Billing Summary
                 </h3>
-                <div className="flex items-center justify-between mb-4 p-3 bg-blue-electric/5 dark:bg-blue-electric/10 rounded-lg border border-blue-electric/20">
+                <div className="flex items-center justify-between mb-4 p-3 bg-surface-alt rounded-lg border border-border">
                   <div className="flex items-center space-x-2">
                     <svg
-                      className="w-5 h-5 text-blue-electric"
+                      className="w-5 h-5 text-text-muted"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
