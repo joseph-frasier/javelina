@@ -177,17 +177,17 @@ function SettingsContent() {
     });
   };
 
-  const getBillingStatusColor = (status: string) => {
+  const getBillingStatusDotColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-green-500';
       case 'canceled':
       case 'past_due':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-red-500';
       case 'trialing':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+        return 'bg-blue-electric';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-gray-slate';
     }
   };
 
@@ -638,11 +638,11 @@ function SettingsContent() {
                               <h3 className="text-base sm:text-lg font-bold text-text">
                                 {org.name}
                               </h3>
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full ${getBillingStatusColor(
-                                  org.plan_status
-                                )}`}
-                              >
+                              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
+                                <span
+                                  aria-hidden="true"
+                                  className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getBillingStatusDotColor(org.plan_status)}`}
+                                />
                                 {org.plan_status}
                               </span>
                             </div>
