@@ -51,7 +51,7 @@ export default function BusinessIndexPage() {
         <div style={{ display: 'grid', gap: 12, marginBottom: 24 }}>
           {completed.map((intake) => {
             const planLabel = intake.planCode === 'business_pro' ? 'Business Pro' : 'Business Starter';
-            const domain = intake.domain.domain || '—';
+            const domain = intake.domain.domain || 'Not set';
             return (
               <Link
                 key={intake.orgId}

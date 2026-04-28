@@ -110,7 +110,7 @@ export function StepWebsite({ t, data, set }: Props) {
         t={t}
         eyebrow="Step 2 of 5"
         title="Let's build your website"
-        subtitle="Tell us about your business. We'll generate the first draft — you can tweak anything after launch."
+        subtitle="Tell us about your business. We'll generate the first draft, then you can tweak anything after launch."
       />
 
       <div style={{ display: 'grid', gap: 16 }}>
@@ -142,27 +142,38 @@ export function StepWebsite({ t, data, set }: Props) {
 
         <div>
           <FieldLabel t={t}>Industry</FieldLabel>
-          <select
-            value={w.industry || ''}
-            onChange={(e) => update({ industry: e.target.value })}
-            style={{
-              width: '100%', padding: '10px 12px',
-              fontSize: 14, fontFamily: FONT,
-              borderRadius: 8, border: `1px solid ${t.border}`,
-              background: t.surface, color: w.industry ? t.text : t.textMuted,
-              outline: 'none', boxShadow: t.shadowSm,
-              appearance: 'none',
-              backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(t.textMuted)}' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              paddingRight: 32,
-            }}
-          >
-            <option value="" disabled>Pick the closest fit…</option>
-            {INDUSTRIES.map((ind) => (
-              <option key={ind} value={ind}>{ind}</option>
-            ))}
-          </select>
+          <div style={{ position: 'relative' }}>
+            <select
+              value={w.industry || ''}
+              onChange={(e) => update({ industry: e.target.value })}
+              style={{
+                width: '100%', padding: '10px 32px 10px 12px',
+                fontSize: 14, fontFamily: FONT,
+                borderRadius: 8, border: `1px solid ${t.border}`,
+                backgroundColor: t.surface, color: w.industry ? t.text : t.textMuted,
+                outline: 'none', boxShadow: t.shadowSm,
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
+              }}
+            >
+              <option value="" disabled>Pick the closest fit</option>
+              {INDUSTRIES.map((ind) => (
+                <option key={ind} value={ind}>{ind}</option>
+              ))}
+            </select>
+            <svg
+              width={12} height={12} viewBox="0 0 24 24" fill="none"
+              stroke={t.textMuted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+              style={{
+                position: 'absolute', right: 12, top: '50%',
+                transform: 'translateY(-50%)', pointerEvents: 'none',
+              }}
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
         </div>
 
         <div>
@@ -249,7 +260,7 @@ export function StepWebsite({ t, data, set }: Props) {
                   size="sm"
                   onClick={() => update({ logoName: null })}
                 >
-                  Skip — use text wordmark
+                  Skip, use text wordmark
                 </Button>
               </div>
               <div style={{ fontSize: 12, color: t.textMuted }}>

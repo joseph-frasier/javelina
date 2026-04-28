@@ -12,7 +12,7 @@ interface Props {
   data: BusinessIntakeData;
 }
 
-// Mirrors BUSINESS_PLAN_FEATURES in lib/plans-config.ts — kept in sync manually
+// Mirrors BUSINESS_PLAN_FEATURES in lib/plans-config.ts (kept in sync manually)
 // until plans-config exposes a shared accessor. Update there first, then here.
 const PLAN_FEATURES: Record<BusinessIntakeData['planCode'], string[]> = {
   business_starter: [
@@ -45,14 +45,14 @@ export function StepConfirm({ t, data }: Props) {
       ? 'Javelina managed'
       : data.dns.mode === 'self'
       ? `Self-managed${data.dns.provider ? ` · ${data.dns.provider}` : ''}`
-      : 'Skip — use Javelina subdomain';
+      : 'Skip, use Javelina subdomain';
 
   const domainLabel =
     data.domain.mode === 'transfer'
-      ? `Transfer · ${data.domain.domain || '—'}`
+      ? `Transfer · ${data.domain.domain || 'Not set'}`
       : data.domain.mode === 'connect'
-      ? `Connect · ${data.domain.domain || '—'}`
-      : `Register · ${data.domain.domain || '—'}`;
+      ? `Connect · ${data.domain.domain || 'Not set'}`
+      : `Register · ${data.domain.domain || 'Not set'}`;
 
   const features = PLAN_FEATURES[data.planCode];
 
@@ -68,16 +68,16 @@ export function StepConfirm({ t, data }: Props) {
       <Card t={t} padding={0}>
         <div style={{ padding: '8px 20px' }}>
           <SummaryRow t={t} label="DNS management" value={dnsLabel} />
-          <SummaryRow t={t} label="Business" value={data.website.bizName || '—'} />
-          <SummaryRow t={t} label="What you do" value={data.website.bizType || '—'} />
-          <SummaryRow t={t} label="Industry" value={data.website.industry || '—'} />
+          <SummaryRow t={t} label="Business" value={data.website.bizName || 'Not set'} />
+          <SummaryRow t={t} label="What you do" value={data.website.bizType || 'Not set'} />
+          <SummaryRow t={t} label="Industry" value={data.website.industry || 'Not set'} />
           <SummaryRow
             t={t}
             label="Pages"
-            value={(data.website.pages || []).join(', ') || '—'}
+            value={(data.website.pages || []).join(', ') || 'Not set'}
           />
           <SummaryRow t={t} label="Aesthetic" value={AESTHETIC_LABEL[data.website.aesthetic]} />
-          <SummaryRow t={t} label="Tone" value={data.website.tone || '—'} />
+          <SummaryRow t={t} label="Tone" value={data.website.tone || 'Not set'} />
           <SummaryRow
             t={t}
             label="Copy"
@@ -88,16 +88,16 @@ export function StepConfirm({ t, data }: Props) {
             <SummaryRow
               t={t}
               label="Auth code"
-              value={data.domain.epp ? '••••-••••-' + (data.domain.epp.slice(-4) || 'XXXX') : '—'}
+              value={data.domain.epp ? '••••-••••-' + (data.domain.epp.slice(-4) || 'XXXX') : 'Not set'}
               mono
             />
           )}
           <SummaryRow
             t={t}
             label="Registrant"
-            value={[data.contact.firstName, data.contact.lastName].filter(Boolean).join(' ') || '—'}
+            value={[data.contact.firstName, data.contact.lastName].filter(Boolean).join(' ') || 'Not set'}
           />
-          <SummaryRow t={t} label="Email" value={data.contact.email || '—'} mono />
+          <SummaryRow t={t} label="Email" value={data.contact.email || 'Not set'} mono />
           <div
             style={{
               display: 'flex', alignItems: 'flex-start',

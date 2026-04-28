@@ -9,9 +9,17 @@ interface StepperProps {
   current: number;
 }
 
+const PULSE_KEYFRAMES = `
+@keyframes javelinaStepPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,114,21,0.45); }
+  50%      { box-shadow: 0 0 0 6px rgba(239,114,21,0); }
+}
+`;
+
 export function Stepper({ t, steps, current }: StepperProps) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: FONT }}>
+      <style>{PULSE_KEYFRAMES}</style>
       {steps.map((s, i) => {
         const done = i < current;
         const active = i === current;
@@ -26,8 +34,8 @@ export function Stepper({ t, steps, current }: StepperProps) {
                   color: done ? '#fff' : active ? t.accent : t.textMuted,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 12, fontWeight: 600,
-                  boxShadow: active ? `0 0 0 3px ${t.ring}` : 'none',
-                  transition: 'all .15s',
+                  transition: 'background .15s, border-color .15s, color .15s',
+                  animation: active ? 'javelinaStepPulse 2s ease-in-out infinite' : undefined,
                 }}
               >
                 {done ? <Icon name="check" size={14} color="#fff" /> : i + 1}

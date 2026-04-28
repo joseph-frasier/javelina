@@ -1,7 +1,7 @@
 'use client';
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { useEffect, useState } from 'react';
+import { useSettingsStore } from '@/lib/settings-store';
 import {
   darkTokens,
   lightTokens,
@@ -10,24 +10,21 @@ import {
 
 export type BusinessThemeMode = 'light' | 'dark';
 
-interface ThemeState {
-  mode: BusinessThemeMode;
-  toggle: () => void;
-  set: (mode: BusinessThemeMode) => void;
+export function useBusinessThemeStore() {
+  const theme = useSettingsStore((s) => s.general.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
+  return {
+    mode: theme,
+    toggle: () => setTheme(theme === 'light' ? 'dark' : 'light'),
+    set: (mode: BusinessThemeMode) => setTheme(mode),
+  };
 }
 
-export const useBusinessThemeStore = create<ThemeState>()(
-  persist(
-    (set) => ({
-      mode: 'light',
-      toggle: () => set((s) => ({ mode: s.mode === 'light' ? 'dark' : 'light' })),
-      set: (mode) => set({ mode }),
-    }),
-    { name: 'business-theme' },
-  ),
-);
-
 export function useBusinessTheme(): Tokens {
-  const mode = useBusinessThemeStore((s) => s.mode);
-  return mode === 'dark' ? darkTokens : lightTokens;
+  const theme = useSettingsStore((s) => s.general.theme);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Avoid hydration flash: assume light until mounted, then sync.
+  if (!mounted) return lightTokens;
+  return theme === 'dark' ? darkTokens : lightTokens;
 }

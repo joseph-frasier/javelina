@@ -30,7 +30,7 @@ export function SitePreview({ t, data }: SitePreviewProps) {
       : 'Made with intention.');
   const subline =
     data.website.description ||
-    "Independent studio. Currently booking new projects — let's make something good.";
+    "Independent studio. Currently booking new projects. Let's make something good.";
 
   return (
     <Card t={t} padding={0} style={{ overflow: 'hidden' }}>

@@ -12,29 +12,30 @@ interface BadgeProps {
 }
 
 export function Badge({ t, tone = 'neutral', children, dot }: BadgeProps) {
-  const tones: Record<Tone, { bg: string; fg: string; dc: string }> = {
-    neutral: { bg: t.surfaceAlt, fg: t.textMuted, dc: t.textFaint },
-    success: { bg: 'rgba(5,150,105,0.10)', fg: t.success, dc: t.success },
-    warning: { bg: 'rgba(217,119,6,0.12)', fg: t.warning, dc: t.warning },
-    danger: { bg: 'rgba(220,38,38,0.10)', fg: t.danger, dc: t.danger },
-    accent: { bg: t.accentSoft, fg: t.accent, dc: t.accent },
+  const dotColor: Record<Tone, string> = {
+    neutral: t.textFaint,
+    success: t.success,
+    warning: t.warning,
+    danger: t.danger,
+    accent: t.accent,
   };
-  const tn = tones[tone];
   return (
     <span
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
         padding: '3px 9px', borderRadius: 999,
         fontSize: 12, fontWeight: 550,
-        background: tn.bg, color: tn.fg,
+        background: t.surface, color: t.text,
         fontFamily: FONT, lineHeight: 1.3,
-        border: `1px solid ${t.border}`,
+        border: `1px solid ${t.borderStrong}`,
       }}
     >
       {dot && (
         <span
+          aria-hidden="true"
           style={{
-            width: 6, height: 6, borderRadius: 999, background: tn.dc,
+            width: 6, height: 6, borderRadius: 999, background: dotColor[tone],
+            flexShrink: 0,
           }}
         />
       )}
