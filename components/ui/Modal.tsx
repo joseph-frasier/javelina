@@ -170,7 +170,7 @@ export function Modal({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {eyebrow && (
-                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-accent">
+                  <p className="mb-1.5 text-sm font-semibold uppercase tracking-[0.18em] text-accent">
                     {eyebrow}
                   </p>
                 )}
@@ -212,7 +212,7 @@ export function Modal({
           <div className={clsx('px-6 py-5', bodyClassName)}>{children}</div>
 
           {footer && (
-            <div className="border-t border-border px-6 py-4 bg-surface-alt rounded-b-2xl">
+            <div className="border-t border-border px-6 py-4 bg-surface rounded-b-2xl">
               {footer}
             </div>
           )}
