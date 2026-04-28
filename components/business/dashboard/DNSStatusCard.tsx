@@ -93,13 +93,13 @@ export function DNSStatusCard({ t, data }: DNSStatusCardProps) {
                 borderRadius: 999,
                 fontSize: 12,
                 fontWeight: 550,
-                background: 'rgba(5,150,105,0.10)',
-                color: t.success,
+                background: t.surface,
+                color: t.text,
                 fontFamily: FONT,
-                border: `1px solid ${t.border}`,
+                border: `1px solid ${t.borderStrong}`,
               }}
             >
-              <span style={{ width: 6, height: 6, borderRadius: 999, background: t.success }} />
+              <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: t.success, flexShrink: 0 }} />
               Resolving
             </span>
           </div>

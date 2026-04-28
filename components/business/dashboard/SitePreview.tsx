@@ -67,7 +67,7 @@ export function SitePreview({ t, data }: SitePreviewProps) {
             border: `1px solid ${t.border}`,
             borderRadius: 10,
             overflow: 'hidden',
-            background: t.surfaceAlt,
+            background: t.surface,
           }}
         >
           <div
@@ -100,7 +100,8 @@ export function SitePreview({ t, data }: SitePreviewProps) {
                 flex: 1,
                 height: 16,
                 borderRadius: 999,
-                background: t.surfaceAlt,
+                background: t.bg,
+                border: `1px solid ${t.border}`,
                 display: 'flex',
                 alignItems: 'center',
                 padding: '0 10px',
@@ -118,9 +119,7 @@ export function SitePreview({ t, data }: SitePreviewProps) {
               padding: '38px 44px',
               minHeight: 260,
               position: 'relative',
-              background: isBold
-                ? headlineBg
-                : `linear-gradient(180deg, ${t.surface} 0%, ${t.surfaceAlt} 100%)`,
+              background: isBold ? headlineBg : t.surface,
             }}
           >
             <div

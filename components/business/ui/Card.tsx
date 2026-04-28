@@ -15,7 +15,7 @@ export function Card({ t, children, style, padding = 24 }: CardProps) {
       style={{
         background: t.surface,
         border: `1px solid ${t.border}`,
-        borderRadius: 14,
+        borderRadius: 16,
         boxShadow: t.shadowSm,
         padding,
         ...style,

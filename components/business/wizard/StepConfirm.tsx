@@ -83,13 +83,13 @@ export function StepConfirm({ t, data }: Props) {
             label="Copy"
             value={data.website.letUsWrite ? 'Javelina will draft for you' : "You'll write it"}
           />
-          <SummaryRow t={t} label="Domain" value={domainLabel} mono />
+          <SummaryRow t={t} label="Domain" value={domainLabel} mono={!domainLabel.endsWith('Not set')} />
           {data.domain.mode === 'transfer' && (
             <SummaryRow
               t={t}
               label="Auth code"
               value={data.domain.epp ? '••••-••••-' + (data.domain.epp.slice(-4) || 'XXXX') : 'Not set'}
-              mono
+              mono={!!data.domain.epp}
             />
           )}
           <SummaryRow
@@ -97,7 +97,7 @@ export function StepConfirm({ t, data }: Props) {
             label="Registrant"
             value={[data.contact.firstName, data.contact.lastName].filter(Boolean).join(' ') || 'Not set'}
           />
-          <SummaryRow t={t} label="Email" value={data.contact.email || 'Not set'} mono />
+          <SummaryRow t={t} label="Email" value={data.contact.email || 'Not set'} mono={!!data.contact.email} />
           <div
             style={{
               display: 'flex', alignItems: 'flex-start',

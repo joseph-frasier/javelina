@@ -10,7 +10,7 @@ export default function BusinessLayout({ children }: { children: ReactNode }) {
     <div
       style={{
         minHeight: '100vh',
-        background: t.bg,
+        background: t.surfaceAlt,
         color: t.text,
         display: 'flex',
         flexDirection: 'column',
