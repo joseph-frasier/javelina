@@ -19,8 +19,8 @@ interface ButtonProps {
 }
 
 const SIZES: Record<Size, { h: number; px: number; fs: number }> = {
-  sm: { h: 30, px: 12, fs: 13 },
-  md: { h: 38, px: 16, fs: 14 },
+  sm: { h: 32, px: 12, fs: 12 },
+  md: { h: 40, px: 16, fs: 14 },
   lg: { h: 44, px: 20, fs: 15 },
 };
 
@@ -36,12 +36,14 @@ export function Button({
           background: disabled ? t.borderStrong : t.accent,
           color: '#fff',
           border: '1px solid transparent',
-          boxShadow: disabled
-            ? 'none'
-            : '0 1px 2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)',
+          boxShadow: disabled ? 'none' : t.shadowSm,
         }
       : variant === 'secondary'
-      ? { background: t.surface, color: t.text, border: `1px solid ${t.border}`, boxShadow: t.shadowSm }
+      ? {
+          background: 'transparent',
+          color: t.accent,
+          border: `1px solid ${t.accent}`,
+        }
       : variant === 'ghost'
       ? { background: 'transparent', color: t.text, border: '1px solid transparent' }
       : { background: 'transparent', color: t.accent, border: 'none', padding: 0, height: 'auto' };
@@ -55,16 +57,17 @@ export function Button({
         height: variant === 'link' ? 'auto' : s.h,
         padding: variant === 'link' ? 0 : `0 ${s.px}px`,
         fontSize: s.fs,
-        fontWeight: 550,
+        fontWeight: 500,
         fontFamily: FONT,
         borderRadius: 8,
         cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'inline-flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 8,
         whiteSpace: 'nowrap',
-        transition: 'background .12s, box-shadow .12s, transform .05s',
-        letterSpacing: -0.1,
+        transition: 'background .15s, box-shadow .15s, color .15s',
+        letterSpacing: '-0.025em',
         ...variantStyle,
         ...style,
       }}

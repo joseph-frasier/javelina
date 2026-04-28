@@ -116,7 +116,7 @@ export function StepDomain({ t, data, set, entitlement }: Props) {
           <Icon name="info" size={16} />
           <div>
             Your plan&apos;s bundled domain has already been used. You can still
-            connect another domain you own — registering or transferring a new
+            connect another domain you own. Registering or transferring a new
             one would require a separate purchase.
           </div>
         </div>
@@ -147,7 +147,7 @@ export function StepDomain({ t, data, set, entitlement }: Props) {
           disabled={entitlementUsed}
           icon={<Icon name="plus" size={18} />}
           label="Register a new domain"
-          description="Included with your plan — pick from .com, .net, .org, .co, .us."
+          description="Included with your plan. Pick from .com, .net, .org, .co, or .us."
         />
       </div>
 
@@ -242,7 +242,7 @@ export function StepDomain({ t, data, set, entitlement }: Props) {
 
       {d.mode === 'register' && (
         <div style={{ marginTop: 22 }}>
-          <FieldLabel t={t} hint="Included in your plan — .com, .net, .org, .co, .us">
+          <FieldLabel t={t} hint="Included in your plan: .com, .net, .org, .co, .us">
             Find a domain
           </FieldLabel>
           <Input

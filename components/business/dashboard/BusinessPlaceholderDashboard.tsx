@@ -22,7 +22,7 @@ export function BusinessPlaceholderDashboard({ data }: Props) {
   const firstName = data.contact.firstName || data.website.bizName || 'there';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100%', background: t.bg, fontFamily: FONT }}>
+    <div style={{ display: 'flex', minHeight: '100%', background: t.surfaceAlt, fontFamily: FONT }}>
       <SideNav t={t} data={data} active="overview" />
 
       <main style={{ flex: 1, padding: '28px 32px 60px', overflow: 'auto' }}>

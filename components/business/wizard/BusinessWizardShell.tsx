@@ -74,7 +74,7 @@ export function BusinessWizardShell({ orgId }: Props) {
                  <StepConfirm t={t} data={data} />;
 
   return (
-    <div style={{ minHeight: '100%', background: t.bg, fontFamily: FONT }}>
+    <div style={{ minHeight: '100%', background: t.surfaceAlt, fontFamily: FONT }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '36px 32px 60px' }}>
         <div
           style={{

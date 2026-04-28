@@ -26,7 +26,7 @@ export function StepContact({ t, data, set }: Props) {
         t={t}
         eyebrow="Step 4 of 5"
         title="Registrar contact details"
-        subtitle="ICANN requires accurate contact info on every domain. This stays private — we enable WHOIS privacy by default."
+        subtitle="ICANN requires accurate contact info on every domain. This stays private. We enable WHOIS privacy by default."
       />
 
       <div style={{ display: 'grid', gap: 16 }}>
@@ -110,7 +110,7 @@ export function StepContact({ t, data, set }: Props) {
                 fontFamily: FONT, marginTop: 2, lineHeight: 1.5,
               }}
             >
-              Your personal details won&apos;t show up in public WHOIS lookups. Registrars see them — nobody else.
+              Your personal details won&apos;t show up in public WHOIS lookups. Registrars see them, nobody else.
             </div>
           </div>
           <Toggle t={t} checked={c.whois !== false} onChange={(v) => update({ whois: v })} />

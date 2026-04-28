@@ -205,7 +205,7 @@ function CheckoutContent() {
 
   if (!checkoutData) {
     return (
-      <div className="min-h-screen bg-accent-light flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
       </div>
     );
@@ -218,7 +218,7 @@ function CheckoutContent() {
     : checkoutData.plan_price || 0;
 
   return (
-    <div className="min-h-screen bg-accent-light dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border bg-surface">
         <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
@@ -601,7 +601,7 @@ function CheckoutContent() {
 export default function CheckoutPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-accent-light dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
       </div>
     }>

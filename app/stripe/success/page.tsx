@@ -85,7 +85,7 @@ function SuccessPageContent() {
     setTimeout(() => {
       try {
         addToast('success', intake === 'business'
-          ? 'Welcome to Javelina Business — let\'s set up your site.'
+          ? 'Welcome to Javelina Business. Let\'s set up your site.'
           : 'Welcome to your new plan!');
       } catch {}
     }, 0);

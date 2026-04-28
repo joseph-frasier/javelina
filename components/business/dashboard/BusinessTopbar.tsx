@@ -8,12 +8,10 @@ import {
   useBusinessThemeStore,
 } from '@/lib/business-theme-store';
 import { Logo } from '@/components/ui/Logo';
-import { Icon } from '@/components/business/ui/Icon';
 
 export function BusinessTopbar() {
   const t = useBusinessTheme();
-  const mode = useBusinessThemeStore((s) => s.mode);
-  const toggle = useBusinessThemeStore((s) => s.toggle);
+  const { mode, toggle } = useBusinessThemeStore();
   const user = useAuthStore((s) => s.user);
   const email = user?.email ?? '';
   const initials =
@@ -75,7 +73,15 @@ export function BusinessTopbar() {
             transition: 'background .12s, color .12s',
           }}
         >
-          <Icon name={mode === 'dark' ? 'sun' : 'moon'} size={15} color={t.textMuted} />
+          {mode === 'dark' ? (
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={t.text} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          ) : (
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={t.text} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          )}
           <span
             style={{
               position: 'absolute',
@@ -93,9 +99,9 @@ export function BusinessTopbar() {
           </span>
         </button>
         {email && (
-          <span style={{ fontSize: 13, color: t.textMuted }}>
-            Signed in as{' '}
-            <span style={{ color: t.text, fontWeight: 500 }}>{email}</span>
+          <span style={{ fontSize: 13, color: t.text }}>
+            <span style={{ color: t.textMuted }}>Signed in as </span>
+            <span style={{ color: t.text, fontWeight: 600 }}>{email}</span>
           </span>
         )}
         <div

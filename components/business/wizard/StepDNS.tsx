@@ -29,7 +29,7 @@ export function StepDNS({ t, data, set }: Props) {
         t={t}
         eyebrow="Step 1 of 5"
         title="How do you want to manage DNS?"
-        subtitle="Choose who's in charge of your DNS records. You can always switch later — nothing here is permanent."
+        subtitle="Choose who's in charge of your DNS records. You can always switch later. Nothing here is permanent."
       />
       <div style={{ display: 'grid', gap: 12 }}>
         <Radio
@@ -38,7 +38,7 @@ export function StepDNS({ t, data, set }: Props) {
           onChange={() => set({ dns: { mode: 'jbp' } })}
           icon={<Icon name="sparkle" size={18} />}
           label="Let Javelina manage it (recommended)"
-          description="We'll point your domain at our nameservers and wire up everything — A, AAAA, CNAME, MX — automatically."
+          description="We'll point your domain at our nameservers and wire up everything (A, AAAA, CNAME, MX) automatically."
         />
         <Radio
           t={t}
