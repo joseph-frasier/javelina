@@ -108,7 +108,7 @@ export function EditZoneModal({
                   Advanced zone metadata settings.
                 </p>
               </div>
-              <span className="ml-2 inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-medium text-blue-electric">
+              <span className="ml-2 inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-medium text-text-muted hover:text-text transition-colors">
                 {isSOAExpanded ? 'Hide advanced' : 'Show advanced'}
                 <svg
                   className={`h-4 w-4 transition-transform ${isSOAExpanded ? 'rotate-180' : ''}`}
@@ -126,13 +126,13 @@ export function EditZoneModal({
             </button>
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-blue-electric/40 bg-blue-electric/10 px-2.5 py-1 text-blue-electric">
+              <span className="rounded-full border border-border bg-surface-alt px-2.5 py-1 text-text-muted">
                 Admin: {formData.admin_email || 'Not set'}
               </span>
-              <span className="rounded-full border border-blue-electric/40 bg-blue-electric/10 px-2.5 py-1 text-blue-electric">
+              <span className="rounded-full border border-border bg-surface-alt px-2.5 py-1 text-text-muted">
                 Negative TTL: {formData.negative_caching_ttl}s
               </span>
-              <span className="rounded-full border border-blue-electric/40 bg-blue-electric/10 px-2.5 py-1 text-blue-electric">
+              <span className="rounded-full border border-border bg-surface-alt px-2.5 py-1 text-text-muted">
                 Serial: {soaSerial}
               </span>
             </div>
