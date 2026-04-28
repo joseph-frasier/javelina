@@ -197,7 +197,7 @@ export function DNSRecordDetailModal({
           </DetailRow>
 
           {displayRecord.comment ? (
-            <DetailRow label="Comment" last>
+            <DetailRow label="Comment">
               <p className="text-sm text-text whitespace-pre-wrap break-words">
                 {displayRecord.comment}
               </p>
