@@ -102,11 +102,10 @@ export function DNSRecordDetailModal({
     helper?: ReactNode;
     copyText?: string;
     copyLabel?: string;
-    last?: boolean;
   }
 
-  const DetailRow = ({ label, children, helper, copyText, copyLabel, last }: DetailRowProps) => (
-    <div className={`py-3 ${!last ? 'border-b border-border' : ''}`}>
+  const DetailRow = ({ label, children, helper, copyText, copyLabel }: DetailRowProps) => (
+    <div className="py-3">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-1.5">
@@ -193,7 +192,6 @@ export function DNSRecordDetailModal({
             copyText={displayRecord.ttl.toString()}
             copyLabel="ttl"
             helper={ttlHint}
-            last={!displayRecord.comment}
           >
             <span className="text-sm text-text">{displayRecord.ttl} seconds</span>
           </DetailRow>
@@ -241,7 +239,7 @@ export function DNSRecordDetailModal({
                 : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'
             }`}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm border-t border-border pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-text-muted text-xs">Record ID</span>
                 <div className="font-mono text-xs text-text break-all mt-1">{displayRecord.id}</div>
