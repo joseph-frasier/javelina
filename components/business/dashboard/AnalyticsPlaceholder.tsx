@@ -2,7 +2,7 @@
 
 import { FONT, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
-import { Button } from '@/components/business/ui/Button';
+import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
 
 interface Props {
   t: Tokens;
@@ -32,7 +32,7 @@ export function AnalyticsPlaceholder({ t }: Props) {
         >
           Last 14 days
         </h3>
-        <Button t={t} variant="link">View analytics →</Button>
+        <HoverArrowLink t={t}>View analytics</HoverArrowLink>
       </div>
       <div
         style={{

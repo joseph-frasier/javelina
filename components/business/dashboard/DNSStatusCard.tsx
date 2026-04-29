@@ -1,10 +1,10 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import Link from 'next/link';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
+import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
 
 interface DNSStatusCardProps {
   t: Tokens;
@@ -63,18 +63,9 @@ export function DNSStatusCard({ t, data }: DNSStatusCardProps) {
         >
           Domain &amp; DNS
         </h3>
-        <Link
-          href={`/organization/${data.orgId}`}
-          style={{
-            color: t.accent,
-            fontSize: 13,
-            fontWeight: 600,
-            textDecoration: 'none',
-            fontFamily: FONT,
-          }}
-        >
-          Open zone editor →
-        </Link>
+        <HoverArrowLink t={t} href={`/organization/${data.orgId}`}>
+          Open zone editor
+        </HoverArrowLink>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

@@ -4,7 +4,7 @@ import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
 import { Badge } from '@/components/business/ui/Badge';
-import { Button } from '@/components/business/ui/Button';
+import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
 import { Icon } from '@/components/business/ui/Icon';
 
 interface BillingCardProps {
@@ -18,7 +18,7 @@ export function BillingCard({ t, data }: BillingCardProps) {
   const planPrice = data.planCode === 'business_pro' ? '$199.88' : '$99.88';
 
   return (
-    <Card t={t}>
+    <Card t={t} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <div
         style={{
           display: 'flex',
@@ -40,7 +40,7 @@ export function BillingCard({ t, data }: BillingCardProps) {
         >
           Plan &amp; billing
         </h3>
-        <Button t={t} variant="link">Manage billing →</Button>
+        <HoverArrowLink t={t}>Manage billing</HoverArrowLink>
       </div>
       <div
         style={{
