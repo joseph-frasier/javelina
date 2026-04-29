@@ -107,6 +107,25 @@ const AESTHETICS: Array<{
   },
 ];
 
+function humanizeAssetError(code: string): string {
+  switch (code) {
+    case 'file_too_large':
+      return 'That file is too large. Logos must be under 5 MB; photos under 25 MB.';
+    case 'unsupported_file_type':
+      return "That file type isn't supported. Try PNG, JPG, WEBP, or HEIC.";
+    case 'photo_limit_exceeded':
+      return 'You can upload up to 10 photos.';
+    case 'storage_upload_failed':
+      return "We couldn't save that file. Please try again.";
+    case 'network_error':
+      return 'Network error. Check your connection and try again.';
+    case 'invalid_upload':
+      return "We couldn't process that file. Please try a different one.";
+    default:
+      return "Couldn't upload — please try again.";
+  }
+}
+
 export function StepWebsite({ t, data, set }: Props) {
   const w = data.website;
   const update = (patch: Partial<W>) => set({ website: patch });
@@ -121,13 +140,18 @@ export function StepWebsite({ t, data, set }: Props) {
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
-  // On mount (or when stored asset metadata changes from outside), pull fresh
-  // 1-hour signed URLs so previews render after page reload.
+  // Hydration: pull fresh 1-hour signed URLs once per orgId on mount when
+  // metadata exists but the URL cache is empty. Subsequent uploads update
+  // the cache directly, so we don't refetch on every metadata change.
+  const hydratedRef = useRef<string | null>(null);
   useEffect(() => {
-    let cancelled = false;
+    if (!data.orgId || hydratedRef.current === data.orgId) return;
     const hasLogoMeta = !!w.logo?.storage_path;
     const hasPhotoMeta = (w.photos ?? []).length > 0;
     if (!hasLogoMeta && !hasPhotoMeta) return;
+
+    hydratedRef.current = data.orgId;
+    let cancelled = false;
     void (async () => {
       const urls = await getAssetUrls(data.orgId);
       if (cancelled || !urls) return;
@@ -145,25 +169,37 @@ export function StepWebsite({ t, data, set }: Props) {
   async function handleLogoSelect(file: File) {
     setLogoError(null);
     setLogoBusy(true);
-    // Optimistic preview.
     const objectUrl = URL.createObjectURL(file);
+    const priorUrl = logoUrl;
+    const priorMeta = w.logo;
     setLogoUrl(objectUrl);
 
-    const form = new FormData();
-    form.append('file', file);
-    const result = await uploadLogo(data.orgId, form);
-    setLogoBusy(false);
-    URL.revokeObjectURL(objectUrl);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const result = await uploadLogo(data.orgId, form);
 
-    if (!result.ok) {
-      setLogoUrl(null);
-      setLogoError(result.error);
-      update({ logo: null });
-      return;
+      if (!result.ok) {
+        // Preserve prior logo on replace failure; only clear if this was a fresh upload.
+        if (priorMeta) {
+          setLogoUrl(priorUrl);
+        } else {
+          setLogoUrl(null);
+          update({ logo: null });
+        }
+        setLogoError(humanizeAssetError(result.error));
+        return;
+      }
+      const { signed_url, expires_at: _expiresAt, ...meta } = result.data;
+      update({ logo: meta as LogoAsset });
+      setLogoUrl(signed_url);
+    } finally {
+      setLogoBusy(false);
+      // Revoke the optimistic Blob URL after we've already swapped to the
+      // server-signed URL (or restored the prior one), so React never paints
+      // a revoked src.
+      URL.revokeObjectURL(objectUrl);
     }
-    const { signed_url, expires_at, ...meta } = result.data;
-    update({ logo: meta as LogoAsset });
-    setLogoUrl(signed_url);
   }
 
   async function handlePhotosSelect(files: FileList) {
@@ -171,7 +207,7 @@ export function StepWebsite({ t, data, set }: Props) {
     const incoming = Array.from(files);
     const existing = w.photos ?? [];
     if (existing.length + incoming.length > 10) {
-      setPhotoError(`photo_limit_exceeded (${existing.length}/10)`);
+      setPhotoError(humanizeAssetError('photo_limit_exceeded'));
       return;
     }
     setPhotoBusy(true);
@@ -180,10 +216,10 @@ export function StepWebsite({ t, data, set }: Props) {
     const result = await uploadPhotos(data.orgId, form);
     setPhotoBusy(false);
     if (!result.ok) {
-      setPhotoError(result.error);
+      setPhotoError(humanizeAssetError(result.error));
       return;
     }
-    const newMeta: PhotoAsset[] = result.data.photos.map(({ signed_url, expires_at, ...m }) => m);
+    const newMeta: PhotoAsset[] = result.data.photos.map(({ signed_url: _signed, expires_at: _expires, ...m }) => m);
     update({ photos: [...existing, ...newMeta] });
     setPhotoUrls((prev) => {
       const next = { ...prev };
@@ -205,7 +241,7 @@ export function StepWebsite({ t, data, set }: Props) {
     if (!result.ok) {
       // Revert on failure.
       update({ photos: existing });
-      setPhotoError(result.error);
+      setPhotoError(humanizeAssetError(result.error));
     }
   }
 
@@ -401,7 +437,7 @@ export function StepWebsite({ t, data, set }: Props) {
               </div>
               {logoError && (
                 <div style={{ fontSize: 12, color: '#b91c1c' }}>
-                  Couldn&apos;t upload logo ({logoError}).
+                  {logoError}
                 </div>
               )}
             </div>
@@ -461,7 +497,7 @@ export function StepWebsite({ t, data, set }: Props) {
           </div>
           {photoError && (
             <div style={{ fontSize: 12, color: '#b91c1c', marginTop: 6 }}>
-              Couldn&apos;t upload photos ({photoError}).
+              {photoError}
             </div>
           )}
           {(w.photos ?? []).length > 0 && (
