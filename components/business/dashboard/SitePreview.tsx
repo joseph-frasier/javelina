@@ -293,10 +293,29 @@ export function SitePreview({ t, data }: SitePreviewProps) {
                   style={{
                     aspectRatio: '1 / 1',
                     borderRadius: 6,
-                    background: `repeating-linear-gradient(${45 + i * 30}deg, ${t.border}, ${t.border} 4px, ${t.surfaceAlt} 4px, ${t.surfaceAlt} 8px)`,
+                    background: t.surfaceAlt,
                     border: `1px solid ${t.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                />
+                >
+                  <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={t.textMuted}
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="9" r="1.4" fill={t.textMuted} stroke="none" />
+                    <path d="M21 16l-5-5-9 9" />
+                  </svg>
+                </div>
               ))}
             </div>
           </div>
