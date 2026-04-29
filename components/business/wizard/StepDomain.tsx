@@ -249,6 +249,7 @@ export function StepDomain({ t, data, set, entitlement }: Props) {
             t={t}
             value={d.search}
             onChange={(v) => update({ search: v })}
+            onKeyDown={(e) => { if (e.key === 'Enter' && (d.search || '').trim() && !searching) runSearch(); }}
             placeholder="mycompany"
             suffix={
               <Button
@@ -314,7 +315,7 @@ export function StepDomain({ t, data, set, entitlement }: Props) {
                         <span style={{ fontSize: 12, color: t.textMuted, marginRight: 14 }}>
                           Included
                         </span>
-                        <Badge t={t} tone="success" dot>
+                        <Badge t={t} tone="success">
                           {selected ? 'Selected' : 'Available'}
                         </Badge>
                       </>

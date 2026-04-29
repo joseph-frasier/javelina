@@ -3,7 +3,6 @@
 import { FONT, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
 import { Button } from '@/components/business/ui/Button';
-import { Icon } from '@/components/business/ui/Icon';
 
 interface Props {
   t: Tokens;
@@ -46,20 +45,6 @@ export function AnalyticsPlaceholder({ t }: Props) {
           textAlign: 'center',
         }}
       >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 10,
-            background: t.accentSoft,
-            color: t.accent,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon name="chart" size={18} color={t.accent} />
-        </div>
         <div style={{ fontSize: 14, fontWeight: 600, color: t.text, fontFamily: FONT }}>
           Analytics will appear here
         </div>

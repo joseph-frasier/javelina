@@ -224,15 +224,9 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[22px] border border-accent bg-accent-soft p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-accent bg-accent-soft text-accent">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Plan Summary</p>
+          <div className="rounded-[22px] border border-border bg-surface-alt p-5">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Plan Summary</p>
                 <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
                   <h3 className="text-xl font-semibold text-text">
                     {selectedPlan ? selectedPlan.name : 'Organization setup'}
@@ -251,12 +245,11 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                     ? 'Submitting this form creates the organization and carries the selected plan details into the billing flow.'
                     : 'This form creates the organization and stores the required billing and admin contacts.'}
                 </p>
-              </div>
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-info/20 bg-info/5 p-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-info">Setup Flow</p>
+          <div className="rounded-[22px] border border-border bg-surface-alt p-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Setup Flow</p>
             <ol className="mt-3 space-y-3 text-sm text-text-muted">
               <li>1. Name the organization and add team-facing context.</li>
               <li>2. Add billing contact and address details.</li>
@@ -273,7 +266,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
 
         <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm bg-surface-alt">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Section 1</p>
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Section 1</p>
             <h3 className="mt-2 text-lg font-semibold text-text">Organization profile</h3>
             <p className="mt-1 text-sm text-text-muted">
               Start with the name and description your teammates will recognize first.
@@ -319,7 +312,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
 
         <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm bg-surface-alt">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Section 2</p>
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Section 2</p>
             <h3 className="mt-2 text-lg font-semibold text-text">Billing contact</h3>
             <p className="mt-1 text-sm text-text-muted">
               These details are used for invoices, receipts, and billing follow-up.
@@ -442,7 +435,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
 
         <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm bg-surface-alt">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Section 3</p>
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Section 3</p>
             <h3 className="mt-2 text-lg font-semibold text-text">Administrative contact</h3>
             <p className="mt-1 text-sm text-text-muted">
               Choose who should receive operational and account-level follow-up.
