@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
@@ -16,7 +17,19 @@ function resolveDomain(data: BusinessIntakeData): string {
   return data.domain.domain || 'your-domain.com';
 }
 
+function useOs(): 'mac' | 'windows' | 'other' {
+  const [os, setOs] = useState<'mac' | 'windows' | 'other'>('mac');
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (/Win/i.test(ua)) setOs('windows');
+    else if (/Mac/i.test(ua)) setOs('mac');
+    else setOs('other');
+  }, []);
+  return os;
+}
+
 export function SitePreview({ t, data }: SitePreviewProps) {
+  const os = useOs();
   const domain = resolveDomain(data);
   const isBold = data.website.aesthetic === 'bold';
   const headlineFont = isBold ? 'Georgia, serif' : 'Inter, system-ui, sans-serif';
@@ -70,50 +83,125 @@ export function SitePreview({ t, data }: SitePreviewProps) {
             background: t.surface,
           }}
         >
-          <div
-            style={{
-              height: 28,
-              borderBottom: `1px solid ${t.border}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '0 12px',
-              background: t.surface,
-            }}
-          >
-            <div style={{ display: 'flex', gap: 4 }}>
-              {['#ff5f57', '#febc2e', '#28c840'].map((c) => (
-                <div
-                  key={c}
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 999,
-                    background: c,
-                    opacity: 0.8,
-                  }}
-                />
-              ))}
-            </div>
+          {os === 'windows' ? (
             <div
               style={{
-                flex: 1,
-                height: 16,
-                borderRadius: 999,
-                background: t.bg,
-                border: `1px solid ${t.border}`,
+                height: 32,
+                borderBottom: `1px solid ${t.border}`,
                 display: 'flex',
                 alignItems: 'center',
-                padding: '0 10px',
-                fontFamily: MONO,
-                fontSize: 10,
-                color: t.textMuted,
-                marginLeft: 10,
+                background: t.surface,
+                position: 'relative',
               }}
             >
-              https://{domain}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                <div
+                  style={{
+                    height: 20,
+                    borderRadius: 4,
+                    background: t.bg,
+                    border: `1px solid ${t.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 10px',
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    color: t.textMuted,
+                    minWidth: 220,
+                    maxWidth: 360,
+                  }}
+                >
+                  https://{domain}
+                </div>
+              </div>
+              <div
+                style={{
+                  marginLeft: 'auto',
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  height: '100%',
+                }}
+              >
+                {[
+                  { label: '─', title: 'Minimize' },
+                  { label: '□', title: 'Maximize' },
+                  { label: '✕', title: 'Close', isClose: true },
+                ].map(({ label, title, isClose }) => (
+                  <div
+                    key={title}
+                    title={title}
+                    style={{
+                      width: 40,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: isClose ? 10 : 11,
+                      color: t.textMuted,
+                      cursor: 'default',
+                      userSelect: 'none',
+                    }}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div
+              style={{
+                height: 28,
+                borderBottom: `1px solid ${t.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '0 12px',
+                background: t.surface,
+              }}
+            >
+              <div style={{ display: 'flex', gap: 4 }}>
+                {['#ff5f57', '#febc2e', '#28c840'].map((c) => (
+                  <div
+                    key={c}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: c,
+                      opacity: 0.8,
+                    }}
+                  />
+                ))}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  height: 16,
+                  borderRadius: 999,
+                  background: t.bg,
+                  border: `1px solid ${t.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 10px',
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  color: t.textMuted,
+                  marginLeft: 10,
+                }}
+              >
+                https://{domain}
+              </div>
+            </div>
+          )}
           <div
             style={{
               padding: '38px 44px',

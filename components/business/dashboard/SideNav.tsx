@@ -1,17 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import { FONT, type Tokens } from '@/components/business/ui/tokens';
-import { Icon, type IconName } from '@/components/business/ui/Icon';
+import { AnimatedNavIcon, type AnimatedNavIconName } from '@/components/business/ui/AnimatedNavIcon';
 
 interface SideNavProps {
   t: Tokens;
   data: BusinessIntakeData;
 }
 
-const ITEMS: { id: string; label: string; icon: IconName; segment: string | null }[] = [
+const ITEMS: { id: string; label: string; icon: AnimatedNavIconName; segment: string | null }[] = [
   { id: 'overview', label: 'Overview', icon: 'sparkle', segment: null },
   { id: 'website', label: 'Website', icon: 'globe', segment: 'website' },
   { id: 'dns', label: 'DNS', icon: 'server', segment: 'dns' },
@@ -20,11 +21,6 @@ const ITEMS: { id: string; label: string; icon: IconName; segment: string | null
   { id: 'billing', label: 'Billing', icon: 'credit', segment: 'billing' },
 ];
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).slice(0, 2);
-  const joined = parts.map((s) => s.charAt(0).toUpperCase()).join('');
-  return joined || 'JB';
-}
 
 function isActive(pathname: string, orgId: string, segment: string | null): boolean {
   const base = `/business/${orgId}`;
@@ -35,6 +31,7 @@ function isActive(pathname: string, orgId: string, segment: string | null): bool
 export function SideNav({ t, data }: SideNavProps) {
   const pathname = usePathname() ?? '';
   const orgId = data.orgId;
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const planLabel = data.planCode === 'business_pro' ? 'Pro · monthly' : 'Starter · monthly';
   const bizName = data.website.bizName || 'Your business';
 
@@ -71,25 +68,7 @@ export function SideNav({ t, data }: SideNavProps) {
         >
           Business
         </div>
-        <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: 6,
-              background: t.accent,
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              fontWeight: 700,
-              fontFamily: FONT,
-              flexShrink: 0,
-            }}
-          >
-            {initials(bizName)}
-          </div>
+        <div style={{ marginTop: 4 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
@@ -117,6 +96,8 @@ export function SideNav({ t, data }: SideNavProps) {
             <Link
               key={it.id}
               href={href}
+              onMouseEnter={() => setHoveredId(it.id)}
+              onMouseLeave={() => setHoveredId(null)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -128,11 +109,17 @@ export function SideNav({ t, data }: SideNavProps) {
                 fontSize: 13.5,
                 fontWeight: on ? 600 : 500,
                 color: on ? t.text : t.textMuted,
-                background: on ? t.surfaceAlt : 'transparent',
+                background: (on || hoveredId === it.id) ? t.surfaceAlt : 'transparent',
+                transition: 'background 0.12s',
                 textDecoration: 'none',
               }}
             >
-              <Icon name={it.icon} size={15} color={on ? t.accent : t.textMuted} />
+              <AnimatedNavIcon
+                name={it.icon}
+                size={20}
+                color={on ? (it.id === 'overview' ? t.text : t.accent) : t.textMuted}
+                isHovered={hoveredId === it.id}
+              />
               {it.label}
             </Link>
           );
@@ -143,6 +130,8 @@ export function SideNav({ t, data }: SideNavProps) {
         <a
           href="#"
           onClick={(e) => e.preventDefault()}
+          onMouseEnter={() => setHoveredId('help')}
+          onMouseLeave={() => setHoveredId(null)}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -156,7 +145,7 @@ export function SideNav({ t, data }: SideNavProps) {
             textDecoration: 'none',
           }}
         >
-          <Icon name="info" size={15} color={t.textMuted} />
+          <AnimatedNavIcon name="info" size={20} color={t.textMuted} isHovered={hoveredId === 'help'} />
           Help &amp; docs
         </a>
       </div>

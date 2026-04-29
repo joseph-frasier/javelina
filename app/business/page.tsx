@@ -70,7 +70,7 @@ export default function BusinessIndexPage() {
                         >
                           {intake.website.bizName || 'Untitled business'}
                         </span>
-                        <Badge t={t} tone="accent" dot>{planLabel}</Badge>
+                        <Badge t={t} tone="accent">{planLabel}</Badge>
                       </div>
                       <div style={{ fontSize: 13, color: t.textMuted }}>
                         {domain}
