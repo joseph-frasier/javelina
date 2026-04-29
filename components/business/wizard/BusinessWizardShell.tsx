@@ -1,7 +1,8 @@
 // components/business/wizard/BusinessWizardShell.tsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { upsertIntakeDraft } from '@/lib/api/business';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
@@ -31,6 +32,28 @@ export function BusinessWizardShell({ orgId }: Props) {
   const complete = useBusinessIntakeStore((s) => s.complete);
 
   const [entitlement, setEntitlement] = useState<BundledDomainStatus | null>(null);
+
+  const lastSyncedRef = useRef<string>('');
+  useEffect(() => {
+    if (!data || !data.orgId) return;
+    // Debounce: serialize the synced fields and only fire if changed
+    const payload = {
+      dns: data.dns,
+      website: data.website,
+      domain: data.domain,
+      contact: data.contact,
+    };
+    const serialized = JSON.stringify(payload);
+    if (serialized === lastSyncedRef.current) return;
+
+    const handle = setTimeout(() => {
+      lastSyncedRef.current = serialized;
+      void upsertIntakeDraft(data.orgId, payload).catch((err) => {
+        console.warn('Failed to sync wizard draft:', err);
+      });
+    }, 800);
+    return () => clearTimeout(handle);
+  }, [data?.orgId, data?.dns, data?.website, data?.domain, data?.contact]);
 
   useEffect(() => {
     let cancelled = false;
