@@ -1,5 +1,6 @@
 'use client';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import { useEffect, useRef, useState } from 'react';
+import type { BusinessIntakeData, LogoAsset, PhotoAsset } from '@/lib/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { StepHeader } from '@/components/business/ui/StepHeader';
 import { FieldLabel } from '@/components/business/ui/FieldLabel';
@@ -8,6 +9,12 @@ import { Checkbox } from '@/components/business/ui/Checkbox';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
 import { AestheticCard } from './AestheticCard';
+import {
+  uploadLogo,
+  uploadPhotos,
+  deletePhoto,
+  getAssetUrls,
+} from '@/lib/api/business-assets';
 
 type W = BusinessIntakeData['website'];
 type Patch = { website?: Partial<W> };
@@ -103,6 +110,104 @@ const AESTHETICS: Array<{
 export function StepWebsite({ t, data, set }: Props) {
   const w = data.website;
   const update = (patch: Partial<W>) => set({ website: patch });
+
+  // Local-only signed URL cache (1-hour TTL, not persisted in Zustand).
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  // On mount (or when stored asset metadata changes from outside), pull fresh
+  // 1-hour signed URLs so previews render after page reload.
+  useEffect(() => {
+    let cancelled = false;
+    const hasLogoMeta = !!w.logo?.storage_path;
+    const hasPhotoMeta = (w.photos ?? []).length > 0;
+    if (!hasLogoMeta && !hasPhotoMeta) return;
+    void (async () => {
+      const urls = await getAssetUrls(data.orgId);
+      if (cancelled || !urls) return;
+      setLogoUrl(urls.logo?.signed_url ?? null);
+      const map: Record<string, string> = {};
+      for (const p of urls.photos) map[p.id] = p.signed_url;
+      setPhotoUrls(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.orgId, w.logo?.storage_path, (w.photos ?? []).length]);
+
+  async function handleLogoSelect(file: File) {
+    setLogoError(null);
+    setLogoBusy(true);
+    // Optimistic preview.
+    const objectUrl = URL.createObjectURL(file);
+    setLogoUrl(objectUrl);
+
+    const form = new FormData();
+    form.append('file', file);
+    const result = await uploadLogo(data.orgId, form);
+    setLogoBusy(false);
+    URL.revokeObjectURL(objectUrl);
+
+    if (!result.ok) {
+      setLogoUrl(null);
+      setLogoError(result.error);
+      update({ logo: null });
+      return;
+    }
+    const { signed_url, expires_at, ...meta } = result.data;
+    update({ logo: meta as LogoAsset });
+    setLogoUrl(signed_url);
+  }
+
+  async function handlePhotosSelect(files: FileList) {
+    setPhotoError(null);
+    const incoming = Array.from(files);
+    const existing = w.photos ?? [];
+    if (existing.length + incoming.length > 10) {
+      setPhotoError(`photo_limit_exceeded (${existing.length}/10)`);
+      return;
+    }
+    setPhotoBusy(true);
+    const form = new FormData();
+    for (const f of incoming) form.append('files', f);
+    const result = await uploadPhotos(data.orgId, form);
+    setPhotoBusy(false);
+    if (!result.ok) {
+      setPhotoError(result.error);
+      return;
+    }
+    const newMeta: PhotoAsset[] = result.data.photos.map(({ signed_url, expires_at, ...m }) => m);
+    update({ photos: [...existing, ...newMeta] });
+    setPhotoUrls((prev) => {
+      const next = { ...prev };
+      for (const p of result.data.photos) next[p.id] = p.signed_url;
+      return next;
+    });
+  }
+
+  async function handlePhotoDelete(photoId: string) {
+    const existing = w.photos ?? [];
+    const optimisticRemaining = existing.filter((p) => p.id !== photoId);
+    update({ photos: optimisticRemaining });
+    setPhotoUrls((prev) => {
+      const next = { ...prev };
+      delete next[photoId];
+      return next;
+    });
+    const result = await deletePhoto(data.orgId, photoId);
+    if (!result.ok) {
+      // Revert on failure.
+      update({ photos: existing });
+      setPhotoError(result.error);
+    }
+  }
 
   return (
     <div>
@@ -219,6 +324,17 @@ export function StepWebsite({ t, data, set }: Props) {
 
         <div>
           <FieldLabel t={t} optional>Logo</FieldLabel>
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleLogoSelect(f);
+              e.currentTarget.value = '';
+            }}
+          />
           <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
             <div
               style={{
@@ -227,15 +343,28 @@ export function StepWebsite({ t, data, set }: Props) {
                 background: t.surfaceAlt,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: t.textMuted, fontSize: 11, fontFamily: MONO,
-                textAlign: 'center', padding: 6,
+                textAlign: 'center', padding: 6, overflow: 'hidden', position: 'relative',
               }}
             >
-              {w.logoName ? (
-                <div style={{ color: t.text, fontWeight: 600, wordBreak: 'break-all' }}>
-                  ✓<br />{w.logoName}
-                </div>
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoUrl}
+                  alt={w.logo?.original_filename ?? 'logo preview'}
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
               ) : (
                 'no file'
+              )}
+              {logoBusy && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(255,255,255,0.7)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, color: t.textMuted,
+                }}>
+                  Uploading…
+                </div>
               )}
             </div>
             <div
@@ -249,16 +378,20 @@ export function StepWebsite({ t, data, set }: Props) {
                   t={t}
                   variant="secondary"
                   size="sm"
-                  onClick={() => update({ logoName: 'logo-mark.svg' })}
+                  onClick={() => logoInputRef.current?.click()}
                   iconLeft={<Icon name="plus" size={13} />}
                 >
-                  Upload logo
+                  {w.logo ? 'Replace logo' : 'Upload logo'}
                 </Button>
                 <Button
                   t={t}
                   variant="ghost"
                   size="sm"
-                  onClick={() => update({ logoName: null })}
+                  onClick={() => {
+                    update({ logo: null });
+                    setLogoUrl(null);
+                    setLogoError(null);
+                  }}
                 >
                   Skip, use text wordmark
                 </Button>
@@ -266,12 +399,29 @@ export function StepWebsite({ t, data, set }: Props) {
               <div style={{ fontSize: 12, color: t.textMuted }}>
                 SVG or PNG, transparent background works best. We&apos;ll generate favicons automatically.
               </div>
+              {logoError && (
+                <div style={{ fontSize: 12, color: '#b91c1c' }}>
+                  Couldn&apos;t upload logo ({logoError}).
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         <div>
           <FieldLabel t={t} optional>Photos &amp; imagery</FieldLabel>
+          <input
+            ref={photoInputRef}
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const fs = e.target.files;
+              if (fs && fs.length > 0) void handlePhotosSelect(fs);
+              e.currentTarget.value = '';
+            }}
+          />
           <div
             style={{
               padding: 16, borderRadius: 10,
@@ -292,23 +442,89 @@ export function StepWebsite({ t, data, set }: Props) {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: t.text }}>
-                {w.photoCount
-                  ? `${w.photoCount} photos ready`
+                {(w.photos ?? []).length
+                  ? `${(w.photos ?? []).length} of 10 photos uploaded`
                   : 'Drop product shots, team photos, or work samples'}
               </div>
               <div style={{ fontSize: 12, color: t.textMuted, marginTop: 2 }}>
-                Up to 20 files. We&apos;ll optimize and lay them out.
+                Up to 10 files. PNG, JPG, WEBP, or HEIC.
               </div>
             </div>
             <Button
               t={t}
               variant="secondary"
               size="sm"
-              onClick={() => update({ photoCount: (w.photoCount || 0) + 6 })}
+              onClick={() => photoInputRef.current?.click()}
             >
-              Browse files
+              {photoBusy ? 'Uploading…' : 'Browse files'}
             </Button>
           </div>
+          {photoError && (
+            <div style={{ fontSize: 12, color: '#b91c1c', marginTop: 6 }}>
+              Couldn&apos;t upload photos ({photoError}).
+            </div>
+          )}
+          {(w.photos ?? []).length > 0 && (
+            <div
+              style={{
+                marginTop: 10,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
+                gap: 8,
+              }}
+            >
+              {(w.photos ?? []).map((p) => {
+                const url = photoUrls[p.id];
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '1 / 1',
+                      borderRadius: 8,
+                      overflow: 'hidden',
+                      background: t.surface,
+                      border: `1px solid ${t.border}`,
+                    }}
+                  >
+                    {url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={url}
+                        alt={p.original_filename}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%', height: '100%',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, color: t.textMuted, fontFamily: MONO,
+                        }}
+                      >
+                        loading…
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void handlePhotoDelete(p.id)}
+                      aria-label="Remove photo"
+                      style={{
+                        position: 'absolute', top: 4, right: 4,
+                        width: 22, height: 22, borderRadius: 11,
+                        background: 'rgba(15,20,25,0.7)', color: '#fff',
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 14, lineHeight: 1,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div>
