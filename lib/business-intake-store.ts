@@ -2,6 +2,23 @@ import { create } from 'zustand';
 
 export type BusinessPlanCode = 'business_starter' | 'business_pro';
 
+export interface LogoAsset {
+  storage_path: string;
+  original_filename: string;
+  size_bytes: number;
+  mime_type: string;
+  uploaded_at: string;
+}
+
+export interface PhotoAsset {
+  id: string;
+  storage_path: string;
+  original_filename: string;
+  size_bytes: number;
+  mime_type: string;
+  uploaded_at: string;
+}
+
 export interface BusinessIntakeData {
   orgId: string;
   planCode: BusinessPlanCode;
@@ -15,8 +32,8 @@ export interface BusinessIntakeData {
     description: string;
     services: string;
     pages: string[];
-    logoName: string | null;
-    photoCount: number;
+    logo: LogoAsset | null;
+    photos: PhotoAsset[];
     tone: string;
     aesthetic: 'bold' | 'simple' | 'choose';
     customColor?: string;
@@ -72,8 +89,8 @@ function defaults(orgId: string, planCode: BusinessPlanCode, bizName: string): B
       description: '',
       services: '',
       pages: ['Home', 'Services', 'Contact'],
-      logoName: null,
-      photoCount: 0,
+      logo: null,
+      photos: [],
       tone: 'Friendly',
       aesthetic: 'simple',
       letUsWrite: true,
