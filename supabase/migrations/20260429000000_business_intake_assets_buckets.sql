@@ -3,6 +3,8 @@
 -- Bytes are accessed only via service-role (Express backend); frontend never
 -- reads these buckets directly — instead it consumes short-lived signed URLs.
 
+BEGIN;
+
 -- 1. Logos: 5 MB cap; png/jpeg/svg/webp.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -31,11 +33,13 @@ ON CONFLICT (id) DO UPDATE SET
   file_size_limit   = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
--- 3. Deny all non-service-role access on these two buckets.
--- (service_role bypasses RLS, so no positive policy is needed for the backend.)
+-- 3. RESTRICTIVE policies that truly deny anon/authed any direct access on
+--    these two buckets. service_role bypasses RLS, so the Express backend
+--    (which uses service-role) is unaffected.
+--    Restrictive policies AND-combine with other policies, subtracting access.
 DROP POLICY IF EXISTS "Deny anon/authed read on business intake assets" ON storage.objects;
 CREATE POLICY "Deny anon/authed read on business intake assets"
-ON storage.objects FOR SELECT
+ON storage.objects AS RESTRICTIVE FOR SELECT
 TO anon, authenticated
 USING (
   bucket_id NOT IN ('dev-business-logos', 'dev-business-photos')
@@ -43,7 +47,7 @@ USING (
 
 DROP POLICY IF EXISTS "Deny anon/authed insert on business intake assets" ON storage.objects;
 CREATE POLICY "Deny anon/authed insert on business intake assets"
-ON storage.objects FOR INSERT
+ON storage.objects AS RESTRICTIVE FOR INSERT
 TO anon, authenticated
 WITH CHECK (
   bucket_id NOT IN ('dev-business-logos', 'dev-business-photos')
@@ -51,7 +55,7 @@ WITH CHECK (
 
 DROP POLICY IF EXISTS "Deny anon/authed update on business intake assets" ON storage.objects;
 CREATE POLICY "Deny anon/authed update on business intake assets"
-ON storage.objects FOR UPDATE
+ON storage.objects AS RESTRICTIVE FOR UPDATE
 TO anon, authenticated
 USING (
   bucket_id NOT IN ('dev-business-logos', 'dev-business-photos')
@@ -59,8 +63,10 @@ USING (
 
 DROP POLICY IF EXISTS "Deny anon/authed delete on business intake assets" ON storage.objects;
 CREATE POLICY "Deny anon/authed delete on business intake assets"
-ON storage.objects FOR DELETE
+ON storage.objects AS RESTRICTIVE FOR DELETE
 TO anon, authenticated
 USING (
   bucket_id NOT IN ('dev-business-logos', 'dev-business-photos')
 );
+
+COMMIT;
