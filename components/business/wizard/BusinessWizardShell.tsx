@@ -2,7 +2,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { upsertIntakeDraft } from '@/lib/api/business';
+import { upsertIntakeDraft, completeIntake } from '@/lib/api/business';
+import { useQueryClient } from '@tanstack/react-query';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
@@ -30,6 +31,7 @@ export function BusinessWizardShell({ orgId }: Props) {
   const update = useBusinessIntakeStore((s) => s.update);
   const setStep = useBusinessIntakeStore((s) => s.setStep);
   const complete = useBusinessIntakeStore((s) => s.complete);
+  const queryClient = useQueryClient();
 
   const [entitlement, setEntitlement] = useState<BundledDomainStatus | null>(null);
 
@@ -82,10 +84,23 @@ export function BusinessWizardShell({ orgId }: Props) {
   const step = data.currentStep;
   const set = (patch: Parameters<typeof update>[1]) => update(orgId, patch);
 
-  const onLaunch = () => {
+  const onLaunch = async () => {
     // eslint-disable-next-line no-console
     console.info('[business-intake] launch payload', data);
-    complete(orgId);
+    const result = await completeIntake(orgId);
+    if (!result.ok) {
+      // Surface a user-facing error; for v1 use console + alert as a placeholder.
+      // The wizard stays on the final step; user can retry.
+      console.error('Wizard submission failed:', result);
+      alert(
+        'We couldn\'t submit your setup. Please try again in a moment. ' +
+        `(Error: ${result.error})`
+      );
+      return;
+    }
+    complete(orgId); // local flag flip for immediate UX feedback
+    queryClient.invalidateQueries({ queryKey: ['business', 'me'] });
+    queryClient.invalidateQueries({ queryKey: ['business', orgId] });
     router.push(`/business/${orgId}`);
   };
 
