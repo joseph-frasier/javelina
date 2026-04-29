@@ -5,7 +5,6 @@ import { clsx } from 'clsx';
 import { useWizardStore } from '@/lib/wizard-store';
 import WizardShell, { StepHeader } from './WizardShell';
 import RadioCard from '@/components/ui/RadioCard';
-import InfoCallout from '@/components/ui/InfoCallout';
 
 const SparkleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -72,17 +71,7 @@ export default function StepDNS() {
         />
       </div>
 
-      {dnsMode === 'javelina' && (
-        <div className="mt-5">
-          <InfoCallout tone="info">
-            You&apos;ll update nameservers at your registrar to{' '}
-            <code>ns1.javelina.app</code> and <code>ns2.javelina.app</code>.
-            Propagation usually takes 15 minutes to an hour.
-          </InfoCallout>
-        </div>
-      )}
-
-      {dnsMode === 'self' && (
+{dnsMode === 'self' && (
         <div className="mt-6">
           <label className="block text-sm font-semibold text-text mb-2">
             Current DNS provider
