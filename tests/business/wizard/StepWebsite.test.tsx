@@ -7,11 +7,11 @@ import type { BusinessIntakeData } from '@/lib/business-intake-store';
 const data = {
   website: {
     bizName: '', bizType: '', tagline: '', description: '',
-    logoName: null, photoCount: 0,
+    logo: null, photos: [],
     tone: 'Friendly', aesthetic: 'simple' as const,
     letUsWrite: true,
   },
-} as BusinessIntakeData;
+} as unknown as BusinessIntakeData;
 
 describe('StepWebsite', () => {
   it('updates bizName on input', () => {
