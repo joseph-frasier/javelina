@@ -40,6 +40,11 @@ export interface BusinessDetail {
   }>;
 }
 
+export type GetBusinessResult =
+  | { kind: 'ok'; data: BusinessDetail }
+  | { kind: 'not_found' }
+  | { kind: 'error'; reason: string };
+
 async function authedFetch(path: string, init?: RequestInit): Promise<Response> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('javelina_session');
@@ -48,34 +53,52 @@ async function authedFetch(path: string, init?: RequestInit): Promise<Response> 
   if (sessionCookie) {
     headers.set('Cookie', `javelina_session=${sessionCookie.value}`);
   }
-  return fetch(`${API_BASE_URL}${path}`, { ...init, headers });
+  return fetch(`${API_BASE_URL}${path}`, { ...init, headers, cache: 'no-store' });
 }
 
 export async function listMyBusinesses(): Promise<BusinessSummary[]> {
-  const res = await authedFetch('/api/business/me');
-  if (!res.ok) return [];
-  const json = await res.json();
-  return json?.data?.businesses ?? [];
+  try {
+    const res = await authedFetch('/api/business/me');
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json?.data?.businesses ?? [];
+  } catch (err) {
+    console.error('[business api]', err);
+    return [];
+  }
 }
 
-export async function getBusiness(orgId: string): Promise<BusinessDetail | null> {
-  const res = await authedFetch(`/api/business/${orgId}`);
-  if (!res.ok) return null;
-  const json = await res.json();
-  return json?.data ?? null;
+export async function getBusiness(orgId: string): Promise<GetBusinessResult> {
+  try {
+    const res = await authedFetch(`/api/business/${orgId}`);
+    if (res.status === 404) return { kind: 'not_found' };
+    if (!res.ok) return { kind: 'error', reason: `http_${res.status}` };
+    const json = await res.json();
+    const data = json?.data;
+    if (!data) return { kind: 'error', reason: 'empty_body' };
+    return { kind: 'ok', data };
+  } catch (err) {
+    console.error('[business api] getBusiness', err);
+    return { kind: 'error', reason: 'network_error' };
+  }
 }
 
 export async function upsertIntakeDraft(
   orgId: string,
   patch: Record<string, unknown>
 ): Promise<{ intake: Record<string, unknown> } | null> {
-  const res = await authedFetch(`/api/business/${orgId}/intake`, {
-    method: 'POST',
-    body: JSON.stringify({ intake: patch }),
-  });
-  if (!res.ok) return null;
-  const json = await res.json();
-  return json?.data ?? null;
+  try {
+    const res = await authedFetch(`/api/business/${orgId}/intake`, {
+      method: 'POST',
+      body: JSON.stringify({ intake: patch }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data ?? null;
+  } catch (err) {
+    console.error('[business api]', err);
+    return null;
+  }
 }
 
 export async function completeIntake(
@@ -84,17 +107,23 @@ export async function completeIntake(
   | { ok: true; intake: Record<string, unknown>; submission_id?: string; already_completed?: boolean }
   | { ok: false; error: string; status: number }
 > {
-  const res = await authedFetch(`/api/business/${orgId}/intake/complete`, {
-    method: 'POST',
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    return { ok: false, error: json?.error ?? 'unknown_error', status: res.status };
+  try {
+    const res = await authedFetch(`/api/business/${orgId}/intake/complete`, {
+      method: 'POST',
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: json?.error ?? 'unknown_error', status: res.status };
+    }
+    return {
+      ok: true,
+      intake: json?.data?.intake ?? {},
+      submission_id: json?.data?.submission_id,
+      already_completed: json?.data?.already_completed,
+    };
+  } catch (err) {
+    console.error('[business api]', err);
+    return { ok: false, error: 'network_error', status: 0 };
   }
-  return {
-    ok: true,
-    intake: json?.data?.intake ?? {},
-    submission_id: json?.data?.submission_id,
-    already_completed: json?.data?.already_completed,
-  };
 }
+

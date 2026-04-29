@@ -36,6 +36,7 @@ export function BusinessWizardShell({ orgId }: Props) {
   const [entitlement, setEntitlement] = useState<BundledDomainStatus | null>(null);
 
   const lastSyncedRef = useRef<string>('');
+  const submittingRef = useRef(false);
   useEffect(() => {
     if (!data || !data.orgId) return;
     // Debounce: serialize the synced fields and only fire if changed
@@ -85,23 +86,29 @@ export function BusinessWizardShell({ orgId }: Props) {
   const set = (patch: Parameters<typeof update>[1]) => update(orgId, patch);
 
   const onLaunch = async () => {
-    // eslint-disable-next-line no-console
-    console.info('[business-intake] launch payload', data);
-    const result = await completeIntake(orgId);
-    if (!result.ok) {
-      // Surface a user-facing error; for v1 use console + alert as a placeholder.
-      // The wizard stays on the final step; user can retry.
-      console.error('Wizard submission failed:', result);
-      alert(
-        'We couldn\'t submit your setup. Please try again in a moment. ' +
-        `(Error: ${result.error})`
-      );
-      return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    try {
+      // eslint-disable-next-line no-console
+      console.info('[business-intake] launch payload', data);
+      const result = await completeIntake(orgId);
+      if (!result.ok) {
+        // Surface a user-facing error; for v1 use console + alert as a placeholder.
+        // The wizard stays on the final step; user can retry.
+        console.error('Wizard submission failed:', result);
+        alert(
+          'We couldn\'t submit your setup. Please try again in a moment. ' +
+          `(Error: ${result.error})`
+        );
+        return;
+      }
+      complete(orgId); // local flag flip for immediate UX feedback
+      queryClient.invalidateQueries({ queryKey: ['business', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['business', orgId] });
+      router.push(`/business/${orgId}`);
+    } finally {
+      submittingRef.current = false;
     }
-    complete(orgId); // local flag flip for immediate UX feedback
-    queryClient.invalidateQueries({ queryKey: ['business', 'me'] });
-    queryClient.invalidateQueries({ queryKey: ['business', orgId] });
-    router.push(`/business/${orgId}`);
   };
 
   const stepContent =
