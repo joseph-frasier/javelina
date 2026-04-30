@@ -1,5 +1,6 @@
 'use client';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import { useEffect, useRef, useState } from 'react';
+import type { BusinessIntakeData, LogoAsset, PhotoAsset } from '@/lib/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { StepHeader } from '@/components/business/ui/StepHeader';
 import { FieldLabel } from '@/components/business/ui/FieldLabel';
@@ -8,6 +9,12 @@ import { Checkbox } from '@/components/business/ui/Checkbox';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
 import { AestheticCard } from './AestheticCard';
+import {
+  uploadLogo,
+  uploadPhotos,
+  deletePhoto,
+  getAssetUrls,
+} from '@/lib/api/business-assets';
 
 type W = BusinessIntakeData['website'];
 type Patch = { website?: Partial<W> };
@@ -100,9 +107,143 @@ const AESTHETICS: Array<{
   },
 ];
 
+function humanizeAssetError(code: string): string {
+  switch (code) {
+    case 'file_too_large':
+      return 'That file is too large. Logos must be under 5 MB; photos under 25 MB.';
+    case 'unsupported_file_type':
+      return "That file type isn't supported. Try PNG, JPG, WEBP, or HEIC.";
+    case 'photo_limit_exceeded':
+      return 'You can upload up to 10 photos.';
+    case 'storage_upload_failed':
+      return "We couldn't save that file. Please try again.";
+    case 'network_error':
+      return 'Network error. Check your connection and try again.';
+    case 'invalid_upload':
+      return "We couldn't process that file. Please try a different one.";
+    default:
+      return "Couldn't upload — please try again.";
+  }
+}
+
 export function StepWebsite({ t, data, set }: Props) {
   const w = data.website;
   const update = (patch: Partial<W>) => set({ website: patch });
+
+  // Local-only signed URL cache (1-hour TTL, not persisted in Zustand).
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Hydration: pull fresh 1-hour signed URLs once per orgId on mount when
+  // metadata exists but the URL cache is empty. Subsequent uploads update
+  // the cache directly, so we don't refetch on every metadata change.
+  const hydratedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!data.orgId || hydratedRef.current === data.orgId) return;
+    const hasLogoMeta = !!w.logo?.storage_path;
+    const hasPhotoMeta = (w.photos ?? []).length > 0;
+    if (!hasLogoMeta && !hasPhotoMeta) return;
+
+    hydratedRef.current = data.orgId;
+    let cancelled = false;
+    void (async () => {
+      const urls = await getAssetUrls(data.orgId);
+      if (cancelled || !urls) return;
+      setLogoUrl(urls.logo?.signed_url ?? null);
+      const map: Record<string, string> = {};
+      for (const p of urls.photos) map[p.id] = p.signed_url;
+      setPhotoUrls(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.orgId, w.logo?.storage_path, (w.photos ?? []).length]);
+
+  async function handleLogoSelect(file: File) {
+    setLogoError(null);
+    setLogoBusy(true);
+    const objectUrl = URL.createObjectURL(file);
+    const priorUrl = logoUrl;
+    const priorMeta = w.logo;
+    setLogoUrl(objectUrl);
+
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const result = await uploadLogo(data.orgId, form);
+
+      if (!result.ok) {
+        // Preserve prior logo on replace failure; only clear if this was a fresh upload.
+        if (priorMeta) {
+          setLogoUrl(priorUrl);
+        } else {
+          setLogoUrl(null);
+          update({ logo: null });
+        }
+        setLogoError(humanizeAssetError(result.error));
+        return;
+      }
+      const { signed_url, expires_at: _expiresAt, ...meta } = result.data;
+      update({ logo: meta as LogoAsset });
+      setLogoUrl(signed_url);
+    } finally {
+      setLogoBusy(false);
+      // Revoke the optimistic Blob URL after we've already swapped to the
+      // server-signed URL (or restored the prior one), so React never paints
+      // a revoked src.
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  async function handlePhotosSelect(files: FileList) {
+    setPhotoError(null);
+    const incoming = Array.from(files);
+    const existing = w.photos ?? [];
+    if (existing.length + incoming.length > 10) {
+      setPhotoError(humanizeAssetError('photo_limit_exceeded'));
+      return;
+    }
+    setPhotoBusy(true);
+    const form = new FormData();
+    for (const f of incoming) form.append('files', f);
+    const result = await uploadPhotos(data.orgId, form);
+    setPhotoBusy(false);
+    if (!result.ok) {
+      setPhotoError(humanizeAssetError(result.error));
+      return;
+    }
+    const newMeta: PhotoAsset[] = result.data.photos.map(({ signed_url: _signed, expires_at: _expires, ...m }) => m);
+    update({ photos: [...existing, ...newMeta] });
+    setPhotoUrls((prev) => {
+      const next = { ...prev };
+      for (const p of result.data.photos) next[p.id] = p.signed_url;
+      return next;
+    });
+  }
+
+  async function handlePhotoDelete(photoId: string) {
+    const existing = w.photos ?? [];
+    const optimisticRemaining = existing.filter((p) => p.id !== photoId);
+    update({ photos: optimisticRemaining });
+    setPhotoUrls((prev) => {
+      const next = { ...prev };
+      delete next[photoId];
+      return next;
+    });
+    const result = await deletePhoto(data.orgId, photoId);
+    if (!result.ok) {
+      // Revert on failure.
+      update({ photos: existing });
+      setPhotoError(humanizeAssetError(result.error));
+    }
+  }
 
   return (
     <div>
@@ -219,6 +360,17 @@ export function StepWebsite({ t, data, set }: Props) {
 
         <div>
           <FieldLabel t={t} optional>Logo</FieldLabel>
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleLogoSelect(f);
+              e.currentTarget.value = '';
+            }}
+          />
           <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
             <div
               style={{
@@ -227,15 +379,28 @@ export function StepWebsite({ t, data, set }: Props) {
                 background: t.surfaceAlt,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: t.textMuted, fontSize: 11, fontFamily: MONO,
-                textAlign: 'center', padding: 6,
+                textAlign: 'center', padding: 6, overflow: 'hidden', position: 'relative',
               }}
             >
-              {w.logoName ? (
-                <div style={{ color: t.text, fontWeight: 600, wordBreak: 'break-all' }}>
-                  ✓<br />{w.logoName}
-                </div>
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoUrl}
+                  alt={w.logo?.original_filename ?? 'logo preview'}
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
               ) : (
                 'no file'
+              )}
+              {logoBusy && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(255,255,255,0.7)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, color: t.textMuted,
+                }}>
+                  Uploading…
+                </div>
               )}
             </div>
             <div
@@ -249,16 +414,20 @@ export function StepWebsite({ t, data, set }: Props) {
                   t={t}
                   variant="secondary"
                   size="sm"
-                  onClick={() => update({ logoName: 'logo-mark.svg' })}
+                  onClick={() => logoInputRef.current?.click()}
                   iconLeft={<Icon name="plus" size={13} />}
                 >
-                  Upload logo
+                  {w.logo ? 'Replace logo' : 'Upload logo'}
                 </Button>
                 <Button
                   t={t}
                   variant="ghost"
                   size="sm"
-                  onClick={() => update({ logoName: null })}
+                  onClick={() => {
+                    update({ logo: null });
+                    setLogoUrl(null);
+                    setLogoError(null);
+                  }}
                 >
                   Skip, use text wordmark
                 </Button>
@@ -266,12 +435,29 @@ export function StepWebsite({ t, data, set }: Props) {
               <div style={{ fontSize: 12, color: t.textMuted }}>
                 SVG or PNG, transparent background works best. We&apos;ll generate favicons automatically.
               </div>
+              {logoError && (
+                <div style={{ fontSize: 12, color: '#b91c1c' }}>
+                  {logoError}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         <div>
           <FieldLabel t={t} optional>Photos &amp; imagery</FieldLabel>
+          <input
+            ref={photoInputRef}
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const fs = e.target.files;
+              if (fs && fs.length > 0) void handlePhotosSelect(fs);
+              e.currentTarget.value = '';
+            }}
+          />
           <div
             style={{
               padding: 16, borderRadius: 10,
@@ -292,23 +478,89 @@ export function StepWebsite({ t, data, set }: Props) {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: t.text }}>
-                {w.photoCount
-                  ? `${w.photoCount} photos ready`
+                {(w.photos ?? []).length
+                  ? `${(w.photos ?? []).length} of 10 photos uploaded`
                   : 'Drop product shots, team photos, or work samples'}
               </div>
               <div style={{ fontSize: 12, color: t.textMuted, marginTop: 2 }}>
-                Up to 20 files. We&apos;ll optimize and lay them out.
+                Up to 10 files. PNG, JPG, WEBP, or HEIC.
               </div>
             </div>
             <Button
               t={t}
               variant="secondary"
               size="sm"
-              onClick={() => update({ photoCount: (w.photoCount || 0) + 6 })}
+              onClick={() => photoInputRef.current?.click()}
             >
-              Browse files
+              {photoBusy ? 'Uploading…' : 'Browse files'}
             </Button>
           </div>
+          {photoError && (
+            <div style={{ fontSize: 12, color: '#b91c1c', marginTop: 6 }}>
+              {photoError}
+            </div>
+          )}
+          {(w.photos ?? []).length > 0 && (
+            <div
+              style={{
+                marginTop: 10,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
+                gap: 8,
+              }}
+            >
+              {(w.photos ?? []).map((p) => {
+                const url = photoUrls[p.id];
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '1 / 1',
+                      borderRadius: 8,
+                      overflow: 'hidden',
+                      background: t.surface,
+                      border: `1px solid ${t.border}`,
+                    }}
+                  >
+                    {url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={url}
+                        alt={p.original_filename}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%', height: '100%',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, color: t.textMuted, fontFamily: MONO,
+                        }}
+                      >
+                        loading…
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void handlePhotoDelete(p.id)}
+                      aria-label="Remove photo"
+                      style={{
+                        position: 'absolute', top: 4, right: 4,
+                        width: 22, height: 22, borderRadius: 11,
+                        background: 'rgba(15,20,25,0.7)', color: '#fff',
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 14, lineHeight: 1,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div>

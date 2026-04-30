@@ -1,7 +1,9 @@
 // components/business/wizard/BusinessWizardShell.tsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { upsertIntakeDraft, completeIntake } from '@/lib/api/business';
+import { useQueryClient } from '@tanstack/react-query';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
@@ -29,8 +31,32 @@ export function BusinessWizardShell({ orgId }: Props) {
   const update = useBusinessIntakeStore((s) => s.update);
   const setStep = useBusinessIntakeStore((s) => s.setStep);
   const complete = useBusinessIntakeStore((s) => s.complete);
+  const queryClient = useQueryClient();
 
   const [entitlement, setEntitlement] = useState<BundledDomainStatus | null>(null);
+
+  const lastSyncedRef = useRef<string>('');
+  const submittingRef = useRef(false);
+  useEffect(() => {
+    if (!data || !data.orgId) return;
+    // Debounce: serialize the synced fields and only fire if changed
+    const payload = {
+      dns: data.dns,
+      website: data.website,
+      domain: data.domain,
+      contact: data.contact,
+    };
+    const serialized = JSON.stringify(payload);
+    if (serialized === lastSyncedRef.current) return;
+
+    const handle = setTimeout(() => {
+      lastSyncedRef.current = serialized;
+      void upsertIntakeDraft(data.orgId, payload).catch((err) => {
+        console.warn('Failed to sync wizard draft:', err);
+      });
+    }, 800);
+    return () => clearTimeout(handle);
+  }, [data?.orgId, data?.dns, data?.website, data?.domain, data?.contact]);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,11 +85,30 @@ export function BusinessWizardShell({ orgId }: Props) {
   const step = data.currentStep;
   const set = (patch: Parameters<typeof update>[1]) => update(orgId, patch);
 
-  const onLaunch = () => {
-    // eslint-disable-next-line no-console
-    console.info('[business-intake] launch payload', data);
-    complete(orgId);
-    router.push(`/business/${orgId}`);
+  const onLaunch = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    try {
+      // eslint-disable-next-line no-console
+      console.info('[business-intake] launch payload', data);
+      const result = await completeIntake(orgId);
+      if (!result.ok) {
+        // Surface a user-facing error; for v1 use console + alert as a placeholder.
+        // The wizard stays on the final step; user can retry.
+        console.error('Wizard submission failed:', result);
+        alert(
+          'We couldn\'t submit your setup. Please try again in a moment. ' +
+          `(Error: ${result.error})`
+        );
+        return;
+      }
+      complete(orgId); // local flag flip for immediate UX feedback
+      queryClient.invalidateQueries({ queryKey: ['business', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['business', orgId] });
+      router.push(`/business/${orgId}`);
+    } finally {
+      submittingRef.current = false;
+    }
   };
 
   const stepContent =

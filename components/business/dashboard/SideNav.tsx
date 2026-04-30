@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import { FONT, type Tokens } from '@/components/business/ui/tokens';
 import { Icon, type IconName } from '@/components/business/ui/Icon';
@@ -7,16 +9,15 @@ import { Icon, type IconName } from '@/components/business/ui/Icon';
 interface SideNavProps {
   t: Tokens;
   data: BusinessIntakeData;
-  active?: string;
 }
 
-const ITEMS: { id: string; label: string; icon: IconName }[] = [
-  { id: 'overview', label: 'Overview', icon: 'sparkle' },
-  { id: 'site', label: 'Website', icon: 'globe' },
-  { id: 'dns', label: 'DNS', icon: 'server' },
-  { id: 'domains', label: 'Domains', icon: 'shield' },
-  { id: 'analytics', label: 'Analytics', icon: 'chart' },
-  { id: 'billing', label: 'Billing', icon: 'credit' },
+const ITEMS: { id: string; label: string; icon: IconName; segment: string | null }[] = [
+  { id: 'overview', label: 'Overview', icon: 'sparkle', segment: null },
+  { id: 'website', label: 'Website', icon: 'globe', segment: 'website' },
+  { id: 'dns', label: 'DNS', icon: 'server', segment: 'dns' },
+  { id: 'domains', label: 'Domains', icon: 'shield', segment: 'domains' },
+  { id: 'analytics', label: 'Analytics', icon: 'chart', segment: 'analytics' },
+  { id: 'billing', label: 'Billing', icon: 'credit', segment: 'billing' },
 ];
 
 function initials(name: string): string {
@@ -25,7 +26,15 @@ function initials(name: string): string {
   return joined || 'JB';
 }
 
-export function SideNav({ t, data, active = 'overview' }: SideNavProps) {
+function isActive(pathname: string, orgId: string, segment: string | null): boolean {
+  const base = `/business/${orgId}`;
+  if (segment === null) return pathname === base;
+  return pathname === `${base}/${segment}` || pathname.startsWith(`${base}/${segment}/`);
+}
+
+export function SideNav({ t, data }: SideNavProps) {
+  const pathname = usePathname() ?? '';
+  const orgId = data.orgId;
   const planLabel = data.planCode === 'business_pro' ? 'Pro · monthly' : 'Starter · monthly';
   const bizName = data.website.bizName || 'Your business';
 
@@ -102,12 +111,12 @@ export function SideNav({ t, data, active = 'overview' }: SideNavProps) {
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {ITEMS.map((it) => {
-          const on = active === it.id;
+          const on = isActive(pathname, orgId, it.segment);
+          const href = it.segment === null ? `/business/${orgId}` : `/business/${orgId}/${it.segment}`;
           return (
-            <a
+            <Link
               key={it.id}
-              href="#"
-              onClick={(e) => e.preventDefault()}
+              href={href}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -125,7 +134,7 @@ export function SideNav({ t, data, active = 'overview' }: SideNavProps) {
             >
               <Icon name={it.icon} size={15} color={on ? t.accent : t.textMuted} />
               {it.label}
-            </a>
+            </Link>
           );
         })}
       </nav>

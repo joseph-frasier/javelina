@@ -1,22 +1,48 @@
 'use client';
-import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useBusinessIntakeStore } from '@/lib/business-intake-store';
+
+import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { getBusiness } from '@/lib/api/business';
+import { adaptDetailToLegacyIntake } from '@/lib/api/business-adapters';
 import { BusinessPlaceholderDashboard } from '@/components/business/dashboard/BusinessPlaceholderDashboard';
+import { IntakeIncompleteState } from './IntakeIncompleteState';
 
 export default function BusinessOrgDashboardPage() {
-  const router = useRouter();
   const params = useParams<{ orgId: string }>();
-  const orgId = params?.orgId;
-  const data = useBusinessIntakeStore((s) => (orgId ? s.intakes[orgId] : undefined));
+  const orgId = params?.orgId ?? '';
 
-  useEffect(() => {
-    if (!orgId) return;
-    if (!data || !data.completedAt) {
-      router.replace(`/business/setup?org_id=${orgId}&plan_code=${data?.planCode ?? 'business_starter'}`);
-    }
-  }, [orgId, data, router]);
+  const { data: result, isLoading } = useQuery({
+    queryKey: ['business', orgId],
+    queryFn: () => getBusiness(orgId),
+    enabled: !!orgId,
+  });
 
-  if (!orgId || !data || !data.completedAt) return null;
-  return <BusinessPlaceholderDashboard data={data} />;
+  if (isLoading || !result) return null;
+  if (result.kind === 'not_found') {
+    return <div style={{ padding: '28px 32px 60px' }}>Business not found.</div>;
+  }
+  if (result.kind === 'error') {
+    return (
+      <div style={{ padding: '28px 32px 60px' }}>
+        Couldn&rsquo;t load this business right now. Please refresh.
+      </div>
+    );
+  }
+
+  const intake = (result.data.intake ?? null) as Record<string, any> | null;
+  const completed = !!intake?.completed_at;
+
+  if (!completed) {
+    return (
+      <IntakeIncompleteState
+        orgId={orgId}
+        orgName={result.data.org.name}
+        planCode={intake?.planCode}
+      />
+    );
+  }
+
+  const adapted = adaptDetailToLegacyIntake(result.data) as any;
+
+  return <BusinessPlaceholderDashboard data={adapted} />;
 }

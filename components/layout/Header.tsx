@@ -11,7 +11,8 @@ import { useHierarchyStore } from '@/lib/hierarchy-store';
 import { useGlobalSearch } from '@/components/search/useGlobalSearch';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
-import { useBusinessIntakeStore } from '@/lib/business-intake-store';
+import { useQuery } from '@tanstack/react-query';
+import { listMyBusinesses } from '@/lib/api/business';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -24,9 +25,12 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
   const { general, setTheme } = useSettingsStore();
   const { currentOrgId } = useHierarchyStore();
   const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
-  const hasBusinessIntakes = useBusinessIntakeStore(
-    (s) => Object.keys(s.intakes).length > 0,
-  );
+  const { data: businesses } = useQuery({
+    queryKey: ['business', 'me'],
+    queryFn: () => listMyBusinesses(),
+    staleTime: 60_000,
+  });
+  const hasBusinessIntakes = (businesses?.length ?? 0) > 0;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);

@@ -12,7 +12,7 @@ const data: BusinessIntakeData = {
     bizName: 'Acme', bizType: '', industry: '',
     tagline: '', description: '', services: '',
     pages: ['Home', 'Services', 'About', 'Contact'],
-    logoName: null, photoCount: 0,
+    logo: null, photos: [],
     tone: 'Friendly', aesthetic: 'simple', letUsWrite: true,
   },
   domain: { mode: 'connect', domain: 'acme.com' },

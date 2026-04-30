@@ -1,7 +1,23 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 export type BusinessPlanCode = 'business_starter' | 'business_pro';
+
+export interface LogoAsset {
+  storage_path: string;
+  original_filename: string;
+  size_bytes: number;
+  mime_type: string;
+  uploaded_at: string;
+}
+
+export interface PhotoAsset {
+  id: string;
+  storage_path: string;
+  original_filename: string;
+  size_bytes: number;
+  mime_type: string;
+  uploaded_at: string;
+}
 
 export interface BusinessIntakeData {
   orgId: string;
@@ -16,8 +32,8 @@ export interface BusinessIntakeData {
     description: string;
     services: string;
     pages: string[];
-    logoName: string | null;
-    photoCount: number;
+    logo: LogoAsset | null;
+    photos: PhotoAsset[];
     tone: string;
     aesthetic: 'bold' | 'simple' | 'choose';
     customColor?: string;
@@ -73,8 +89,8 @@ function defaults(orgId: string, planCode: BusinessPlanCode, bizName: string): B
       description: '',
       services: '',
       pages: ['Home', 'Services', 'Contact'],
-      logoName: null,
-      photoCount: 0,
+      logo: null,
+      photos: [],
       tone: 'Friendly',
       aesthetic: 'simple',
       letUsWrite: true,
@@ -111,45 +127,40 @@ function clampStep(n: number): 0 | 1 | 2 | 3 | 4 {
   return n as 0 | 1 | 2 | 3 | 4;
 }
 
-export const useBusinessIntakeStore = create<StoreState>()(
-  persist(
-    (set, get) => ({
-      intakes: {},
-      get: (orgId) => get().intakes[orgId] ?? null,
-      init: (orgId, planCode, bizName) =>
-        set((s) => {
-          if (s.intakes[orgId]) return s;
-          return { intakes: { ...s.intakes, [orgId]: defaults(orgId, planCode, bizName) } };
-        }),
-      update: (orgId, patch) =>
-        set((s) => {
-          const curr = s.intakes[orgId];
-          if (!curr) return s;
-          return { intakes: { ...s.intakes, [orgId]: deepMerge(curr, patch) } };
-        }),
-      setStep: (orgId, step) =>
-        set((s) => {
-          const curr = s.intakes[orgId];
-          if (!curr) return s;
-          return {
-            intakes: {
-              ...s.intakes,
-              [orgId]: { ...curr, currentStep: clampStep(step) },
-            },
-          };
-        }),
-      complete: (orgId) =>
-        set((s) => {
-          const curr = s.intakes[orgId];
-          if (!curr) return s;
-          return {
-            intakes: {
-              ...s.intakes,
-              [orgId]: { ...curr, completedAt: new Date().toISOString() },
-            },
-          };
-        }),
+export const useBusinessIntakeStore = create<StoreState>()((set, get) => ({
+  intakes: {},
+  get: (orgId) => get().intakes[orgId] ?? null,
+  init: (orgId, planCode, bizName) =>
+    set((s) => {
+      if (s.intakes[orgId]) return s;
+      return { intakes: { ...s.intakes, [orgId]: defaults(orgId, planCode, bizName) } };
     }),
-    { name: 'business-intake-store' },
-  ),
-);
+  update: (orgId, patch) =>
+    set((s) => {
+      const curr = s.intakes[orgId];
+      if (!curr) return s;
+      return { intakes: { ...s.intakes, [orgId]: deepMerge(curr, patch) } };
+    }),
+  setStep: (orgId, step) =>
+    set((s) => {
+      const curr = s.intakes[orgId];
+      if (!curr) return s;
+      return {
+        intakes: {
+          ...s.intakes,
+          [orgId]: { ...curr, currentStep: clampStep(step) },
+        },
+      };
+    }),
+  complete: (orgId) =>
+    set((s) => {
+      const curr = s.intakes[orgId];
+      if (!curr) return s;
+      return {
+        intakes: {
+          ...s.intakes,
+          [orgId]: { ...curr, completedAt: new Date().toISOString() },
+        },
+      };
+    }),
+}));
