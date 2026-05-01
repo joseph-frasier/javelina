@@ -93,7 +93,7 @@ function SuccessPageContent() {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-accent-light dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <div className="bg-surface rounded-xl border border-border shadow-lg p-8 text-center">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -133,7 +133,7 @@ function SuccessPageContent() {
     const redirectPath = resolveDestination();
     
     return (
-      <div className="min-h-screen bg-accent-light dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <div className="bg-surface rounded-xl border border-border shadow-lg p-8 text-center">
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -172,7 +172,7 @@ function SuccessPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-accent-light dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Processing Content */}
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="max-w-md w-full">
@@ -196,7 +196,7 @@ function SuccessPageContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-accent-light dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
       </div>
     }>
