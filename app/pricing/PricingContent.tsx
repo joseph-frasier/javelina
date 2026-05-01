@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Logo } from '@/components/ui/Logo';
 import { PricingCard } from '@/components/stripe/PricingCard';
 import Button from '@/components/ui/Button';
 import { useSubscriptionStore, type PlanId } from '@/lib/subscription-store';
@@ -11,7 +10,6 @@ import { useToastStore } from '@/lib/toast-store';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { getPlanById, fetchPlans, PLANS_CONFIG } from '@/lib/plans-config';
 import type { Plan } from '@/lib/plans-config';
-import Link from 'next/link';
 import { gsap } from 'gsap';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { PRICING_FAQS } from '@/lib/constants/faq';
@@ -146,7 +144,7 @@ export default function PricingContent() {
       <div className="min-h-screen flex items-center justify-center bg-surface-alt">
         <div className="flex items-center space-x-2">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-          <span className="text-accent">Loading pricing plans...</span>
+          <span className="text-text-muted">Loading pricing plans...</span>
         </div>
       </div>
     );
@@ -155,12 +153,9 @@ export default function PricingContent() {
   return (
     <div className="min-h-screen bg-surface-alt">
 
-      {/* Header */}
-      <div className="border-b border-border bg-surface" role="banner">
-        <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
-          <Link href="/" className="inline-block cursor-pointer" aria-label="Go to home page">
-            <Logo width={150} height={60} />
-          </Link>
+      {/* Main Content */}
+      <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
+        <div className="mb-8">
           <Breadcrumb
             items={
               audience
@@ -181,14 +176,10 @@ export default function PricingContent() {
             }
           />
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
 
         {/* Hero Section */}
         <section className="text-center mb-12" aria-labelledby="pricing-hero-heading">
-          <h1 id="pricing-hero-heading" className="text-3xl font-black text-accent mb-2">
+          <h1 id="pricing-hero-heading" className="text-3xl font-black text-text mb-2">
             {audience === 'dns'
               ? 'Javelina DNS Plans'
               : audience === 'business'
@@ -208,29 +199,11 @@ export default function PricingContent() {
           </p>
         </section>
 
-        {/* Switch path link (only when arriving via /pricing/start) */}
-        {audience && (
-          <div className="mb-6">
-            <Link
-              href="/pricing/start"
-              className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-orange transition-colors"
-            >
-              <span aria-hidden="true">←</span> Switch path
-            </Link>
-          </div>
-        )}
+
 
         {/* Business Services Section */}
         {showBusinessSection && (
         <section className="mb-12" aria-labelledby="business-services-heading">
-          <div className="text-center mb-6">
-            <h2 id="business-services-heading" className="text-2xl font-bold text-accent mb-2">
-              Business Services
-            </h2>
-            <p className="text-sm text-text-muted font-light">
-              Complete managed service bundles: DNS, domain, email, website, and more.
-            </p>
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {PLANS_CONFIG.filter((plan) => plan.productLine === 'business').map((plan) => {
               const planForCard = {
@@ -262,12 +235,9 @@ export default function PricingContent() {
         {showDnsSections && (
         <section className="mb-12" aria-labelledby="monthly-plans-heading">
           <div className="text-center mb-6">
-            <h2 id="monthly-plans-heading" className="text-2xl font-bold text-accent mb-2">
+            <h2 id="monthly-plans-heading" className="text-2xl font-bold text-text mb-2">
               Monthly Subscriptions
             </h2>
-            <p className="text-sm text-text-muted font-light">
-              Flexible monthly billing. Cancel anytime.
-            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {PLANS_CONFIG.filter(plan => {
@@ -366,12 +336,9 @@ export default function PricingContent() {
         {showDnsSections && (
         <section className="mb-12" aria-labelledby="lifetime-plans-heading">
           <div className="text-center mb-6">
-            <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-accent mb-2">
+            <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-text mb-2">
               Lifetime Plans
             </h2>
-            <p className="text-sm text-text-muted font-light">
-              Pay once, own forever. No recurring fees.
-            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {PLANS_CONFIG.filter(plan => {
@@ -466,7 +433,7 @@ export default function PricingContent() {
 
         {/* FAQ Section */}
         <section className="mt-8 max-w-3xl mx-auto" aria-labelledby="faq-heading">
-          <h2 id="faq-heading" className="text-2xl font-bold text-accent text-center mb-6">
+          <h2 id="faq-heading" className="text-2xl font-bold text-text text-center mb-6">
             Frequently Asked Questions
           </h2>
           <div className="space-y-4" role="list">
@@ -476,7 +443,7 @@ export default function PricingContent() {
                 className="bg-white rounded-lg border border-gray-light p-4"
                 role="listitem"
               >
-                <h3 className="text-base font-bold text-accent mb-1">
+                <h3 className="text-base font-bold text-text mb-1">
                   {faq.question}
                 </h3>
                 <p className="text-sm text-text-muted font-regular">
