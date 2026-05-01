@@ -412,10 +412,11 @@ export function StepWebsite({ t, data, set }: Props) {
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button
                   t={t}
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={() => logoInputRef.current?.click()}
                   iconLeft={<Icon name="plus" size={13} />}
+                  style={{ border: `1px solid ${t.border}` }}
                 >
                   {w.logo ? 'Replace logo' : 'Upload logo'}
                 </Button>
@@ -428,6 +429,7 @@ export function StepWebsite({ t, data, set }: Props) {
                     setLogoUrl(null);
                     setLogoError(null);
                   }}
+                  style={{ border: `1px solid ${t.border}` }}
                 >
                   Skip, use text wordmark
                 </Button>
@@ -488,9 +490,10 @@ export function StepWebsite({ t, data, set }: Props) {
             </div>
             <Button
               t={t}
-              variant="secondary"
+              variant="ghost"
               size="sm"
               onClick={() => photoInputRef.current?.click()}
+              style={{ border: `1px solid ${t.border}`, background: t.surface }}
             >
               {photoBusy ? 'Uploading…' : 'Browse files'}
             </Button>

@@ -162,11 +162,7 @@ export function BusinessWizardShell({ orgId }: Props) {
                 Continue
               </Button>
             ) : (
-              <Button
-                t={t}
-                onClick={onLaunch}
-                iconRight={<Icon name="rocket" size={14} color="#fff" />}
-              >
+              <Button t={t} onClick={onLaunch}>
                 Launch my site
               </Button>
             )}

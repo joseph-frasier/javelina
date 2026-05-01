@@ -36,9 +36,9 @@ export function BusinessTopbar() {
       }}
     >
       <Link
-        href="/business"
+        href="/"
         style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
-        aria-label="Javelina Business"
+        aria-label="Go to Javelina home"
       >
         <Logo width={120} height={40} />
       </Link>

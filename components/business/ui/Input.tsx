@@ -1,5 +1,5 @@
 'use client';
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { FONT, type Tokens } from './tokens';
 
 interface InputProps {
@@ -7,6 +7,7 @@ interface InputProps {
   value: string | number | undefined;
   onChange?: (v: string) => void;
   onBlur?: () => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
   placeholder?: string;
   prefix?: ReactNode;
   suffix?: ReactNode;
@@ -15,7 +16,7 @@ interface InputProps {
   readOnly?: boolean;
 }
 
-export function Input({ t, value, onChange, onBlur, placeholder, prefix, suffix, style, type = 'text', readOnly }: InputProps) {
+export function Input({ t, value, onChange, onBlur, onKeyDown, placeholder, prefix, suffix, style, type = 'text', readOnly }: InputProps) {
   const [focus, setFocus] = useState(false);
   return (
     <div
@@ -51,6 +52,7 @@ export function Input({ t, value, onChange, onBlur, placeholder, prefix, suffix,
         value={value ?? ''}
         readOnly={readOnly}
         onChange={(e) => onChange?.(e.target.value)}
+        onKeyDown={onKeyDown}
         onFocus={() => setFocus(true)}
         onBlur={() => {
           setFocus(false);

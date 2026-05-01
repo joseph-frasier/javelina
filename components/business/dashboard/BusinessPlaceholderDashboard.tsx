@@ -77,7 +77,9 @@ export function BusinessPlaceholderDashboard({ data }: Props) {
         <DNSStatusCard t={t} data={data} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <AnalyticsPlaceholder t={t} />
-          <BillingCard t={t} data={data} />
+          <div style={{ flex: 1, display: 'flex' }}>
+            <BillingCard t={t} data={data} />
+          </div>
         </div>
       </div>
 

@@ -4,7 +4,6 @@ import { FONT, type Tokens } from '@/components/business/ui/tokens';
 import { StepHeader } from '@/components/business/ui/StepHeader';
 import { Card } from '@/components/business/ui/Card';
 import { Badge } from '@/components/business/ui/Badge';
-import { Icon } from '@/components/business/ui/Icon';
 import { SummaryRow } from './SummaryRow';
 
 interface Props {
@@ -117,20 +116,10 @@ export function StepConfirm({ t, data }: Props) {
       <div
         style={{
           marginTop: 20, padding: 16, borderRadius: 12,
-          background: t.accentSoft, border: `1px solid ${t.accent}33`,
+          background: t.surface, border: `1px solid ${t.border}`,
           display: 'flex', gap: 14, alignItems: 'flex-start',
         }}
       >
-        <div
-          style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: t.accent,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, color: '#fff',
-          }}
-        >
-          <Icon name="rocket" size={18} color="#fff" />
-        </div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 600, color: t.text, fontFamily: FONT }}>
             What you&apos;re getting ({data.planCode === 'business_pro' ? 'Business Pro' : 'Business Starter'})
