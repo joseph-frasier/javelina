@@ -21,6 +21,11 @@ export default function PricingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnboarding = searchParams.get('onboarding') === 'true';
+  const audienceParam = searchParams.get('audience');
+  const audience: 'dns' | 'business' | null =
+    audienceParam === 'dns' || audienceParam === 'business' ? audienceParam : null;
+  const showBusinessSection = audience === null || audience === 'business';
+  const showDnsSections = audience === null || audience === 'dns';
   const selectPlan = useSubscriptionStore((state) => state.selectPlan);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const addToast = useToastStore((state) => state.addToast);
@@ -156,11 +161,24 @@ export default function PricingContent() {
           <Link href="/" className="inline-block cursor-pointer" aria-label="Go to home page">
             <Logo width={150} height={60} />
           </Link>
-          <Breadcrumb 
-            items={[
-              { label: 'Dashboard', href: '/' },
-              { label: 'Select Plan' }
-            ]}
+          <Breadcrumb
+            items={
+              audience
+                ? [
+                    { label: 'Dashboard', href: '/' },
+                    { label: 'Choose Plan Type', href: '/pricing/start' },
+                    {
+                      label:
+                        audience === 'business'
+                          ? 'Business Services'
+                          : 'Javelina DNS',
+                    },
+                  ]
+                : [
+                    { label: 'Dashboard', href: '/' },
+                    { label: 'Select Plan' },
+                  ]
+            }
           />
         </div>
       </header>
@@ -171,16 +189,39 @@ export default function PricingContent() {
         {/* Hero Section */}
         <section className="text-center mb-12" aria-labelledby="pricing-hero-heading">
           <h1 id="pricing-hero-heading" className="text-3xl font-black text-orange-dark mb-2">
-            {isOnboarding ? 'Choose Your Plan' : 'Pricing Plans'}
+            {audience === 'dns'
+              ? 'Javelina DNS Plans'
+              : audience === 'business'
+              ? 'Business Services Plans'
+              : isOnboarding
+              ? 'Choose Your Plan'
+              : 'Pricing Plans'}
           </h1>
           <p className="text-base text-gray-slate font-light max-w-2xl mx-auto">
-            {isOnboarding
+            {audience === 'dns'
+              ? 'Self-manage your DNS infrastructure. Pick a tier that fits your needs.'
+              : audience === 'business'
+              ? 'Fully managed bundles: domain, DNS, email, and website, done for you.'
+              : isOnboarding
               ? 'Select the plan that best fits your needs. You can upgrade or downgrade anytime.'
               : 'Start managing your DNS infrastructure with confidence. Select the plan that fits your needs.'}
           </p>
         </section>
 
+        {/* Switch path link (only when arriving via /pricing/start) */}
+        {audience && (
+          <div className="mb-6">
+            <Link
+              href="/pricing/start"
+              className="inline-flex items-center gap-1 text-sm text-gray-slate hover:text-orange transition-colors"
+            >
+              <span aria-hidden="true">←</span> Switch path
+            </Link>
+          </div>
+        )}
+
         {/* Business Services Section */}
+        {showBusinessSection && (
         <section className="mb-12" aria-labelledby="business-services-heading">
           <div className="text-center mb-6">
             <h2 id="business-services-heading" className="text-2xl font-bold text-orange-dark mb-2">
@@ -215,8 +256,10 @@ export default function PricingContent() {
             })}
           </div>
         </section>
+        )}
 
         {/* Monthly Subscription Plans Section */}
+        {showDnsSections && (
         <section className="mb-12" aria-labelledby="monthly-plans-heading">
           <div className="text-center mb-6">
             <h2 id="monthly-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
@@ -264,6 +307,7 @@ export default function PricingContent() {
             })}
           </div>
         </section>
+        )}
 
         {/* Enterprise Lifetime Plan - Full Width */}
         {/* {PLANS_CONFIG.filter(plan => plan.id === 'enterprise_lifetime').map((plan) => (
@@ -319,6 +363,7 @@ export default function PricingContent() {
         ))} */}
 
         {/* Lifetime Plans Section */}
+        {showDnsSections && (
         <section className="mb-12" aria-labelledby="lifetime-plans-heading">
           <div className="text-center mb-6">
             <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
@@ -364,6 +409,7 @@ export default function PricingContent() {
             })}
           </div>
         </section>
+        )}
 
         {/* Enterprise Subscription Plan - Full Width Bottom Section */}
         {/* {PLANS_CONFIG.filter(plan => plan.id === 'enterprise').map((plan) => (

@@ -371,7 +371,7 @@ export function OrganizationClient({ org }: OrganizationClientProps) {
               description="Common tasks and shortcuts"
             >
               <div className="space-y-4 mt-4">
-                <Link href="/pricing" className="block">
+                <Link href="/pricing/start" className="block">
                   <Button variant="primary" className="w-full justify-start">
                     <svg
                       className="w-5 h-5 mr-2"

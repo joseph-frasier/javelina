@@ -183,7 +183,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               {hasBusinessIntakes && (
                 <Link
                   href="/business"
-                  className="text-gray-slate hover:text-orange font-regular text-sm transition-colors"
+                  className="px-3 py-1.5 rounded-md text-sm text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
                 >
                   My Business
                 </Link>

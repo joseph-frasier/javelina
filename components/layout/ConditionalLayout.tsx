@@ -38,7 +38,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const isAuthPage = pathname === '/login' || 
                      pathname === '/forgot-password';
 
-  const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout';
+  const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout' || pathname.startsWith('/pricing/');
 
   const isPublicMarketingPage = pathname === '/infrastructure';
   
