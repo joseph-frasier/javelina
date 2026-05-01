@@ -143,20 +143,20 @@ export default function PricingContent() {
   // Show loading state while plans are being fetched
   if (!plansLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+      <div className="min-h-screen flex items-center justify-center bg-surface-alt">
         <div className="flex items-center space-x-2">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Loading pricing plans...</span>
+          <span className="text-accent">Loading pricing plans...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-orange-light">
+    <div className="min-h-screen bg-surface-alt">
 
       {/* Header */}
-      <header className="border-b border-gray-light bg-white" role="banner">
+      <div className="border-b border-border bg-surface" role="banner">
         <div className="max-w-7xl mx-auto pl-2 pr-4 sm:pl-3 sm:pr-6 lg:pl-4 lg:pr-8 py-1 flex items-center justify-between">
           <Link href="/" className="inline-block cursor-pointer" aria-label="Go to home page">
             <Logo width={150} height={60} />
@@ -181,14 +181,14 @@ export default function PricingContent() {
             }
           />
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
+      <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
 
         {/* Hero Section */}
         <section className="text-center mb-12" aria-labelledby="pricing-hero-heading">
-          <h1 id="pricing-hero-heading" className="text-3xl font-black text-orange-dark mb-2">
+          <h1 id="pricing-hero-heading" className="text-3xl font-black text-accent mb-2">
             {audience === 'dns'
               ? 'Javelina DNS Plans'
               : audience === 'business'
@@ -197,7 +197,7 @@ export default function PricingContent() {
               ? 'Choose Your Plan'
               : 'Pricing Plans'}
           </h1>
-          <p className="text-base text-gray-slate font-light max-w-2xl mx-auto">
+          <p className="text-base text-text-muted font-light max-w-2xl mx-auto">
             {audience === 'dns'
               ? 'Self-manage your DNS infrastructure. Pick a tier that fits your needs.'
               : audience === 'business'
@@ -213,7 +213,7 @@ export default function PricingContent() {
           <div className="mb-6">
             <Link
               href="/pricing/start"
-              className="inline-flex items-center gap-1 text-sm text-gray-slate hover:text-orange transition-colors"
+              className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-orange transition-colors"
             >
               <span aria-hidden="true">←</span> Switch path
             </Link>
@@ -224,10 +224,10 @@ export default function PricingContent() {
         {showBusinessSection && (
         <section className="mb-12" aria-labelledby="business-services-heading">
           <div className="text-center mb-6">
-            <h2 id="business-services-heading" className="text-2xl font-bold text-orange-dark mb-2">
+            <h2 id="business-services-heading" className="text-2xl font-bold text-accent mb-2">
               Business Services
             </h2>
-            <p className="text-sm text-gray-slate font-light">
+            <p className="text-sm text-text-muted font-light">
               Complete managed service bundles: DNS, domain, email, website, and more.
             </p>
           </div>
@@ -262,10 +262,10 @@ export default function PricingContent() {
         {showDnsSections && (
         <section className="mb-12" aria-labelledby="monthly-plans-heading">
           <div className="text-center mb-6">
-            <h2 id="monthly-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
+            <h2 id="monthly-plans-heading" className="text-2xl font-bold text-accent mb-2">
               Monthly Subscriptions
             </h2>
-            <p className="text-sm text-gray-slate font-light">
+            <p className="text-sm text-text-muted font-light">
               Flexible monthly billing. Cancel anytime.
             </p>
           </div>
@@ -316,10 +316,10 @@ export default function PricingContent() {
               {/* Left: Plan Info */}
               {/* <div className="flex-1">
                 <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-orange-dark mb-2">
+                  <h3 className="text-2xl font-bold text-accent mb-2">
                     {plan.name}
                   </h3>
-                  <p className="text-sm text-gray-slate font-light">
+                  <p className="text-sm text-text-muted font-light">
                     {plan.description}
                   </p>
                 </div>
@@ -339,7 +339,7 @@ export default function PricingContent() {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      <span className="text-sm text-gray-slate font-regular">
+                      <span className="text-sm text-text-muted font-regular">
                         {feature.name}
                       </span>
                     </div>
@@ -366,10 +366,10 @@ export default function PricingContent() {
         {showDnsSections && (
         <section className="mb-12" aria-labelledby="lifetime-plans-heading">
           <div className="text-center mb-6">
-            <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-orange-dark mb-2">
+            <h2 id="lifetime-plans-heading" className="text-2xl font-bold text-accent mb-2">
               Lifetime Plans
             </h2>
-            <p className="text-sm text-gray-slate font-light">
+            <p className="text-sm text-text-muted font-light">
               Pay once, own forever. No recurring fees.
             </p>
           </div>
@@ -418,10 +418,10 @@ export default function PricingContent() {
               {/* Left: Plan Info */}
               {/* <div className="flex-1">
                 <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-orange-dark mb-2">
+                  <h3 className="text-2xl font-bold text-accent mb-2">
                     {plan.name}
                   </h3>
-                  <p className="text-sm text-gray-slate font-light">
+                  <p className="text-sm text-text-muted font-light">
                     {plan.description}
                   </p>
                 </div>
@@ -441,7 +441,7 @@ export default function PricingContent() {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      <span className="text-sm text-gray-slate font-regular">
+                      <span className="text-sm text-text-muted font-regular">
                         {feature.name}
                       </span>
                     </div>
@@ -466,7 +466,7 @@ export default function PricingContent() {
 
         {/* FAQ Section */}
         <section className="mt-8 max-w-3xl mx-auto" aria-labelledby="faq-heading">
-          <h2 id="faq-heading" className="text-2xl font-bold text-orange-dark text-center mb-6">
+          <h2 id="faq-heading" className="text-2xl font-bold text-accent text-center mb-6">
             Frequently Asked Questions
           </h2>
           <div className="space-y-4" role="list">
@@ -476,17 +476,17 @@ export default function PricingContent() {
                 className="bg-white rounded-lg border border-gray-light p-4"
                 role="listitem"
               >
-                <h3 className="text-base font-bold text-orange-dark mb-1">
+                <h3 className="text-base font-bold text-accent mb-1">
                   {faq.question}
                 </h3>
-                <p className="text-sm text-gray-slate font-regular">
+                <p className="text-sm text-text-muted font-regular">
                   {faq.answer}
                 </p>
               </article>
             ))}
           </div>
         </section>
-      </main>
+      </div>
 
       {/* Organization Creation Modal */}
       <AddOrganizationModal

@@ -27,7 +27,7 @@ export default function PricingStartContent() {
   }, [isInitialMount]);
 
   return (
-    <div className="min-h-screen bg-orange-light">
+    <div className="min-h-screen bg-surface-alt">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <Breadcrumb
           items={[
@@ -37,7 +37,7 @@ export default function PricingStartContent() {
         />
       </div>
 
-      <main
+      <div
         ref={contentRef}
         className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16"
         role="main"
@@ -83,7 +83,7 @@ export default function PricingStartContent() {
             Compare all plans
           </Link>
         </p>
-      </main>
+      </div>
     </div>
   );
 }
