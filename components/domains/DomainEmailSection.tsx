@@ -19,7 +19,7 @@ import type {
   Mailbox,
   MailAlias,
 } from '@/types/mailbox';
-import { Mail, Plus, Trash2, Key, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Key, ExternalLink } from 'lucide-react';
 
 interface DomainEmailSectionProps {
   domainId: string;
@@ -231,7 +231,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   // Loading skeleton
   if (loading) {
     return (
-      <Card title="Email" icon={<Mail className="w-5 h-5 text-accent" />}>
+      <Card title="Email">
         <div className="animate-pulse space-y-3">
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
@@ -246,7 +246,6 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
       <Card
         title="Email"
         description="Add email mailboxes to your domain"
-        icon={<Mail className="w-5 h-5 text-accent" />}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -299,7 +298,6 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   return (
     <Card
       title="Email"
-      icon={<Mail className="w-5 h-5 text-accent" />}
       action={
         emailStatus.webmail_url ? (
           <a

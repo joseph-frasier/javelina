@@ -186,7 +186,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
               {members.map((member) => (
                 <div
                   key={member.user_id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border dark:border-gray-slate hover:shadow-sm transition-shadow"
+                  className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface shadow-sm"
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {/* Avatar */}

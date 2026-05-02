@@ -198,10 +198,7 @@ export function Sidebar({
                 >
                   <svg
                     aria-hidden
-                    className={clsx(
-                      'w-4 h-4 shrink-0',
-                      hasPendingCheckout ? 'text-warning' : 'text-accent'
-                    )}
+                    className="w-4 h-4 shrink-0 text-text-muted"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -218,7 +215,7 @@ export function Sidebar({
                   </span>
                   {hasPendingCheckout && (
                     <svg
-                      className="w-3.5 h-3.5 flex-shrink-0 text-warning"
+                      className="w-4 h-4 flex-shrink-0 text-warning"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
