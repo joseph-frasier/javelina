@@ -216,7 +216,7 @@ export function AvatarUpload({
       >
         {/* Avatar Display */}
         <div 
-          className={`w-20 h-20 rounded-full overflow-hidden relative ${currentAvatarUrl ? 'cursor-pointer' : ''}`}
+          className={`w-20 h-20 rounded-3xl overflow-hidden relative ${currentAvatarUrl ? 'cursor-pointer' : ''}`}
           onClick={() => currentAvatarUrl && setShowEnlargedView(true)}
         >
           {currentAvatarUrl ? (

@@ -339,7 +339,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-8 h-8 bg-accent rounded-full flex items-center justify-center hover:bg-accent-hover transition-colors focus-visible:outline-none focus-visible:shadow-focus-ring overflow-hidden ml-1"
+                className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center hover:bg-accent-hover transition-colors focus-visible:outline-none focus-visible:shadow-focus-ring overflow-hidden ml-1"
                 aria-label={`User menu for ${userName}`}
                 aria-expanded={isDropdownOpen}
                 aria-haspopup="true"
@@ -366,7 +366,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                   <div className="p-4 border-b border-border">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 bg-accent rounded-full flex items-center justify-center overflow-hidden shrink-0"
+                        className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center overflow-hidden shrink-0"
                         aria-hidden="true"
                       >
                         {userAvatarUrl ? (

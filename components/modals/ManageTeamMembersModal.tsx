@@ -352,10 +352,6 @@ export function ManageTeamMembersModal({
                           key={roleName}
                           className={`${ROLE_PILL_CLASSES} px-3 py-1 text-xs`}
                         >
-                          <span
-                            aria-hidden="true"
-                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(roleName)}`}
-                          />
                           {roleName} {count}
                         </span>
                       ))
@@ -440,10 +436,6 @@ export function ManageTeamMembersModal({
                         ) : (
                           <>
                             <span className={`${ROLE_PILL_CLASSES} text-xs px-3 py-1`}>
-                              <span
-                                aria-hidden="true"
-                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(user.role)}`}
-                              />
                               {user.role}
                             </span>
                             <Button
@@ -544,10 +536,6 @@ export function ManageTeamMembersModal({
                               {getStatusLabel(invitation.status)}
                             </span>
                             <span className={`${ROLE_PILL_CLASSES} text-xs px-2 py-1`}>
-                              <span
-                                aria-hidden="true"
-                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(invitation.role)}`}
-                              />
                               {invitation.role}
                             </span>
                           </div>
