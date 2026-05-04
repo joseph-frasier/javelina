@@ -97,6 +97,8 @@ This gives accurate per-agent granularity (agent 10 and agent 12 can complete in
 
 ### A. `javelina-intake` (one ask of the intake repo owner)
 
+> **Self-contained spec for the intake repo owner:** [`2026-05-04-intake-progress-emissions-spec.md`](./2026-05-04-intake-progress-emissions-spec.md). The summary below mirrors that doc.
+
 Instrument the agent runners (and the deterministic worker pipeline as it ships) to emit `syncToJavelina()` calls at phase boundaries on the `website` service. The existing helper handles retries and the local `lead_services` mirror.
 
 **Required new sync calls.** Triggered by existing Inngest events (per contract §8) so the intake-side change is purely additive instrumentation, not new orchestration:
