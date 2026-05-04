@@ -12,7 +12,8 @@ export type AnimatedNavIconName =
   | 'chart'
   | 'credit'
   | 'info'
-  | 'sparkle';
+  | 'sparkle'
+  | 'building';
 
 interface Props {
   name: AnimatedNavIconName;
@@ -147,6 +148,26 @@ export function AnimatedNavIcon({ name, size = 16, color = 'currentColor', isHov
           animate={{ x: h ? [0, 2, 0] : 0, opacity: h ? [1, 0.25, 1] : 1 }}
           transition={h ? { duration: 0.45 } : { duration: 0 }}
         />
+      </g>
+    ),
+
+    // Building bounces up; windows flash on hover
+    building: (
+      <g>
+        <motion.g
+          animate={{ y: h ? [0, -2, 0] : 0 }}
+          transition={h ? { duration: 0.45, ease: EASE_OUT } : { duration: 0 }}
+        >
+          <path d="M3.5 14.5V3.5a0.6 0.6 0 01.6-.6h7.3a0.6 0.6 0 01.6.6V14.5" />
+          <path d="M11.5 7h2.4a0.6 0.6 0 01.6.6V14.5" />
+          <line x1="1.5" y1="14.5" x2="14.5" y2="14.5" />
+          <motion.g
+            animate={{ opacity: h ? [1, 0.2, 1, 0.2, 1] : 1 }}
+            transition={h ? { duration: 0.5, delay: 0.1 } : { duration: 0 }}
+          >
+            <path d="M5.5 5.5h1.5M9 5.5h1.5M5.5 8.5h1.5M9 8.5h1.5M5.5 11.5h1.5M9 11.5h1.5" />
+          </motion.g>
+        </motion.g>
       </g>
     ),
 

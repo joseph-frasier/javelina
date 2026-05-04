@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
+import { AnimatedNavIcon } from '@/components/business/ui/AnimatedNavIcon';
 
 export type AudienceId = 'dns' | 'business';
 
@@ -10,37 +13,7 @@ interface AudienceCardProps {
   description: string;
   startingPrice: string;
   href: string;
-}
-
-function AudienceIcon({ audience }: { audience: AudienceId }) {
-  if (audience === 'dns') {
-    return (
-      <svg
-        className="w-10 h-10 text-text-muted"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="9" strokeWidth={1.75} />
-        <path strokeWidth={1.75} d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
-      </svg>
-    );
-  }
-  return (
-    <svg
-      className="w-10 h-10 text-text-muted"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path strokeWidth={1.75} strokeLinejoin="round" d="M5 21V5a1 1 0 011-1h9a1 1 0 011 1v16" />
-      <path strokeWidth={1.75} strokeLinejoin="round" d="M16 9h3a1 1 0 011 1v11" />
-      <path strokeWidth={1.75} d="M3 21h18" />
-      <path strokeWidth={1.5} d="M8 8h2M8 12h2M8 16h2M12 8h2M12 12h2M12 16h2" />
-    </svg>
-  );
+  tooltip: string;
 }
 
 export function AudienceCard({
@@ -49,20 +22,36 @@ export function AudienceCard({
   description,
   startingPrice,
   href,
+  tooltip,
 }: AudienceCardProps) {
   const router = useRouter();
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <button
       type="button"
       onClick={() => router.push(href)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="group flex flex-col items-center text-center p-6 rounded-xl bg-surface border border-border shadow-card hover:shadow-lg hover:border-border-strong focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/30 transition-all duration-150 cursor-pointer min-h-[260px]"
       aria-label={`Choose ${title}: ${description} Starting at ${startingPrice} per month.`}
     >
-      <div className="mb-5">
-        <AudienceIcon audience={audience} />
+      <div className="mb-5 text-text-muted">
+        <AnimatedNavIcon
+          name={audience === 'dns' ? 'globe' : 'building'}
+          size={40}
+          color="currentColor"
+          isHovered={isHovered}
+        />
       </div>
-      <h3 className="text-lg font-bold text-text mb-3">{title}</h3>
+      <div className="flex items-center justify-center gap-1.5 mb-3">
+        <h3 className="text-lg font-bold text-text">{title}</h3>
+        <span onClick={(e) => e.stopPropagation()}>
+          <Tooltip content={tooltip} position="top">
+            <InfoIcon />
+          </Tooltip>
+        </span>
+      </div>
       <p className="text-sm text-text-muted leading-relaxed mb-6 max-w-xs">
         {description}
       </p>

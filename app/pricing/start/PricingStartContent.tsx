@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { gsap } from 'gsap';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { AudienceCard } from '@/components/pricing/AudienceCard';
@@ -67,6 +66,7 @@ export default function PricingStartContent() {
             description="Self-manage your DNS infrastructure. For developers and technical teams."
             startingPrice="$9.95"
             href="/pricing?audience=dns"
+            tooltip="Best for developers, engineers, and technical teams who want direct control over zones, records, TTLs, and DNS configuration."
           />
           <AudienceCard
             audience="business"
@@ -74,15 +74,10 @@ export default function PricingStartContent() {
             description="We manage everything. Domain, DNS, email, and website. Done for you."
             startingPrice="$99.88"
             href="/pricing?audience=business"
+            tooltip="Ideal for business owners who want a professional online presence without managing the technical side. We handle setup and keep everything running."
           />
         </section>
 
-        <p className="text-center text-sm text-text-muted mt-10">
-          Not sure?{' '}
-          <Link href="/pricing" className="text-accent hover:underline">
-            Compare all plans
-          </Link>
-        </p>
       </div>
     </div>
   );

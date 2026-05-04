@@ -92,7 +92,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
       <div
         ref={tooltipRef}
         style={tooltipStyle}
-        className="fixed z-[99999] px-2.5 py-1.5 text-xs font-medium text-white bg-[#0f1419] dark:bg-[#232a32] rounded-md shadow-popover whitespace-nowrap pointer-events-none transition-opacity duration-100"
+        className="fixed z-[99999] px-3 py-2 text-xs font-medium text-white bg-[#0f1419] dark:bg-[#232a32] rounded-md shadow-popover pointer-events-none transition-opacity duration-100 max-w-[220px] text-center leading-relaxed"
       >
         {content}
         <span
