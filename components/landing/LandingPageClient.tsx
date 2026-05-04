@@ -10,6 +10,7 @@ import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import { Logo } from '@/components/ui/Logo';
 import Image from 'next/image';
+import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -693,6 +694,7 @@ export default function LandingPageClient() {
                 width={150}
                 height={41}
               />
+              <LegalFooterLinks className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-gray-500" />
               <p className="text-sm text-gray-600">&copy; 2026 Javelina DNS. All rights reserved.</p>
             </div>
           </div>

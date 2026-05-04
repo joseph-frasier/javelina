@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
+import { LegalSettings } from '@/components/legal/LegalSettings';
 import { subscriptionsApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
@@ -702,6 +703,10 @@ function SettingsContent() {
                   )}
                 </Card>
                 </div>
+              )}
+
+              {activeSection === 'legal' && (
+                <LegalSettings />
               )}
 
               {/* Password & Authentication - commented out until Auth0 password reset & OAuth are implemented */}

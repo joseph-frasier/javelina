@@ -7,6 +7,8 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import Button from '@/components/ui/Button';
+import { TosAcceptCheckbox } from '@/components/legal/TosAcceptCheckbox';
+import { useAuthStore } from '@/lib/auth-store';
 
 interface StripePaymentFormProps {
   onSuccess: () => void;
@@ -30,6 +32,7 @@ export function StripePaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -38,9 +41,28 @@ export function StripePaymentForm({
       return;
     }
 
+    if (!acceptedTerms) {
+      onError('Please accept the Terms of Service to continue.');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
+      // Record ToS acceptance with the backend before kicking off Stripe.
+      // This is the canonical legal-trail capture for the checkout context.
+      try {
+        await useAuthStore.getState().acceptTos('checkout');
+      } catch (tosErr) {
+        onError(
+          tosErr instanceof Error
+            ? tosErr.message
+            : 'Failed to record Terms acceptance. Please try again.'
+        );
+        setIsProcessing(false);
+        return;
+      }
+
       // Validate element inputs before submission
       const { error: submitError } = await elements.submit();
       if (submitError) {
@@ -118,13 +140,21 @@ export function StripePaymentForm({
         </div>
       </div>
 
+      {/* Terms of Service acceptance — required before submit */}
+      <TosAcceptCheckbox
+        checked={acceptedTerms}
+        onChange={setAcceptedTerms}
+        variant="subscription"
+        disabled={isProcessing}
+      />
+
       {/* Submit Button */}
       <Button
         type="submit"
         variant="primary"
         size="lg"
         className="w-full"
-        disabled={!stripe || isProcessing}
+        disabled={!stripe || isProcessing || !acceptedTerms}
       >
         {isProcessing ? (
           <div className="flex items-center justify-center">

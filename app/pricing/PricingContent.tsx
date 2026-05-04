@@ -14,6 +14,7 @@ import { gsap } from 'gsap';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { PRICING_FAQS } from '@/lib/constants/faq';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
+import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
 
 export default function PricingContent() {
   const router = useRouter();
@@ -453,6 +454,10 @@ export default function PricingContent() {
             ))}
           </div>
         </section>
+
+        <div className="mt-12 border-t border-gray-light pt-6">
+          <LegalFooterLinks />
+        </div>
       </div>
 
       {/* Organization Creation Modal */}
