@@ -11,6 +11,8 @@ import { SitePreview } from './SitePreview';
 import { DNSStatusCard } from './DNSStatusCard';
 import { BillingCard } from './BillingCard';
 import { AnalyticsPlaceholder } from './AnalyticsPlaceholder';
+import { BuildProgressCard } from './BuildProgressCard';
+import { MOCK_MILESTONES } from '@/lib/business/build-progress-mock';
 
 interface Props {
   data: BusinessIntakeData;
@@ -62,6 +64,10 @@ export function BusinessPlaceholderDashboard({ data }: Props) {
             New deploy
           </Button>
         </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <BuildProgressCard t={t} milestones={MOCK_MILESTONES} />
       </div>
 
       <SitePreview t={t} data={data} />
