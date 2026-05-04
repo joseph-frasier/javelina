@@ -12,25 +12,22 @@ export function TocRail({ sections }: TocRailProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length > 0) {
-          const top = visible.reduce((a, b) =>
-            a.boundingClientRect.top < b.boundingClientRect.top ? a : b
-          );
-          setActiveSlug(top.target.id);
+
+    const getActive = () => {
+      const offset = 160;
+      let current = sections[0]?.slug ?? "";
+      for (const s of sections) {
+        const el = document.getElementById(s.slug);
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = s.slug;
         }
-      },
-      { rootMargin: "-100px 0px -65% 0px", threshold: 0.1 }
-    );
+      }
+      setActiveSlug(current);
+    };
 
-    sections.forEach((s) => {
-      const el = document.getElementById(s.slug);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
+    getActive();
+    window.addEventListener("scroll", getActive, { passive: true });
+    return () => window.removeEventListener("scroll", getActive);
   }, [sections]);
 
   return (
