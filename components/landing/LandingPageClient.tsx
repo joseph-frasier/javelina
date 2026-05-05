@@ -319,7 +319,7 @@ export default function LandingPageClient() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Feature 1 - Low-Latency Resolution */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -332,7 +332,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Feature 2 - Zero-Downtime Failover */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -345,7 +345,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Feature 3 - DDoS Resilience */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -358,7 +358,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Feature 4 - Single IP, Global Reach */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -542,7 +542,7 @@ export default function LandingPageClient() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Card 1 */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -555,7 +555,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 2 */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -568,7 +568,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 3 */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -581,7 +581,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 4 - Faster Build Cycles */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -594,7 +594,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 5 - Simplified Toolchain */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
@@ -607,7 +607,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 6 - Transparent Codebase */}
-              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent/50 hover:bg-surface/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
