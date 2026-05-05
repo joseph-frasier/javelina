@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
 
     // Public routes that don't require authentication
     // Root path '/' is accessible to all (shows login to unauthenticated, dashboard to authenticated)
-    const publicRoutes = ['/', '/login', '/forgot-password', '/email-verified', '/invite/accept', '/admin/login', '/pricing', '/checkout', '/infrastructure', '/legal', '/terms']
+    const publicRoutes = ['/', '/login', '/forgot-password', '/email-verified', '/invite/accept', '/admin/login', '/checkout', '/infrastructure', '/legal', '/terms']
     const isPublicRoute = publicRoutes.some((route) => {
       // Exact match for root path
       if (route === '/' && request.nextUrl.pathname === '/') {
