@@ -660,11 +660,11 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
           <button
             onClick={handleSend}
             disabled={loading || !inputValue.trim() || inputValue.length > MAX_MESSAGE_LENGTH || !isAuthenticated || !user}
-            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-accent transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-50"
+            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-surface-hover border border-border transition-colors hover:bg-surface hover:border-border-strong focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Send message"
           >
             <svg
-              className="w-4 h-4 text-white"
+              className="w-4 h-4 text-text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

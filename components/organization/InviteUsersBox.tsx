@@ -186,7 +186,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
               {members.map((member) => (
                 <div
                   key={member.user_id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border dark:border-gray-slate hover:shadow-sm transition-shadow"
+                  className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface shadow-sm"
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {/* Avatar */}
@@ -195,11 +195,11 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                         <img
                           src={member.avatar}
                           alt={member.name}
-                          className="w-10 h-10 rounded-full"
+                          className="w-10 h-10 rounded-xl"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-accent/10 dark:bg-accent/20 flex items-center justify-center">
-                          <span className="text-sm font-bold text-accent">
+                        <div className="w-10 h-10 rounded-xl border border-border bg-surface-alt flex items-center justify-center">
+                          <span className="text-sm font-bold text-text">
                             {getInitials(member.name)}
                           </span>
                         </div>
@@ -218,11 +218,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
 
                     {/* Role Badge */}
                     <div className="flex-shrink-0">
-                      <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
-                        <span
-                          aria-hidden="true"
-                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(member.role)}`}
-                        />
+                      <span className="inline-flex items-center text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
                         {member.role}
                       </span>
                     </div>
