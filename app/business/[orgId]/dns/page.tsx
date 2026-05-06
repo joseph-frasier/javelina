@@ -3,11 +3,10 @@
 import { FONT, MONO } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
-import { Button } from '@/components/business/ui/Button';
 import { Badge } from '@/components/business/ui/Badge';
-import { Icon } from '@/components/business/ui/Icon';
 import { PageHeader, SectionHeader, StatRow, TableHeader, TableCell } from '@/components/business/dashboard/_pageBits';
 import { MOCK_DNS_RECORDS } from '@/lib/business/page-mocks';
+import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
 
 export default function BusinessDnsPage() {
   const t = useBusinessTheme();
@@ -18,16 +17,6 @@ export default function BusinessDnsPage() {
         t={t}
         title="DNS"
         description="Records, nameservers, and propagation status for your zones."
-        actions={
-          <>
-            <Button t={t} variant="secondary" size="md" iconLeft={<Icon name="refresh" size={14} />}>
-              Recheck propagation
-            </Button>
-            <Button t={t} size="md" iconLeft={<Icon name="plus" size={14} color="#fff" />}>
-              Add record
-            </Button>
-          </>
-        }
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -44,7 +33,7 @@ export default function BusinessDnsPage() {
         <Card t={t}>
           <SectionHeader t={t} title="Nameservers" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['ns1.javelina.app', 'ns2.javelina.app', 'ns3.javelina.app', 'ns4.javelina.app'].map((ns) => (
+            {JAVELINA_NAMESERVERS.map((ns) => (
               <div key={ns} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: t.surfaceAlt, border: `1px solid ${t.border}`, borderRadius: 8 }}>
                 <span style={{ fontFamily: MONO, fontSize: 13, color: t.text }}>{ns}</span>
                 <Badge t={t} tone="success" dot>Active</Badge>

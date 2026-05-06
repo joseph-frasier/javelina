@@ -67,10 +67,6 @@ export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
         </div>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <ServiceStatusGrid t={t} provisioning={provisioning} />
-      </div>
-
       <SitePreview t={t} data={data} />
 
       <div
@@ -82,12 +78,19 @@ export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
         }}
       >
         <DNSStatusCard t={t} data={data} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <AnalyticsPlaceholder t={t} orgId={data.orgId} />
-          <div style={{ flex: 1, display: 'flex' }}>
-            <BillingCard t={t} data={data} />
-          </div>
-        </div>
+        <ServiceStatusGrid t={t} provisioning={provisioning} />
+      </div>
+
+      <div
+        style={{
+          marginTop: 16,
+          display: 'grid',
+          gridTemplateColumns: '1.4fr 1fr',
+          gap: 16,
+        }}
+      >
+        <AnalyticsPlaceholder t={t} orgId={data.orgId} />
+        <BillingCard t={t} data={data} />
       </div>
 
       <div style={{ marginTop: 28 }}>

@@ -69,7 +69,7 @@ export function StepDNS({ t, data, set }: Props) {
                 borderRadius: 4, border: `1px solid ${t.border}`,
               }}
             >
-              ns1.javelina.app
+              ns1.javelina.cc
             </span>{' '}
             and{' '}
             <span
@@ -79,7 +79,7 @@ export function StepDNS({ t, data, set }: Props) {
                 borderRadius: 4, border: `1px solid ${t.border}`,
               }}
             >
-              ns2.javelina.app
+              ns2.javelina.me
             </span>
             . Propagation usually takes 15 minutes to an hour.
           </div>

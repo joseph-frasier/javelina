@@ -247,35 +247,6 @@ export function SitePreview({ t, data }: SitePreviewProps) {
             >
               {subline}
             </div>
-            <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
-              <div
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 6,
-                  background: t.text,
-                  color: t.bg,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  fontFamily: FONT,
-                }}
-              >
-                See work
-              </div>
-              <div
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 6,
-                  border: `1px solid ${t.border}`,
-                  color: t.text,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  fontFamily: FONT,
-                }}
-              >
-                Start a project →
-              </div>
-            </div>
-
             <div
               style={{
                 position: 'absolute',

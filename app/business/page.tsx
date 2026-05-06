@@ -1,19 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { useBusinessIntakeStore } from '@/lib/business-intake-store';
+import { useQuery } from '@tanstack/react-query';
+import { listMyBusinesses, type BusinessSummary } from '@/lib/api/business';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Badge } from '@/components/business/ui/Badge';
 import { Icon } from '@/components/business/ui/Icon';
 
+function planLabelFor(planCode: BusinessSummary['plan_code']): string | null {
+  if (planCode === 'business_pro') return 'Business Pro';
+  if (planCode === 'business_starter') return 'Business Starter';
+  return null;
+}
+
 export default function BusinessIndexPage() {
   const t = useBusinessTheme();
-  const intakes = useBusinessIntakeStore((s) => s.intakes);
-  const entries = Object.values(intakes);
-  const completed = entries.filter((i) => i.completedAt !== null);
-  const inProgress = entries.filter((i) => i.completedAt === null);
+  const { data: businesses, isLoading } = useQuery({
+    queryKey: ['business', 'me'],
+    queryFn: () => listMyBusinesses(),
+    staleTime: 60_000,
+  });
+
+  const entries = businesses ?? [];
+  const completed = entries.filter((b) => b.intake_completed_at !== null);
+  const inProgress = entries.filter((b) => b.intake_completed_at === null);
 
   return (
     <div
@@ -36,7 +48,7 @@ export default function BusinessIndexPage() {
         </h1>
       </div>
 
-      {entries.length === 0 && (
+      {!isLoading && entries.length === 0 && (
         <Card t={t}>
           <div style={{ fontSize: 14, color: t.textMuted, lineHeight: 1.55 }}>
             You haven&apos;t started a Javelina Business plan yet.{' '}
@@ -49,13 +61,13 @@ export default function BusinessIndexPage() {
 
       {completed.length > 0 && (
         <div style={{ display: 'grid', gap: 12, marginBottom: 24 }}>
-          {completed.map((intake) => {
-            const planLabel = intake.planCode === 'business_pro' ? 'Business Pro' : 'Business Starter';
-            const domain = intake.domain.domain || 'Not set';
+          {completed.map((b) => {
+            const planLabel = planLabelFor(b.plan_code);
+            const domain = b.domain || 'Not set';
             return (
               <Link
-                key={intake.orgId}
-                href={`/business/${intake.orgId}`}
+                key={b.org_id}
+                href={`/business/${b.org_id}`}
                 style={{ textDecoration: 'none' }}
               >
                 <Card t={t} style={{ cursor: 'pointer', transition: 'box-shadow .12s' }}>
@@ -68,9 +80,9 @@ export default function BusinessIndexPage() {
                             letterSpacing: -0.2,
                           }}
                         >
-                          {intake.website.bizName || 'Untitled business'}
+                          {b.name || 'Untitled business'}
                         </span>
-                        <Badge t={t} tone="accent">{planLabel}</Badge>
+                        {planLabel && <Badge t={t} tone="accent">{planLabel}</Badge>}
                       </div>
                       <div style={{ fontSize: 13, color: t.textMuted }}>
                         {domain}
@@ -96,20 +108,20 @@ export default function BusinessIndexPage() {
             In progress
           </h2>
           <div style={{ display: 'grid', gap: 12 }}>
-            {inProgress.map((intake) => (
+            {inProgress.map((b) => (
               <Link
-                key={intake.orgId}
-                href={`/business/setup?org_id=${intake.orgId}&plan_code=${intake.planCode}&org_name=${encodeURIComponent(intake.website.bizName || '')}`}
+                key={b.org_id}
+                href={`/business/${b.org_id}`}
                 style={{ textDecoration: 'none' }}
               >
                 <Card t={t} style={{ cursor: 'pointer' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 16, fontWeight: 600, color: t.text, letterSpacing: -0.2 }}>
-                        {intake.website.bizName || 'Untitled business'}
+                        {b.name || 'Untitled business'}
                       </div>
                       <div style={{ fontSize: 13, color: t.textMuted, marginTop: 4 }}>
-                        Resume setup · step {intake.currentStep + 1} of 5
+                        {b.intake_started_at ? 'Resume setup' : 'Start setup'}
                       </div>
                     </div>
                     <Icon name="arrowRight" size={16} color={t.textMuted} />

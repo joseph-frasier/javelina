@@ -5,6 +5,7 @@ import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
 import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
+import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
 
 interface DNSStatusCardProps {
   t: Tokens;
@@ -103,8 +104,9 @@ export function DNSStatusCard({ t, data }: DNSStatusCardProps) {
           <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {managed ? (
               <>
-                <span style={{ fontFamily: MONO, fontSize: 12.5, color: t.text }}>ns1.javelina.app</span>
-                <span style={{ fontFamily: MONO, fontSize: 12.5, color: t.text }}>ns2.javelina.app</span>
+                {JAVELINA_NAMESERVERS.map((ns) => (
+                  <span key={ns} style={{ fontFamily: MONO, fontSize: 12.5, color: t.text }}>{ns}</span>
+                ))}
               </>
             ) : (
               <span style={{ fontSize: 12.5, color: t.textMuted, fontFamily: FONT }}>
