@@ -9,14 +9,8 @@ import Button from '@/components/ui/Button';
 import { adminApi, type LeadDetailResponse, type ActionResponse } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { LeadStateHeader } from '../_components/LeadStateHeader';
-import { ServicesPanel } from '../_components/ServicesPanel';
 import { OperatorActions } from '../_components/OperatorActions';
-import { ScribeCard } from '../_components/AgentCards/ScribeCard';
-import { ScoutCard } from '../_components/AgentCards/ScoutCard';
-import { MatchmakerCard } from '../_components/AgentCards/MatchmakerCard';
-import { StrategistCard } from '../_components/AgentCards/StrategistCard';
-import { ComposerCard } from '../_components/AgentCards/ComposerCard';
-import { StylistCard } from '../_components/AgentCards/StylistCard';
+import { ServiceSection } from '../_components/PipelineDetail/ServiceSection';
 
 const PACKAGE_LABEL = {
   business_starter: 'Starter',
@@ -110,14 +104,12 @@ export default function PipelineDetailPage() {
                 onReject={(reason) => runAction(() => adminApi.intake.reject(leadId, reason), 'Lead routed to custom.')}
                 onMarkFailed={(reason) => runAction(() => adminApi.intake.markFailed(leadId, reason), 'Lead marked failed.')}
               />
-              <ServicesPanel services={data.services} />
-              <div className="space-y-6">
-                <ScribeCard data={data.lead.lead_record} />
-                <ScoutCard data={data.lead.research_report} />
-                <MatchmakerCard data={data.lead.similarity_report} />
-                <StrategistCard data={data.lead.upsell_risk_report} />
-                <ComposerCard data={data.lead.copy_prep} />
-                <StylistCard data={data.lead.design_prep} />
+              <div className="space-y-4">
+                <ServiceSection serviceKey="foundation" lead={data.lead} services={data.services} leadId={leadId} />
+                <ServiceSection serviceKey="website"    lead={data.lead} services={data.services} leadId={leadId} />
+                <ServiceSection serviceKey="dns"        lead={data.lead} services={data.services} leadId={leadId} />
+                <ServiceSection serviceKey="email"      lead={data.lead} services={data.services} leadId={leadId} />
+                <ServiceSection serviceKey="domain"     lead={data.lead} services={data.services} leadId={leadId} />
               </div>
             </div>
           </>

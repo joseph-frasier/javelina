@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import type { LeadRecord } from '@/lib/schemas/intake';
 
 interface Props { data: LeadRecord | null }
@@ -9,14 +8,7 @@ interface Props { data: LeadRecord | null }
 export function ScribeCard({ data }: Props) {
   const [showRaw, setShowRaw] = useState(false);
 
-  if (!data) {
-    return (
-      <CollapsibleCard title="Scribe" storageKey="pipelines.agentcard.scribe">
-        <div className="text-xs text-text-muted mb-3 font-mono">lead_record</div>
-        <p className="text-sm text-text-muted italic">Not yet generated</p>
-      </CollapsibleCard>
-    );
-  }
+  if (!data) return null;
 
   const client = data.client ?? { name: '', businessName: '', email: '', phone: '', industry: '', industryCategory: '', location: '' };
   const brand = data.brand ?? { tagline: '', tone: [], voiceGuidelines: '', colors: { primary: { hex: '', name: '' }, secondary: { hex: '', name: '' } } };
@@ -30,9 +22,7 @@ export function ScribeCard({ data }: Props) {
   const allSeo = [...primaryKeywords, ...secondaryKeywords];
 
   return (
-    <CollapsibleCard title="Scribe" storageKey="pipelines.agentcard.scribe">
-      <div className="text-xs text-text-muted mb-3 font-mono">lead_record</div>
-
+    <div>
       <section className="space-y-4">
         <div>
           <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted">Business</h4>
@@ -118,6 +108,6 @@ export function ScribeCard({ data }: Props) {
           </pre>
         )}
       </div>
-    </CollapsibleCard>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import type { ContentPlanReport } from '@/lib/schemas/intake';
 
 interface Props { data: ContentPlanReport | null }
@@ -9,14 +8,7 @@ interface Props { data: ContentPlanReport | null }
 export function ComposerCard({ data }: Props) {
   const [showRaw, setShowRaw] = useState(false);
 
-  if (!data) {
-    return (
-      <CollapsibleCard title="Composer" storageKey="pipelines.agentcard.composer">
-        <div className="text-xs text-text-muted mb-3 font-mono">copy_prep</div>
-        <p className="text-sm text-text-muted italic">Not yet generated</p>
-      </CollapsibleCard>
-    );
-  }
+  if (!data) return null;
 
   const heroSection = data.heroSection ?? { headline: '', subheadline: '', ctaText: '' };
   const brandVoice = data.brandVoice ?? { tone: '', personality: '', languageGuidelines: [] };
@@ -24,9 +16,7 @@ export function ComposerCard({ data }: Props) {
   const missingAssets = data.missingAssets ?? [];
 
   return (
-    <CollapsibleCard title="Composer" storageKey="pipelines.agentcard.composer">
-      <div className="text-xs text-text-muted mb-3 font-mono">copy_prep</div>
-
+    <div>
       {missingAssets.length > 0 && (
         <div className="mb-4 p-3 rounded border border-warning/30 bg-warning-soft">
           <p className="text-xs font-medium uppercase tracking-wide text-warning mb-2">
@@ -112,6 +102,6 @@ export function ComposerCard({ data }: Props) {
           </pre>
         )}
       </div>
-    </CollapsibleCard>
+    </div>
   );
 }

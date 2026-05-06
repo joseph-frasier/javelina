@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
+import React, { useState } from 'react';
 import type { DesignDirectionReport } from '@/lib/schemas/intake';
 
 interface Props { data: DesignDirectionReport | null }
@@ -33,14 +32,7 @@ function Swatch({ token }: { token: ColorToken }) {
 export function StylistCard({ data }: Props) {
   const [showRaw, setShowRaw] = useState(false);
 
-  if (!data) {
-    return (
-      <CollapsibleCard title="Stylist" storageKey="pipelines.agentcard.stylist">
-        <div className="text-xs text-text-muted mb-3 font-mono">design_prep</div>
-        <p className="text-sm text-text-muted italic">Not yet generated</p>
-      </CollapsibleCard>
-    );
-  }
+  if (!data) return null;
 
   const colors = data.colors ?? [];
   const typography = data.typography ?? { headingFont: '', bodyFont: '', headingWeight: '', bodyWeight: '' };
@@ -49,9 +41,7 @@ export function StylistCard({ data }: Props) {
   const spacing = data.spacing ?? { sectionPadding: '', componentGap: '' };
 
   return (
-    <CollapsibleCard title="Stylist" storageKey="pipelines.agentcard.stylist">
-      <div className="text-xs text-text-muted mb-3 font-mono">design_prep</div>
-
+    <div>
       {colors.length > 0 && (
         <section className="mb-4">
           <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted mb-2">Palette</h4>
@@ -122,6 +112,6 @@ export function StylistCard({ data }: Props) {
           </pre>
         )}
       </div>
-    </CollapsibleCard>
+    </div>
   );
 }

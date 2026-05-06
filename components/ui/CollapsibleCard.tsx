@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import { Card } from '@/components/ui/Card';
 
 interface CollapsibleCardProps {
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   storageKey: string;
   className?: string;

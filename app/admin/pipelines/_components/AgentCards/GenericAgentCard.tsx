@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 
 interface Props {
   agentName: string;
   field: string;
   data: unknown;
-  storageKey: string;
 }
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
@@ -55,34 +53,30 @@ function ObjectNode({ obj, depth }: { obj: Record<string, unknown>; depth: numbe
   );
 }
 
-export function GenericAgentCard({ agentName, field, data, storageKey }: Props) {
+export function GenericAgentCard({ agentName: _agentName, field, data }: Props) {
   const [showRaw, setShowRaw] = useState(false);
   return (
-    <CollapsibleCard title={agentName} storageKey={storageKey}>
+    <div>
       <div className="text-xs text-text-muted mb-3 font-mono">{field}</div>
-      {data === null ? (
-        <p className="text-sm text-text-muted italic">Not yet generated</p>
-      ) : isPlainObject(data) ? (
+      {isPlainObject(data) ? (
         <ObjectNode obj={data} depth={0} />
       ) : (
         <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre>
       )}
-      {data !== null && (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setShowRaw((v) => !v)}
-            className="text-xs text-text-muted underline"
-          >
-            {showRaw ? 'Hide raw JSON' : 'View raw JSON'}
-          </button>
-          {showRaw && (
-            <pre className="mt-2 p-3 bg-surface-alt rounded text-xs overflow-auto max-h-80">
-              {JSON.stringify(data, null, 2)}
-            </pre>
-          )}
-        </div>
-      )}
-    </CollapsibleCard>
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={() => setShowRaw((v) => !v)}
+          className="text-xs text-text-muted underline"
+        >
+          {showRaw ? 'Hide raw JSON' : 'View raw JSON'}
+        </button>
+        {showRaw && (
+          <pre className="mt-2 p-3 bg-surface-alt rounded text-xs overflow-auto max-h-80">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        )}
+      </div>
+    </div>
   );
 }
