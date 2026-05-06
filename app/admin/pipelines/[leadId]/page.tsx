@@ -16,6 +16,7 @@ import { ScoutCard } from '../_components/AgentCards/ScoutCard';
 import { MatchmakerCard } from '../_components/AgentCards/MatchmakerCard';
 import { StrategistCard } from '../_components/AgentCards/StrategistCard';
 import { ComposerCard } from '../_components/AgentCards/ComposerCard';
+import { StylistCard } from '../_components/AgentCards/StylistCard';
 
 const PACKAGE_LABEL = {
   business_starter: 'Starter',
@@ -111,12 +112,12 @@ export default function PipelineDetailPage() {
               />
               <ServicesPanel services={data.services} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Stylist will land here in the next task */}
                 <ScribeCard data={data.lead.lead_record} />
                 <ScoutCard data={data.lead.research_report} />
                 <MatchmakerCard data={data.lead.similarity_report} />
                 <StrategistCard data={data.lead.upsell_risk_report} />
                 <ComposerCard data={data.lead.copy_prep} />
+                <StylistCard data={data.lead.design_prep} />
               </div>
             </div>
           </>
