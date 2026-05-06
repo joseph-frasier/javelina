@@ -14,9 +14,9 @@ export function useDashboardMode(): UseDashboardModeResult {
   const storedMode = useDashboardModeStore((s) => s.mode);
   const toggle = useDashboardModeStore((s) => s.toggle);
   const setMode = useDashboardModeStore((s) => s.setMode);
-  const role = useAuthStore((s) => s.user?.role ?? null);
+  const isSuperadmin = useAuthStore((s) => s.user?.superadmin === true);
 
-  const mode: DashboardMode = role === 'superuser' ? storedMode : 'real';
+  const mode: DashboardMode = isSuperadmin ? storedMode : 'real';
 
   return {
     mode,

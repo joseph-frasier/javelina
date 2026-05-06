@@ -7,10 +7,10 @@ import { Header } from '@/components/layout/Header';
 import { useAuthStore } from '@/lib/auth-store';
 import { useDashboardModeStore } from '@/lib/dashboard-mode-store';
 
-function mountAs(role: 'user' | 'superuser') {
+function mountAs(opts: { superadmin: boolean }) {
   useAuthStore.setState({
     // @ts-expect-error minimal user
-    user: { id: 'u1', email: 'a@b', role, display_name: 'Test' },
+    user: { id: 'u1', email: 'a@b', role: 'user', superadmin: opts.superadmin, display_name: 'Test' },
     profileReady: true,
   });
 }
@@ -31,15 +31,15 @@ describe('Header demo mode toggle', () => {
     useDashboardModeStore.setState({ mode: 'real' });
   });
 
-  it('non-superusers never see the toggle', async () => {
-    mountAs('user');
+  it('non-superadmins never see the toggle', async () => {
+    mountAs({ superadmin: false });
     renderHeader();
     await userEvent.click(screen.getByRole('button', { name: /User menu/ }));
     expect(screen.queryByRole('menuitem', { name: /Demo data/ })).toBeNull();
   });
 
-  it('superusers see the toggle and can flip it', async () => {
-    mountAs('superuser');
+  it('superadmins see the toggle and can flip it', async () => {
+    mountAs({ superadmin: true });
     renderHeader();
     await userEvent.click(screen.getByRole('button', { name: /User menu/ }));
     const item = screen.getByRole('menuitem', { name: /Demo data/ });
@@ -49,14 +49,14 @@ describe('Header demo mode toggle', () => {
   });
 
   it('shows DEMO badge next to logo when mock is on', () => {
-    mountAs('superuser');
+    mountAs({ superadmin: true });
     useDashboardModeStore.setState({ mode: 'mock' });
     renderHeader();
     expect(screen.getByText('DEMO')).toBeInTheDocument();
   });
 
   it('hides DEMO badge when mock is off', () => {
-    mountAs('superuser');
+    mountAs({ superadmin: true });
     renderHeader();
     expect(screen.queryByText('DEMO')).toBeNull();
   });

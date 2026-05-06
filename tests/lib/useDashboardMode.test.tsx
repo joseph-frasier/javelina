@@ -1,21 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 import { useDashboardModeStore } from '@/lib/dashboard-mode-store';
 import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 import { useAuthStore } from '@/lib/auth-store';
 
-function setUser(role: 'user' | 'superuser' | null) {
+function setUser(opts: { superadmin: boolean } | null) {
   useAuthStore.setState({
-    // @ts-expect-error partial user shape is fine for the role coercion test
-    user: role === null ? null : { id: 'u1', email: 'a@b', role },
+    // @ts-expect-error partial user shape is fine for the gate coercion test
+    user: opts === null ? null : { id: 'u1', email: 'a@b', role: 'user', superadmin: opts.superadmin },
   });
 }
 
 describe('useDashboardMode', () => {
   beforeEach(() => {
     useDashboardModeStore.setState({ mode: 'real' });
-    setUser('superuser');
+    setUser({ superadmin: true });
   });
 
   it('returns real by default', () => {
@@ -24,16 +24,16 @@ describe('useDashboardMode', () => {
     expect(result.current.isMock).toBe(false);
   });
 
-  it('returns mock when superuser sets it', () => {
+  it('returns mock when superadmin sets it', () => {
     useDashboardModeStore.setState({ mode: 'mock' });
     const { result } = renderHook(() => useDashboardMode());
     expect(result.current.mode).toBe('mock');
     expect(result.current.isMock).toBe(true);
   });
 
-  it('coerces non-superusers to real even if store says mock', () => {
+  it('coerces non-superadmins to real even if store says mock', () => {
     useDashboardModeStore.setState({ mode: 'mock' });
-    setUser('user');
+    setUser({ superadmin: false });
     const { result } = renderHook(() => useDashboardMode());
     expect(result.current.mode).toBe('real');
     expect(result.current.isMock).toBe(false);

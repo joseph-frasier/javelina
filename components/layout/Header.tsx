@@ -72,6 +72,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
   })();
   const userEmail = user?.email || '';
   const userRole = user?.role || 'user';
+  const isSuperadmin = user?.superadmin === true;
   const userInitial = userName.charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatar_url;
 
@@ -413,7 +414,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                     >
                       Settings
                     </Link>
-                    {userRole === 'superuser' && (
+                    {isSuperadmin && (
                       <>
                         <div className="my-1 border-t border-border" />
                         <button

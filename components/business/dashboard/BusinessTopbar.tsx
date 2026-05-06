@@ -15,7 +15,7 @@ export function BusinessTopbar() {
   const t = useBusinessTheme();
   const { mode, toggle } = useBusinessThemeStore();
   const user = useAuthStore((s) => s.user);
-  const role = user?.role ?? 'user';
+  const isSuperadmin = user?.superadmin === true;
   const { isMock, toggle: toggleDemoMode } = useDashboardMode();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -184,7 +184,7 @@ export function BusinessTopbar() {
                 zIndex: 50,
               }}
             >
-              {role === 'superuser' ? (
+              {isSuperadmin ? (
                 <button
                   type="button"
                   role="menuitem"
