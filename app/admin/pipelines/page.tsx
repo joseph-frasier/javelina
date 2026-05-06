@@ -30,7 +30,7 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   live: 'Live',
   routed_to_custom: 'Routed to custom',
   abandoned: 'Abandoned',
-  failed: 'Failed',
+  failed: 'Halted',
 };
 
 function blockedOnCell(lead: LeadSummary): string {

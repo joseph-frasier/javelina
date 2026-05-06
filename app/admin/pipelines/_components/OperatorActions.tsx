@@ -3,35 +3,28 @@
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import type { LeadDetail, LeadStatus } from '@/lib/api-client';
-
-const TERMINAL_STATUSES: LeadStatus[] = ['live', 'routed_to_custom', 'abandoned', 'failed'];
+import type { LeadDetail } from '@/lib/api-client';
 
 interface Props {
   lead: LeadDetail;
   onConfirmScope: () => void | Promise<void>;
   onReject: (reason: string) => void | Promise<void>;
-  onMarkFailed: (reason: string) => void | Promise<void>;
   busy?: boolean;
 }
 
-type ModalKind = 'confirm' | 'reject' | 'mark-failed' | null;
+type ModalKind = 'confirm' | 'reject' | null;
 
-export function OperatorActions({ lead, onConfirmScope, onReject, onMarkFailed, busy }: Props) {
+/**
+ * Scope-review actions — only meaningful while the lead is in
+ * `agents_complete` (the green-button moment). The pipeline-halt action
+ * lives separately (HaltPipelineButton) since it's a broader-state action
+ * with different intent.
+ */
+export function OperatorActions({ lead, onConfirmScope, onReject, busy }: Props) {
   const [open, setOpen] = useState<ModalKind>(null);
   const [reason, setReason] = useState('');
 
-  const isAwaitingReview = lead.status === 'agents_complete';
-  const isTerminal = TERMINAL_STATUSES.includes(lead.status);
-  const canMarkFailed = !isTerminal;
-
-  if (!isAwaitingReview && !canMarkFailed) {
-    return (
-      <p className="text-sm text-text-muted italic">
-        No operator actions available in this state.
-      </p>
-    );
-  }
+  if (lead.status !== 'agents_complete') return null;
 
   const closeModal = () => { setOpen(null); setReason(''); };
 
@@ -42,30 +35,14 @@ export function OperatorActions({ lead, onConfirmScope, onReject, onMarkFailed, 
     closeModal();
   };
 
-  const submitMarkFailed = async () => {
-    const trimmed = reason.trim();
-    if (!trimmed) return;
-    await onMarkFailed(trimmed);
-    closeModal();
-  };
-
   return (
     <div className="flex flex-wrap gap-2">
-      {isAwaitingReview && (
-        <>
-          <Button variant="primary" onClick={() => setOpen('confirm')} disabled={busy}>
-            Confirm scope
-          </Button>
-          <Button variant="outline" onClick={() => setOpen('reject')} disabled={busy}>
-            Reject
-          </Button>
-        </>
-      )}
-      {canMarkFailed && (
-        <Button variant="outline" onClick={() => setOpen('mark-failed')} disabled={busy}>
-          Mark failed
-        </Button>
-      )}
+      <Button variant="primary" onClick={() => setOpen('confirm')} disabled={busy}>
+        Confirm scope
+      </Button>
+      <Button variant="outline" onClick={() => setOpen('reject')} disabled={busy}>
+        Reject
+      </Button>
 
       {open === 'confirm' && (
         <Modal isOpen onClose={closeModal} title="Confirm scope">
@@ -105,31 +82,6 @@ export function OperatorActions({ lead, onConfirmScope, onReject, onMarkFailed, 
               onClick={submitReject}
             >
               Submit reject
-            </Button>
-          </div>
-        </Modal>
-      )}
-
-      {open === 'mark-failed' && (
-        <Modal isOpen onClose={closeModal} title="Mark failed">
-          <label className="block text-sm font-medium mb-1" htmlFor="mark-failed-reason">Reason</label>
-          <textarea
-            id="mark-failed-reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full p-2 border border-border rounded text-sm"
-            rows={3}
-            placeholder="e.g. OpenSRS registration failed after 3 retries"
-          />
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={closeModal}>Cancel</Button>
-            <Button
-              variant="primary"
-              aria-label="Submit mark failed"
-              disabled={!reason.trim() || busy}
-              onClick={submitMarkFailed}
-            >
-              Submit mark failed
             </Button>
           </div>
         </Modal>

@@ -11,5 +11,5 @@ export const blockedOnLabel: Record<LeadStatus, string | null> = {
   live: null,
   routed_to_custom: 'Routed to custom',
   abandoned: 'Abandoned by customer',
-  failed: 'Failed',
+  failed: 'Halted',
 };

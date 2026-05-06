@@ -29,7 +29,7 @@ const STATUS_OPTIONS: Array<{ value: LeadStatus | 'all'; label: string }> = [
   { value: 'all', label: 'All' },
   { value: 'agents_complete', label: 'Awaiting review' },
   { value: 'provisioning', label: 'Provisioning' },
-  { value: 'failed', label: 'Failed' },
+  { value: 'failed', label: 'Halted' },
   { value: 'routed_to_custom', label: 'Routed to custom' },
   { value: 'live', label: 'Live' },
   { value: 'abandoned', label: 'Abandoned' },
@@ -101,7 +101,7 @@ export function PipelineFilters({
 
       {showFailedChip && (
         <Tooltip
-          content={`${failedCount} lead${failedCount === 1 ? '' : 's'} in the failed bin — click to view`}
+          content={`${failedCount} halted pipeline${failedCount === 1 ? '' : 's'} — click to view`}
         >
           <button
             type="button"
@@ -109,7 +109,7 @@ export function PipelineFilters({
             className="inline-flex items-center gap-1.5 rounded-md border border-danger/40 bg-danger/10 px-2.5 py-1 text-xs font-medium text-danger transition-colors hover:bg-danger/15 focus-visible:outline-none focus-visible:shadow-focus-ring"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Failed: {failedCount}</span>
+            <span>Halted: {failedCount}</span>
           </button>
         </Tooltip>
       )}

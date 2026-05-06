@@ -23,45 +23,38 @@ function makeLead(overrides: Partial<LeadDetail> = {}): LeadDetail {
 }
 
 describe('OperatorActions', () => {
-  it('shows confirm + reject + mark-failed when status=agents_complete', () => {
+  it('shows confirm + reject when status=agents_complete', () => {
     render(
       <OperatorActions
         lead={makeLead({ status: 'agents_complete' })}
         onConfirmScope={vi.fn()}
         onReject={vi.fn()}
-        onMarkFailed={vi.fn()}
       />
     );
     expect(screen.getByRole('button', { name: /confirm scope/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^reject/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /mark failed/i })).toBeInTheDocument();
   });
 
-  it('hides confirm + reject when status is not agents_complete; mark-failed still shown for non-terminal', () => {
-    render(
+  it('renders nothing when status is not agents_complete', () => {
+    const { container } = render(
       <OperatorActions
         lead={makeLead({ status: 'provisioning' })}
         onConfirmScope={vi.fn()}
         onReject={vi.fn()}
-        onMarkFailed={vi.fn()}
       />
     );
-    expect(screen.queryByRole('button', { name: /confirm scope/i })).toBeNull();
-    expect(screen.queryByRole('button', { name: /^reject/i })).toBeNull();
-    expect(screen.getByRole('button', { name: /mark failed/i })).toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('hides all buttons for terminal status', () => {
-    render(
+  it('renders nothing for terminal status', () => {
+    const { container } = render(
       <OperatorActions
         lead={makeLead({ status: 'live' })}
         onConfirmScope={vi.fn()}
         onReject={vi.fn()}
-        onMarkFailed={vi.fn()}
       />
     );
-    expect(screen.queryAllByRole('button')).toHaveLength(0);
-    expect(screen.getByText(/no operator actions available/i)).toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 
   it('reject modal blocks submission when reason is empty', async () => {
@@ -72,7 +65,6 @@ describe('OperatorActions', () => {
         lead={makeLead({ status: 'agents_complete' })}
         onConfirmScope={vi.fn()}
         onReject={onReject}
-        onMarkFailed={vi.fn()}
       />
     );
 

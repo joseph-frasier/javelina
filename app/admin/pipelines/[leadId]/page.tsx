@@ -10,6 +10,7 @@ import { adminApi, type LeadDetailResponse, type ActionResponse } from '@/lib/ap
 import { useToastStore } from '@/lib/toast-store';
 import { LeadStateHeader } from '../_components/LeadStateHeader';
 import { OperatorActions } from '../_components/OperatorActions';
+import { HaltPipelineButton } from '../_components/HaltPipelineButton';
 import { ServiceSection } from '../_components/PipelineDetail/ServiceSection';
 
 const PACKAGE_LABEL = {
@@ -94,6 +95,15 @@ export default function PipelineDetailPage() {
                 { label: 'Pipelines', href: '/admin/pipelines' },
                 { label: data.lead.contact_name || data.lead.id },
               ]}
+              actions={
+                <HaltPipelineButton
+                  status={data.lead.status}
+                  busy={busy}
+                  onHalt={(reason) =>
+                    runAction(() => adminApi.intake.markFailed(leadId, reason), 'Pipeline halted.')
+                  }
+                />
+              }
             />
             <div className="space-y-6">
               <LeadStateHeader lead={data.lead} />
@@ -102,7 +112,6 @@ export default function PipelineDetailPage() {
                 busy={busy}
                 onConfirmScope={() => runAction(() => adminApi.intake.confirmScope(leadId), 'Scope confirmed.')}
                 onReject={(reason) => runAction(() => adminApi.intake.reject(leadId, reason), 'Lead routed to custom.')}
-                onMarkFailed={(reason) => runAction(() => adminApi.intake.markFailed(leadId, reason), 'Lead marked failed.')}
               />
               <div className="space-y-4">
                 <ServiceSection serviceKey="foundation" lead={data.lead} services={data.services} leadId={leadId} onRefresh={load} />
