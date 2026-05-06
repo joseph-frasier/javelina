@@ -59,3 +59,4 @@ CLAUDE.md
 # pre-existing tracked files in docs/superpowers/ remain in history).
 docs/superpowers/plans/
 docs/superpowers/specs/
+.superpowers/
