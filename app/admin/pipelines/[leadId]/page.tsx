@@ -105,11 +105,11 @@ export default function PipelineDetailPage() {
                 onMarkFailed={(reason) => runAction(() => adminApi.intake.markFailed(leadId, reason), 'Lead marked failed.')}
               />
               <div className="space-y-4">
-                <ServiceSection serviceKey="foundation" lead={data.lead} services={data.services} leadId={leadId} />
-                <ServiceSection serviceKey="website"    lead={data.lead} services={data.services} leadId={leadId} />
-                <ServiceSection serviceKey="dns"        lead={data.lead} services={data.services} leadId={leadId} />
-                <ServiceSection serviceKey="email"      lead={data.lead} services={data.services} leadId={leadId} />
-                <ServiceSection serviceKey="domain"     lead={data.lead} services={data.services} leadId={leadId} />
+                <ServiceSection serviceKey="foundation" lead={data.lead} services={data.services} leadId={leadId} onRefresh={load} />
+                <ServiceSection serviceKey="website"    lead={data.lead} services={data.services} leadId={leadId} onRefresh={load} />
+                <ServiceSection serviceKey="dns"        lead={data.lead} services={data.services} leadId={leadId} onRefresh={load} />
+                <ServiceSection serviceKey="email"      lead={data.lead} services={data.services} leadId={leadId} onRefresh={load} />
+                <ServiceSection serviceKey="domain"     lead={data.lead} services={data.services} leadId={leadId} onRefresh={load} />
               </div>
             </div>
           </>

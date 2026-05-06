@@ -20,6 +20,7 @@ interface ServiceSectionHeaderProps {
   state: ServiceState;
   progressLabel: string;
   updatedAt: { label: string; iso: string };
+  trailingSlot?: React.ReactNode;
 }
 
 export function ServiceSectionHeader({
@@ -27,6 +28,7 @@ export function ServiceSectionHeader({
   state,
   progressLabel,
   updatedAt,
+  trailingSlot,
 }: ServiceSectionHeaderProps) {
   const variant = SERVICE_STATE_VARIANT[state];
   const animate = state === 'in_progress';
@@ -46,10 +48,13 @@ export function ServiceSectionHeader({
         </span>
       )}
 
-      {/* Progress label */}
-      {progressLabel && progressLabel !== '—' && (
-        <span className="text-xs text-text-muted truncate hidden md:block">{progressLabel}</span>
-      )}
+      {/* Progress label — suppressed when the badge already conveys the state */}
+      {progressLabel &&
+        progressLabel !== '—' &&
+        state !== 'live' &&
+        state !== 'not_applicable' && (
+          <span className="text-xs text-text-muted truncate hidden md:block">{progressLabel}</span>
+        )}
 
       {/* Spacer */}
       <span className="flex-1" />
@@ -67,6 +72,9 @@ export function ServiceSectionHeader({
           {formatAge(updatedAt.iso)} ago
         </span>
       </Tooltip>
+
+      {/* Trailing slot (e.g. operator override menu) */}
+      {trailingSlot}
     </div>
   );
 }

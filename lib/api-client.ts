@@ -851,6 +851,24 @@ export const adminApi = {
         { reason }
       ),
     // mark-pax8-done deferred to JAV-119 1.6
+
+    overrideService: (
+      leadId: string,
+      service: 'website' | 'dns' | 'email' | 'domain',
+      body: {
+        state: 'live' | 'not_applicable' | 'failed' | 'needs_input';
+        reason: string;
+        progress_label?: string;
+      }
+    ) =>
+      apiClient.post<{
+        status: 'applied';
+        lead_id: string;
+        service: string;
+        state: string;
+        progress_label: string | null;
+        override_id: string;
+      }>(`/admin/intake/leads/${leadId}/services/${service}/override`, body),
   },
 };
 
