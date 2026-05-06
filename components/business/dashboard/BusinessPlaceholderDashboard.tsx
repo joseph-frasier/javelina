@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessDetail } from '@/lib/api/business';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Button } from '@/components/business/ui/Button';
@@ -11,14 +12,14 @@ import { SitePreview } from './SitePreview';
 import { DNSStatusCard } from './DNSStatusCard';
 import { BillingCard } from './BillingCard';
 import { AnalyticsPlaceholder } from './AnalyticsPlaceholder';
-import { BuildProgressCard } from './BuildProgressCard';
-import { MOCK_MILESTONES } from '@/lib/business/build-progress-mock';
+import { ServiceStatusGrid } from './ServiceStatusGrid';
 
 interface Props {
   data: BusinessIntakeData;
+  provisioning: BusinessDetail['provisioning'];
 }
 
-export function BusinessPlaceholderDashboard({ data }: Props) {
+export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
   const t = useBusinessTheme();
   const firstName = data.contact.firstName || data.website.bizName || 'there';
 
@@ -67,7 +68,7 @@ export function BusinessPlaceholderDashboard({ data }: Props) {
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <BuildProgressCard t={t} milestones={MOCK_MILESTONES} />
+        <ServiceStatusGrid t={t} provisioning={provisioning} />
       </div>
 
       <SitePreview t={t} data={data} />

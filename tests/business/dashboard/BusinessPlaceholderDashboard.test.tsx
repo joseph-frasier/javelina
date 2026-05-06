@@ -26,7 +26,7 @@ const data: BusinessIntakeData = {
 
 describe('BusinessPlaceholderDashboard', () => {
   it('renders status, submitted data, and next steps', () => {
-    render(<BusinessPlaceholderDashboard data={data} />);
+    render(<BusinessPlaceholderDashboard data={data} provisioning={[]} />);
     expect(screen.getByText(/Acme/)).toBeTruthy();
     expect(screen.getAllByText(/acme\.com/)).toBeTruthy();
     expect(screen.getByText(/What happens next/i)).toBeTruthy();

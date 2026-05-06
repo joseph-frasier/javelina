@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getBusiness } from '@/lib/api/business';
 import { adaptDetailToLegacyIntake } from '@/lib/api/business-adapters';
+import { shouldPoll } from '@/lib/business/service-status';
 import { BusinessPlaceholderDashboard } from '@/components/business/dashboard/BusinessPlaceholderDashboard';
 import { IntakeIncompleteState } from './IntakeIncompleteState';
 
@@ -15,6 +16,12 @@ export default function BusinessOrgDashboardPage() {
     queryKey: ['business', orgId],
     queryFn: () => getBusiness(orgId),
     enabled: !!orgId,
+    refetchInterval: (query) => {
+      const r = query.state.data;
+      if (!r || r.kind !== 'ok') return false;
+      return shouldPoll(r.data) ? 5000 : false;
+    },
+    refetchIntervalInBackground: false,
   });
 
   if (isLoading || !result) return null;
@@ -44,5 +51,10 @@ export default function BusinessOrgDashboardPage() {
 
   const adapted = adaptDetailToLegacyIntake(result.data) as any;
 
-  return <BusinessPlaceholderDashboard data={adapted} />;
+  return (
+    <BusinessPlaceholderDashboard
+      data={adapted}
+      provisioning={result.data.provisioning}
+    />
+  );
 }
