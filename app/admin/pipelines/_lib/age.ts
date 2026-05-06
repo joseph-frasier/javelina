@@ -1,5 +1,7 @@
-export function formatAge(iso: string): string {
+export function formatAge(iso: string | null | undefined): string {
+  if (!iso) return '—';
   const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '—';
   const now = Date.now();
   const diffMs = now - then;
   if (diffMs <= 0) return '0m';

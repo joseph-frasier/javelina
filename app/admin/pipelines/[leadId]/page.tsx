@@ -93,12 +93,12 @@ export default function PipelineDetailPage() {
         ) : data ? (
           <>
             <AdminPageHeader
-              title={`${data.lead.contact_name} — ${PACKAGE_LABEL[data.lead.package]}`}
-              subtitle={data.lead.contact_email}
+              title={`${data.lead.contact_name || 'Lead'} — ${PACKAGE_LABEL[data.lead.package] ?? data.lead.package ?? '—'}`}
+              subtitle={data.lead.contact_email ?? ''}
               breadcrumb={[
                 { label: 'Admin', href: '/admin' },
                 { label: 'Pipelines', href: '/admin/pipelines' },
-                { label: data.lead.contact_name },
+                { label: data.lead.contact_name || data.lead.id },
               ]}
             />
             <div className="space-y-6">

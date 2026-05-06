@@ -21,7 +21,8 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   failed: 'Failed',
 };
 
-function fmtCost(cents: number): string {
+function fmtCost(cents: number | null | undefined): string {
+  if (typeof cents !== 'number' || !Number.isFinite(cents)) return '—';
   return `$${(cents / 100).toFixed(2)}`;
 }
 
@@ -66,8 +67,8 @@ export function LeadStateHeader({ lead }: { lead: LeadDetail }) {
     <Card title="Lead state">
       <div className="flex flex-wrap items-center gap-3">
         <AdminStatusBadge
-          variant={STATUS_VARIANT[lead.status]}
-          label={STATUS_LABEL[lead.status]}
+          variant={STATUS_VARIANT[lead.status] ?? 'neutral'}
+          label={STATUS_LABEL[lead.status] ?? lead.status ?? 'Unknown'}
         />
         <Tooltip content={lead.created_at}>
           <span className="text-sm text-text-muted cursor-help">

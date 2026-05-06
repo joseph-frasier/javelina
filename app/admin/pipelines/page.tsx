@@ -97,7 +97,7 @@ function AdminPipelinesPageContent() {
         limit: 50,
       })
       .then((res) => {
-        if (!cancelled) setLeads(res.leads);
+        if (!cancelled) setLeads(res?.leads ?? []);
       })
       .catch((e) => {
         if (cancelled) return;
@@ -127,7 +127,7 @@ function AdminPipelinesPageContent() {
       key: 'package',
       header: 'Package',
       render: (lead) => (
-        <AdminStatusBadge variant="info" label={PACKAGE_LABEL[lead.package]} dot={false} />
+        <AdminStatusBadge variant="info" label={PACKAGE_LABEL[lead.package] ?? lead.package ?? '—'} dot={false} />
       ),
     },
     {
@@ -135,8 +135,8 @@ function AdminPipelinesPageContent() {
       header: 'Status',
       render: (lead) => (
         <AdminStatusBadge
-          variant={STATUS_VARIANT[lead.status]}
-          label={STATUS_LABEL[lead.status]}
+          variant={STATUS_VARIANT[lead.status] ?? 'neutral'}
+          label={STATUS_LABEL[lead.status] ?? lead.status ?? 'Unknown'}
         />
       ),
     },

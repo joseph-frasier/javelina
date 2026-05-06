@@ -86,9 +86,9 @@ export function ComposerCard({ data }: Props) {
                     </span>
                   )}
                 </div>
-                {p.sections.length > 0 && (
+                {(p.sections ?? []).length > 0 && (
                   <ul className="mt-2 space-y-0.5">
-                    {p.sections.map((s, j) => (
+                    {(p.sections ?? []).map((s, j) => (
                       <li key={j} className="text-xs text-text-muted">
                         <span className="font-mono uppercase tracking-wide">{s.type}</span>
                         {s.heading && <span> · {s.heading}</span>}
