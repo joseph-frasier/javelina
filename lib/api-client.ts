@@ -523,6 +523,94 @@ export const dnsRecordsApi = {
   },
 };
 
+// ===== Intake (admin pipelines queue) =====
+// Backend forwarder is a pure passthrough — responses are byte-identical to
+// what javelina-intake's /api/internal/leads* returns. See
+// documentation/admin-queue-api-guide.md.
+
+export type LeadStatus =
+  | 'created' | 'form_submitted' | 'agents_complete'
+  | 'scope_confirmed' | 'provisioning' | 'live'
+  | 'routed_to_custom' | 'abandoned' | 'failed';
+
+export type LeadPackage = 'business_starter' | 'business_pro';
+
+export interface LeadSummary {
+  id: string;
+  firm_id: string;
+  org_id: string;
+  package: LeadPackage;
+  contact_email: string;
+  contact_name: string;
+  status: LeadStatus;
+  version: number;
+  total_cost_cents: number;
+  created_at: string;
+  form_submitted_at: string | null;
+  agents_completed_at: string | null;
+  scope_confirmed_at: string | null;
+  scope_rejected_at: string | null;
+  scope_rejection_reason: string | null;
+  updated_at: string;
+}
+
+export interface ListLeadsResponse {
+  leads: LeadSummary[];
+  pagination: { limit: number; offset: number; total: number | null };
+}
+
+export interface LeadDetail extends LeadSummary {
+  lead_record: LeadRecord | null;
+  research_report: ResearchReport | null;
+  similarity_report: SimilarityReport | null;
+  upsell_risk_report: UpsellRiskReport | null;
+  copy_prep: ContentPlanReport | null;
+  structure_prep: unknown | null;
+  design_prep: DesignDirectionReport | null;
+}
+
+export interface LeadService {
+  lead_id: string;
+  service: 'website' | 'dns' | 'email' | 'domain';
+  state: string;
+  internal_state: string;
+  progress_label: string;
+  metadata: Record<string, unknown>;
+  updated_at: string;
+}
+
+export interface LeadDetailResponse {
+  lead: LeadDetail;
+  services: LeadService[];
+}
+
+export type ActionResponse =
+  | { result: 'applied' | 'already_applied'; status: LeadStatus; [k: string]: unknown }
+  | { error: string; from?: LeadStatus; to?: LeadStatus };
+
+export interface ListLeadsParams {
+  status?: LeadStatus;
+  package?: LeadPackage;
+  age_min_hours?: number;
+  limit?: number;
+  offset?: number;
+  order?: 'oldest' | 'newest';
+}
+
+function buildIntakeQueryString(params?: ListLeadsParams): string {
+  if (!params) return '';
+  const qs = new URLSearchParams();
+  if (params.status) qs.set('status', params.status);
+  if (params.package) qs.set('package', params.package);
+  if (typeof params.age_min_hours === 'number') {
+    qs.set('age_min_hours', String(params.age_min_hours));
+  }
+  if (typeof params.limit === 'number') qs.set('limit', String(params.limit));
+  if (typeof params.offset === 'number') qs.set('offset', String(params.offset));
+  if (params.order) qs.set('order', params.order);
+  return qs.toString();
+}
+
 // Admin API
 export const adminApi = {
   /**
@@ -730,6 +818,37 @@ export const adminApi = {
     is_active?: boolean;
   }) => {
     return apiClient.put(`/admin/mailbox-pricing/${tierId}`, updates);
+  },
+
+  intake: {
+    listLeads: (params?: ListLeadsParams) => {
+      const qs = buildIntakeQueryString(params);
+      return apiClient.get<ListLeadsResponse>(
+        `/admin/intake/leads${qs ? `?${qs}` : ''}`
+      );
+    },
+
+    getLead: (leadId: string) =>
+      apiClient.get<LeadDetailResponse>(`/admin/intake/leads/${leadId}`),
+
+    confirmScope: (leadId: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/confirm-scope`,
+        {}
+      ),
+
+    reject: (leadId: string, reason: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/reject`,
+        { reason }
+      ),
+
+    markFailed: (leadId: string, reason: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/mark-failed`,
+        { reason }
+      ),
+    // mark-pax8-done deferred to JAV-119 1.6
   },
 };
 
@@ -1271,6 +1390,15 @@ export const searchApi = {
 // ============================================================
 // DOMAIN REGISTRATION API METHODS
 // ============================================================
+
+import type {
+  LeadRecord,
+  ResearchReport,
+  SimilarityReport,
+  UpsellRiskReport,
+  ContentPlanReport,
+  DesignDirectionReport,
+} from '@/lib/schemas/intake';
 
 import type {
   DomainSearchResponse,

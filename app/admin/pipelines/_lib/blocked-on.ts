@@ -1,7 +1,6 @@
-export type LeadStatus =
-  | 'created' | 'form_submitted' | 'agents_complete'
-  | 'scope_confirmed' | 'provisioning' | 'live'
-  | 'routed_to_custom' | 'abandoned' | 'failed';
+import type { LeadStatus } from '@/lib/api-client';
+
+export type { LeadStatus };
 
 export const blockedOnLabel: Record<LeadStatus, string | null> = {
   created: 'Awaiting form submission',
