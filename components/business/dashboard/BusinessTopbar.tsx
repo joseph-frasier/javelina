@@ -64,7 +64,7 @@ export function BusinessTopbar() {
         </Link>
         {isMock && (
           <span
-            aria-label="Demo data mode is active"
+            aria-label="Mock data mode is active"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -77,7 +77,7 @@ export function BusinessTopbar() {
               letterSpacing: 1.2,
             }}
           >
-            DEMO
+            MOCK
           </span>
         )}
       </div>
@@ -213,7 +213,7 @@ export function BusinessTopbar() {
                     e.currentTarget.style.background = 'transparent';
                   }}
                 >
-                  <span>Demo data</span>
+                  <span>Mock data</span>
                   <span style={{ color: isMock ? t.accent : t.textMuted, fontWeight: 600 }}>
                     {isMock ? 'ON' : 'OFF'}
                   </span>

@@ -35,29 +35,29 @@ describe('Header demo mode toggle', () => {
     mountAs({ superadmin: false });
     renderHeader();
     await userEvent.click(screen.getByRole('button', { name: /User menu/ }));
-    expect(screen.queryByRole('menuitem', { name: /Demo data/ })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Mock data/ })).toBeNull();
   });
 
   it('superadmins see the toggle and can flip it', async () => {
     mountAs({ superadmin: true });
     renderHeader();
     await userEvent.click(screen.getByRole('button', { name: /User menu/ }));
-    const item = screen.getByRole('menuitem', { name: /Demo data/ });
+    const item = screen.getByRole('menuitem', { name: /Mock data/ });
     expect(item).toHaveTextContent(/OFF/);
     await userEvent.click(item);
     expect(useDashboardModeStore.getState().mode).toBe('mock');
   });
 
-  it('shows DEMO badge next to logo when mock is on', () => {
+  it('shows MOCK badge next to logo when mock is on', () => {
     mountAs({ superadmin: true });
     useDashboardModeStore.setState({ mode: 'mock' });
     renderHeader();
-    expect(screen.getByText('DEMO')).toBeInTheDocument();
+    expect(screen.getByText('MOCK')).toBeInTheDocument();
   });
 
-  it('hides DEMO badge when mock is off', () => {
+  it('hides MOCK badge when mock is off', () => {
     mountAs({ superadmin: true });
     renderHeader();
-    expect(screen.queryByText('DEMO')).toBeNull();
+    expect(screen.queryByText('MOCK')).toBeNull();
   });
 });

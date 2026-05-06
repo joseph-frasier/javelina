@@ -158,9 +158,9 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
             {isMock && (
               <span
                 className="ml-2 inline-flex items-center rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-500"
-                aria-label="Demo data mode is active"
+                aria-label="Mock data mode is active"
               >
-                DEMO
+                MOCK
               </span>
             )}
           </div>
@@ -426,7 +426,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                           className="w-full text-left px-4 py-2 text-sm text-text hover:bg-surface-hover transition-colors flex items-center justify-between"
                           role="menuitem"
                         >
-                          <span>Demo data</span>
+                          <span>Mock data</span>
                           <span className={isMock ? 'text-accent font-semibold' : 'text-text-muted'}>
                             {isMock ? 'ON' : 'OFF'}
                           </span>
