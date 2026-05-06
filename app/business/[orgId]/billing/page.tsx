@@ -5,11 +5,13 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { FONT, MONO } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 import { Card } from '@/components/business/ui/Card';
 import { Button } from '@/components/business/ui/Button';
 import { Badge } from '@/components/business/ui/Badge';
 import { Icon } from '@/components/business/ui/Icon';
 import { PageHeader, SectionHeader, StatRow, TableHeader, TableCell } from '@/components/business/dashboard/_pageBits';
+import { EmptyCardState } from '@/components/business/ui/EmptyCardState';
 import { MOCK_INVOICES } from '@/lib/business/page-mocks';
 import {
   getCurrentSubscription,
@@ -110,6 +112,7 @@ function PlanCardContent({
 
 export default function BusinessBillingPage() {
   const t = useBusinessTheme();
+  const { isMock } = useDashboardMode();
   const params = useParams<{ orgId: string }>();
   const orgId = params?.orgId ?? '';
   const [portalLoading, setPortalLoading] = useState(false);
@@ -222,33 +225,37 @@ export default function BusinessBillingPage() {
 
       <Card t={t}>
         <SectionHeader t={t} title="Billing history" />
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr 100px',
-            border: `1px solid ${t.border}`,
-            borderRadius: 8,
-            overflow: 'hidden',
-          }}
-        >
-          <TableHeader t={t}>Reference</TableHeader>
-          <TableHeader t={t}>Date</TableHeader>
-          <TableHeader t={t}>Amount</TableHeader>
-          <TableHeader t={t}>Status</TableHeader>
-          {MOCK_INVOICES.map((inv) => (
-            <div key={inv.id} style={{ display: 'contents' }}>
-              <TableCell t={t} mono accent>{inv.id}</TableCell>
-              <TableCell t={t}>{new Date(inv.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</TableCell>
-              <TableCell t={t}>{inv.amount}</TableCell>
-              <TableCell t={t}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: t.success, fontFamily: FONT, textTransform: 'capitalize' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 999, background: t.success, display: 'inline-block' }} />
-                  {inv.status}
-                </span>
-              </TableCell>
-            </div>
-          ))}
-        </div>
+        {isMock ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr 100px',
+              border: `1px solid ${t.border}`,
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <TableHeader t={t}>Reference</TableHeader>
+            <TableHeader t={t}>Date</TableHeader>
+            <TableHeader t={t}>Amount</TableHeader>
+            <TableHeader t={t}>Status</TableHeader>
+            {MOCK_INVOICES.map((inv) => (
+              <div key={inv.id} style={{ display: 'contents' }}>
+                <TableCell t={t} mono accent>{inv.id}</TableCell>
+                <TableCell t={t}>{new Date(inv.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</TableCell>
+                <TableCell t={t}>{inv.amount}</TableCell>
+                <TableCell t={t}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: t.success, fontFamily: FONT, textTransform: 'capitalize' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 999, background: t.success, display: 'inline-block' }} />
+                    {inv.status}
+                  </span>
+                </TableCell>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyCardState message="Invoice history isn't available yet. It will appear here once billing has run for at least one cycle." />
+        )}
       </Card>
     </div>
   );
