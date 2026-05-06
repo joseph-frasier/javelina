@@ -13,6 +13,7 @@ import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { useQuery } from '@tanstack/react-query';
 import { listMyBusinesses } from '@/lib/api/business';
+import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -31,6 +32,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
     staleTime: 60_000,
   });
   const hasBusinessIntakes = (businesses?.length ?? 0) > 0;
+  const { isMock, toggle: toggleDemoMode } = useDashboardMode();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -152,6 +154,14 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
             <Link href="/" className="flex items-center shrink-0" aria-label="Go to home page">
               <Logo width={325} height={130} priority className="h-20 w-auto" />
             </Link>
+            {isMock && (
+              <span
+                className="ml-2 inline-flex items-center rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-500"
+                aria-label="Demo data mode is active"
+              >
+                DEMO
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2">
@@ -403,6 +413,25 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                     >
                       Settings
                     </Link>
+                    {userRole === 'superuser' && (
+                      <>
+                        <div className="my-1 border-t border-border" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toggleDemoMode();
+                            setIsDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-text hover:bg-surface-hover transition-colors flex items-center justify-between"
+                          role="menuitem"
+                        >
+                          <span>Demo data</span>
+                          <span className={isMock ? 'text-accent font-semibold' : 'text-text-muted'}>
+                            {isMock ? 'ON' : 'OFF'}
+                          </span>
+                        </button>
+                      </>
+                    )}
                     <button
                       className="w-full text-left px-4 py-2 text-sm text-text hover:bg-surface-hover transition-colors"
                       onClick={handleLogout}
