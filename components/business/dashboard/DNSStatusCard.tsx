@@ -6,6 +6,10 @@ import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
 import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
 import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
+import { useQuery } from '@tanstack/react-query';
+import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
+import { listZonesForOrg } from '@/lib/api/zones';
+import { listDnsRecordsForZone } from '@/lib/api/dns-records';
 
 interface DNSStatusCardProps {
   t: Tokens;
@@ -38,8 +42,33 @@ const RECORDS: [string, string, string, string][] = [
 ];
 
 export function DNSStatusCard({ t, data }: DNSStatusCardProps) {
-  const domain = resolveDomain(data);
+  const { isMock } = useDashboardMode();
   const managed = data.dns.mode === 'jbp';
+
+  const zonesQuery = useQuery({
+    queryKey: ['zones', data.orgId],
+    queryFn: () => listZonesForOrg(data.orgId),
+    enabled: !!data.orgId && !isMock,
+  });
+  const primaryZone = zonesQuery.data?.[0];
+
+  const recordsQuery = useQuery({
+    queryKey: ['dns-records', primaryZone?.id ?? ''],
+    queryFn: () => listDnsRecordsForZone(primaryZone!.id),
+    enabled: !!primaryZone?.id && !isMock,
+  });
+
+  const domain = isMock
+    ? resolveDomain(data)
+    : (primaryZone?.name ?? resolveDomain(data));
+
+  const realRecords = (recordsQuery.data ?? []).map((r): [string, string, string, string] => [
+    r.type,
+    r.name,
+    r.content,
+    r.ttl != null ? String(r.ttl) : '—',
+  ]);
+  const displayedRecords = isMock ? RECORDS : realRecords;
 
   return (
     <Card t={t}>
@@ -119,31 +148,37 @@ export function DNSStatusCard({ t, data }: DNSStatusCardProps) {
 
       <div style={{ marginTop: 18, borderTop: `1px solid ${t.border}`, paddingTop: 14 }}>
         <div style={{ fontSize: 12, color: t.textMuted, fontFamily: FONT, marginBottom: 10 }}>
-          Active records <span style={{ color: t.text, fontWeight: 500 }}>· {RECORDS.length}</span>
+          Active records <span style={{ color: t.text, fontWeight: 500 }}>· {displayedRecords.length}</span>
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '60px 1fr 1fr 60px',
-            gap: 0,
-            border: `1px solid ${t.border}`,
-            borderRadius: 8,
-            overflow: 'hidden',
-            fontFamily: MONO,
-            fontSize: 12,
-          }}
-        >
-          {RECORDS.map((r, i) => (
-            <div key={i} style={{ display: 'contents' }}>
-              <div style={cell(t, i === 0, 'accent')}>{r[0]}</div>
-              <div style={cell(t, i === 0)}>{r[1]}</div>
-              <div style={cell(t, i === 0)} title={r[2]}>
-                {r[2]}
+        {displayedRecords.length === 0 ? (
+          <div style={{ fontSize: 12, color: t.textMuted, fontFamily: FONT, padding: '12px 0' }}>
+            No DNS records yet.
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '60px 1fr 1fr 60px',
+              gap: 0,
+              border: `1px solid ${t.border}`,
+              borderRadius: 8,
+              overflow: 'hidden',
+              fontFamily: MONO,
+              fontSize: 12,
+            }}
+          >
+            {displayedRecords.map((r, i) => (
+              <div key={i} style={{ display: 'contents' }}>
+                <div style={cell(t, i === 0, 'accent')}>{r[0]}</div>
+                <div style={cell(t, i === 0)}>{r[1]}</div>
+                <div style={cell(t, i === 0)} title={r[2]}>
+                  {r[2]}
+                </div>
+                <div style={{ ...cell(t, i === 0), color: t.textMuted }}>{r[3]}</div>
               </div>
-              <div style={{ ...cell(t, i === 0), color: t.textMuted }}>{r[3]}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   );
