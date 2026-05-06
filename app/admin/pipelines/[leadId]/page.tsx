@@ -11,6 +11,7 @@ import { useToastStore } from '@/lib/toast-store';
 import { LeadStateHeader } from '../_components/LeadStateHeader';
 import { ServicesPanel } from '../_components/ServicesPanel';
 import { OperatorActions } from '../_components/OperatorActions';
+import { ScribeCard } from '../_components/AgentCards/ScribeCard';
 import { ScoutCard } from '../_components/AgentCards/ScoutCard';
 import { MatchmakerCard } from '../_components/AgentCards/MatchmakerCard';
 import { StrategistCard } from '../_components/AgentCards/StrategistCard';
@@ -109,7 +110,8 @@ export default function PipelineDetailPage() {
               />
               <ServicesPanel services={data.services} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Scribe + Composer + Stylist will land here in later tasks */}
+                {/* Composer + Stylist will land here in later tasks */}
+                <ScribeCard data={data.lead.lead_record} />
                 <ScoutCard data={data.lead.research_report} />
                 <MatchmakerCard data={data.lead.similarity_report} />
                 <StrategistCard data={data.lead.upsell_risk_report} />
