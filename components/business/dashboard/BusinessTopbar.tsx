@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 import { FONT } from '@/components/business/ui/tokens';
 import {
   useBusinessTheme,
@@ -13,6 +15,23 @@ export function BusinessTopbar() {
   const t = useBusinessTheme();
   const { mode, toggle } = useBusinessThemeStore();
   const user = useAuthStore((s) => s.user);
+  const role = user?.role ?? 'user';
+  const { isMock, toggle: toggleDemoMode } = useDashboardMode();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handle(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [menuOpen]);
+
   const email = user?.email ?? '';
   const initials =
     (email || 'JB')
@@ -35,13 +54,33 @@ export function BusinessTopbar() {
         fontFamily: FONT,
       }}
     >
-      <Link
-        href="/"
-        style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
-        aria-label="Go to Javelina home"
-      >
-        <Logo width={120} height={40} />
-      </Link>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Link
+          href="/"
+          style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+          aria-label="Go to Javelina home"
+        >
+          <Logo width={120} height={40} />
+        </Link>
+        {isMock && (
+          <span
+            aria-label="Demo data mode is active"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '2px 8px',
+              borderRadius: 6,
+              background: 'rgba(245, 158, 11, 0.18)',
+              color: '#f59e0b',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 1.2,
+            }}
+          >
+            DEMO
+          </span>
+        )}
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <Link
           href="/"
@@ -104,21 +143,95 @@ export function BusinessTopbar() {
             <span style={{ color: t.text, fontWeight: 600 }}>{email}</span>
           </span>
         )}
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 999,
-            background: t.accent,
-            color: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 12,
-            fontWeight: 600,
-          }}
-        >
-          {initials}
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={`User menu for ${email || 'account'}`}
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              background: t.accent,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 12,
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            {initials}
+          </button>
+          {menuOpen && (
+            <div
+              role="menu"
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 'calc(100% + 8px)',
+                minWidth: 200,
+                background: t.surface,
+                border: `1px solid ${t.border}`,
+                borderRadius: 10,
+                boxShadow: '0 10px 24px rgba(0,0,0,0.18)',
+                padding: 4,
+                zIndex: 50,
+              }}
+            >
+              {role === 'superuser' ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    toggleDemoMode();
+                    setMenuOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 12px',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    color: t.text,
+                    fontFamily: FONT,
+                    borderRadius: 6,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = t.surfaceAlt;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <span>Demo data</span>
+                  <span style={{ color: isMock ? t.accent : t.textMuted, fontWeight: 600 }}>
+                    {isMock ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+              ) : (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: 13,
+                    color: t.textMuted,
+                    fontFamily: FONT,
+                  }}
+                >
+                  Signed in as {email || 'account'}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>
