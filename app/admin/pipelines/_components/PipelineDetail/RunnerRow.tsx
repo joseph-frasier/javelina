@@ -22,6 +22,23 @@ import { StrategistCard } from '../AgentCards/StrategistCard';
 import { ComposerCard } from '../AgentCards/ComposerCard';
 import { StylistCard } from '../AgentCards/StylistCard';
 
+/**
+ * Agent jsonb columns are written by intake as a versioned envelope:
+ *   { $schema: "...", $version: 1, data: { ...actualPayload } }
+ * The card components expect the inner payload, so unwrap defensively.
+ * Returns the input unchanged if it's already unwrapped (older rows /
+ * payloads written before the envelope rolled out).
+ */
+function unwrapEnvelope<T>(value: unknown): T | null {
+  if (value == null) return null;
+  if (typeof value !== 'object') return value as T;
+  const v = value as Record<string, unknown>;
+  if ('data' in v && ('$schema' in v || '$version' in v)) {
+    return (v.data as T) ?? null;
+  }
+  return value as T;
+}
+
 interface RunnerRowProps {
   runner: Runner;
   lead: LeadDetail;
@@ -53,22 +70,30 @@ function ArtifactBody({
   lead: LeadDetail;
 }) {
   switch (outputColumn) {
-    case 'lead_record':
-      return lead.lead_record ? <ScribeCard data={lead.lead_record} /> : null;
-    case 'research_report':
-      return lead.research_report ? <ScoutCard data={lead.research_report} /> : null;
-    case 'similarity_report':
-      return lead.similarity_report ? (
-        <MatchmakerCard data={lead.similarity_report} />
-      ) : null;
-    case 'upsell_risk_report':
-      return lead.upsell_risk_report ? (
-        <StrategistCard data={lead.upsell_risk_report} />
-      ) : null;
-    case 'copy_prep':
-      return lead.copy_prep ? <ComposerCard data={lead.copy_prep} /> : null;
-    case 'design_prep':
-      return lead.design_prep ? <StylistCard data={lead.design_prep} /> : null;
+    case 'lead_record': {
+      const d = unwrapEnvelope<NonNullable<LeadDetail['lead_record']>>(lead.lead_record);
+      return d ? <ScribeCard data={d} /> : null;
+    }
+    case 'research_report': {
+      const d = unwrapEnvelope<NonNullable<LeadDetail['research_report']>>(lead.research_report);
+      return d ? <ScoutCard data={d} /> : null;
+    }
+    case 'similarity_report': {
+      const d = unwrapEnvelope<NonNullable<LeadDetail['similarity_report']>>(lead.similarity_report);
+      return d ? <MatchmakerCard data={d} /> : null;
+    }
+    case 'upsell_risk_report': {
+      const d = unwrapEnvelope<NonNullable<LeadDetail['upsell_risk_report']>>(lead.upsell_risk_report);
+      return d ? <StrategistCard data={d} /> : null;
+    }
+    case 'copy_prep': {
+      const d = unwrapEnvelope<NonNullable<LeadDetail['copy_prep']>>(lead.copy_prep);
+      return d ? <ComposerCard data={d} /> : null;
+    }
+    case 'design_prep': {
+      const d = unwrapEnvelope<NonNullable<LeadDetail['design_prep']>>(lead.design_prep);
+      return d ? <StylistCard data={d} /> : null;
+    }
     default:
       return null;
   }
