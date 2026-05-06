@@ -44,7 +44,7 @@ export function ScribeCard({ data }: Props) {
 
         <div>
           <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted">Brand voice</h4>
-          {brand.tagline && <p className="text-sm italic">"{brand.tagline}"</p>}
+          {brand.tagline && <p className="text-sm italic">&ldquo;{brand.tagline}&rdquo;</p>}
           {brand.tone.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {brand.tone.map((t) => (
