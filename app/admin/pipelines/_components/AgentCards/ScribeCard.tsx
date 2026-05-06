@@ -87,7 +87,7 @@ export function ScribeCard({ data }: Props) {
             <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted">SEO terms</h4>
             <div className="flex flex-wrap gap-1">
               {seo.primaryKeywords.map((k) => (
-                <span key={`p-${k}`} className="px-2 py-0.5 text-xs rounded bg-accent-light text-text">{k}</span>
+                <span key={`p-${k}`} className="px-2 py-0.5 text-xs rounded bg-accent-soft text-text">{k}</span>
               ))}
               {seo.secondaryKeywords.map((k) => (
                 <span key={`s-${k}`} className="px-2 py-0.5 text-xs rounded bg-surface-alt text-text-muted">{k}</span>

@@ -96,14 +96,14 @@ export function PipelineFilters({ value, onChange }: Props) {
         <button
           type="button"
           onClick={() => onChange({ ...value, order: 'oldest' })}
-          className={`px-2 py-1 rounded ${value.order === 'oldest' ? 'bg-accent-light text-text' : 'text-text-muted'}`}
+          className={`px-2 py-1 rounded ${value.order === 'oldest' ? 'bg-accent-soft text-text' : 'text-text-muted'}`}
         >
           Oldest first
         </button>
         <button
           type="button"
           onClick={() => onChange({ ...value, order: 'newest' })}
-          className={`px-2 py-1 rounded ${value.order === 'newest' ? 'bg-accent-light text-text' : 'text-text-muted'}`}
+          className={`px-2 py-1 rounded ${value.order === 'newest' ? 'bg-accent-soft text-text' : 'text-text-muted'}`}
         >
           Newest first
         </button>
