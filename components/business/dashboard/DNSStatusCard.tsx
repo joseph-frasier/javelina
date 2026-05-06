@@ -63,8 +63,8 @@ export function DNSStatusCard({ t, data }: DNSStatusCardProps) {
         >
           Domain &amp; DNS
         </h3>
-        <HoverArrowLink t={t} href={`/organization/${data.orgId}`}>
-          Open zone editor
+        <HoverArrowLink t={t} href={`/business/${data.orgId}/dns`}>
+          View DNS details
         </HoverArrowLink>
       </div>
 
