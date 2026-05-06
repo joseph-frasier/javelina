@@ -106,10 +106,11 @@ function AdminPipelinesPageContent() {
     return () => { cancelled = true; };
   }, [filters, addToast]);
 
-  // Independent counts for the action-needed chips so they stay accurate
-  // regardless of the current filter view. Refetched on every filter change
-  // so an operator who just marked a lead failed (or confirmed scope) sees
-  // the chip update.
+  // Independent counts for the action-needed chips. Counts are global —
+  // package/order/status filters in this page don't affect them — so this
+  // fires once per mount, not on filter changes. When an operator returns
+  // to the queue after acting on a lead, navigation re-mounts this page
+  // and the counts refresh naturally.
   useEffect(() => {
     let cancelled = false;
     const readTotal = (res: { pagination?: { total: number | null }; leads?: unknown[] }) => {
@@ -127,9 +128,15 @@ function AdminPipelinesPageContent() {
         setAwaitingReviewCount(readTotal(reviewRes));
         setFailedCount(readTotal(failedRes));
       })
-      .catch(() => { /* non-critical — leave counts as-is */ });
+      .catch((err) => {
+        // Non-blocking: chips drive operator awareness, not page correctness,
+        // so we don't show a toast. But silently swallowing means a broken
+        // count endpoint hides the chips entirely — log so it surfaces in
+        // devtools / error reporting.
+        console.warn('[pipelines] failed to load action-needed counts', err);
+      });
     return () => { cancelled = true; };
-  }, [filters]);
+  }, []);
 
   const columns: AdminDataTableColumn<LeadSummary>[] = [
     {

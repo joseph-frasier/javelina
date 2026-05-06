@@ -1,8 +1,8 @@
 'use client';
 
 import { AlertTriangle, ClipboardCheck } from 'lucide-react';
-import { Tooltip } from '@/components/ui/Tooltip';
 import type { LeadStatus, LeadPackage } from '@/lib/api-client';
+import { CountChip } from './CountChip';
 
 export interface PipelineFiltersValue {
   status: LeadStatus | 'all';
@@ -85,33 +85,27 @@ export function PipelineFilters({
       </label>
 
       {showAwaitingChip && (
-        <Tooltip
-          content={`${awaitingReviewCount} lead${awaitingReviewCount === 1 ? '' : 's'} awaiting scope review — click to view`}
-        >
-          <button
-            type="button"
-            onClick={() => onChange({ ...value, status: 'agents_complete' })}
-            className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2.5 py-1 text-xs font-medium text-warning transition-colors hover:bg-warning/15 focus-visible:outline-none focus-visible:shadow-focus-ring"
-          >
-            <ClipboardCheck className="w-3.5 h-3.5" />
-            <span>Awaiting review: {awaitingReviewCount}</span>
-          </button>
-        </Tooltip>
+        <CountChip
+          variant="warning"
+          icon={ClipboardCheck}
+          label="Awaiting review"
+          count={awaitingReviewCount as number}
+          onClick={() => onChange({ ...value, status: 'agents_complete' })}
+          singularTooltip="1 lead awaiting scope review — click to view"
+          pluralTooltip={`${awaitingReviewCount} leads awaiting scope review — click to view`}
+        />
       )}
 
       {showFailedChip && (
-        <Tooltip
-          content={`${failedCount} halted pipeline${failedCount === 1 ? '' : 's'} — click to view`}
-        >
-          <button
-            type="button"
-            onClick={() => onChange({ ...value, status: 'failed' })}
-            className="inline-flex items-center gap-1.5 rounded-md border border-danger/40 bg-danger/10 px-2.5 py-1 text-xs font-medium text-danger transition-colors hover:bg-danger/15 focus-visible:outline-none focus-visible:shadow-focus-ring"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Halted: {failedCount}</span>
-          </button>
-        </Tooltip>
+        <CountChip
+          variant="danger"
+          icon={AlertTriangle}
+          label="Halted"
+          count={failedCount as number}
+          onClick={() => onChange({ ...value, status: 'failed' })}
+          singularTooltip="1 halted pipeline — click to view"
+          pluralTooltip={`${failedCount} halted pipelines — click to view`}
+        />
       )}
 
       <div className="ml-auto flex items-center gap-1 text-sm">
