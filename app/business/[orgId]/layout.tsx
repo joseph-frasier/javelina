@@ -22,7 +22,7 @@ export default function BusinessOrgLayout({ children }: { children: ReactNode })
 
   if (!orgId || isLoading) {
     return (
-      <div style={{ display: 'flex', minHeight: '100%', background: t.bg, fontFamily: FONT }}>
+      <div style={{ display: 'flex', flex: 1, background: t.bg, fontFamily: FONT }}>
         <main style={{ flex: 1, padding: '28px 32px 60px', color: t.textMuted }}>Loading…</main>
       </div>
     );
@@ -30,7 +30,7 @@ export default function BusinessOrgLayout({ children }: { children: ReactNode })
 
   if (result?.kind === 'not_found') {
     return (
-      <div style={{ display: 'flex', minHeight: '100%', background: t.bg, fontFamily: FONT }}>
+      <div style={{ display: 'flex', flex: 1, background: t.bg, fontFamily: FONT }}>
         <main style={{ flex: 1, padding: '28px 32px 60px', color: t.textMuted }}>
           Business not found.
         </main>
@@ -40,7 +40,7 @@ export default function BusinessOrgLayout({ children }: { children: ReactNode })
 
   if (!result || result.kind === 'error') {
     return (
-      <div style={{ display: 'flex', minHeight: '100%', background: t.bg, fontFamily: FONT }}>
+      <div style={{ display: 'flex', flex: 1, background: t.bg, fontFamily: FONT }}>
         <main style={{ flex: 1, padding: '28px 32px 60px', color: t.textMuted }}>
           Couldn&rsquo;t load this business right now. Please refresh.
         </main>
@@ -51,7 +51,7 @@ export default function BusinessOrgLayout({ children }: { children: ReactNode })
   const sideNavData = adaptDetailToLegacyIntake(result.data) as any;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100%', background: t.bg, fontFamily: FONT }}>
+    <div style={{ display: 'flex', flex: 1, background: t.bg, fontFamily: FONT }}>
       <SideNav t={t} data={sideNavData} />
       <main style={{ flex: 1, padding: '28px 32px 60px', overflow: 'auto' }}>{children}</main>
     </div>

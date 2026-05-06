@@ -18,7 +18,7 @@ export default function BusinessLayout({ children }: { children: ReactNode }) {
       }}
     >
       <BusinessTopbar />
-      <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</div>
     </div>
   );
 }
