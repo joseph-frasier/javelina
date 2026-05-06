@@ -10,6 +10,7 @@ import { adminApi, type LeadDetailResponse } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { LeadStateHeader } from '../_components/LeadStateHeader';
 import { ServicesPanel } from '../_components/ServicesPanel';
+import { OperatorActions } from '../_components/OperatorActions';
 
 const PACKAGE_LABEL = {
   business_starter: 'Starter',
@@ -23,6 +24,7 @@ export default function PipelineDetailPage() {
   const [data, setData] = useState<LeadDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,6 +44,28 @@ export default function PipelineDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const runAction = useCallback(
+    async (fn: () => Promise<unknown>, successMsg: string) => {
+      setBusy(true);
+      try {
+        await fn();
+        addToast('success', successMsg);
+        await load();
+      } catch (e) {
+        const apiErr = e as { statusCode?: number; details?: { error?: string; from?: string; to?: string }; message?: string };
+        if (apiErr.statusCode === 409 && apiErr.details?.from && apiErr.details?.to) {
+          addToast('info', `Already in state ${apiErr.details.to}.`);
+          await load();
+        } else {
+          addToast('error', apiErr.message ?? 'Action failed');
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [load, addToast]
+  );
 
   return (
     <AdminProtectedRoute>
@@ -70,8 +94,15 @@ export default function PipelineDetailPage() {
             />
             <div className="space-y-6">
               <LeadStateHeader lead={data.lead} />
+              <OperatorActions
+                lead={data.lead}
+                busy={busy}
+                onConfirmScope={() => runAction(() => adminApi.intake.confirmScope(leadId), 'Scope confirmed.')}
+                onReject={(reason) => runAction(() => adminApi.intake.reject(leadId, reason), 'Lead routed to custom.')}
+                onMarkFailed={(reason) => runAction(() => adminApi.intake.markFailed(leadId, reason), 'Lead marked failed.')}
+              />
               <ServicesPanel services={data.services} />
-              {/* Operator actions and agent cards land in subsequent tasks */}
+              {/* Agent cards land in subsequent tasks */}
             </div>
           </>
         ) : null}
