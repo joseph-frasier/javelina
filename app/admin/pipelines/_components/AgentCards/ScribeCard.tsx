@@ -18,8 +18,16 @@ export function ScribeCard({ data }: Props) {
     );
   }
 
-  const { client, brand, services, seo, businessDetails } = data;
-  const allSeo = [...seo.primaryKeywords, ...seo.secondaryKeywords];
+  const client = data.client ?? { name: '', businessName: '', email: '', phone: '', industry: '', industryCategory: '', location: '' };
+  const brand = data.brand ?? { tagline: '', tone: [], voiceGuidelines: '', colors: { primary: { hex: '', name: '' }, secondary: { hex: '', name: '' } } };
+  const services = data.services ?? [];
+  const seo = data.seo ?? { primaryKeywords: [], secondaryKeywords: [], metaDescription: '' };
+  const businessDetails = data.businessDetails ?? { yearsInBusiness: '', serviceArea: '', uniqueSellingPoints: [] };
+  const tone = brand.tone ?? [];
+  const primaryKeywords = seo.primaryKeywords ?? [];
+  const secondaryKeywords = seo.secondaryKeywords ?? [];
+  const uniqueSellingPoints = businessDetails.uniqueSellingPoints ?? [];
+  const allSeo = [...primaryKeywords, ...secondaryKeywords];
 
   return (
     <Card title="Scribe">
@@ -45,9 +53,9 @@ export function ScribeCard({ data }: Props) {
         <div>
           <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted">Brand voice</h4>
           {brand.tagline && <p className="text-sm italic">&ldquo;{brand.tagline}&rdquo;</p>}
-          {brand.tone.length > 0 && (
+          {tone.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
-              {brand.tone.map((t) => (
+              {tone.map((t) => (
                 <span key={t} className="px-2 py-0.5 text-xs rounded-full bg-surface-alt text-text-muted">{t}</span>
               ))}
             </div>
@@ -71,11 +79,11 @@ export function ScribeCard({ data }: Props) {
           </div>
         )}
 
-        {businessDetails.uniqueSellingPoints.length > 0 && (
+        {uniqueSellingPoints.length > 0 && (
           <div>
             <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted">Unique selling points</h4>
             <ul className="list-disc list-inside space-y-0.5">
-              {businessDetails.uniqueSellingPoints.map((p, i) => (
+              {uniqueSellingPoints.map((p, i) => (
                 <li key={i} className="text-sm">{p}</li>
               ))}
             </ul>
@@ -86,10 +94,10 @@ export function ScribeCard({ data }: Props) {
           <div>
             <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted">SEO terms</h4>
             <div className="flex flex-wrap gap-1">
-              {seo.primaryKeywords.map((k) => (
+              {primaryKeywords.map((k) => (
                 <span key={`p-${k}`} className="px-2 py-0.5 text-xs rounded bg-accent-soft text-text">{k}</span>
               ))}
-              {seo.secondaryKeywords.map((k) => (
+              {secondaryKeywords.map((k) => (
                 <span key={`s-${k}`} className="px-2 py-0.5 text-xs rounded bg-surface-alt text-text-muted">{k}</span>
               ))}
             </div>

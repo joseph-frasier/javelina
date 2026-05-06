@@ -18,7 +18,10 @@ export function ComposerCard({ data }: Props) {
     );
   }
 
-  const { heroSection, pages, missingAssets, brandVoice } = data;
+  const heroSection = data.heroSection ?? { headline: '', subheadline: '', ctaText: '' };
+  const brandVoice = data.brandVoice ?? { tone: '', personality: '', languageGuidelines: [] };
+  const pages = data.pages ?? [];
+  const missingAssets = data.missingAssets ?? [];
 
   return (
     <Card title="Composer">

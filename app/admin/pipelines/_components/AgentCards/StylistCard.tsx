@@ -42,7 +42,11 @@ export function StylistCard({ data }: Props) {
     );
   }
 
-  const { colors, typography, layout, spacing } = data;
+  const colors = data.colors ?? [];
+  const typography = data.typography ?? { headingFont: '', bodyFont: '', headingWeight: '', bodyWeight: '' };
+  const layout = data.layout ?? { maxWidth: '', sections: [] };
+  const layoutSections = layout.sections ?? [];
+  const spacing = data.spacing ?? { sectionPadding: '', componentGap: '' };
 
   return (
     <Card title="Stylist">
@@ -77,13 +81,13 @@ export function StylistCard({ data }: Props) {
         </div>
       </section>
 
-      {layout.sections.length > 0 && (
+      {layoutSections.length > 0 && (
         <section className="mb-4">
           <h4 className="text-xs font-medium uppercase tracking-wide text-text-muted mb-2">
-            Layout sections ({layout.sections.length})
+            Layout sections ({layoutSections.length})
           </h4>
           <div className="flex flex-wrap gap-1">
-            {layout.sections.map((s, i) => (
+            {layoutSections.map((s, i) => (
               <span key={i} className="px-2 py-0.5 text-xs rounded bg-surface-alt text-text-muted">
                 {s.name}
                 {s.type ? ` · ${s.type}` : ''}
