@@ -46,8 +46,6 @@ function readFilters(sp: URLSearchParams): PipelineFiltersValue {
   return {
     status: (sp.get('status') as LeadStatus) || 'all',
     pkg: (sp.get('package') as LeadPackage) || 'all',
-    needsHuman: sp.get('needsHuman') === '1',
-    stuck24h: sp.get('stuck24h') === '1',
     order: (sp.get('order') as 'oldest' | 'newest') || 'oldest',
   };
 }
@@ -56,8 +54,6 @@ function writeFilters(filters: PipelineFiltersValue): string {
   const sp = new URLSearchParams();
   if (filters.status !== 'all') sp.set('status', filters.status);
   if (filters.pkg !== 'all') sp.set('package', filters.pkg);
-  if (filters.needsHuman) sp.set('needsHuman', '1');
-  if (filters.stuck24h) sp.set('stuck24h', '1');
   if (filters.order !== 'oldest') sp.set('order', filters.order);
   const s = sp.toString();
   return s ? `?${s}` : '';
@@ -72,6 +68,8 @@ function AdminPipelinesPageContent() {
   const [leads, setLeads] = useState<LeadSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [awaitingReviewCount, setAwaitingReviewCount] = useState<number | null>(null);
+  const [failedCount, setFailedCount] = useState<number | null>(null);
 
   const setFilters = (next: PipelineFiltersValue) => {
     router.replace(`/admin/pipelines${writeFilters(next)}`);
@@ -82,17 +80,13 @@ function AdminPipelinesPageContent() {
     setLoading(true);
     setError(null);
 
-    const status: LeadStatus | undefined = filters.needsHuman
-      ? 'agents_complete'
-      : filters.status === 'all'
-        ? undefined
-        : filters.status;
+    const status: LeadStatus | undefined =
+      filters.status === 'all' ? undefined : filters.status;
 
     adminApi.intake
       .listLeads({
         status,
         package: filters.pkg === 'all' ? undefined : filters.pkg,
-        age_min_hours: filters.stuck24h ? 24 : undefined,
         order: filters.order,
         limit: 50,
       })
@@ -111,6 +105,31 @@ function AdminPipelinesPageContent() {
 
     return () => { cancelled = true; };
   }, [filters, addToast]);
+
+  // Independent counts for the action-needed chips so they stay accurate
+  // regardless of the current filter view. Refetched on every filter change
+  // so an operator who just marked a lead failed (or confirmed scope) sees
+  // the chip update.
+  useEffect(() => {
+    let cancelled = false;
+    const readTotal = (res: { pagination?: { total: number | null }; leads?: unknown[] }) => {
+      const total = res?.pagination?.total;
+      // `total` can be null when Supabase couldn't count — fall back to the
+      // returned rows length as a lower bound rather than showing nothing.
+      return typeof total === 'number' ? total : (res?.leads?.length ?? 0);
+    };
+    Promise.all([
+      adminApi.intake.listLeads({ status: 'agents_complete', limit: 1 }),
+      adminApi.intake.listLeads({ status: 'failed', limit: 1 }),
+    ])
+      .then(([reviewRes, failedRes]) => {
+        if (cancelled) return;
+        setAwaitingReviewCount(readTotal(reviewRes));
+        setFailedCount(readTotal(failedRes));
+      })
+      .catch(() => { /* non-critical — leave counts as-is */ });
+    return () => { cancelled = true; };
+  }, [filters]);
 
   const columns: AdminDataTableColumn<LeadSummary>[] = [
     {
@@ -176,7 +195,12 @@ function AdminPipelinesPageContent() {
   return (
     <>
       <AdminPageHeader title="Pipelines" subtitle="Operator queue — stuck leads" />
-      <PipelineFilters value={filters} onChange={setFilters} />
+      <PipelineFilters
+        value={filters}
+        onChange={setFilters}
+        awaitingReviewCount={awaitingReviewCount}
+        failedCount={failedCount}
+      />
       {error ? (
         <div className="p-6 border border-border rounded-lg flex items-center justify-between">
           <span className="text-text-muted">{error}</span>
