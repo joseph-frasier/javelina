@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import type { DesignDirectionReport } from '@/lib/schemas/intake';
 
 interface Props { data: DesignDirectionReport | null }
@@ -35,10 +35,10 @@ export function StylistCard({ data }: Props) {
 
   if (!data) {
     return (
-      <Card title="Stylist">
+      <CollapsibleCard title="Stylist" storageKey="pipelines.agentcard.stylist">
         <div className="text-xs text-text-muted -mt-2 mb-3">design_prep</div>
         <p className="text-sm text-text-muted italic">Not yet generated</p>
-      </Card>
+      </CollapsibleCard>
     );
   }
 
@@ -49,7 +49,7 @@ export function StylistCard({ data }: Props) {
   const spacing = data.spacing ?? { sectionPadding: '', componentGap: '' };
 
   return (
-    <Card title="Stylist">
+    <CollapsibleCard title="Stylist" storageKey="pipelines.agentcard.stylist">
       <div className="text-xs text-text-muted -mt-2 mb-3">design_prep</div>
 
       {colors.length > 0 && (
@@ -122,6 +122,6 @@ export function StylistCard({ data }: Props) {
           </pre>
         )}
       </div>
-    </Card>
+    </CollapsibleCard>
   );
 }

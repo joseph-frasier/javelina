@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import type { LeadRecord } from '@/lib/schemas/intake';
 
 interface Props { data: LeadRecord | null }
@@ -11,10 +11,10 @@ export function ScribeCard({ data }: Props) {
 
   if (!data) {
     return (
-      <Card title="Scribe">
+      <CollapsibleCard title="Scribe" storageKey="pipelines.agentcard.scribe">
         <div className="text-xs text-text-muted -mt-2 mb-3">lead_record</div>
         <p className="text-sm text-text-muted italic">Not yet generated</p>
-      </Card>
+      </CollapsibleCard>
     );
   }
 
@@ -30,7 +30,7 @@ export function ScribeCard({ data }: Props) {
   const allSeo = [...primaryKeywords, ...secondaryKeywords];
 
   return (
-    <Card title="Scribe">
+    <CollapsibleCard title="Scribe" storageKey="pipelines.agentcard.scribe">
       <div className="text-xs text-text-muted -mt-2 mb-3">lead_record</div>
 
       <section className="space-y-4">
@@ -118,6 +118,6 @@ export function ScribeCard({ data }: Props) {
           </pre>
         )}
       </div>
-    </Card>
+    </CollapsibleCard>
   );
 }

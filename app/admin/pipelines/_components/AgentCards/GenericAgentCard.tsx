@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 
 interface Props {
   agentName: string;
   field: string;
   data: unknown;
+  storageKey: string;
 }
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
@@ -54,10 +55,10 @@ function ObjectNode({ obj, depth }: { obj: Record<string, unknown>; depth: numbe
   );
 }
 
-export function GenericAgentCard({ agentName, field, data }: Props) {
+export function GenericAgentCard({ agentName, field, data, storageKey }: Props) {
   const [showRaw, setShowRaw] = useState(false);
   return (
-    <Card title={agentName}>
+    <CollapsibleCard title={agentName} storageKey={storageKey}>
       <div className="text-xs text-text-muted -mt-2 mb-3">{field}</div>
       {data === null ? (
         <p className="text-sm text-text-muted italic">Not yet generated</p>
@@ -82,6 +83,6 @@ export function GenericAgentCard({ agentName, field, data }: Props) {
           )}
         </div>
       )}
-    </Card>
+    </CollapsibleCard>
   );
 }

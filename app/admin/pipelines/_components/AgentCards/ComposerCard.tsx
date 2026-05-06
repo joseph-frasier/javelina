@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { CollapsibleCard } from '@/components/ui/CollapsibleCard';
 import type { ContentPlanReport } from '@/lib/schemas/intake';
 
 interface Props { data: ContentPlanReport | null }
@@ -11,10 +11,10 @@ export function ComposerCard({ data }: Props) {
 
   if (!data) {
     return (
-      <Card title="Composer">
+      <CollapsibleCard title="Composer" storageKey="pipelines.agentcard.composer">
         <div className="text-xs text-text-muted -mt-2 mb-3">copy_prep</div>
         <p className="text-sm text-text-muted italic">Not yet generated</p>
-      </Card>
+      </CollapsibleCard>
     );
   }
 
@@ -24,7 +24,7 @@ export function ComposerCard({ data }: Props) {
   const missingAssets = data.missingAssets ?? [];
 
   return (
-    <Card title="Composer">
+    <CollapsibleCard title="Composer" storageKey="pipelines.agentcard.composer">
       <div className="text-xs text-text-muted -mt-2 mb-3">copy_prep</div>
 
       {missingAssets.length > 0 && (
@@ -112,6 +112,6 @@ export function ComposerCard({ data }: Props) {
           </pre>
         )}
       </div>
-    </Card>
+    </CollapsibleCard>
   );
 }
