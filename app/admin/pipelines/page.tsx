@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -9,18 +9,19 @@ import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/Ad
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Tooltip } from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
-import { adminApi, type LeadSummary } from '@/lib/api-client';
+import { adminApi, type LeadSummary, type LeadStatus, type LeadPackage } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { formatAge } from './_lib/age';
 import { blockedOnLabel } from './_lib/blocked-on';
 import { STATUS_VARIANT } from './_lib/status-variant';
+import { PipelineFilters, type PipelineFiltersValue } from './_components/PipelineFilters';
 
-const PACKAGE_LABEL: Record<LeadSummary['package'], string> = {
+const PACKAGE_LABEL: Record<LeadPackage, string> = {
   business_starter: 'Starter',
   business_pro: 'Pro',
 };
 
-const STATUS_LABEL: Record<LeadSummary['status'], string> = {
+const STATUS_LABEL: Record<LeadStatus, string> = {
   created: 'Created',
   form_submitted: 'Form submitted',
   agents_complete: 'Awaiting review',
@@ -37,38 +38,79 @@ function blockedOnCell(lead: LeadSummary): string {
   if (
     (lead.status === 'routed_to_custom' || lead.status === 'failed') &&
     lead.scope_rejection_reason
-  ) {
-    return `${base} · ${lead.scope_rejection_reason}`;
-  }
+  ) return `${base} · ${lead.scope_rejection_reason}`;
   return base;
 }
 
-export default function AdminPipelinesPage() {
+function readFilters(sp: URLSearchParams): PipelineFiltersValue {
+  return {
+    status: (sp.get('status') as LeadStatus) || 'all',
+    pkg: (sp.get('package') as LeadPackage) || 'all',
+    needsHuman: sp.get('needsHuman') === '1',
+    stuck24h: sp.get('stuck24h') === '1',
+    order: (sp.get('order') as 'oldest' | 'newest') || 'oldest',
+  };
+}
+
+function writeFilters(filters: PipelineFiltersValue): string {
+  const sp = new URLSearchParams();
+  if (filters.status !== 'all') sp.set('status', filters.status);
+  if (filters.pkg !== 'all') sp.set('package', filters.pkg);
+  if (filters.needsHuman) sp.set('needsHuman', '1');
+  if (filters.stuck24h) sp.set('stuck24h', '1');
+  if (filters.order !== 'oldest') sp.set('order', filters.order);
+  const s = sp.toString();
+  return s ? `?${s}` : '';
+}
+
+function AdminPipelinesPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addToast } = useToastStore();
+  const filters = useMemo(() => readFilters(searchParams), [searchParams]);
+
   const [leads, setLeads] = useState<LeadSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await adminApi.intake.listLeads({ order: 'oldest', limit: 50 });
-      setLeads(res.leads);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to load leads';
-      setError(msg);
-      addToast('error', msg);
-    } finally {
-      setLoading(false);
-    }
+  const setFilters = (next: PipelineFiltersValue) => {
+    router.replace(`/admin/pipelines${writeFilters(next)}`);
   };
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    const status: LeadStatus | undefined = filters.needsHuman
+      ? 'agents_complete'
+      : filters.status === 'all'
+        ? undefined
+        : filters.status;
+
+    adminApi.intake
+      .listLeads({
+        status,
+        package: filters.pkg === 'all' ? undefined : filters.pkg,
+        age_min_hours: filters.stuck24h ? 24 : undefined,
+        order: filters.order,
+        limit: 50,
+      })
+      .then((res) => {
+        if (!cancelled) setLeads(res.leads);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        const msg = e instanceof Error ? e.message : 'Failed to load leads';
+        setError(msg);
+        addToast('error', msg);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [filters, addToast]);
 
   const columns: AdminDataTableColumn<LeadSummary>[] = [
     {
@@ -117,9 +159,7 @@ export default function AdminPipelinesPage() {
           <Tooltip content={label}>
             <span className="cursor-help">{truncated}</span>
           </Tooltip>
-        ) : (
-          <span>{label}</span>
-        );
+        ) : <span>{label}</span>;
       },
     },
     {
@@ -134,28 +174,41 @@ export default function AdminPipelinesPage() {
   ];
 
   return (
+    <>
+      <AdminPageHeader title="Pipelines" subtitle="Operator queue — stuck leads" />
+      <PipelineFilters value={filters} onChange={setFilters} />
+      {error ? (
+        <div className="p-6 border border-border rounded-lg flex items-center justify-between">
+          <span className="text-text-muted">{error}</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.replace(window.location.pathname + window.location.search)}
+          >
+            Retry
+          </Button>
+        </div>
+      ) : (
+        <AdminDataTable
+          data={leads}
+          columns={columns}
+          loading={loading}
+          getRowId={(lead) => lead.id}
+          onRowClick={(lead) => router.push(`/admin/pipelines/${lead.id}`)}
+          emptyState={<span>No leads match these filters.</span>}
+        />
+      )}
+    </>
+  );
+}
+
+export default function AdminPipelinesPage() {
+  return (
     <AdminProtectedRoute>
       <AdminLayout>
-        <AdminPageHeader
-          title="Pipelines"
-          subtitle="Operator queue — stuck leads"
-        />
-
-        {error ? (
-          <div className="p-6 border border-border rounded-lg flex items-center justify-between">
-            <span className="text-text-muted">{error}</span>
-            <Button size="sm" variant="outline" onClick={load}>Retry</Button>
-          </div>
-        ) : (
-          <AdminDataTable
-            data={leads}
-            columns={columns}
-            loading={loading}
-            getRowId={(lead) => lead.id}
-            onRowClick={(lead) => router.push(`/admin/pipelines/${lead.id}`)}
-            emptyState={<span>No leads match these filters.</span>}
-          />
-        )}
+        <Suspense fallback={null}>
+          <AdminPipelinesPageContent />
+        </Suspense>
       </AdminLayout>
     </AdminProtectedRoute>
   );
