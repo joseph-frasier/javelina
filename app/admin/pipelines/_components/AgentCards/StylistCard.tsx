@@ -36,7 +36,7 @@ export function StylistCard({ data }: Props) {
   if (!data) {
     return (
       <CollapsibleCard title="Stylist" storageKey="pipelines.agentcard.stylist">
-        <div className="text-xs text-text-muted -mt-2 mb-3">design_prep</div>
+        <div className="text-xs text-text-muted mb-3 font-mono">design_prep</div>
         <p className="text-sm text-text-muted italic">Not yet generated</p>
       </CollapsibleCard>
     );
@@ -50,7 +50,7 @@ export function StylistCard({ data }: Props) {
 
   return (
     <CollapsibleCard title="Stylist" storageKey="pipelines.agentcard.stylist">
-      <div className="text-xs text-text-muted -mt-2 mb-3">design_prep</div>
+      <div className="text-xs text-text-muted mb-3 font-mono">design_prep</div>
 
       {colors.length > 0 && (
         <section className="mb-4">

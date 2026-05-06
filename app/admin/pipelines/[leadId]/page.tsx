@@ -111,7 +111,7 @@ export default function PipelineDetailPage() {
                 onMarkFailed={(reason) => runAction(() => adminApi.intake.markFailed(leadId, reason), 'Lead marked failed.')}
               />
               <ServicesPanel services={data.services} />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <ScribeCard data={data.lead.lead_record} />
                 <ScoutCard data={data.lead.research_report} />
                 <MatchmakerCard data={data.lead.similarity_report} />

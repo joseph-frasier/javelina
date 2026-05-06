@@ -59,7 +59,7 @@ export function GenericAgentCard({ agentName, field, data, storageKey }: Props) 
   const [showRaw, setShowRaw] = useState(false);
   return (
     <CollapsibleCard title={agentName} storageKey={storageKey}>
-      <div className="text-xs text-text-muted -mt-2 mb-3">{field}</div>
+      <div className="text-xs text-text-muted mb-3 font-mono">{field}</div>
       {data === null ? (
         <p className="text-sm text-text-muted italic">Not yet generated</p>
       ) : isPlainObject(data) ? (

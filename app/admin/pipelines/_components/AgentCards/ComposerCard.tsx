@@ -12,7 +12,7 @@ export function ComposerCard({ data }: Props) {
   if (!data) {
     return (
       <CollapsibleCard title="Composer" storageKey="pipelines.agentcard.composer">
-        <div className="text-xs text-text-muted -mt-2 mb-3">copy_prep</div>
+        <div className="text-xs text-text-muted mb-3 font-mono">copy_prep</div>
         <p className="text-sm text-text-muted italic">Not yet generated</p>
       </CollapsibleCard>
     );
@@ -25,7 +25,7 @@ export function ComposerCard({ data }: Props) {
 
   return (
     <CollapsibleCard title="Composer" storageKey="pipelines.agentcard.composer">
-      <div className="text-xs text-text-muted -mt-2 mb-3">copy_prep</div>
+      <div className="text-xs text-text-muted mb-3 font-mono">copy_prep</div>
 
       {missingAssets.length > 0 && (
         <div className="mb-4 p-3 rounded border border-warning/30 bg-warning-soft">

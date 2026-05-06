@@ -12,7 +12,7 @@ export function ScribeCard({ data }: Props) {
   if (!data) {
     return (
       <CollapsibleCard title="Scribe" storageKey="pipelines.agentcard.scribe">
-        <div className="text-xs text-text-muted -mt-2 mb-3">lead_record</div>
+        <div className="text-xs text-text-muted mb-3 font-mono">lead_record</div>
         <p className="text-sm text-text-muted italic">Not yet generated</p>
       </CollapsibleCard>
     );
@@ -31,7 +31,7 @@ export function ScribeCard({ data }: Props) {
 
   return (
     <CollapsibleCard title="Scribe" storageKey="pipelines.agentcard.scribe">
-      <div className="text-xs text-text-muted -mt-2 mb-3">lead_record</div>
+      <div className="text-xs text-text-muted mb-3 font-mono">lead_record</div>
 
       <section className="space-y-4">
         <div>
