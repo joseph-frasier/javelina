@@ -6,7 +6,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
-import { adminApi, type LeadDetailResponse } from '@/lib/api-client';
+import { adminApi, type LeadDetailResponse, type ActionResponse } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { LeadStateHeader } from '../_components/LeadStateHeader';
 import { ServicesPanel } from '../_components/ServicesPanel';
@@ -46,20 +46,23 @@ export default function PipelineDetailPage() {
   }, [load]);
 
   const runAction = useCallback(
-    async (fn: () => Promise<unknown>, successMsg: string) => {
+    async (
+      fn: () => Promise<ActionResponse>,
+      successMsg: string
+    ) => {
       setBusy(true);
       try {
-        await fn();
-        addToast('success', successMsg);
+        const res = await fn();
+        if ('result' in res && res.result === 'already_applied') {
+          addToast('info', `Already applied — lead is in state ${res.status}.`);
+        } else {
+          addToast('success', successMsg);
+        }
         await load();
       } catch (e) {
-        const apiErr = e as { statusCode?: number; details?: { error?: string; from?: string; to?: string }; message?: string };
-        if (apiErr.statusCode === 409 && apiErr.details?.from && apiErr.details?.to) {
-          addToast('info', `Already in state ${apiErr.details.to}.`);
-          await load();
-        } else {
-          addToast('error', apiErr.message ?? 'Action failed');
-        }
+        const apiErr = e as { details?: { error?: string }; message?: string };
+        const msg = apiErr.details?.error ?? apiErr.message ?? 'Action failed';
+        addToast('error', msg);
       } finally {
         setBusy(false);
       }
