@@ -564,8 +564,10 @@ export interface LeadDetail extends LeadSummary {
   research_report: ResearchReport | null;
   similarity_report: SimilarityReport | null;
   upsell_risk_report: UpsellRiskReport | null;
+  // Agent 10 (Composer) emits both copy + page structure here. The legacy
+  // structure_prep column on the intake DB is unused (Agent 11 was folded
+  // into Agent 10) — see documentation/admin-queue-api-guide.md §3.
   copy_prep: ContentPlanReport | null;
-  structure_prep: unknown | null;
   design_prep: DesignDirectionReport | null;
 }
 

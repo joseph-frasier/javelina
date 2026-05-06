@@ -17,7 +17,7 @@ function makeLead(overrides: Partial<LeadDetail> = {}): LeadDetail {
     scope_rejection_reason: null,
     updated_at: '2026-05-06T00:00:00Z',
     lead_record: null, research_report: null, similarity_report: null,
-    upsell_risk_report: null, copy_prep: null, structure_prep: null, design_prep: null,
+    upsell_risk_report: null, copy_prep: null, design_prep: null,
     ...overrides,
   };
 }

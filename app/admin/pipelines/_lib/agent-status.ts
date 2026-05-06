@@ -2,18 +2,17 @@ import type { LeadDetail } from '@/lib/api-client';
 
 export type RunnerStatus = 'done' | 'running' | 'queued' | 'failed' | 'skipped' | 'not_built';
 
-export type AgentId = '1' | '2' | '3' | '5' | '10' | '11' | '12';
+export type AgentId = '1' | '2' | '3' | '5' | '10' | '12';
 
 // Maps AgentId → the LeadDetail jsonb column that proves the agent ran.
-// Agent 11 (Structurer) writes structure_prep but is treated as "not yet built"
-// for now per the spec — it's not user-surfaced.
+// Agent 10 (Composer) absorbed Agent 11's responsibilities — copy + page
+// structure both live in copy_prep. structure_prep is unused.
 const AGENT_TO_COLUMN: Record<AgentId, keyof LeadDetail | null> = {
   '1': 'lead_record',
   '2': 'research_report',
   '3': 'similarity_report',
   '5': 'upsell_risk_report',
   '10': 'copy_prep',
-  '11': 'structure_prep',
   '12': 'design_prep',
 };
 

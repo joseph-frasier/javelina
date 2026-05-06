@@ -14,7 +14,6 @@ export type Runner =
         | 'similarity_report'
         | 'upsell_risk_report'
         | 'copy_prep'
-        | 'structure_prep'
         | 'design_prep'
         | null;
       // Optional package gate — if present and lead.package doesn't match, runner is hidden.
@@ -38,7 +37,6 @@ export const RUNNERS: Record<ServiceKey, Runner[]> = {
   ],
   website: [
     { kind: 'agent', agentId: '10', displayName: 'Composer', outputColumn: 'copy_prep' },
-    { kind: 'agent', agentId: '11', displayName: 'Structurer', outputColumn: 'structure_prep' },
     { kind: 'agent', agentId: '12', displayName: 'Stylist', outputColumn: 'design_prep' },
     {
       kind: 'worker',

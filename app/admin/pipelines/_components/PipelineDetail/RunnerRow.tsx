@@ -21,7 +21,6 @@ import { MatchmakerCard } from '../AgentCards/MatchmakerCard';
 import { StrategistCard } from '../AgentCards/StrategistCard';
 import { ComposerCard } from '../AgentCards/ComposerCard';
 import { StylistCard } from '../AgentCards/StylistCard';
-import { GenericAgentCard } from '../AgentCards/GenericAgentCard';
 
 interface RunnerRowProps {
   runner: Runner;
@@ -70,14 +69,6 @@ function ArtifactBody({
       return lead.copy_prep ? <ComposerCard data={lead.copy_prep} /> : null;
     case 'design_prep':
       return lead.design_prep ? <StylistCard data={lead.design_prep} /> : null;
-    case 'structure_prep':
-      return lead.structure_prep != null ? (
-        <GenericAgentCard
-          agentName="Structurer"
-          field="structure_prep"
-          data={lead.structure_prep}
-        />
-      ) : null;
     default:
       return null;
   }
