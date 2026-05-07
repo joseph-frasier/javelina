@@ -40,6 +40,8 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
 
   const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout' || pathname.startsWith('/pricing/');
 
+  const isLegalPage = pathname.startsWith('/legal') || pathname.startsWith('/terms');
+
   const isPublicMarketingPage = pathname === '/infrastructure';
   
   const isStripeFlow = pathname.startsWith('/stripe/');
@@ -51,7 +53,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const isBusinessRoute = pathname.startsWith('/business');
 
   // For pages without Header/Sidebar (auth, pricing, admin, public marketing, invite, business), render immediately
-  if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute || isPublicMarketingPage || isInviteFlow || isBusinessRoute) {
+  if (isAuthPage || isPricingOrCheckout || isLegalPage || isStripeFlow || isAdminRoute || isPublicMarketingPage || isInviteFlow || isBusinessRoute) {
     return (
       <>
         <IdleLogoutGuard />

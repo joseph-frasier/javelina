@@ -19,6 +19,9 @@ interface ModalProps {
   bodyClassName?: string;
   contentClassName?: string;
   allowOverflow?: boolean;
+  disableEsc?: boolean;
+  disableOverlayClick?: boolean;
+  hideCloseButton?: boolean;
 }
 
 export function Modal({
@@ -34,6 +37,9 @@ export function Modal({
   bodyClassName,
   contentClassName,
   allowOverflow = false,
+  disableEsc = false,
+  disableOverlayClick = false,
+  hideCloseButton = false,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -101,6 +107,7 @@ export function Modal({
   }, [isOpen, mounted, shouldRender]);
 
   useEffect(() => {
+    if (disableEsc) return;
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
@@ -109,7 +116,7 @@ export function Modal({
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, disableEsc]);
 
   useEffect(() => {
     if (isOpen) {
@@ -144,7 +151,7 @@ export function Modal({
         className="fixed inset-0 bg-[rgba(11,13,16,0.55)] backdrop-blur-[2px] pointer-events-auto"
         onClick={(e) => {
           e.stopPropagation();
-          onClose();
+          if (!disableOverlayClick) onClose();
         }}
         aria-hidden="true"
       />
@@ -187,25 +194,27 @@ export function Modal({
                 )}
                 {headerContent && <div className="mt-3">{headerContent}</div>}
               </div>
-              <button
-                onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-text-muted transition-colors hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:shadow-focus-ring"
-                aria-label="Close modal"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {!hideCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-text-muted transition-colors hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:shadow-focus-ring"
+                  aria-label="Close modal"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
 

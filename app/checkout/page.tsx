@@ -10,6 +10,7 @@ import { useToastStore } from '@/lib/toast-store';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { discountsApi } from '@/lib/api-client';
 import Button from '@/components/ui/Button';
+import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
 
 interface CheckoutData {
   org_id: string;
@@ -593,6 +594,9 @@ function CheckoutContent() {
             </div>
           </div>
         )}
+        <div className="mt-10 border-t border-border pt-6">
+          <LegalFooterLinks />
+        </div>
       </div>
     </div>
   );
