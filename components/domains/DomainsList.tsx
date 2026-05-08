@@ -4,8 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Domain } from '@/types/domains';
 import { Pagination } from '@/components/admin/Pagination';
+import { domainsApi } from '@/lib/api-client';
 
 const DOMAINS_PER_PAGE = 10;
+
+// JAV-102: session-scoped set so we only sync each transferring row once per session.
+const syncedThisSession = new Set<string>();
 
 interface DomainsListProps {
   domains: Domain[];
@@ -34,6 +38,16 @@ function getRelativeExpiry(expiresAt: string) {
 export default function DomainsList({ domains, isLoading }: DomainsListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   useEffect(() => { setCurrentPage(1); }, [domains]);
+
+  // JAV-102: nudge OpenSRS reconciliation for any transferring rows we haven't synced yet this session.
+  useEffect(() => {
+    for (const d of domains) {
+      if (d.status === 'transferring' && !syncedThisSession.has(d.id)) {
+        syncedThisSession.add(d.id);
+        domainsApi.syncDomain(d.id).catch(() => {});
+      }
+    }
+  }, [domains]);
 
   const totalPages = Math.ceil(domains.length / DOMAINS_PER_PAGE);
   const pagedDomains = domains.slice(
