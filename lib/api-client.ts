@@ -1284,6 +1284,9 @@ import type {
   DomainManagementResponse,
   DomainContact,
   DomainRenewalResponse,
+  DomainAuthCodeResponse,
+  DomainVerification,
+  DomainSyncResponse,
 } from "@/types/domains";
 
 import type {
@@ -1346,6 +1349,18 @@ export const domainsApi = {
 
   renew: (id: string, years: number): Promise<DomainRenewalResponse> =>
     apiClient.post(`/domains/${id}/renew`, { years }),
+
+  getAuthCode: (id: string): Promise<DomainAuthCodeResponse> =>
+    apiClient.post(`/domains/${id}/auth-code`, {}),
+
+  syncDomain: (id: string): Promise<DomainSyncResponse> =>
+    apiClient.post(`/domains/${id}/sync`, {}),
+
+  getVerification: (id: string): Promise<DomainVerification> =>
+    apiClient.get(`/domains/${id}/verification`),
+
+  resendVerification: (id: string): Promise<{ success: boolean }> =>
+    apiClient.post(`/domains/${id}/verification/resend`, {}),
 };
 
 // ============================================================
