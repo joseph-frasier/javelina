@@ -113,6 +113,9 @@ export interface Domain {
   metadata?: Record<string, any>;
   created_at: string;
   updated_at: string;
+  last_synced_at?: string;
+  registrant_verified?: boolean;
+  registrant_verification_deadline?: string;
 }
 
 export interface DomainsListResponse {
@@ -138,6 +141,22 @@ export interface DomainManagementResponse {
     organization_id: string;
     organization_name: string;
   } | null;
+  verification?: DomainVerification;
+}
+
+export interface DomainAuthCodeResponse {
+  auth_code: string;
+}
+
+export interface DomainVerification {
+  verified: boolean;
+  deadline: string | null;
+  email: string | null;
+}
+
+export interface DomainSyncResponse {
+  synced: boolean;
+  changed: boolean;
 }
 
 export interface DomainRenewalResponse {
