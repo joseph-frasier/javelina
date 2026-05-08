@@ -521,6 +521,29 @@ export default function DomainDetailPage() {
               )}
             </div>
 
+            {data.upcoming_renewal_invoice && (
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {data.upcoming_renewal_invoice.status === 'failed' ? (
+                  <span className="text-red-600 dark:text-red-400 font-medium">
+                    Auto-renewal payment failed. Auto-renew has been disabled.
+                  </span>
+                ) : (
+                  <>
+                    Auto-renewal payment of{' '}
+                    <strong>
+                      ${data.upcoming_renewal_invoice.amount.toFixed(2)}{' '}
+                      {data.upcoming_renewal_invoice.currency.toUpperCase()}
+                    </strong>{' '}
+                    scheduled for{' '}
+                    <strong>
+                      {new Date(data.upcoming_renewal_invoice.due_date).toLocaleDateString()}
+                    </strong>
+                    .
+                  </>
+                )}
+              </div>
+            )}
+
             <div>
               <Button
                 type="button"

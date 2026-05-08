@@ -142,6 +142,12 @@ export interface DomainManagementResponse {
     organization_name: string;
   } | null;
   verification?: DomainVerification;
+  upcoming_renewal_invoice?: {
+    amount: number;
+    currency: string;
+    due_date: string;
+    status: 'pending' | 'paid' | 'failed';
+  };
 }
 
 export interface DomainAuthCodeResponse {
