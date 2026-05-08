@@ -15,6 +15,7 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Pagination } from '@/components/admin/Pagination';
 import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
 import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
+import { TransferVerificationCard } from '@/components/domains/TransferVerificationCard';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
 import type {
@@ -153,6 +154,30 @@ export default function DomainDetailPage() {
       setLoadError(null);
       const result = await domainsApi.getManagement(domainId);
       setData(result);
+
+      // JAV-102: kick off a sync against OpenSRS; if anything changed, refetch.
+      domainsApi
+        .syncDomain(domainId)
+        .then((sync) => {
+          if (sync.changed) {
+            domainsApi
+              .getManagement(domainId)
+              .then((fresh) => {
+                setData(fresh);
+                if (
+                  result.domain.status === 'transferring' &&
+                  fresh.domain.status === 'active'
+                ) {
+                  addToast(
+                    'success',
+                    'Transfer complete — your domain is now active.'
+                  );
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
 
       setAutoRenew(result.domain.auto_renew || false);
       setDomainLocked(result.live?.locked ?? false);
@@ -577,6 +602,12 @@ export default function DomainDetailPage() {
           </div>{/* end right column */}
         </div>{/* end inner grid */}
       </div>{/* end combined card */}
+
+      <TransferVerificationCard
+        domain={domain}
+        domainLocked={domainLocked}
+        verification={data.verification}
+      />
 
       {/* Email */}
       {!hideMailboxes && domain && domain.status === 'active' && (
