@@ -54,16 +54,16 @@ function NsCopyButton({ ns, index }: { ns: string; index: number }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-surface-alt border border-border hover:bg-surface-hover transition-colors cursor-pointer"
+      className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
       aria-label={`Copy ${ns}`}
     >
-      <span className="text-sm font-mono text-text">{ns}</span>
+      <span className="text-sm font-mono text-gray-800 dark:text-gray-200">{ns}</span>
       {copied ? (
-        <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       ) : (
-        <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       )}
@@ -138,6 +138,20 @@ export default function DomainDetailPage() {
   // Unlink state
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
+
+  // Billing portal state
+  const [openingBillingPortal, setOpeningBillingPortal] = useState(false);
+  const handleOpenBillingPortal = useCallback(async () => {
+    if (openingBillingPortal) return;
+    setOpeningBillingPortal(true);
+    try {
+      const { url } = await domainsApi.createBillingPortal(domainId);
+      window.location.href = url;
+    } catch (err: any) {
+      addToast('error', extractErrorMessage(err, 'Failed to open billing portal'));
+      setOpeningBillingPortal(false);
+    }
+  }, [domainId, addToast, openingBillingPortal]);
 
   // Renewal state
   const [renewalPricing, setRenewalPricing] = useState<DomainPricing | null>(null);
@@ -329,7 +343,7 @@ export default function DomainDetailPage() {
   if (loadError || !data) {
     return (
       <div className="space-y-4">
-        <Link href="/domains?tab=my-domains" className="text-sm text-accent hover:text-accent/70 transition-colors">
+        <Link href="/domains?tab=my-domains" className="text-sm text-orange hover:text-orange/70 transition-colors">
           &larr; Back to My Domains
         </Link>
         <ErrorMessage message={loadError || 'Domain not found'} />
@@ -367,31 +381,41 @@ export default function DomainDetailPage() {
       )}
 
       {/* Hero Header */}
-      <div className="border-l-4 border-accent bg-surface dark:bg-surface/[0.03] rounded-xl p-6 shadow-sm">
-        <Link href="/domains?tab=my-domains" className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent/70 transition-colors mb-4">
+      <div className="border-l-4 border-orange bg-white dark:bg-white/[0.03] rounded-xl p-6 shadow-sm">
+        <Link href="/domains?tab=my-domains" className="inline-flex items-center gap-1.5 text-sm font-medium text-orange hover:text-orange/70 transition-colors mb-4">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
           Back to My Domains
         </Link>
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold font-mono tracking-tight text-text">
-            {domain.domain_name}
-          </h1>
-          <span className="flex items-center gap-1.5">
-            <span className={`w-2.5 h-2.5 rounded-full ${
-              domain.status === 'active' ? 'bg-green-500 animate-pulse' :
-              domain.status === 'pending' || domain.status === 'processing' ? 'bg-yellow-500' :
-              domain.status === 'expired' || domain.status === 'failed' ? 'bg-red-500' :
-              domain.status === 'transferring' ? 'bg-purple-500' :
-              domain.status === 'cancelled' ? 'bg-gray-400' : 'bg-green-500'
-            }`} />
-            <span className="text-sm font-medium text-text-muted capitalize">
-              {domain.status === 'transfer_complete' ? 'Transferred' : domain.status}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold font-mono tracking-tight text-orange-dark dark:text-white">
+              {domain.domain_name}
+            </h1>
+            <span className="flex items-center gap-1.5">
+              <span className={`w-2.5 h-2.5 rounded-full ${
+                domain.status === 'active' ? 'bg-green-500 animate-pulse' :
+                domain.status === 'pending' || domain.status === 'processing' ? 'bg-yellow-500' :
+                domain.status === 'expired' || domain.status === 'failed' ? 'bg-red-500' :
+                domain.status === 'transferring' ? 'bg-purple-500' :
+                domain.status === 'cancelled' ? 'bg-gray-400' : 'bg-green-500'
+              }`} />
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
+                {domain.status === 'transfer_complete' ? 'Transferred' : domain.status}
+              </span>
             </span>
-          </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenBillingPortal}
+            disabled={openingBillingPortal}
+          >
+            {openingBillingPortal ? 'Opening…' : 'Manage Billing'}
+          </Button>
         </div>
-        <p className="text-sm text-text-muted mt-2 font-medium">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
           {domain.registration_type === 'linked' ? 'Linked · ' : domain.registration_type === 'transfer' ? 'Transfer · ' : ''}
           {domain.registered_at && `Registered ${new Date(domain.registered_at).toLocaleDateString()}`}
           {domain.expires_at && ` · Expires ${new Date(domain.expires_at).toLocaleDateString()}`}
@@ -399,22 +423,24 @@ export default function DomainDetailPage() {
       </div>
 
       {/* Combined Domain Settings + Renewal + Nameservers card */}
-      <div className="rounded-xl bg-surface shadow-md border border-border hover:shadow-lg transition-shadow">
+      <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow">
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-gray-100 dark:divide-white/5">
           {/* Left column: Domain Settings + Renewal */}
           <div className="p-6 space-y-6">
             {/* Domain Settings */}
             <div>
-              <h3 className="text-base font-semibold text-accent mb-4">Domain Settings</h3>
+              <h3 className="text-base font-semibold text-orange mb-4">Domain Settings</h3>
               <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
-              <svg className="w-5 h-5 text-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
+              <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+              </div>
               <div>
-                <p className="text-sm font-medium text-text">Auto-Renew</p>
-                <p className="text-xs text-text-muted">
+                <p className="text-sm font-medium text-orange-dark dark:text-white">Auto-Renew</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Automatically renew this domain before it expires.
                 </p>
               </div>
@@ -424,10 +450,10 @@ export default function DomainDetailPage() {
                 onClick={handleToggleAutoRenew}
                 disabled={isTogglingAutoRenew}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                  autoRenew ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'
+                  autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
                 } ${isTogglingAutoRenew ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   autoRenew ? 'translate-x-6' : 'translate-x-1'
                 }`} />
               </button>
@@ -439,12 +465,14 @@ export default function DomainDetailPage() {
 
           <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
-              <svg className="w-5 h-5 text-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              </svg>
+              <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
               <div>
-                <p className="text-sm font-medium text-text">Domain Lock</p>
-                <p className="text-xs text-text-muted">
+                <p className="text-sm font-medium text-orange-dark dark:text-white">Domain Lock</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Prevent unauthorized transfers of this domain.
                 </p>
               </div>
@@ -454,10 +482,10 @@ export default function DomainDetailPage() {
                 onClick={handleToggleLock}
                 disabled={isTogglingLock}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                  domainLocked ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'
+                  domainLocked ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
                 } ${isTogglingLock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   domainLocked ? 'translate-x-6' : 'translate-x-1'
                 }`} />
               </button>
@@ -473,18 +501,18 @@ export default function DomainDetailPage() {
             {/* Renewal */}
             {domain.status === 'active' && domain.expires_at && (
               <div>
-                <h3 className="text-base font-semibold text-accent mb-4">Renewal</h3>
+                <h3 className="text-base font-semibold text-orange mb-4">Renewal</h3>
                 <div className="space-y-4">
             <div className="text-center pb-4 mb-0">
-                    <span className={`text-3xl font-bold ${daysRemaining! < 30 ? 'text-red-500' : daysRemaining! < 90 ? 'text-yellow-500' : 'text-accent'}`}>
+                    <span className={`text-3xl font-bold ${daysRemaining! < 30 ? 'text-red-500' : daysRemaining! < 90 ? 'text-yellow-500' : 'text-orange'}`}>
                       {daysRemaining}
                     </span>
-                    <span className="text-sm text-text-muted ml-2">days remaining</span>
+                    <span className="text-sm text-gray-400 dark:text-gray-500 ml-2">days remaining</span>
             </div>
-            <div className="rounded-lg bg-surface-alt border border-border p-4 space-y-4">
+            <div className="rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-text-muted">Current expiration</p>
-                <p className="text-sm font-medium text-text">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Current expiration</p>
+                <p className="text-sm font-medium text-orange-dark dark:text-white">
                   {new Date(domain.expires_at).toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'long',
@@ -494,14 +522,14 @@ export default function DomainDetailPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label htmlFor="renewal-years" className="text-sm text-text-muted">
+                <label htmlFor="renewal-years" className="text-sm text-gray-500 dark:text-gray-400">
                   Renew for
                 </label>
                 <select
                   id="renewal-years"
                   value={selectedYears}
                   onChange={(e) => setSelectedYears(Number(e.target.value))}
-                  className="text-sm rounded-md border border-border bg-surface text-text px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  className="text-sm rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-orange-dark dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange/50"
                 >
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
                     <option key={y} value={y}>
@@ -513,8 +541,8 @@ export default function DomainDetailPage() {
 
               {renewalTotalPrice && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-muted">Total</span>
-                  <span className="font-semibold text-text">
+                  <span className="text-gray-500 dark:text-gray-400">Total</span>
+                  <span className="font-semibold text-orange-dark dark:text-white">
                     ${renewalTotalPrice} {renewalPricing?.currency?.toUpperCase() || 'USD'}
                   </span>
                 </div>
@@ -566,7 +594,7 @@ export default function DomainDetailPage() {
 
           {/* Right column: Nameservers */}
           <div className="p-6">
-            <h3 className="text-base font-semibold text-accent mb-4">Nameservers</h3>
+            <h3 className="text-base font-semibold text-orange mb-4">Nameservers</h3>
         <div className="p-3 mb-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
             Using Javelina for DNS?
@@ -612,7 +640,7 @@ export default function DomainDetailPage() {
             <button
               type="button"
               onClick={addNameserverField}
-              className="text-sm text-accent hover:text-[#d46410] transition-colors"
+              className="text-sm text-orange hover:text-[#d46410] transition-colors"
             >
               + Add nameserver
             </button>
@@ -637,6 +665,8 @@ export default function DomainDetailPage() {
         <DomainEmailSection
           domainId={domain.id}
           domainName={domain.domain_name}
+          onOpenBillingPortal={handleOpenBillingPortal}
+          openingBillingPortal={openingBillingPortal}
         />
       )}
 
@@ -644,7 +674,7 @@ export default function DomainDetailPage() {
       <Card
         title="WHOIS Contact Information"
         action={
-          <Button variant="secondary" size="md" onClick={() => setIsWhoisModalOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setIsWhoisModalOpen(true)}>
             Edit
           </Button>
         }
@@ -663,8 +693,8 @@ export default function DomainDetailPage() {
             { label: 'Organization', value: contact.org_name },
           ] as { label: string; value: string | undefined; fullRow?: boolean }[]).map(({ label, value, fullRow }) => (
             <div key={label} className={fullRow ? 'md:col-span-4' : undefined}>
-              <dt className="text-xs text-text-muted">{label}</dt>
-              <dd className="text-sm font-medium text-text">
+              <dt className="text-xs text-gray-400 dark:text-gray-500">{label}</dt>
+              <dd className="text-sm font-medium text-orange-dark dark:text-white">
                 {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
               </dd>
             </div>
@@ -677,26 +707,26 @@ export default function DomainDetailPage() {
         {zone ? (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-text font-medium">{zone.name}</p>
-              <p className="text-xs text-text-muted">
+              <p className="text-sm text-orange-dark dark:text-white font-medium">{zone.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Organization: {zone.organization_name}
               </p>
             </div>
             <Link
               href={`/zone/${zone.id}`}
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-md transition-colors"
             >
               Manage DNS records
             </Link>
           </div>
         ) : (
           <div>
-            <p className="text-sm text-text-muted mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               No DNS zone exists for this domain yet. Create one to manage DNS records in Javelina.
             </p>
             {userOrgs.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
                   Select an organization
                 </p>
                 {userOrgs
@@ -705,10 +735,15 @@ export default function DomainDetailPage() {
                   <button
                     key={org.id}
                     onClick={() => handleOpenZoneModal(org.id, org.name)}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-accent dark:hover:border-accent hover:shadow-md transition-all flex items-center justify-between group"
+                    className="w-full text-left px-4 py-3 rounded-lg border border-gray-light dark:border-gray-700 hover:border-orange dark:hover:border-orange hover:shadow-md transition-all flex items-center justify-between group"
                   >
-                    <span className="text-sm font-medium text-text">{org.name}</span>
-                    <span className="text-xs font-medium text-accent group-hover:translate-x-0.5 transition-transform">Set up DNS &rarr;</span>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-orange/10 text-orange text-sm font-bold flex items-center justify-center flex-shrink-0">
+                        {org.name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="text-sm font-medium text-orange-dark dark:text-white">{org.name}</span>
+                    </span>
+                    <span className="text-xs font-medium text-orange group-hover:translate-x-0.5 transition-transform">Set up DNS &rarr;</span>
                   </button>
                 ))}
                 <Pagination
@@ -720,7 +755,7 @@ export default function DomainDetailPage() {
                 />
               </div>
             ) : (
-              <p className="text-sm text-text-muted">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 You need to create an organization first to set up DNS.
               </p>
             )}
@@ -737,7 +772,7 @@ export default function DomainDetailPage() {
           <h3 className="text-base font-semibold text-red-700 dark:text-red-400">
             Remove Domain
           </h3>
-          <p className="text-sm text-text-muted mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             This domain was linked from the OpenSRS Storefront. Removing it will only detach it from
             your Javelina account&mdash;your domain registration with OpenSRS is not affected and you
             can re-link it at any time.

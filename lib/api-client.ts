@@ -1326,6 +1326,9 @@ export const domainsApi = {
   getById: (id: string): Promise<DomainDetailResponse> =>
     apiClient.get(`/domains/${id}`),
 
+  createBillingPortal: (id: string): Promise<{ url: string }> =>
+    apiClient.post(`/domains/${id}/billing-portal`, {}),
+
   link: (domain: string): Promise<DomainDetailResponse> =>
     apiClient.post("/domains/link", { domain }),
 

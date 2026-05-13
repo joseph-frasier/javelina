@@ -24,9 +24,16 @@ import { Mail, Plus, Trash2, Key, ExternalLink, Copy, Check, ChevronDown, Chevro
 interface DomainEmailSectionProps {
   domainId: string;
   domainName: string;
+  onOpenBillingPortal?: () => void;
+  openingBillingPortal?: boolean;
 }
 
-export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionProps) {
+export function DomainEmailSection({
+  domainId,
+  domainName,
+  onOpenBillingPortal,
+  openingBillingPortal = false,
+}: DomainEmailSectionProps) {
   const { addToast } = useToastStore();
 
   // State
@@ -61,6 +68,14 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   const [deletingAlias, setDeletingAlias] = useState<string | null>(null);
   const [copiedRecordKey, setCopiedRecordKey] = useState<string | null>(null);
   const [showDnsRecords, setShowDnsRecords] = useState(false);
+  const [confirmDeleteMailbox, setConfirmDeleteMailbox] = useState<string | null>(null);
+
+  // Per-mailbox price for billing transparency
+  const perMailboxPrice = emailStatus?.tier?.price ?? 0;
+  const mailboxCount = mailboxes.length;
+  const monthlyTotal = perMailboxPrice * mailboxCount;
+  const formatPrice = (n: number) =>
+    n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const copyRecordValue = useCallback(
     async (key: string, value: string) => {
@@ -329,18 +344,57 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
       }
     >
       <div className="space-y-5">
+        {/* Past-due banner */}
+        {emailStatus.status === 'suspended' && (
+          <div className="flex items-start gap-3 p-3 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                Your last payment failed.
+              </p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                Update your card to restore full email service. Mail delivery may be interrupted while the subscription is past due.
+              </p>
+            </div>
+            {onOpenBillingPortal && (
+              <button
+                type="button"
+                onClick={onOpenBillingPortal}
+                disabled={openingBillingPortal}
+                className="text-xs font-medium text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 whitespace-nowrap disabled:opacity-60"
+              >
+                {openingBillingPortal ? 'Opening…' : 'Update card →'}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Plan strip */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-baseline gap-2">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="px-2.5 py-0.5 bg-orange/10 text-orange text-xs font-semibold rounded-full uppercase tracking-wide">
               {emailStatus.tier?.tier_name}
             </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {emailStatus.tier?.storage_gb} GB
+              {emailStatus.tier?.storage_gb} GB per mailbox
             </span>
             <span className="text-gray-300 dark:text-gray-700">·</span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              ${emailStatus.tier?.price.toFixed(2)}<span className="text-gray-400 dark:text-gray-500">/mo per mailbox</span>
+            <span
+              className="text-sm text-gray-600 dark:text-gray-400"
+              title="Billed monthly. Changes are prorated to today."
+            >
+              {mailboxCount > 0 ? (
+                <>
+                  {mailboxCount} × ${formatPrice(perMailboxPrice)} ={' '}
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    ${formatPrice(monthlyTotal)}/mo
+                  </span>
+                </>
+              ) : (
+                <>
+                  ${formatPrice(perMailboxPrice)}
+                  <span className="text-gray-400 dark:text-gray-500">/mo per mailbox</span>
+                </>
+              )}
             </span>
           </div>
           <Button
@@ -415,6 +469,9 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 minLength={8}
                 maxLength={128}
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Adds ${formatPrice(perMailboxPrice)}/mo to your subscription, prorated to today.
+              </p>
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -467,7 +524,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                         <Key className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteMailbox(mb.user)}
+                        onClick={() => setConfirmDeleteMailbox(mb.user)}
                         disabled={deletingMailbox === mb.user}
                         className="p-1.5 rounded text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
                         title="Delete mailbox"
@@ -664,6 +721,28 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
         onClose={() => setShowDisableConfirm(false)}
         variant="danger"
         isLoading={disablingEmail}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmDeleteMailbox !== null}
+        title="Delete mailbox"
+        message={
+          confirmDeleteMailbox
+            ? mailboxCount === 1
+              ? `Delete ${confirmDeleteMailbox}@${domainName}? This is your only mailbox — your subscription will drop to $0.00/mo and all mail in this mailbox will be permanently deleted.`
+              : `Delete ${confirmDeleteMailbox}@${domainName}? This will permanently delete all mail in this mailbox and reduce your subscription by $${formatPrice(perMailboxPrice)}/mo, prorated to today.`
+            : ''
+        }
+        confirmText={deletingMailbox === confirmDeleteMailbox ? 'Deleting...' : 'Delete mailbox'}
+        onConfirm={async () => {
+          if (!confirmDeleteMailbox) return;
+          const user = confirmDeleteMailbox;
+          setConfirmDeleteMailbox(null);
+          await handleDeleteMailbox(user);
+        }}
+        onClose={() => setConfirmDeleteMailbox(null)}
+        variant="danger"
+        isLoading={deletingMailbox === confirmDeleteMailbox}
       />
     </Card>
   );
