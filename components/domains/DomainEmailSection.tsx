@@ -81,7 +81,7 @@ import type {
   Mailbox,
   MailAlias,
 } from '@/types/mailbox';
-import { Mail, Plus, Trash2, Key, ExternalLink, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { Mail, Plus, Trash2, Key, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface DomainEmailSectionProps {
   domainId: string;
@@ -130,6 +130,7 @@ export function DomainEmailSection({
   const [deletingAlias, setDeletingAlias] = useState<string | null>(null);
   const [copiedRecordKey, setCopiedRecordKey] = useState<string | null>(null);
   const [showDnsRecords, setShowDnsRecords] = useState(false);
+  const [showConnectGuide, setShowConnectGuide] = useState(false);
   const [confirmDeleteMailbox, setConfirmDeleteMailbox] = useState<string | null>(null);
 
   // Per-mailbox price for billing transparency
@@ -392,18 +393,6 @@ export function DomainEmailSection({
     <Card
       title="Email"
       icon={<Mail className="w-5 h-5 text-orange" />}
-      action={
-        emailStatus.webmail_url ? (
-          <a
-            href={emailStatus.webmail_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1"
-          >
-            Open Webmail <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        ) : null
-      }
     >
       <div className="space-y-5">
         {/* Past-due banner */}
@@ -702,6 +691,91 @@ export function DomainEmailSection({
             <p className="text-sm text-gray-400 dark:text-gray-500">No aliases yet.</p>
           )}
         </div>
+
+        {/* How to connect (collapsible) */}
+        {emailStatus.mail_client_settings && (
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={() => setShowConnectGuide((v) => !v)}
+              className="flex items-center gap-2 w-full text-left group"
+              aria-expanded={showConnectGuide}
+            >
+              {showConnectGuide ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                How to connect your mailbox
+              </h4>
+            </button>
+            {showConnectGuide && (
+              <div className="mt-3 space-y-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Use these settings to add a mailbox to Outlook, Apple Mail, the Gmail app,
+                  or any other mail client. Username for both servers is the full email address;
+                  password is the one you set when creating the mailbox.
+                </p>
+                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {[
+                    {
+                      key: 'imap',
+                      label: 'Incoming (IMAP)',
+                      caption: 'Receives mail from the server.',
+                      host: emailStatus.mail_client_settings.imap_host,
+                      port: emailStatus.mail_client_settings.imap_port,
+                      security: emailStatus.mail_client_settings.imap_security,
+                    },
+                    {
+                      key: 'smtp',
+                      label: 'Outgoing (SMTP)',
+                      caption: 'Sends mail through the server.',
+                      host: emailStatus.mail_client_settings.smtp_host,
+                      port: emailStatus.mail_client_settings.smtp_port,
+                      security: emailStatus.mail_client_settings.smtp_security,
+                    },
+                  ].map((row) => {
+                    const copyValue = `${row.host}:${row.port} (${row.security})`;
+                    const copied = copiedRecordKey === row.key;
+                    return (
+                      <li key={row.key} className="py-3 first:pt-0 last:pb-0">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 w-28 pt-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            {row.label}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <code className="font-mono text-xs text-gray-900 dark:text-white break-all">
+                              {row.host}:{row.port}
+                              <span className="ml-1 text-gray-400 dark:text-gray-500">
+                                ({row.security})
+                              </span>
+                            </code>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-500">
+                              {row.caption}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => copyRecordValue(row.key, copyValue)}
+                            className="p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0 transition-colors"
+                            aria-label="Copy settings"
+                          >
+                            {copied ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Required DNS Records (collapsible) */}
         {emailStatus.required_dns_records && emailStatus.required_dns_records.length > 0 && (

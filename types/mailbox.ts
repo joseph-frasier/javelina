@@ -29,12 +29,21 @@ export interface RequiredMailDnsRecord {
   description: string;
 }
 
+export interface MailClientSettings {
+  imap_host: string;
+  imap_port: number;
+  imap_security: "SSL/TLS" | "STARTTLS";
+  smtp_host: string;
+  smtp_port: number;
+  smtp_security: "SSL/TLS" | "STARTTLS";
+}
+
 export interface DomainEmailStatus {
   enabled: boolean;
   status?: "active" | "suspended" | "disabled";
   tier?: MailboxPricingTier | null;
   mailbox_count?: number;
-  webmail_url?: string;
+  mail_client_settings?: MailClientSettings;
   required_dns_records?: RequiredMailDnsRecord[];
   created_at?: string;
 }
