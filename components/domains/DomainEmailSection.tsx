@@ -19,7 +19,7 @@ import type {
   Mailbox,
   MailAlias,
 } from '@/types/mailbox';
-import { Plus, Trash2, Key, ExternalLink } from 'lucide-react';
+import { Mail, Plus, Trash2, Key, ExternalLink, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface DomainEmailSectionProps {
   domainId: string;
@@ -59,6 +59,21 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   const [disablingEmail, setDisablingEmail] = useState(false);
   const [deletingMailbox, setDeletingMailbox] = useState<string | null>(null);
   const [deletingAlias, setDeletingAlias] = useState<string | null>(null);
+  const [copiedRecordKey, setCopiedRecordKey] = useState<string | null>(null);
+  const [showDnsRecords, setShowDnsRecords] = useState(false);
+
+  const copyRecordValue = useCallback(
+    async (key: string, value: string) => {
+      try {
+        await navigator.clipboard.writeText(value);
+        setCopiedRecordKey(key);
+        setTimeout(() => setCopiedRecordKey((k) => (k === key ? null : k)), 1500);
+      } catch {
+        addToast('error', 'Could not copy to clipboard');
+      }
+    },
+    [addToast]
+  );
 
   // Fetch email status and pricing
   const fetchStatus = useCallback(async () => {
@@ -231,7 +246,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   // Loading skeleton
   if (loading) {
     return (
-      <Card title="Email">
+      <Card title="Email" icon={<Mail className="w-5 h-5 text-orange" />}>
         <div className="animate-pulse space-y-3">
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
@@ -246,6 +261,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
       <Card
         title="Email"
         description="Add email mailboxes to your domain"
+        icon={<Mail className="w-5 h-5 text-orange" />}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -260,8 +276,8 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 onClick={() => setSelectedTier(tier.id)}
                 className={`p-4 rounded-lg border-2 text-left transition-all ${
                   selectedTier === tier.id
-                    ? 'border-accent bg-accent/5'
-                    : 'border-border hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'border-orange bg-orange/5'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <div className="font-semibold text-sm text-gray-900 dark:text-white">
@@ -270,7 +286,7 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {tier.storage_gb}GB storage
                 </div>
-                <div className="text-lg font-bold text-accent mt-2">
+                <div className="text-lg font-bold text-orange mt-2">
                   ${tier.price.toFixed(2)}
                   <span className="text-xs font-normal text-gray-500">/mo per mailbox</span>
                 </div>
@@ -298,28 +314,33 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
   return (
     <Card
       title="Email"
+      icon={<Mail className="w-5 h-5 text-orange" />}
       action={
         emailStatus.webmail_url ? (
           <a
             href={emailStatus.webmail_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-accent hover:text-text flex items-center gap-1"
+            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1"
           >
             Open Webmail <ExternalLink className="w-3.5 h-3.5" />
           </a>
         ) : null
       }
     >
-      <div className="space-y-6">
-        {/* Current Plan */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-accent/10 text-accent text-sm font-medium rounded-full">
+      <div className="space-y-5">
+        {/* Plan strip */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-baseline gap-2">
+            <span className="px-2.5 py-0.5 bg-orange/10 text-orange text-xs font-semibold rounded-full uppercase tracking-wide">
               {emailStatus.tier?.tier_name}
             </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {emailStatus.tier?.storage_gb}GB &middot; ${emailStatus.tier?.price.toFixed(2)}/mo per mailbox
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {emailStatus.tier?.storage_gb} GB
+            </span>
+            <span className="text-gray-300 dark:text-gray-700">·</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              ${emailStatus.tier?.price.toFixed(2)}<span className="text-gray-400 dark:text-gray-500">/mo per mailbox</span>
             </span>
           </div>
           <Button
@@ -327,11 +348,11 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
             size="sm"
             onClick={() => setShowChangePlan(!showChangePlan)}
           >
-            Change Plan
+            Increase Storage
           </Button>
         </div>
 
-        {/* Change Plan Panel */}
+        {/* Increase Storage Panel */}
         {showChangePlan && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             {pricingTiers.map((tier) => (
@@ -341,13 +362,13 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
                 disabled={changingPlan || tier.id === emailStatus.tier?.id}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   tier.id === emailStatus.tier?.id
-                    ? 'border-accent bg-accent/5 opacity-50'
-                    : 'border-border hover:border-accent'
+                    ? 'border-orange bg-orange/5 opacity-50'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-orange'
                 }`}
               >
                 <div className="font-semibold text-sm">{tier.tier_name}</div>
                 <div className="text-xs text-gray-500 mt-1">{tier.storage_gb}GB</div>
-                <div className="text-sm font-bold text-accent mt-1">
+                <div className="text-sm font-bold text-orange mt-1">
                   ${tier.price.toFixed(2)}/mo
                 </div>
               </button>
@@ -358,8 +379,8 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
         {/* Mailboxes */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Mailboxes ({mailboxes.length})
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Mailboxes <span className="text-gray-400 dark:text-gray-600 font-normal">· {mailboxes.length}</span>
             </h4>
             <Button
               variant="outline"
@@ -418,63 +439,57 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
           )}
 
           {mailboxes.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900/50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email Address</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {mailboxes.map((mb) => (
-                    <tr key={mb.user} className="hover:bg-surface-hover/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                        {mb.user}@{mb.domain}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          mb.suspended
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        }`}>
-                          {mb.suspended ? 'Suspended' : 'Active'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => { setShowResetPassword(mb.user); setResetPasswordValue(''); }}
-                            className="text-gray-500 hover:text-accent"
-                            title="Reset password"
-                          >
-                            <Key className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMailbox(mb.user)}
-                            disabled={deletingMailbox === mb.user}
-                            className="text-gray-500 hover:text-red-500"
-                            title="Delete mailbox"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              {mailboxes.map((mb) => {
+                const fullEmail = mb.user.includes('@') ? mb.user : `${mb.user}@${mb.domain}`;
+                return (
+                  <li
+                    key={mb.user}
+                    className="group flex items-center justify-between gap-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                          mb.suspended ? 'bg-red-400' : 'bg-green-500'
+                        }`}
+                        title={mb.suspended ? 'Suspended' : 'Active'}
+                      />
+                      <span className="text-sm text-gray-900 dark:text-white truncate">
+                        {fullEmail}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => { setShowResetPassword(mb.user); setResetPasswordValue(''); }}
+                        className="p-1.5 rounded text-gray-500 hover:text-orange hover:bg-gray-100 dark:hover:bg-gray-800"
+                        title="Reset password"
+                      >
+                        <Key className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMailbox(mb.user)}
+                        disabled={deletingMailbox === mb.user}
+                        className="p-1.5 rounded text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+                        title="Delete mailbox"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           ) : (
-            <p className="text-sm text-gray-400 italic">No mailboxes yet. Add one above.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              No mailboxes yet. Click <span className="text-gray-600 dark:text-gray-300 font-medium">Add Mailbox</span> to create one.
+            </p>
           )}
 
           {showResetPassword && (
             <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
               <p className="text-sm font-medium">
                 Reset password for{' '}
-                <span className="text-accent">{showResetPassword}@{domainName}</span>
+                <span className="text-orange">{showResetPassword}@{domainName}</span>
               </p>
               <Input
                 type="password"
@@ -497,8 +512,8 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
         {/* Aliases */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Aliases ({aliases.length})
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Aliases <span className="text-gray-400 dark:text-gray-600 font-normal">· {aliases.length}</span>
             </h4>
             <Button variant="outline" size="sm" onClick={() => setShowAddAlias(!showAddAlias)}>
               <Plus className="w-4 h-4 mr-1" /> Add Alias
@@ -524,36 +539,119 @@ export function DomainEmailSection({ domainId, domainName }: DomainEmailSectionP
           )}
 
           {aliases.length > 0 ? (
-            <div className="space-y-2">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {aliases.map((a) => (
-                <div key={a.alias} className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-sm">
-                    <span className="font-medium text-gray-900 dark:text-white">{a.alias}@{a.domain}</span>
-                    <span className="text-gray-400 mx-2">&rarr;</span>
-                    <span className="text-gray-500">{a.target}@{a.domain}</span>
+                <li key={a.alias} className="group flex items-center justify-between gap-3 py-2.5">
+                  <div className="text-sm flex items-center gap-2 min-w-0">
+                    <span className="text-gray-900 dark:text-white truncate">{a.alias}@{a.domain}</span>
+                    <span className="text-gray-300 dark:text-gray-700">&rarr;</span>
+                    <span className="text-gray-500 dark:text-gray-400 truncate">{a.target}@{a.domain}</span>
                   </div>
-                  <button onClick={() => handleDeleteAlias(a.alias)} disabled={deletingAlias === a.alias} className="text-gray-500 hover:text-red-500" title="Delete alias">
+                  <button
+                    onClick={() => handleDeleteAlias(a.alias)}
+                    disabled={deletingAlias === a.alias}
+                    className="p-1.5 rounded text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity disabled:opacity-50"
+                    title="Delete alias"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            <p className="text-sm text-gray-400 italic">No aliases yet.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">No aliases yet.</p>
           )}
         </div>
 
-        {/* Disable Email */}
-        <div className="pt-4 border-t border-border">
-          <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-red-700 dark:text-red-400">Disable Email</h4>
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1 mb-3">
-              This will permanently delete all mailboxes, aliases, and email data for this domain.
-            </p>
-            <Button variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => setShowDisableConfirm(true)}>
-              Disable Email
-            </Button>
+        {/* Required DNS Records (collapsible) */}
+        {emailStatus.required_dns_records && emailStatus.required_dns_records.length > 0 && (
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={() => setShowDnsRecords((v) => !v)}
+              className="flex items-center gap-2 w-full text-left group"
+              aria-expanded={showDnsRecords}
+            >
+              {showDnsRecords ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                Required DNS Records <span className="text-gray-400 dark:text-gray-600 font-normal">· {emailStatus.required_dns_records.length}</span>
+              </h4>
+            </button>
+            {showDnsRecords && (
+              <div className="mt-3 space-y-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Add these at your domain&apos;s DNS provider. Mail won&apos;t flow
+                  until they are in place. Propagation can take up to 24 hours.
+                </p>
+                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {emailStatus.required_dns_records.map((record, idx) => {
+                    const key = `${record.type}-${record.host}-${idx}`;
+                    const copied = copiedRecordKey === key;
+                    return (
+                      <li key={key} className="group py-3 first:pt-0 last:pb-0">
+                        <div className="flex items-start gap-3">
+                          <div className="flex items-center gap-1.5 shrink-0 w-16 pt-0.5">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              {record.type}
+                            </span>
+                            {record.priority !== undefined && (
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                                {record.priority}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <code className="font-mono text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                                {record.host}
+                              </code>
+                              <span className="text-gray-300 dark:text-gray-700">&rarr;</span>
+                              <code className="font-mono text-xs text-gray-900 dark:text-white break-all">
+                                {record.value}
+                              </code>
+                            </div>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-500">
+                              {record.description}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => copyRecordValue(key, record.value)}
+                            className="p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0 transition-colors"
+                            aria-label="Copy value"
+                          >
+                            {copied ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
+        )}
+
+        {/* Disable Email */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
+          <div className="text-xs text-gray-500 dark:text-gray-500">
+            Disabling will permanently delete all mailboxes, aliases, and email data for this domain.
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowDisableConfirm(true)}
+            className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 whitespace-nowrap"
+          >
+            Disable Email
+          </button>
         </div>
       </div>
 

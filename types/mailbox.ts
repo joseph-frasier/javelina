@@ -21,12 +21,21 @@ export interface MailboxPricingAdminTier {
   updated_at: string;
 }
 
+export interface RequiredMailDnsRecord {
+  type: "MX" | "TXT" | "CNAME";
+  host: string;
+  value: string;
+  priority?: number;
+  description: string;
+}
+
 export interface DomainEmailStatus {
   enabled: boolean;
   status?: "active" | "suspended" | "disabled";
   tier?: MailboxPricingTier | null;
   mailbox_count?: number;
   webmail_url?: string;
+  required_dns_records?: RequiredMailDnsRecord[];
   created_at?: string;
 }
 
