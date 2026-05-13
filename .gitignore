@@ -54,6 +54,7 @@ CLAUDE.md
 .serena/
 
 # mockups
+.jbp_mockup/
 
 # superpowers planning artifacts (plans + specs are local-only going forward;
 # pre-existing tracked files in docs/superpowers/ remain in history).
