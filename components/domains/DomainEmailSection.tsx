@@ -13,6 +13,68 @@ function extractErrorMessage(err: any, fallback: string): string {
   if (typeof err === 'string') return err;
   return fallback;
 }
+
+interface PasswordRules {
+  length: boolean;
+  chars: boolean;
+  notContainsIdentity: boolean;
+  composition: boolean;
+  allPass: boolean;
+}
+
+/**
+ * Mirrors backend validateMailboxPassword(). Keep in sync.
+ */
+function checkPasswordRules(
+  password: string,
+  username: string,
+  domain: string
+): PasswordRules {
+  const length = password.length >= 12 && password.length <= 54;
+  const chars = password.length > 0 && /^[!#-~]+$/.test(password);
+  const lower = password.toLowerCase();
+  const notContainsIdentity =
+    password.length > 0 &&
+    (!username || !lower.includes(username.toLowerCase())) &&
+    (!domain || !lower.includes(domain.toLowerCase()));
+  let classes = 0;
+  if (/[a-z]/.test(password)) classes++;
+  if (/[A-Z]/.test(password)) classes++;
+  if (/\d/.test(password)) classes++;
+  if (/[^a-zA-Z0-9]/.test(password)) classes++;
+  const composition = classes >= 3;
+  return {
+    length,
+    chars,
+    notContainsIdentity,
+    composition,
+    allPass: length && chars && notContainsIdentity && composition,
+  };
+}
+
+function PasswordRuleList({ rules }: { rules: PasswordRules }) {
+  const items: { ok: boolean; label: string }[] = [
+    { ok: rules.length, label: '12–54 characters' },
+    { ok: rules.composition, label: '3 of: lowercase, uppercase, digit, symbol' },
+    { ok: rules.chars, label: 'Printable ASCII only (no spaces or quotes)' },
+    { ok: rules.notContainsIdentity, label: 'Does not contain username or domain' },
+  ];
+  return (
+    <ul className="text-xs space-y-0.5 pl-0.5">
+      {items.map((it) => (
+        <li
+          key={it.label}
+          className={`flex items-start gap-1.5 ${
+            it.ok ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-500'
+          }`}
+        >
+          <span className="font-mono leading-none mt-0.5">{it.ok ? '✓' : '·'}</span>
+          <span>{it.label}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 import type {
   MailboxPricingTier,
   DomainEmailStatus,
@@ -175,8 +237,8 @@ export function DomainEmailSection({
 
   const handleCreateMailbox = async () => {
     if (!newMailboxUser || !newMailboxPassword) return;
-    if (newMailboxPassword.length < 8) {
-      addToast('error', 'Password must be at least 8 characters.');
+    if (!checkPasswordRules(newMailboxPassword, newMailboxUser, domainName).allPass) {
+      addToast('error', 'Password does not meet the listed requirements.');
       return;
     }
     setCreatingMailbox(true);
@@ -210,8 +272,8 @@ export function DomainEmailSection({
 
   const handleResetPassword = async () => {
     if (!showResetPassword || !resetPasswordValue) return;
-    if (resetPasswordValue.length < 8) {
-      addToast('error', 'Password must be at least 8 characters.');
+    if (!checkPasswordRules(resetPasswordValue, showResetPassword, domainName).allPass) {
+      addToast('error', 'Password does not meet the listed requirements.');
       return;
     }
     setResettingPassword(true);
@@ -465,9 +527,12 @@ export function DomainEmailSection({
                 type="password"
                 value={newMailboxPassword}
                 onChange={(e) => setNewMailboxPassword(e.target.value)}
-                placeholder="Min 8 characters"
-                minLength={8}
-                maxLength={128}
+                placeholder="At least 12 characters"
+                minLength={12}
+                maxLength={54}
+              />
+              <PasswordRuleList
+                rules={checkPasswordRules(newMailboxPassword, newMailboxUser, domainName)}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Adds ${formatPrice(perMailboxPrice)}/mo to your subscription, prorated to today.
@@ -476,7 +541,11 @@ export function DomainEmailSection({
                 <Button
                   size="sm"
                   onClick={handleCreateMailbox}
-                  disabled={!newMailboxUser || !newMailboxPassword || creatingMailbox}
+                  disabled={
+                    !newMailboxUser ||
+                    creatingMailbox ||
+                    !checkPasswordRules(newMailboxPassword, newMailboxUser, domainName).allPass
+                  }
                 >
                   {creatingMailbox ? 'Creating...' : 'Create Mailbox'}
                 </Button>
@@ -552,12 +621,26 @@ export function DomainEmailSection({
                 type="password"
                 value={resetPasswordValue}
                 onChange={(e) => setResetPasswordValue(e.target.value)}
-                placeholder="Min 8 characters"
-                minLength={8}
-                maxLength={128}
+                placeholder="At least 12 characters"
+                minLength={12}
+                maxLength={54}
+              />
+              <PasswordRuleList
+                rules={checkPasswordRules(
+                  resetPasswordValue,
+                  showResetPassword || '',
+                  domainName
+                )}
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleResetPassword} disabled={!resetPasswordValue || resettingPassword}>
+                <Button
+                  size="sm"
+                  onClick={handleResetPassword}
+                  disabled={
+                    resettingPassword ||
+                    !checkPasswordRules(resetPasswordValue, showResetPassword || '', domainName).allPass
+                  }
+                >
                   {resettingPassword ? 'Updating...' : 'Update Password'}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setShowResetPassword(null)}>Cancel</Button>
