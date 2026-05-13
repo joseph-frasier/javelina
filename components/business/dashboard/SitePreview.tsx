@@ -1,0 +1,328 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
+import { Card } from '@/components/business/ui/Card';
+import { Badge } from '@/components/business/ui/Badge';
+import { Button } from '@/components/business/ui/Button';
+import { Icon } from '@/components/business/ui/Icon';
+
+interface SitePreviewProps {
+  t: Tokens;
+  data: BusinessIntakeData;
+}
+
+function resolveDomain(data: BusinessIntakeData): string {
+  return data.domain.domain || 'your-domain.com';
+}
+
+function useOs(): 'mac' | 'windows' | 'other' {
+  const [os, setOs] = useState<'mac' | 'windows' | 'other'>('mac');
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (/Win/i.test(ua)) setOs('windows');
+    else if (/Mac/i.test(ua)) setOs('mac');
+    else setOs('other');
+  }, []);
+  return os;
+}
+
+export function SitePreview({ t, data }: SitePreviewProps) {
+  const os = useOs();
+  const domain = resolveDomain(data);
+  const isBold = data.website.aesthetic === 'bold';
+  const headlineFont = isBold ? 'Georgia, serif' : 'Inter, system-ui, sans-serif';
+  const headlineColor = isBold ? '#0f0f0f' : t.text;
+  const headlineBg = isBold ? '#f5f1e8' : t.surface;
+  const eyebrow = (data.website.bizName || 'Your business').toUpperCase();
+  const headline =
+    data.website.tagline ||
+    (data.website.bizType
+      ? `${data.website.bizType} done right.`
+      : 'Made with intention.');
+  const subline =
+    data.website.description ||
+    "Independent studio. Currently booking new projects. Let's make something good.";
+
+  return (
+    <Card t={t} padding={0} style={{ overflow: 'hidden' }}>
+      <div style={{ padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Badge t={t} tone="success" dot>Live</Badge>
+            <span style={{ fontFamily: MONO, fontSize: 13, color: t.text, fontWeight: 500 }}>
+              {domain}
+            </span>
+            <a style={{ color: t.textMuted, display: 'flex', cursor: 'pointer' }}>
+              <Icon name="external" size={14} />
+            </a>
+          </div>
+          <div style={{ fontSize: 12, color: t.textMuted, fontFamily: FONT, marginTop: 6 }}>
+            Last deployed <span style={{ color: t.text, fontWeight: 500 }}>3 minutes ago</span>
+            {' · '}
+            <span style={{ fontFamily: MONO }}>main@a7f91c3</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button t={t} variant="secondary" size="sm" iconLeft={<Icon name="refresh" size={13} />}>
+            Redeploy
+          </Button>
+          <Button t={t} size="sm" iconRight={<Icon name="external" size={13} color="#fff" />}>
+            Visit site
+          </Button>
+        </div>
+      </div>
+
+      <div style={{ padding: '0 20px 20px' }}>
+        <div
+          style={{
+            border: `1px solid ${t.border}`,
+            borderRadius: 10,
+            overflow: 'hidden',
+            background: t.surface,
+          }}
+        >
+          {os === 'windows' ? (
+            <div
+              style={{
+                height: 32,
+                borderBottom: `1px solid ${t.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                background: t.surface,
+                position: 'relative',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                <div
+                  style={{
+                    height: 20,
+                    borderRadius: 4,
+                    background: t.bg,
+                    border: `1px solid ${t.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 10px',
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    color: t.textMuted,
+                    minWidth: 220,
+                    maxWidth: 360,
+                  }}
+                >
+                  https://{domain}
+                </div>
+              </div>
+              <div
+                style={{
+                  marginLeft: 'auto',
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  height: '100%',
+                }}
+              >
+                {[
+                  { label: '─', title: 'Minimize' },
+                  { label: '□', title: 'Maximize' },
+                  { label: '✕', title: 'Close', isClose: true },
+                ].map(({ label, title, isClose }) => (
+                  <div
+                    key={title}
+                    title={title}
+                    style={{
+                      width: 40,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: isClose ? 10 : 11,
+                      color: t.textMuted,
+                      cursor: 'default',
+                      userSelect: 'none',
+                    }}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                height: 28,
+                borderBottom: `1px solid ${t.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '0 12px',
+                background: t.surface,
+              }}
+            >
+              <div style={{ display: 'flex', gap: 4 }}>
+                {['#ff5f57', '#febc2e', '#28c840'].map((c) => (
+                  <div
+                    key={c}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: c,
+                      opacity: 0.8,
+                    }}
+                  />
+                ))}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  height: 16,
+                  borderRadius: 999,
+                  background: t.bg,
+                  border: `1px solid ${t.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 10px',
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  color: t.textMuted,
+                  marginLeft: 10,
+                }}
+              >
+                https://{domain}
+              </div>
+            </div>
+          )}
+          <div
+            style={{
+              padding: '38px 44px',
+              minHeight: 260,
+              position: 'relative',
+              background: isBold ? headlineBg : t.surface,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: t.accent,
+                letterSpacing: 1,
+                fontFamily: FONT,
+              }}
+            >
+              {eyebrow}
+            </div>
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: 30,
+                fontWeight: 700,
+                color: headlineColor,
+                letterSpacing: -0.8,
+                fontFamily: headlineFont,
+                maxWidth: 440,
+                lineHeight: 1.15,
+              }}
+            >
+              {headline}
+            </div>
+            <div
+              style={{
+                marginTop: 14,
+                fontSize: 13,
+                color: t.textMuted,
+                fontFamily: FONT,
+                maxWidth: 440,
+                lineHeight: 1.6,
+              }}
+            >
+              {subline}
+            </div>
+            <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
+              <div
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: 6,
+                  background: t.text,
+                  color: t.bg,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: FONT,
+                }}
+              >
+                See work
+              </div>
+              <div
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: 6,
+                  border: `1px solid ${t.border}`,
+                  color: t.text,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: FONT,
+                }}
+              >
+                Start a project →
+              </div>
+            </div>
+
+            <div
+              style={{
+                position: 'absolute',
+                right: 44,
+                top: 38,
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 8,
+                width: 180,
+              }}
+            >
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    aspectRatio: '1 / 1',
+                    borderRadius: 6,
+                    background: t.surfaceAlt,
+                    border: `1px solid ${t.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={t.textMuted}
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="9" r="1.4" fill={t.textMuted} stroke="none" />
+                    <path d="M21 16l-5-5-9 9" />
+                  </svg>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+export default SitePreview;

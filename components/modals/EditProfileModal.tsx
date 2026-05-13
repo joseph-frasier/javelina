@@ -105,7 +105,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
             htmlFor="name" 
             className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
           >
-            Full Name <span className="text-red-500">*</span>
+            Full Name <span className="text-danger" aria-hidden="true">*</span>
           </label>
           <Input
             id="name"

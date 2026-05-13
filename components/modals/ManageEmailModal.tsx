@@ -16,7 +16,7 @@ export function ManageEmailModal({ isOpen, onClose }: ManageEmailModalProps) {
     <Modal isOpen={isOpen} onClose={onClose} title="Email address">
       <div className="space-y-4">
         {/* Current Email */}
-        <div className="p-4 border border-gray-light dark:border-gray-700 rounded-lg">
+        <div className="p-4 border border-border rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900 dark:text-white">{currentEmail}</p>
@@ -27,7 +27,7 @@ export function ManageEmailModal({ isOpen, onClose }: ManageEmailModalProps) {
                 Verified
               </p>
             </div>
-            <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 rounded-full">
+            <span className="text-xs px-2 py-1 bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400 rounded-full">
               Primary
             </span>
           </div>

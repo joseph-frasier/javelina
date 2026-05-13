@@ -48,8 +48,6 @@ export function DNSRecordDetailModal({
   const [isMetadataExpanded, setIsMetadataExpanded] = useState(false);
   const metadataSectionId = useId();
 
-  // Keep record in state during closing animation
-  // This prevents the component from unmounting before the animation completes
   useEffect(() => {
     if (record) {
       setDisplayRecord(record);
@@ -65,8 +63,7 @@ export function DNSRecordDetailModal({
   const updatedDate = formatDateWithRelative(displayRecord.updated_at);
   const displayName = displayRecord.name || '@';
   const ttlHint = formatTTLHint(displayRecord.ttl);
-  
-  // Determine if we should show zone name suffix for this record type
+
   const showZoneSuffix = ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(displayRecord.type) &&
                          !displayRecord.value.endsWith('.');
 
@@ -76,7 +73,7 @@ export function DNSRecordDetailModal({
       setCopied(label);
       setTimeout(() => setCopied(null), 2000);
     } catch {
-      // clipboard unavailable - ignore copy feedback
+      // clipboard unavailable
     }
   };
 
@@ -84,15 +81,15 @@ export function DNSRecordDetailModal({
     <button
       type="button"
       onClick={() => void handleCopy(text, label)}
-      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors group border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
+      className="p-1.5 hover:bg-surface-hover rounded transition-colors group border border-transparent hover:border-border"
       aria-label={`Copy ${label}`}
     >
       {copied === label ? (
-        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
         </svg>
       ) : (
-        <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-text-muted group-hover:text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       )}
@@ -108,17 +105,15 @@ export function DNSRecordDetailModal({
   }
 
   const DetailRow = ({ label, children, helper, copyText, copyLabel }: DetailRowProps) => (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40 p-3">
+    <div className="py-3">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1.5">
             {label}
           </p>
-          <div className="mt-1.5">{children}</div>
+          <div>{children}</div>
           {helper ? (
-            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {helper}
-            </div>
+            <div className="mt-1 text-xs text-text-muted">{helper}</div>
           ) : null}
         </div>
         {copyText && copyLabel ? <CopyButton text={copyText} label={copyLabel} /> : null}
@@ -128,8 +123,8 @@ export function DNSRecordDetailModal({
 
   const valueCodeClassName =
     displayRecord.type === 'TXT'
-      ? 'text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words'
-      : 'text-sm text-gray-900 dark:text-gray-100 break-all';
+      ? 'text-base text-text whitespace-pre-wrap break-words'
+      : 'text-base text-text break-all';
 
   return (
     <Modal
@@ -138,31 +133,31 @@ export function DNSRecordDetailModal({
       title="DNS Record Details"
       size="large"
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
         {/* Summary Header */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5">
+        <div className="rounded-xl border border-border bg-surface-alt p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3 min-w-0">
-              <span className="px-3 py-1.5 bg-blue-electric/10 dark:bg-blue-electric/20 text-blue-electric rounded-lg text-sm font-semibold flex-shrink-0">
+              <span className="px-2.5 py-1 bg-white dark:bg-gray-700 border border-border-strong dark:border-gray-600 text-text rounded text-sm font-semibold flex-shrink-0">
                 {displayRecord.type}
               </span>
               <div className="min-w-0">
-                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 break-all">
+                <p className="text-lg font-semibold text-text break-all">
                   {displayName}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 break-all mt-0.5">
+                <p className="text-sm text-text-muted break-all mt-0.5">
                   {fqdn}
                 </p>
               </div>
             </div>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 sm:text-right">
+            <p className="text-xs sm:text-sm text-text-muted sm:text-right flex-shrink-0">
               {typeInfo.description}
             </p>
           </div>
         </div>
 
         {/* Primary Details */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5 space-y-3">
+        <div className="rounded-xl border border-border px-4 sm:px-5">
           <DetailRow
             label="Name"
             copyText={displayName}
@@ -170,15 +165,11 @@ export function DNSRecordDetailModal({
             helper={
               <>
                 FQDN:{' '}
-                <span className="font-mono break-all text-gray-600 dark:text-gray-300">
-                  {fqdn}
-                </span>
+                <span className="font-mono break-all">{fqdn}</span>
               </>
             }
           >
-            <span className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
-              {displayName}
-            </span>
+            <span className="text-base font-mono text-text break-all">{displayName}</span>
           </DetailRow>
 
           <DetailRow
@@ -186,11 +177,11 @@ export function DNSRecordDetailModal({
             copyText={displayRecord.value}
             copyLabel="value"
           >
-            <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2">
+            <div className="rounded-md border border-border bg-surface px-3 py-2">
               <code className={valueCodeClassName}>
                 {displayRecord.value}
                 {showZoneSuffix ? (
-                  <span className="text-gray-500 dark:text-gray-400">.{zoneName}.</span>
+                  <span className="text-text-muted">.{zoneName}.</span>
                 ) : null}
               </code>
             </div>
@@ -202,36 +193,32 @@ export function DNSRecordDetailModal({
             copyLabel="ttl"
             helper={ttlHint}
           >
-            <span className="text-sm text-gray-900 dark:text-gray-100">
-              {displayRecord.ttl} seconds
-            </span>
+            <span className="text-base text-text">{displayRecord.ttl} seconds</span>
           </DetailRow>
 
           {displayRecord.comment ? (
             <DetailRow label="Comment">
-              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
+              <p className="text-sm text-text whitespace-pre-wrap break-words">
                 {displayRecord.comment}
               </p>
             </DetailRow>
           ) : null}
         </div>
 
-        {/* Technical Metadata (Collapsed by Default) */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/60 p-4 sm:p-5">
+        {/* Technical Metadata */}
+        <div className="rounded-xl border border-border px-4 sm:px-5">
           <button
             type="button"
-            className="w-full flex items-center justify-between text-left"
+            className="w-full flex items-center justify-between text-left py-3"
             onClick={() => setIsMetadataExpanded((prev) => !prev)}
             aria-expanded={isMetadataExpanded}
             aria-controls={metadataSectionId}
           >
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               Technical Metadata
             </span>
             <svg
-              className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                isMetadataExpanded ? 'rotate-180' : 'rotate-0'
-              }`}
+              className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isMetadataExpanded ? 'rotate-180' : 'rotate-0'}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -248,71 +235,57 @@ export function DNSRecordDetailModal({
             aria-hidden={!isMetadataExpanded}
             className={`overflow-hidden transition-all duration-200 ease-out ${
               isMetadataExpanded
-                ? 'max-h-96 opacity-100 translate-y-0 mt-3'
+                ? 'max-h-96 opacity-100 translate-y-0 pb-4'
                 : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'
             }`}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Record ID:</span>
-                <div className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all mt-1">
-                  {displayRecord.id}
-                </div>
+                <span className="text-text-muted text-xs">Record ID</span>
+                <div className="font-mono text-sm text-text break-all mt-1">{displayRecord.id}</div>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Zone ID:</span>
-                <div className="font-mono text-xs text-gray-900 dark:text-gray-100 break-all mt-1">
-                  {displayRecord.zone_id}
-                </div>
+                <span className="text-text-muted text-xs">Zone ID</span>
+                <div className="font-mono text-sm text-text break-all mt-1">{displayRecord.zone_id}</div>
               </div>
               <div>
                 <Tooltip content={createdDate.absolute}>
-                  <span className="text-gray-500 dark:text-gray-400">Created:</span>
+                  <span className="text-text-muted text-xs">Created</span>
                 </Tooltip>
-                <div className="text-gray-900 dark:text-gray-100 mt-1">
-                  {createdDate.relative}
-                </div>
+                <div className="text-sm text-text mt-1">{createdDate.relative}</div>
               </div>
               <div>
                 <Tooltip content={updatedDate.absolute}>
-                  <span className="text-gray-500 dark:text-gray-400">Last Updated:</span>
+                  <span className="text-text-muted text-xs">Last Updated</span>
                 </Tooltip>
-                <div className="text-gray-900 dark:text-gray-100 mt-1">
-                  {updatedDate.relative}
-                </div>
+                <div className="text-sm text-text mt-1">{updatedDate.relative}</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-3">
-          <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-2">
-            <Button
-              variant="primary"
-              onClick={() => {
-                onEdit(displayRecord);
-                onClose();
-              }}
-              className="w-full sm:w-auto h-11"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit
-            </Button>
+        <div className="mt-5 pt-1">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
             <Button
               variant="outline"
-              onClick={() => {
-                onDelete(displayRecord);
-                onClose();
-              }}
-              className="w-full sm:w-auto h-11 !border-red-600 !text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/20"
+              onClick={() => { onDelete(displayRecord); onClose(); }}
+              className="h-10 !border-red-600 !text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/20"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               Delete
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => { onEdit(displayRecord); onClose(); }}
+              className="h-10"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
             </Button>
           </div>
         </div>

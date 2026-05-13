@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-orange-light flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-accent-light flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-[420px]">
         {/* Logo/Brand Section */}
         <div className="flex flex-col items-center mb-0">
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Forgot Password Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-light p-8">
+        <div className="bg-surface rounded-xl shadow-lg border border-border p-8">
           {successMessage ? (
             <div className="text-center">
               <div className="mb-4">
@@ -125,10 +125,10 @@ export default function ForgotPasswordPage() {
                   />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-orange-dark mb-2">
+              <h2 className="text-2xl font-bold text-text mb-2">
                 Check your email
               </h2>
-              <p className="text-gray-slate text-sm">{successMessage}</p>
+              <p className="text-text-muted text-sm">{successMessage}</p>
               <div className="mt-6">
                 <Link href="/login">
                   <Button variant="primary" size="lg" className="w-full">
@@ -136,14 +136,14 @@ export default function ForgotPasswordPage() {
                   </Button>
                 </Link>
               </div>
-              <p className="text-xs text-gray-slate mt-4">
+              <p className="text-xs text-text-muted mt-4">
                 Didn&rsquo;t receive the email?{' '}
                 <button
                   onClick={() => {
                     setSuccessMessage('');
                     setError('');
                   }}
-                  className="text-orange hover:underline"
+                  className="text-accent hover:underline"
                 >
                   Try again
                 </button>
@@ -152,10 +152,10 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-orange-dark mb-2">
+                <h2 className="text-2xl font-bold text-text mb-2">
                   Forgot your password?
                 </h2>
-                <p className="text-sm text-gray-slate">
+                <p className="text-sm text-text-muted">
                   No worries! Enter your email address and we&rsquo;ll send you
                   instructions to reset your password.
                 </p>
@@ -236,7 +236,7 @@ export default function ForgotPasswordPage() {
                 <div className="text-center">
                   <Link
                     href="/login"
-                    className="text-sm text-gray-slate hover:text-orange transition-colors"
+                    className="text-sm text-text-muted hover:text-accent transition-colors"
                   >
                     ← Back to Sign In
                   </Link>
@@ -248,7 +248,7 @@ export default function ForgotPasswordPage() {
 
         {/* Help Text */}
         {!successMessage && (
-          <p className="mt-6 text-center text-xs text-gray-slate">
+          <p className="mt-6 text-center text-xs text-text-muted">
             If you don&rsquo;t receive an email within a few minutes, please
             check your spam folder or contact support.
           </p>

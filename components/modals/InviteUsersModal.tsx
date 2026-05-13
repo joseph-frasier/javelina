@@ -179,16 +179,16 @@ export function InviteUsersModal({
       }
     : isNearLimit
     ? {
-        card: 'border-orange/20 bg-orange/10 dark:border-orange/30 dark:bg-orange/10',
-        badge: 'border-orange/20 bg-orange/15 text-orange-dark dark:border-orange/20 dark:bg-orange/15 dark:text-orange-100',
-        bar: 'bg-orange',
-        accent: 'text-orange-dark dark:text-orange-100',
+        card: 'border-accent bg-accent-soft',
+        badge: 'border-accent bg-accent-soft text-accent',
+        bar: 'bg-accent',
+        accent: 'text-text-100',
       }
     : {
-        card: 'border-blue-200 bg-blue-50 dark:border-blue-electric/25 dark:bg-blue-electric/10',
-        badge: 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-electric/20 dark:bg-blue-electric/15 dark:text-blue-100',
-        bar: 'bg-blue-electric',
-        accent: 'text-blue-700 dark:text-blue-100',
+        card: 'border-info bg-surface-alt',
+        badge: 'border-info bg-surface-alt text-info',
+        bar: 'bg-info',
+        accent: 'text-info',
       };
 
   return (
@@ -202,21 +202,21 @@ export function InviteUsersModal({
       bodyClassName="space-y-6"
       headerContent={
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+          <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-muted dark:border-white/10 dark:bg-surface/5 dark:text-white/70">
             {currentMemberCount} active {currentMemberCount === 1 ? 'member' : 'members'}
           </span>
-          <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+          <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-muted dark:border-white/10 dark:bg-surface/5 dark:text-white/70">
             {isUnlimitedMembers ? 'Unlimited seats' : `${seatsRemaining} seat${seatsRemaining === 1 ? '' : 's'} available`}
           </span>
         </div>
       }
     >
       <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
-        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+        <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm dark:border-white/10 dark:bg-surface/[0.04] dark:shadow-none">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-orange-dark dark:text-[#fff3ea]">Seat availability</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight text-orange-dark dark:text-white">
+              <p className="text-sm font-medium text-text dark:text-[#fff3ea]">Seat availability</p>
+              <p className="mt-2 text-3xl font-semibold tracking-tight text-text">
                 {isUnlimitedMembers ? 'Unlimited' : `${currentMemberCount}/${maxMembers}`}
               </p>
             </div>
@@ -235,11 +235,11 @@ export function InviteUsersModal({
 
           {!isUnlimitedMembers && (
             <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-gray-slate dark:text-white/45">
+              <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-text/45">
                 <span>Seat usage</span>
                 <span>{percentUsed}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-gray-light/70 dark:bg-white/10">
+              <div className="h-2 overflow-hidden rounded-full bg-surface-alt/70 dark:bg-surface/10">
                 <div
                   className={`h-full rounded-full transition-all ${usageToneClasses.bar}`}
                   style={{ width: `${percentUsed}%` }}
@@ -249,8 +249,8 @@ export function InviteUsersModal({
           )}
 
           <div className={`mt-5 rounded-2xl border p-4 ${usageToneClasses.card}`}>
-            <p className="text-sm font-medium text-orange-dark dark:text-[#fff3ea]">What they can do</p>
-            <ul className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
+            <p className="text-sm font-medium text-text dark:text-[#fff3ea]">What they can do</p>
+            <ul className="mt-3 space-y-3 text-sm text-text/70">
               <li>
                 Assign a role now so the invite lands with the right permissions.
               </li>
@@ -281,13 +281,13 @@ export function InviteUsersModal({
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 [.theme-light_&]:border-red-100 [.theme-light_&]:bg-white/80">
-                <p className="text-xs uppercase tracking-[0.24em] text-white/40 [.theme-light_&]:text-gray-slate">Current usage</p>
-                <p className="mt-2 text-2xl font-semibold text-white [.theme-light_&]:text-orange-dark">{currentMemberCount}/{maxMembers}</p>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 [.theme-light_&]:border-red-100 [.theme-light_&]:bg-surface/80">
+                <p className="text-xs uppercase tracking-[0.24em] text-white/40 [.theme-light_&]:text-text-muted">Current usage</p>
+                <p className="mt-2 text-2xl font-semibold text-white [.theme-light_&]:text-text">{currentMemberCount}/{maxMembers}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 [.theme-light_&]:border-red-100 [.theme-light_&]:bg-white/80">
-                <p className="text-xs uppercase tracking-[0.24em] text-white/40 [.theme-light_&]:text-gray-slate">Current plan</p>
-                <p className="mt-2 text-2xl font-semibold text-white [.theme-light_&]:text-orange-dark">{tier.charAt(0).toUpperCase() + tier.slice(1)}</p>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 [.theme-light_&]:border-red-100 [.theme-light_&]:bg-surface/80">
+                <p className="text-xs uppercase tracking-[0.24em] text-white/40 [.theme-light_&]:text-text-muted">Current plan</p>
+                <p className="mt-2 text-2xl font-semibold text-white [.theme-light_&]:text-text">{tier.charAt(0).toUpperCase() + tier.slice(1)}</p>
               </div>
             </div>
 
@@ -307,11 +307,11 @@ export function InviteUsersModal({
             </div>
           </section>
         ) : (
-          <form onSubmit={handleSubmit} className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+          <form onSubmit={handleSubmit} className="rounded-[22px] border border-border bg-surface p-5 shadow-sm dark:border-white/10 dark:bg-surface/[0.04] dark:shadow-none">
             <div>
               <label
                 htmlFor="email"
-                className="mb-2 block text-sm font-medium text-orange-dark dark:text-[#fff3ea]"
+                className="mb-2 block text-sm font-medium text-text dark:text-[#fff3ea]"
               >
                 Email Address *
               </label>
@@ -325,14 +325,14 @@ export function InviteUsersModal({
                 error={errors.email}
                 helperText="We’ll email a secure invite link to this address."
                 disabled={isLoading}
-                className="!border-gray-light !bg-white !text-orange-dark placeholder:!text-gray-slate/50 hover:!border-orange/40 focus:!ring-orange dark:!border-white/10 dark:!bg-[#0f151d] dark:!text-white dark:placeholder:!text-white/25"
+                className="!border-border !bg-surface !text-text placeholder:!text-text-muted/50 hover:!border-accent/40 focus:!ring-accent dark:!border-white/10 dark:!bg-[#0f151d] dark:!text-white dark:placeholder:!text-white/25"
               />
             </div>
 
             <div className="mt-6">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-medium text-orange-dark dark:text-[#fff3ea]">Role *</p>
-                <span className="text-xs text-gray-slate dark:text-white/45">Choose the permissions they start with.</span>
+                <p className="text-sm font-medium text-text dark:text-[#fff3ea]">Role *</p>
+                <span className="text-xs text-text/45">Choose the permissions they start with.</span>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -345,14 +345,14 @@ export function InviteUsersModal({
                       onClick={() => setRole(option.value)}
                       className={`rounded-2xl border p-4 text-left transition-all ${
                         isSelected
-                          ? 'border-orange/50 bg-orange/10 shadow-[0_0_0_1px_rgba(239,114,21,0.12)] dark:border-orange/70 dark:bg-orange/12'
-                          : 'border-gray-light bg-white hover:border-orange/30 hover:bg-orange/5 dark:border-white/10 dark:bg-[#0f151d] dark:hover:border-white/25 dark:hover:bg-white/[0.06]'
+                          ? 'border-accent bg-accent-soft shadow-sm'
+                          : 'border-border bg-surface-alt hover:border-accent hover:bg-accent-soft'
                       }`}
                     >
-                      <p className={`text-sm font-semibold leading-none ${isSelected ? 'text-orange-dark dark:text-[#fff3ea]' : 'text-orange-dark dark:text-white'}`}>
+                      <p className={`text-sm font-semibold leading-none ${isSelected ? 'text-text dark:text-[#fff3ea]' : 'text-text'}`}>
                         {option.title}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/60">{option.description}</p>
+                      <p className="mt-2 text-sm leading-6 text-text/60">{option.description}</p>
                     </button>
                   );
                 })}

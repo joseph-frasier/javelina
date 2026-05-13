@@ -25,7 +25,7 @@ export function BulkActionBar({
 
   return (
     <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom duration-300">
-      <div className="bg-orange-dark dark:bg-orange-900 text-white rounded-lg shadow-2xl border border-orange-600 dark:border-orange-800">
+      <div className="bg-accent-dark dark:bg-accent-900 text-white rounded-lg shadow-2xl border border-orange-600 dark:border-orange-800">
         <div className="flex items-center gap-4 px-6 py-4">
           {/* Selection Info */}
           <div className="flex items-center gap-2">
@@ -34,7 +34,7 @@ export function BulkActionBar({
             </span>
           </div>
 
-          <div className="h-6 w-px bg-white/30"></div>
+          <div className="h-6 w-px bg-surface/30"></div>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export function BulkActionBar({
                 size="sm"
                 variant="ghost"
                 onClick={onSelectAll}
-                className="!text-white hover:!bg-white/10"
+                className="!text-white hover:!bg-surface/10"
               >
                 Select All ({totalCount})
               </Button>
@@ -53,19 +53,19 @@ export function BulkActionBar({
               size="sm"
               variant="ghost"
               onClick={onClearSelection}
-              className="!text-white hover:!bg-white/10"
+              className="!text-white hover:!bg-surface/10"
             >
               Clear
             </Button>
 
-            <div className="h-6 w-px bg-white/30 mx-1"></div>
+            <div className="h-6 w-px bg-surface/30 mx-1"></div>
 
             {onEnable && (
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={onEnable}
-                className="!text-white hover:!bg-white/10 flex items-center gap-2"
+                className="!text-white hover:!bg-surface/10 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -79,7 +79,7 @@ export function BulkActionBar({
                 size="sm"
                 variant="ghost"
                 onClick={onSuspend}
-                className="!text-white hover:!bg-white/10 flex items-center gap-2"
+                className="!text-white hover:!bg-surface/10 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />

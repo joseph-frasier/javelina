@@ -15,10 +15,10 @@ export default function LoginPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-orange-light">
+    <div className="min-h-screen flex items-center justify-center bg-accent-light">
       <div className="flex items-center space-x-2">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-        <span className="text-orange-dark">Redirecting...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+        <span className="text-text">Redirecting...</span>
       </div>
     </div>
   );

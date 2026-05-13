@@ -1,0 +1,67 @@
+'use client';
+
+import { FONT, type Tokens } from '@/components/business/ui/tokens';
+import { Card } from '@/components/business/ui/Card';
+import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
+
+interface Props {
+  t: Tokens;
+}
+
+export function AnalyticsPlaceholder({ t }: Props) {
+  return (
+    <Card t={t}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          marginBottom: 14,
+        }}
+      >
+        <h3
+          style={{
+            margin: 0,
+            fontSize: 13,
+            fontWeight: 600,
+            color: t.textMuted,
+            textTransform: 'uppercase',
+            letterSpacing: 0.6,
+            fontFamily: FONT,
+          }}
+        >
+          Last 14 days
+        </h3>
+        <HoverArrowLink t={t}>View analytics</HoverArrowLink>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px 8px',
+          gap: 8,
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: 14, fontWeight: 600, color: t.text, fontFamily: FONT }}>
+          Analytics will appear here
+        </div>
+        <div
+          style={{
+            fontSize: 12.5,
+            color: t.textMuted,
+            fontFamily: FONT,
+            maxWidth: 280,
+            lineHeight: 1.5,
+          }}
+        >
+          Visitors, pageviews, and uptime start populating once your site goes live.
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+export default AnalyticsPlaceholder;

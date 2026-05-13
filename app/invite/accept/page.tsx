@@ -26,7 +26,7 @@ function InviteAcceptContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-slate">Redirecting to login...</p>
+      <p className="text-text-muted">Redirecting to login...</p>
     </div>
   );
 }
@@ -35,7 +35,7 @@ export default function InviteAcceptPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-slate">Loading...</p>
+        <p className="text-text-muted">Loading...</p>
       </div>
     }>
       <InviteAcceptContent />

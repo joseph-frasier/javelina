@@ -7,51 +7,55 @@ export interface InputProps
   error?: string;
   helperText?: string;
   suffixHint?: string;
+  mono?: boolean;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, helperText, suffixHint, type = 'text', value, ...props }, ref) => {
+  (
+    { className, label, error, helperText, suffixHint, mono, type = 'text', value, ...props },
+    ref
+  ) => {
     const measureRef = useRef<HTMLSpanElement>(null);
     const [suffixOffset, setSuffixOffset] = useState(0);
 
-    // Calculate how much of suffix user has already typed
     const getSuffixToShow = () => {
       if (!suffixHint || !value) return suffixHint;
       const valueStr = String(value);
       let matchedChars = 0;
-      
-      // Check how many chars at end of value match start of suffix
       for (let i = 0; i < suffixHint.length; i++) {
         if (valueStr.endsWith(suffixHint.substring(0, i + 1))) {
           matchedChars = i + 1;
         }
       }
-      
       return suffixHint.substring(matchedChars);
     };
 
-    // Calculate the width of the input value to position the suffix hint
     useEffect(() => {
       if (measureRef.current && suffixHint && value) {
-        // Get the actual text width without padding
         const width = measureRef.current.scrollWidth;
         setSuffixOffset(width);
       }
     }, [value, suffixHint]);
 
-    // Determine if we should show the suffix hint
     const valueStr = String(value || '');
     const suffixToShow = getSuffixToShow();
-    const showSuffixHint = suffixHint && valueStr.length > 0 && !valueStr.endsWith('.') && suffixToShow && suffixToShow.length > 0;
+    const showSuffixHint =
+      suffixHint &&
+      valueStr.length > 0 &&
+      !valueStr.endsWith('.') &&
+      suffixToShow &&
+      suffixToShow.length > 0;
 
     return (
       <div className="w-full">
         {label && (
           <label
             htmlFor={props.id}
-            className="block text-sm font-medium text-orange-dark mb-2"
+            className="block text-sm font-medium text-text mb-1.5"
           >
-            {label}
+            {label.endsWith(' *') ? (
+              <>{label.slice(0, -2)} <span className="text-danger" aria-hidden="true">*</span></>
+            ) : label}
           </label>
         )}
         <div className="relative">
@@ -60,35 +64,39 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             value={value}
             className={clsx(
-              'w-full px-4 py-2.5 rounded-md border transition-colors',
-              'font-regular text-orange-dark dark:text-gray-100',
-              'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-              'bg-white dark:bg-gray-800',
-              'focus:outline-none focus:ring-2 focus:ring-offset-1',
+              'w-full h-10 px-3 rounded-md border bg-surface text-text',
+              mono ? 'font-mono text-[13px]' : 'font-sans text-sm',
+              'placeholder:text-text-faint',
+              'transition-[border-color,box-shadow] duration-150',
+              'focus-visible:outline-none focus-visible:shadow-focus-ring',
               error
-                ? 'border-red-500 focus:ring-red-500'
-                : 'border-gray-light dark:border-gray-600 focus:ring-orange hover:border-orange/50',
-              'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-light',
+                ? 'border-danger focus-visible:border-danger'
+                : 'border-border hover:border-border-strong focus-visible:border-accent',
+              'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-surface-alt',
               className
             )}
             {...props}
           />
-          {/* Hidden span to measure text width */}
           {suffixHint && (
             <span
               ref={measureRef}
-              className="absolute opacity-0 pointer-events-none whitespace-pre font-regular"
-              style={{ fontSize: 'inherit', fontFamily: 'inherit', left: '16px' }}
+              className={clsx(
+                'absolute opacity-0 pointer-events-none whitespace-pre',
+                mono ? 'font-mono' : 'font-sans'
+              )}
+              style={{ fontSize: 'inherit', fontFamily: 'inherit', left: '12px' }}
               aria-hidden="true"
             >
               {valueStr}
             </span>
           )}
-          {/* Suffix hint overlay */}
           {showSuffixHint && (
             <span
-              className="absolute top-0 bottom-0 flex items-center pointer-events-none text-gray-400 dark:text-gray-600 font-regular"
-              style={{ left: `${suffixOffset + 16}px` }}
+              className={clsx(
+                'absolute top-0 bottom-0 flex items-center pointer-events-none text-text-faint',
+                mono ? 'font-mono' : 'font-sans'
+              )}
+              style={{ left: `${suffixOffset + 12}px` }}
               aria-hidden="true"
             >
               {suffixToShow}
@@ -96,12 +104,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="mt-1.5 text-sm font-regular text-red-500">{error}</p>
+          <p className="mt-1.5 text-xs text-danger">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-1.5 text-sm font-light text-gray-slate">
-            {helperText}
-          </p>
+          <p className="mt-1.5 text-xs text-text-muted">{helperText}</p>
         )}
       </div>
     );

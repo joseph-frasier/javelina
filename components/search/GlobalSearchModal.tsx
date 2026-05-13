@@ -41,7 +41,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
             onChange={(e) => search.setQuery(e.target.value)}
             onKeyDown={search.onKeyDown}
             placeholder={placeholderText}
-            className="w-full rounded-md border border-gray-light bg-white px-4 py-3 pl-11 text-sm text-gray-900 outline-none transition-colors focus:border-orange focus:ring-2 focus:ring-orange/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            className="w-full rounded-md border border-border bg-surface px-4 py-3 pl-11 text-sm text-gray-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
           />
           <svg
             className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -65,7 +65,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
               onClick={() => search.setScope('current')}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 search.effectiveScope === 'current'
-                  ? 'bg-orange text-white'
+                  ? 'bg-accent text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
@@ -76,7 +76,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
               onClick={() => search.setScope('all')}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 search.effectiveScope === 'all'
-                  ? 'bg-orange text-white'
+                  ? 'bg-accent text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
@@ -86,7 +86,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
         )}
 
         {search.loading ? (
-          <div className="py-10 text-center text-sm text-gray-slate dark:text-gray-300">
+          <div className="py-10 text-center text-sm text-text-muted">
             Searching...
           </div>
         ) : search.error ? (
@@ -102,7 +102,7 @@ export function GlobalSearchModal({ context, search }: GlobalSearchModalProps) {
           />
         )}
 
-        <div className="flex items-center justify-between pt-3 text-xs text-gray-slate dark:text-gray-400">
+        <div className="flex items-center justify-between pt-3 text-xs text-text-muted">
           <span>Shortcut: {search.shortcutHint}</span>
           <span>Close: Esc</span>
         </div>

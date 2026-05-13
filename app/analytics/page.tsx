@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { StatCard, Card } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
+import { StatCard } from '@/components/ui/StatCard';
 import Dropdown from '@/components/ui/Dropdown';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 // No longer need Supabase client - using Express API with session cookies
@@ -148,11 +149,11 @@ export default function AnalyticsPage() {
       `}</style>
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto px-4 sm:px-6 lg:px-6 py-4 sm:py-6 md:py-8">
         {/* Coming Soon Banner */}
-        <div className="mb-6 w-fit mx-auto p-4 sm:p-6 rounded-lg bg-orange/10 dark:bg-orange/20 border border-orange/30 dark:border-orange/40 text-center">
-          <p className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
+        <div className="mb-6 w-fit mx-auto p-4 sm:p-6 rounded-lg bg-accent/10 dark:bg-accent/20 border border-accent/30 dark:border-accent/40 text-center">
+          <p className="text-lg sm:text-xl font-semibold text-text">
             Coming soon
           </p>
-          <p className="mt-1 text-sm text-gray-slate dark:text-gray-400">
+          <p className="mt-1 text-sm text-text-muted">
             Analytics is under development. Check back later for DNS activity and performance insights.
           </p>
         </div>
@@ -161,10 +162,10 @@ export default function AnalyticsPage() {
         <div className="pointer-events-none select-none opacity-60">
         {/* Page Header */}
         <div className="mb-4 sm:mb-6">
-          <h1 className="font-black text-2xl sm:text-3xl md:text-4xl text-orange-dark dark:text-orange mb-2">
+          <h1 className="font-black text-2xl sm:text-3xl md:text-4xl text-text mb-2">
             DNS Analytics
           </h1>
-          <p className="font-light text-gray-slate dark:text-gray-300 text-sm sm:text-base">
+          <p className="font-light text-text-muted text-sm sm:text-base">
             Monitor DNS activity and performance across all zones
           </p>
         </div>
@@ -202,33 +203,33 @@ export default function AnalyticsPage() {
 
             {/* Start Date */}
             <div>
-              <label className="block text-sm font-medium text-orange-dark dark:text-orange mb-2">
+              <label className="block text-sm font-medium text-text mb-2">
                 Start Date
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark dark:text-gray-100"
+                className="w-full px-3 py-2 rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-text"
               />
             </div>
 
             {/* End Date */}
             <div>
-              <label className="block text-sm font-medium text-orange-dark dark:text-orange mb-2">
+              <label className="block text-sm font-medium text-text mb-2">
                 End Date
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange text-orange-dark dark:text-gray-100"
+                className="w-full px-3 py-2 rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-text"
               />
             </div>
           </div>
 
           {/* Last Refresh */}
-          <div className="mt-4 text-xs sm:text-sm text-gray-slate dark:text-gray-400 font-light">
+          <div className="mt-4 text-xs sm:text-sm text-text-muted font-light">
             Last refreshed: {isMounted ? lastRefresh.toLocaleTimeString() : '--'}
           </div>
         </Card>

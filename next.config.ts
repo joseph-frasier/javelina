@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // The wizard's photo upload server action passes multipart bodies up to
+    // 10 × 25 MB. Default cap is 1 MB.
+    serverActions: {
+      bodySizeLimit: "300mb",
+    },
+  },
   // Security headers including Content Security Policy
   // Note: If you deploy with a separate backend API domain (e.g., api.yourdomain.com),
   // add it to the connect-src directive below

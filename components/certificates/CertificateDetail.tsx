@@ -196,7 +196,7 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
   if (loadError || !certificate) {
     return (
       <div className="space-y-4">
-        <Link href="/domains?tab=ssl-certificates" className="text-sm text-orange hover:text-orange/70 transition-colors">
+        <Link href="/domains?tab=ssl-certificates" className="text-sm text-accent hover:text-accent/70 transition-colors">
           &larr; Back to SSL Certificates
         </Link>
         <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -214,11 +214,11 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
     <div className="space-y-6">
       {/* Back link + header */}
       <div>
-        <Link href="/domains?tab=ssl-certificates" className="text-sm text-orange hover:text-orange/70 transition-colors">
+        <Link href="/domains?tab=ssl-certificates" className="text-sm text-accent hover:text-accent/70 transition-colors">
           &larr; Back to SSL Certificates
         </Link>
         <div className="mt-3 flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold text-orange-dark dark:text-white">
+          <h1 className="text-2xl font-bold text-text">
             {certificate.domain}
           </h1>
           <CertificateStatusBadge status={certificate.status} />
@@ -233,11 +233,11 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Domain</p>
-            <p className="text-sm text-orange-dark dark:text-white mt-1">{certificate.domain}</p>
+            <p className="text-sm text-text mt-1">{certificate.domain}</p>
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Product</p>
-            <p className="text-sm text-orange-dark dark:text-white mt-1">{formatProductType(certificate.product_type)}</p>
+            <p className="text-sm text-text mt-1">{formatProductType(certificate.product_type)}</p>
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Status</p>
@@ -247,14 +247,14 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Period</p>
-            <p className="text-sm text-orange-dark dark:text-white mt-1">
+            <p className="text-sm text-text mt-1">
               {certificate.period} {certificate.period === 1 ? 'year' : 'years'}
             </p>
           </div>
           {certificate.issued_at && (
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Issued</p>
-              <p className="text-sm text-orange-dark dark:text-white mt-1">
+              <p className="text-sm text-text mt-1">
                 {new Date(certificate.issued_at).toLocaleDateString()}
               </p>
             </div>
@@ -262,21 +262,21 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
           {certificate.expires_at && (
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Expires</p>
-              <p className="text-sm text-orange-dark dark:text-white mt-1">
+              <p className="text-sm text-text mt-1">
                 {new Date(certificate.expires_at).toLocaleDateString()}
               </p>
             </div>
           )}
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Created</p>
-            <p className="text-sm text-orange-dark dark:text-white mt-1">
+            <p className="text-sm text-text mt-1">
               {new Date(certificate.created_at).toLocaleDateString()}
             </p>
           </div>
           {certificate.amount_paid != null && (
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Amount Paid</p>
-              <p className="text-sm text-orange-dark dark:text-white mt-1">
+              <p className="text-sm text-text mt-1">
                 ${(certificate.amount_paid / 100).toFixed(2)} {certificate.currency.toUpperCase()}
               </p>
             </div>
@@ -290,27 +290,27 @@ export default function CertificateDetail({ certificateId }: CertificateDetailPr
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Name</p>
-              <p className="text-sm text-orange-dark dark:text-white mt-1">
+              <p className="text-sm text-text mt-1">
                 {certificate.contact_info.first_name} {certificate.contact_info.last_name}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Email</p>
-              <p className="text-sm text-orange-dark dark:text-white mt-1 break-all">
+              <p className="text-sm text-text mt-1 break-all">
                 {certificate.contact_info.email}
               </p>
             </div>
             {certificate.contact_info.org_name && (
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Organization</p>
-                <p className="text-sm text-orange-dark dark:text-white mt-1">
+                <p className="text-sm text-text mt-1">
                   {certificate.contact_info.org_name}
                 </p>
               </div>
             )}
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Phone</p>
-              <p className="text-sm text-orange-dark dark:text-white mt-1">{certificate.contact_info.phone}</p>
+              <p className="text-sm text-text mt-1">{certificate.contact_info.phone}</p>
             </div>
           </div>
         </Card>

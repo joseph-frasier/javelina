@@ -15,6 +15,7 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Pagination } from '@/components/admin/Pagination';
 import { DomainCertificatesSection } from '@/components/certificates/DomainCertificatesSection';
 import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
+import { TransferVerificationCard } from '@/components/domains/TransferVerificationCard';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
 import type {
@@ -138,6 +139,20 @@ export default function DomainDetailPage() {
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
 
+  // Billing portal state
+  const [openingBillingPortal, setOpeningBillingPortal] = useState(false);
+  const handleOpenBillingPortal = useCallback(async () => {
+    if (openingBillingPortal) return;
+    setOpeningBillingPortal(true);
+    try {
+      const { url } = await domainsApi.createBillingPortal(domainId);
+      window.location.href = url;
+    } catch (err: any) {
+      addToast('error', extractErrorMessage(err, 'Failed to open billing portal'));
+      setOpeningBillingPortal(false);
+    }
+  }, [domainId, addToast, openingBillingPortal]);
+
   // Renewal state
   const [renewalPricing, setRenewalPricing] = useState<DomainPricing | null>(null);
   const [selectedYears, setSelectedYears] = useState(1);
@@ -153,6 +168,30 @@ export default function DomainDetailPage() {
       setLoadError(null);
       const result = await domainsApi.getManagement(domainId);
       setData(result);
+
+      // JAV-102: kick off a sync against OpenSRS; if anything changed, refetch.
+      domainsApi
+        .syncDomain(domainId)
+        .then((sync) => {
+          if (sync.changed) {
+            domainsApi
+              .getManagement(domainId)
+              .then((fresh) => {
+                setData(fresh);
+                if (
+                  result.domain.status === 'transferring' &&
+                  fresh.domain.status === 'active'
+                ) {
+                  addToast(
+                    'success',
+                    'Transfer complete — your domain is now active.'
+                  );
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
 
       setAutoRenew(result.domain.auto_renew || false);
       setDomainLocked(result.live?.locked ?? false);
@@ -349,22 +388,32 @@ export default function DomainDetailPage() {
           </svg>
           Back to My Domains
         </Link>
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold font-mono tracking-tight text-orange-dark dark:text-white">
-            {domain.domain_name}
-          </h1>
-          <span className="flex items-center gap-1.5">
-            <span className={`w-2.5 h-2.5 rounded-full ${
-              domain.status === 'active' ? 'bg-green-500 animate-pulse' :
-              domain.status === 'pending' || domain.status === 'processing' ? 'bg-yellow-500' :
-              domain.status === 'expired' || domain.status === 'failed' ? 'bg-red-500' :
-              domain.status === 'transferring' ? 'bg-purple-500' :
-              domain.status === 'cancelled' ? 'bg-gray-400' : 'bg-green-500'
-            }`} />
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
-              {domain.status === 'transfer_complete' ? 'Transferred' : domain.status}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold font-mono tracking-tight text-orange-dark dark:text-white">
+              {domain.domain_name}
+            </h1>
+            <span className="flex items-center gap-1.5">
+              <span className={`w-2.5 h-2.5 rounded-full ${
+                domain.status === 'active' ? 'bg-green-500 animate-pulse' :
+                domain.status === 'pending' || domain.status === 'processing' ? 'bg-yellow-500' :
+                domain.status === 'expired' || domain.status === 'failed' ? 'bg-red-500' :
+                domain.status === 'transferring' ? 'bg-purple-500' :
+                domain.status === 'cancelled' ? 'bg-gray-400' : 'bg-green-500'
+              }`} />
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
+                {domain.status === 'transfer_complete' ? 'Transferred' : domain.status}
+              </span>
             </span>
-          </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenBillingPortal}
+            disabled={openingBillingPortal}
+          >
+            {openingBillingPortal ? 'Opening…' : 'Manage Billing'}
+          </Button>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
           {domain.registration_type === 'linked' ? 'Linked · ' : domain.registration_type === 'transfer' ? 'Transfer · ' : ''}
@@ -500,6 +549,29 @@ export default function DomainDetailPage() {
               )}
             </div>
 
+            {data.upcoming_renewal_invoice && (
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {data.upcoming_renewal_invoice.status === 'failed' ? (
+                  <span className="text-red-600 dark:text-red-400 font-medium">
+                    Auto-renewal payment failed. Auto-renew has been disabled.
+                  </span>
+                ) : (
+                  <>
+                    Auto-renewal payment of{' '}
+                    <strong>
+                      ${data.upcoming_renewal_invoice.amount.toFixed(2)}{' '}
+                      {data.upcoming_renewal_invoice.currency.toUpperCase()}
+                    </strong>{' '}
+                    scheduled for{' '}
+                    <strong>
+                      {new Date(data.upcoming_renewal_invoice.due_date).toLocaleDateString()}
+                    </strong>
+                    .
+                  </>
+                )}
+              </div>
+            )}
+
             <div>
               <Button
                 type="button"
@@ -582,11 +654,19 @@ export default function DomainDetailPage() {
         </div>{/* end inner grid */}
       </div>{/* end combined card */}
 
+      <TransferVerificationCard
+        domain={domain}
+        domainLocked={domainLocked}
+        verification={data.verification}
+      />
+
       {/* Email */}
       {!hideMailboxes && domain && domain.status === 'active' && (
         <DomainEmailSection
           domainId={domain.id}
           domainName={domain.domain_name}
+          onOpenBillingPortal={handleOpenBillingPortal}
+          openingBillingPortal={openingBillingPortal}
         />
       )}
 

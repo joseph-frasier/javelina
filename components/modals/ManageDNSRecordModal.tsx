@@ -158,7 +158,7 @@ const getValueLabel = (type: DNSRecordType): string => {
 };
 
 const getRecordTypeIcon = (type: RecordTypeOptionValue, isSelected: boolean) => {
-  const iconClass = clsx('w-5 h-5 mb-1 transition-all', isSelected ? 'text-orange' : 'text-gray-500 dark:text-gray-400');
+  const iconClass = clsx('w-5 h-5 mb-1 transition-all', isSelected ? 'text-accent' : 'text-gray-500 dark:text-gray-400');
 
   switch (type) {
     case 'A':
@@ -662,8 +662,8 @@ export function ManageDNSRecordModal({
         className={clsx(
           'w-full rounded-lg border-2 p-2 text-center transition-all',
           isDisabled && 'cursor-not-allowed opacity-50 bg-gray-50 dark:bg-gray-800/50',
-          !isDisabled && isSelected && 'border-orange bg-orange/10 dark:bg-orange/20',
-          !isDisabled && !isSelected && 'border-gray-200 bg-white hover:border-orange/50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-orange/50'
+          !isDisabled && isSelected && 'border-accent bg-accent-soft dark:bg-accent/20',
+          !isDisabled && !isSelected && 'border-gray-200 bg-surface hover:border-accent/50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-accent/50'
         )}
       >
         <div className="flex flex-col items-center justify-center">
@@ -672,7 +672,7 @@ export function ManageDNSRecordModal({
             className={clsx(
               'mb-0.5 text-xs font-semibold',
               isDisabled && 'text-gray-400 dark:text-gray-600',
-              !isDisabled && isSelected && 'text-orange',
+              !isDisabled && isSelected && 'text-accent',
               !isDisabled && !isSelected && 'text-gray-900 dark:text-gray-100'
             )}
           >
@@ -750,7 +750,7 @@ export function ManageDNSRecordModal({
 
     return (
       <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-orange-dark dark:text-gray-100">{`${modeLabel} ${formData.type} Value`}</p>
+        <p className="text-sm font-medium text-text">{`${modeLabel} ${formData.type} Value`}</p>
         {renderValueModeToggle()}
       </div>
     );
@@ -761,7 +761,7 @@ export function ManageDNSRecordModal({
 
     if (formData.type === 'MX') {
       return (
-        <div className="md:col-span-2 rounded-lg border border-gray-light/70 bg-transparent p-4 dark:border-gray-700/70">
+        <div className="md:col-span-2 rounded-lg border border-border/70 bg-transparent p-4 dark:border-gray-700/70">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Input
               id="mx-priority"
@@ -792,7 +792,7 @@ export function ManageDNSRecordModal({
               placeholder="mail.example.com"
             />
           </div>
-          <p className="mt-1 text-xs text-gray-slate">Composed value: `{effectiveFormData.value || '...'}`</p>
+          <p className="mt-1 text-xs text-text-muted">Composed value: `{effectiveFormData.value || '...'}`</p>
           {(realtimeErrors.value || errors.value) && (
             <p className="mt-1 text-sm font-regular text-red-500">{realtimeErrors.value || errors.value}</p>
           )}
@@ -802,7 +802,7 @@ export function ManageDNSRecordModal({
 
     if (formData.type === 'SRV') {
       return (
-        <div className="md:col-span-2 rounded-lg border border-gray-light/70 bg-transparent p-4 dark:border-gray-700/70">
+        <div className="md:col-span-2 rounded-lg border border-border/70 bg-transparent p-4 dark:border-gray-700/70">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
             <Input
               id="srv-priority"
@@ -863,7 +863,7 @@ export function ManageDNSRecordModal({
               placeholder="sip.example.com"
             />
           </div>
-          <p className="mt-1 text-xs text-gray-slate">Composed value: `{effectiveFormData.value || '...'}`</p>
+          <p className="mt-1 text-xs text-text-muted">Composed value: `{effectiveFormData.value || '...'}`</p>
           {(realtimeErrors.value || errors.value) && (
             <p className="mt-1 text-sm font-regular text-red-500">{realtimeErrors.value || errors.value}</p>
           )}
@@ -872,7 +872,7 @@ export function ManageDNSRecordModal({
     }
 
     return (
-      <div className="md:col-span-2 rounded-lg border border-gray-light/70 bg-transparent p-4 dark:border-gray-700/70">
+      <div className="md:col-span-2 rounded-lg border border-border/70 bg-transparent p-4 dark:border-gray-700/70">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Input
             id="caa-flags"
@@ -915,7 +915,7 @@ export function ManageDNSRecordModal({
             placeholder="letsencrypt.org"
           />
         </div>
-        <p className="mt-1 text-xs text-gray-slate">Composed value: `{effectiveFormData.value || '...'}`</p>
+        <p className="mt-1 text-xs text-text-muted">Composed value: `{effectiveFormData.value || '...'}`</p>
         {(realtimeErrors.value || errors.value) && (
           <p className="mt-1 text-sm font-regular text-red-500">{realtimeErrors.value || errors.value}</p>
         )}
@@ -956,7 +956,7 @@ export function ManageDNSRecordModal({
           <div className="md:col-span-2">
             <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Record Type</label>
 
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-slate">Common Types</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Common Types</p>
             <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
               {recordTypeOptions
                 .filter((option) => COMMON_RECORD_TYPES.includes(option.value as DNSRecordType))
@@ -977,7 +977,7 @@ export function ManageDNSRecordModal({
                 ref={allTypesSectionRef}
                 className="overflow-hidden will-change-[height,opacity]"
               >
-                <div className="rounded-lg border border-gray-light/60 p-3 dark:border-gray-700/60">
+                <div className="rounded-lg border border-border/60 p-3 dark:border-gray-700/60">
                   <Input
                     id="record-type-search"
                     label="Search Types"
@@ -990,7 +990,7 @@ export function ManageDNSRecordModal({
                     {searchedRecordTypes.map((option) => renderRecordTypeButton(option))}
                   </div>
                   {searchedRecordTypes.length === 0 && (
-                    <p className="mt-3 text-xs text-gray-slate">No record types match your search.</p>
+                    <p className="mt-3 text-xs text-text-muted">No record types match your search.</p>
                   )}
                 </div>
               </div>
@@ -1036,7 +1036,7 @@ export function ManageDNSRecordModal({
                   min={10}
                   max={604800}
                 />
-                <p className="mt-1 text-xs text-gray-slate">
+                <p className="mt-1 text-xs text-text-muted">
                   Min: 10 seconds, Max: 604800 seconds (7 days). Recommended: 15 minutes to 1 day.
                 </p>
                 <button
@@ -1045,7 +1045,7 @@ export function ManageDNSRecordModal({
                     setCustomTTL(false);
                     setFormData((prev) => ({ ...prev, ttl: 3600 }));
                   }}
-                  className="mt-1 text-xs text-orange transition-colors hover:text-orange-dark"
+                  className="mt-1 text-xs text-accent transition-colors hover:text-text"
                 >
                   Use preset values
                 </button>
@@ -1086,13 +1086,13 @@ export function ManageDNSRecordModal({
               value={formData.comment}
               onChange={(e) => setFormData((prev) => ({ ...prev, comment: e.target.value }))}
               rows={2}
-              className="w-full rounded-md border border-gray-light bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-orange dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
+              className="w-full rounded-md border border-border bg-surface-alt px-3 py-2 text-sm text-text placeholder:text-text-faint transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
               placeholder="Optional comment or notes about this record"
             />
           </div>
         </div>
 
-        <div className="-mx-6 flex items-center justify-end gap-3 border-t border-gray-light px-6 pt-4 dark:border-gray-700">
+        <div className="-mx-6 flex items-center justify-end gap-3 border-t border-border px-6 pt-4 dark:border-gray-700">
           <Button type="button" variant="outline" className="h-10" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>

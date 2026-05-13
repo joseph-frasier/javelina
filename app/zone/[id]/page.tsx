@@ -26,8 +26,8 @@ export default async function ZonePage({
   if (!sessionCookie) {
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold text-orange-dark mb-4">Not Authenticated</h1>
-        <p className="text-gray-slate">Please log in to view this zone.</p>
+        <h1 className="text-3xl font-bold text-text mb-4">Not Authenticated</h1>
+        <p className="text-text-muted">Please log in to view this zone.</p>
       </div>
     );
   }
@@ -47,8 +47,8 @@ export default async function ZonePage({
     
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold text-orange-dark mb-4">Zone Not Found</h1>
-        <p className="text-gray-slate">
+        <h1 className="text-3xl font-bold text-text mb-4">Zone Not Found</h1>
+        <p className="text-text-muted">
           {errorData.error || `The zone "${id}" does not exist or you don't have access to it.`}
         </p>
       </div>

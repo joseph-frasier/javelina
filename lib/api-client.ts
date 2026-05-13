@@ -309,6 +309,20 @@ export const organizationsApi = {
   },
 
   /**
+   * Get the bundled-domain entitlement status for an org.
+   * Returns { eligible, redeemed, redeemed_at, available } where `available`
+   * means the org's plan includes a bundled domain AND it hasn't been used yet.
+   */
+  getBundledDomainStatus: (id: string): Promise<{
+    eligible: boolean;
+    redeemed: boolean;
+    redeemed_at: string | null;
+    available: boolean;
+  }> => {
+    return apiClient.get(`/organizations/${id}/bundled-domain-status`);
+  },
+
+  /**
    * Create a new organization
    */
   create: (data: { 
@@ -1270,6 +1284,9 @@ import type {
   DomainManagementResponse,
   DomainContact,
   DomainRenewalResponse,
+  DomainAuthCodeResponse,
+  DomainVerification,
+  DomainSyncResponse,
 } from "@/types/domains";
 
 import type {
@@ -1309,6 +1326,9 @@ export const domainsApi = {
   getById: (id: string): Promise<DomainDetailResponse> =>
     apiClient.get(`/domains/${id}`),
 
+  createBillingPortal: (id: string): Promise<{ url: string }> =>
+    apiClient.post(`/domains/${id}/billing-portal`, {}),
+
   link: (domain: string): Promise<DomainDetailResponse> =>
     apiClient.post("/domains/link", { domain }),
 
@@ -1332,6 +1352,18 @@ export const domainsApi = {
 
   renew: (id: string, years: number): Promise<DomainRenewalResponse> =>
     apiClient.post(`/domains/${id}/renew`, { years }),
+
+  getAuthCode: (id: string): Promise<DomainAuthCodeResponse> =>
+    apiClient.post(`/domains/${id}/auth-code`, {}),
+
+  syncDomain: (id: string): Promise<DomainSyncResponse> =>
+    apiClient.post(`/domains/${id}/sync`, {}),
+
+  getVerification: (id: string): Promise<DomainVerification> =>
+    apiClient.get(`/domains/${id}/verification`),
+
+  resendVerification: (id: string): Promise<{ success: boolean }> =>
+    apiClient.post(`/domains/${id}/verification/resend`, {}),
 };
 
 // ============================================================

@@ -81,8 +81,8 @@ const SortableTagItem = memo(function SortableTagItem({
         group flex items-center justify-between p-3 rounded-lg transition-colors
         ${isDragging ? 'shadow-lg' : ''}
         ${isActive 
-          ? 'bg-orange/10 border border-orange' 
-          : 'bg-gray-light/30 dark:bg-gray-800 border border-transparent hover:bg-gray-light/50 dark:hover:bg-gray-700'
+          ? 'bg-accent/10 border border-accent' 
+          : 'bg-surface-alt dark:bg-gray-800 border border-transparent hover:bg-surface-hover/50 dark:hover:bg-gray-700'
         }
       `}
     >
@@ -94,7 +94,7 @@ const SortableTagItem = memo(function SortableTagItem({
           className={`p-1 rounded transition-colors touch-none ${
             disabled 
               ? 'cursor-not-allowed opacity-40' 
-              : 'cursor-grab active:cursor-grabbing hover:bg-gray-light dark:hover:bg-gray-600'
+              : 'cursor-grab active:cursor-grabbing hover:bg-surface-hover dark:hover:bg-gray-600'
           }`}
           title={disabled ? 'Organization disabled' : 'Drag to reorder'}
           onClick={(e) => e.stopPropagation()}
@@ -111,7 +111,7 @@ const SortableTagItem = memo(function SortableTagItem({
             w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
             ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
             ${isActive
-              ? 'bg-orange border-orange'
+              ? 'bg-accent border-accent'
               : 'border-gray-400 dark:border-gray-500'
             }
           `}
@@ -132,7 +132,7 @@ const SortableTagItem = memo(function SortableTagItem({
         </div>
         
         <span 
-          className={`text-xs text-gray-slate dark:text-gray-400 ${
+          className={`text-xs text-text-muted ${
             disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
           }`}
           onClick={() => !disabled && onTagClick(tag.id)}
@@ -152,12 +152,12 @@ const SortableTagItem = memo(function SortableTagItem({
             className={`p-1 rounded transition-all ${
               disabled 
                 ? 'opacity-40 cursor-not-allowed' 
-                : 'opacity-0 group-hover:opacity-100 hover:bg-gray-light dark:hover:bg-gray-600'
+                : 'opacity-0 group-hover:opacity-100 hover:bg-surface-hover dark:hover:bg-gray-600'
             }`}
             title={disabled ? 'Organization disabled' : 'Edit tag'}
             disabled={disabled}
           >
-            <svg className="w-4 h-4 text-gray-400 hover:text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-gray-400 hover:text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </button>
@@ -171,7 +171,7 @@ const SortableTagItem = memo(function SortableTagItem({
           className={`p-1 rounded transition-colors ${
             disabled 
               ? 'opacity-40 cursor-not-allowed' 
-              : 'hover:bg-gray-light dark:hover:bg-gray-600'
+              : 'hover:bg-surface-hover dark:hover:bg-gray-600'
           }`}
           title={disabled ? 'Organization disabled' : (tag.is_favorite ? 'Remove from favorites' : 'Add to favorites')}
           disabled={disabled}
@@ -284,7 +284,7 @@ export function TagsManagerCard({
           disabled={disabled}
           title={disabled ? 'Organization disabled' : 'Create a new tag'}
         >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Create Tag
@@ -294,7 +294,7 @@ export function TagsManagerCard({
       {tags.length === 0 ? (
         <div className="text-center py-12">
           <svg
-            className="w-16 h-16 text-gray-slate dark:text-gray-light mx-auto mb-4 opacity-50"
+            className="w-16 h-16 text-text-muted dark:text-gray-light mx-auto mb-4 opacity-50"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -306,12 +306,12 @@ export function TagsManagerCard({
               d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
             />
           </svg>
-          <p className="text-gray-slate dark:text-gray-light text-sm mb-4">
+          <p className="text-text-muted dark:text-gray-light text-sm mb-4">
             {disabled ? 'This organization is disabled. No tags can be created.' : 'No tags yet. Create your first tag to organize your zones.'}
           </p>
           {!disabled && (
             <Button variant="primary" size="sm" onClick={onCreateTag}>
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Create Tag
@@ -322,13 +322,13 @@ export function TagsManagerCard({
         <div className="mt-4">
           {/* Active Filter Indicator */}
           {hasActiveFilters && (
-            <div className="flex items-center justify-between p-2 bg-orange/10 rounded-lg mb-3">
-              <span className="text-sm text-orange-dark dark:text-orange">
+            <div className="flex items-center justify-between p-2 bg-accent/10 rounded-lg mb-3">
+              <span className="text-sm text-text">
                 Filtering by {activeTagIds.length} tag{activeTagIds.length > 1 ? 's' : ''}
               </span>
               <button
                 onClick={onClearFilters}
-                className="text-sm text-orange hover:text-orange-dark flex items-center gap-1"
+                className="text-sm text-accent hover:text-text flex items-center gap-1"
               >
                 Clear
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,7 +391,7 @@ export function TagsManagerCard({
 
           {/* Tag count indicator when scrolling */}
           {tags.length > 6 && (
-            <p className="text-xs text-gray-slate dark:text-gray-500 mt-3">
+            <p className="text-xs text-text-muted dark:text-gray-500 mt-3">
               {tags.length} tags total{!disabled && ' • Drag to reorder'}
             </p>
           )}

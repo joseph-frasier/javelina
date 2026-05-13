@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { clsx } from 'clsx';
 import Button from './Button';
 
 interface ConfirmationModalProps {
@@ -17,6 +18,27 @@ interface ConfirmationModalProps {
   variant?: 'danger' | 'warning' | 'info';
   isLoading?: boolean;
 }
+
+const variantStyles: Record<
+  NonNullable<ConfirmationModalProps['variant']>,
+  { title: string; iconWrap: string; buttonVariant: 'primary' | 'danger' }
+> = {
+  danger: {
+    title: 'text-danger',
+    iconWrap: 'bg-danger-soft text-danger',
+    buttonVariant: 'danger',
+  },
+  warning: {
+    title: 'text-warning',
+    iconWrap: 'bg-warning-soft text-warning',
+    buttonVariant: 'primary',
+  },
+  info: {
+    title: 'text-accent',
+    iconWrap: 'bg-accent-soft text-accent',
+    buttonVariant: 'primary',
+  },
+};
 
 export function ConfirmationModal({
   isOpen,
@@ -39,143 +61,141 @@ export function ConfirmationModal({
     return () => setMounted(false);
   }, []);
 
-  // Handle opening/closing with animation
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
     }
   }, [isOpen]);
 
-  // GSAP Opening Animation
   useGSAP(() => {
     if (!mounted || !shouldRender) return;
 
     if (isOpen && modalRef.current && overlayRef.current) {
-      // Opening animation - Scale + Fade
       gsap.fromTo(
         overlayRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+        { opacity: 1, duration: 0.22, ease: 'power2.out' }
       );
 
       gsap.fromTo(
         modalRef.current,
-        { 
-          scale: 0.95, 
-          opacity: 0,
-          y: 20
-        },
-        { 
-          scale: 1, 
-          opacity: 1,
-          y: 0,
-          duration: 0.4, 
-          ease: 'power3.out'
-        }
+        { scale: 0.97, opacity: 0, y: 16 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.3, ease: 'power3.out' }
       );
     }
   }, [isOpen, mounted, shouldRender]);
 
-  // Handle closing animation separately
   useEffect(() => {
     if (!mounted || !shouldRender) return;
-    if (isOpen) return; // Only handle closing
+    if (isOpen) return;
 
     if (modalRef.current && overlayRef.current) {
-      // Kill any existing animations
       gsap.killTweensOf([modalRef.current, overlayRef.current]);
 
-      // Closing animation
       const tl = gsap.timeline({
-        onComplete: () => setShouldRender(false)
+        onComplete: () => setShouldRender(false),
       });
 
       tl.to(overlayRef.current, {
         opacity: 0,
-        duration: 0.2,
-        ease: 'power2.in'
+        duration: 0.18,
+        ease: 'power2.in',
       });
 
-      tl.to(modalRef.current, {
-        scale: 0.95,
-        opacity: 0,
-        y: 20,
-        duration: 0.2,
-        ease: 'power2.in'
-      }, 0); // Start at same time as overlay
+      tl.to(
+        modalRef.current,
+        {
+          scale: 0.97,
+          opacity: 0,
+          y: 16,
+          duration: 0.18,
+          ease: 'power2.in',
+        },
+        0
+      );
     }
   }, [isOpen, mounted, shouldRender]);
 
   if (!shouldRender || !mounted) return null;
 
-  const variantClasses = {
-    danger: 'text-red-600',
-    warning: 'text-orange-600',
-    info: 'text-orange-600',
-  };
+  const styles = variantStyles[variant];
 
-  const iconByVariant = {
-    danger: (
-      <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-    ),
-    warning: (
-      <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
-    ),
-    info: (
-      <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  };
+  const iconSvg = (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden
+    >
+      {variant === 'info' ? (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      ) : (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+        />
+      )}
+    </svg>
+  );
 
   const modalContent = (
     <div className="fixed inset-0 z-[100001] flex items-center justify-center">
-      {/* Backdrop */}
       <div
         ref={overlayRef}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-[rgba(11,13,16,0.55)] backdrop-blur-[2px]"
         onClick={onClose}
+        aria-hidden="true"
       />
 
-      {/* Modal */}
-      <div 
+      <div
         ref={modalRef}
-        className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4"
+        className="relative bg-surface rounded-2xl border border-border shadow-popover max-w-md w-full mx-4"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-title"
       >
         <div className="p-6">
-          {/* Icon & Title */}
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0">
-              {iconByVariant[variant]}
+            <div
+              className={clsx(
+                'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center',
+                styles.iconWrap
+              )}
+            >
+              {iconSvg}
             </div>
-            <div className="flex-1">
-              <h3 className={`text-lg font-semibold ${variantClasses[variant]}`}>
+            <div className="flex-1 min-w-0">
+              <h3
+                id="confirmation-title"
+                className={clsx(
+                  'text-lg font-semibold leading-tight',
+                  styles.title
+                )}
+              >
                 {title}
               </h3>
-              <p className="mt-2 text-sm text-gray-slate dark:text-gray-300">
+              <p className="mt-2 text-sm text-text-muted leading-relaxed">
                 {message}
               </p>
             </div>
           </div>
 
-          {/* Actions */}
           <div className="mt-6 flex gap-3 justify-end">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-            >
+            <Button variant="secondary" onClick={onClose} disabled={isLoading}>
               {cancelText}
             </Button>
             <Button
-              variant="primary"
+              variant={styles.buttonVariant}
               onClick={onConfirm}
-              disabled={isLoading}
-              className={variant === 'danger' ? '!bg-red-600 hover:!bg-red-700' : ''}
+              loading={isLoading}
             >
               {isLoading ? 'Processing...' : confirmText}
             </Button>
@@ -187,4 +207,3 @@ export function ConfirmationModal({
 
   return createPortal(modalContent, document.body);
 }
-

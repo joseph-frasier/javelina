@@ -10,6 +10,7 @@ import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import { Logo } from '@/components/ui/Logo';
 import Image from 'next/image';
+import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -99,10 +100,10 @@ export default function LandingPageClient() {
   // Show loading state while auth is initializing
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+      <div className="min-h-screen flex items-center justify-center bg-accent-light">
         <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark font-medium">Loading...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <span className="text-text font-medium">Loading...</span>
         </div>
       </div>
     );
@@ -140,7 +141,7 @@ export default function LandingPageClient() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={login}
-                  className="text-sm font-medium text-gray-400 hover:text-orange transition-colors"
+                  className="text-sm font-medium text-gray-400 hover:text-accent transition-colors"
                 >
                   Sign in
                 </button>
@@ -170,7 +171,7 @@ export default function LandingPageClient() {
                 <h1 className="font-condensed font-black text-4xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.05]">
                   Premium DNS,
                   <br />
-                  <span className="text-orange">built on Anycast.</span>
+                  <span className="text-accent">built on Anycast.</span>
                 </h1>
 
                 <p className="mt-6 text-base sm:text-xl text-gray-400 max-w-lg mx-auto lg:mx-0 leading-relaxed font-light">
@@ -179,15 +180,15 @@ export default function LandingPageClient() {
 
                 <ul className="mt-6 space-y-2 text-sm sm:text-base text-gray-300 max-w-lg mx-auto lg:mx-0">
                   <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                     Low-latency DNS resolution worldwide
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                     31 PoPs across 6 continents and 19 countries
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                     Zero-downtime failover with no TTL-dependent delay
                   </li>
                 </ul>
@@ -195,7 +196,7 @@ export default function LandingPageClient() {
                 <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
                   <button
                     onClick={signup}
-                    className="inline-flex items-center bg-orange text-white hover:brightness-110 rounded-full px-7 sm:px-8 py-3.5 sm:py-4 text-base font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
+                    className="inline-flex items-center bg-accent text-white hover:brightness-110 rounded-full px-7 sm:px-8 py-3.5 sm:py-4 text-base font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
                   >
                     Get started
                     <svg className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,7 +205,7 @@ export default function LandingPageClient() {
                   </button>
                   <button
                     onClick={() => document.querySelector('.features-section')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="text-gray-500 hover:text-orange font-medium text-base transition-colors flex items-center gap-2 px-2 py-4"
+                    className="text-gray-500 hover:text-accent font-medium text-base transition-colors flex items-center gap-2 px-2 py-4"
                   >
                     Learn more
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,7 +235,7 @@ export default function LandingPageClient() {
                         { name: 'cdn.enterprise.co', records: 24, status: 'bg-yellow-500' },
                         { name: 'mail.brand.dev', records: 6, status: 'bg-green-500' },
                       ].map((zone, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                        <div key={i} className="flex items-center justify-between p-3 bg-surface/5 rounded-lg">
                           <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full ${zone.status}`} />
                             <span className="text-sm font-medium text-gray-300">{zone.name}</span>
@@ -291,9 +292,9 @@ export default function LandingPageClient() {
                     ].map((feature) => (
                       <span
                         key={`${setIdx}-${feature}`}
-                        className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 whitespace-nowrap select-none"
+                        className="inline-flex items-center justify-center gap-2 bg-surface/5 border border-white/10 rounded-full px-4 py-2 whitespace-nowrap select-none"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-orange flex-shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                         <span className="text-sm font-medium text-gray-400">{feature}</span>
                       </span>
                     ))}
@@ -309,7 +310,7 @@ export default function LandingPageClient() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
-                Why <span className="text-orange">Javelina DNS</span>
+                Why <span className="text-accent">Javelina DNS</span>
               </h2>
               <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-light">
                 Anycast architecture delivers measurable advantages over traditional DNS providers.
@@ -318,7 +319,7 @@ export default function LandingPageClient() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Feature 1 - Low-Latency Resolution */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -331,7 +332,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Feature 2 - Zero-Downtime Failover */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -344,7 +345,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Feature 3 - DDoS Resilience */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -357,7 +358,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Feature 4 - Single IP, Global Reach */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -373,7 +374,7 @@ export default function LandingPageClient() {
         </section>
 
         {/* ====== 4a. UNICAST VS ANYCAST ====== */}
-        <section className="py-14 sm:py-20 lg:py-24 bg-white/[0.02] relative overflow-hidden">
+        <section className="py-14 sm:py-20 lg:py-24 bg-surface/[0.02] relative overflow-hidden">
           {/* Orange glow on the right side behind Anycast card */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -386,19 +387,19 @@ export default function LandingPageClient() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center mb-12">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
-                Unicast vs <span className="text-orange">Anycast</span>
+                Unicast vs <span className="text-accent">Anycast</span>
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="feature-card rounded-2xl p-6 sm:p-8 border border-white/10 bg-white/[0.03]">
+              <div className="feature-card rounded-2xl p-6 sm:p-8 border border-white/10 bg-surface/[0.03]">
                 <h3 className="text-lg font-bold text-gray-500 mb-3">Traditional Unicast</h3>
                 <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
                   One IP address maps to one physical server. The farther your users are from that server, the more latency and risk you inherit before any content loads.
                 </p>
               </div>
               <div className="feature-card rounded-2xl p-6 sm:p-8 border border-orange/30 bg-orange/[0.04] shadow-lg shadow-orange-500/25">
-                <h3 className="text-lg font-bold text-orange mb-3">Anycast (Javelina DNS)</h3>
+                <h3 className="text-lg font-bold text-accent mb-3">Anycast (Javelina DNS)</h3>
                 <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
                   The same IP address is announced from many locations, and BGP routes queries to the nearest available node in real time. Local resolution, failover at the routing layer automatically, and distributed resilience under load.
                 </p>
@@ -449,7 +450,7 @@ export default function LandingPageClient() {
                     ].map((chip) => (
                       <div
                         key={chip.label}
-                        className="flex flex-col items-center px-5 py-3 rounded-xl bg-white/5 border border-white/10"
+                        className="flex flex-col items-center px-5 py-3 rounded-xl bg-surface/5 border border-white/10"
                       >
                         <span className="text-lg font-bold text-white">{chip.label}</span>
                         <span className="text-xs text-white/40">{chip.sub}</span>
@@ -459,7 +460,7 @@ export default function LandingPageClient() {
 
                   <Link
                     href="/infrastructure"
-                    className="inline-flex items-center gap-2 bg-orange text-white hover:brightness-110 rounded-full px-7 py-3.5 text-sm font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
+                    className="inline-flex items-center gap-2 bg-accent text-white hover:brightness-110 rounded-full px-7 py-3.5 text-sm font-semibold shadow-lg shadow-orange/25 hover:shadow-xl hover:shadow-orange/30 transition-all group"
                   >
                     View Infrastructure
                     <svg
@@ -528,11 +529,11 @@ export default function LandingPageClient() {
         </section>
 
         {/* ====== 4c. BUILT WITH ZIG ====== */}
-        <section className="zig-section py-14 sm:py-20 lg:py-24 bg-white/[0.02]">
+        <section className="zig-section py-14 sm:py-20 lg:py-24 bg-surface/[0.02]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
-                Built with <span className="text-orange">Zig</span>
+                Built with <span className="text-accent">Zig</span>
               </h2>
               <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-light">
                 Engineered for deterministic performance and reliability where it matters most.
@@ -541,7 +542,7 @@ export default function LandingPageClient() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Card 1 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -554,7 +555,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 2 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -567,7 +568,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 3 */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -580,7 +581,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 4 - Faster Build Cycles */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -593,7 +594,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 5 - Simplified Toolchain */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
@@ -606,7 +607,7 @@ export default function LandingPageClient() {
               </div>
 
               {/* Card 6 - Transparent Codebase */}
-              <div className="feature-card group bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-orange/50 hover:bg-white/[0.08] transition-all duration-300">
+              <div className="feature-card group bg-surface/5 rounded-2xl p-6 sm:p-8 border border-white/20 hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] hover:bg-surface/[0.08] transition-all duration-300">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange to-orange/80 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg shadow-orange/20 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -622,11 +623,11 @@ export default function LandingPageClient() {
         </section>
 
         {/* ====== 5. HOW IT WORKS ====== */}
-        <section className="how-it-works py-14 sm:py-20 lg:py-28 bg-white/[0.02]">
+        <section className="how-it-works py-14 sm:py-20 lg:py-28 bg-surface/[0.02]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
-                Get started in <span className="text-orange">minutes</span>
+                Get started in <span className="text-accent">minutes</span>
               </h2>
               <p className="mt-4 text-lg text-gray-500 font-light">
                 Three simple steps to take control of your DNS.
@@ -643,7 +644,7 @@ export default function LandingPageClient() {
                 { num: '3', title: 'Manage with ease', desc: 'Use our intuitive dashboard to manage records, monitor health, and collaborate with your team.' },
               ].map((step, i) => (
                 <div key={i} className="step-item text-center relative">
-                  <div className="w-14 h-14 bg-orange text-white rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-black shadow-lg shadow-orange/25 relative z-10">
+                  <div className="w-14 h-14 bg-accent text-white rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-black shadow-lg shadow-orange/25 relative z-10">
                     {step.num}
                   </div>
                   <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
@@ -665,7 +666,7 @@ export default function LandingPageClient() {
 
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative cta-content">
             <h2 className="font-condensed font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight mb-4">
-              Ready to take control of your <span className="text-orange">DNS</span>?
+              Ready to take control of your <span className="text-accent">DNS</span>?
             </h2>
             <p className="text-lg sm:text-xl text-white/80 mb-10 font-light max-w-2xl mx-auto">
               Join teams already using Javelina to manage their infrastructure.
@@ -693,6 +694,7 @@ export default function LandingPageClient() {
                 width={150}
                 height={41}
               />
+              <LegalFooterLinks className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-gray-500" />
               <p className="text-sm text-gray-600">&copy; 2026 Javelina DNS. All rights reserved.</p>
             </div>
           </div>
@@ -704,10 +706,10 @@ export default function LandingPageClient() {
   // Show loading state while redirecting users with orgs
   if (isRedirecting || (isAuthenticated && user && organizations.length > 0)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
+      <div className="min-h-screen flex items-center justify-center bg-accent-light">
         <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Loading...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <span className="text-text">Loading...</span>
         </div>
       </div>
     );
@@ -723,10 +725,10 @@ export default function LandingPageClient() {
 
       {/* Hero Section - Welcome */}
       <div className="mb-8">
-        <h1 className="font-black font-sans text-4xl text-orange-dark mb-2">
+        <h1 className="font-black font-sans text-4xl text-text mb-2">
           Welcome to Javelina
         </h1>
-        <p className="font-light text-gray-slate text-lg">
+        <p className="font-light text-text-muted text-lg">
           Get started with DNS management in just a few simple steps
         </p>
       </div>
@@ -740,10 +742,10 @@ export default function LandingPageClient() {
           className="lg:col-span-1 h-fit"
         >
           <div className="space-y-4 mt-4">
-            <Link href="/pricing" className="block">
+            <Link href="/pricing/start" className="block">
               <Button variant="primary" className="w-full justify-start">
                 <svg
-                  className="w-5 h-5 mr-2"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -761,7 +763,7 @@ export default function LandingPageClient() {
             <Link href="/profile" className="block">
               <Button variant="secondary" className="w-full justify-start">
                 <svg
-                  className="w-5 h-5 mr-2"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -779,7 +781,7 @@ export default function LandingPageClient() {
             <Link href="/settings" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <svg
-                  className="w-5 h-5 mr-2"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

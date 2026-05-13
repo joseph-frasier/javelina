@@ -73,20 +73,20 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
     fetchSubscription();
   }, [organizationId, fetchMembers, fetchSubscription]);
 
-  const getRoleColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-orange/10 text-orange border-orange/20';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-blue-electric/10 text-blue-electric border-blue-electric/20';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+        return 'bg-blue-500';
       case 'Editor':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-gray-slate/10 text-gray-slate border-gray-slate/20';
+        return 'bg-gray-slate';
       default:
-        return 'bg-gray-light/10 text-gray-slate border-gray-light/20';
+        return 'bg-text-muted';
     }
   };
 
@@ -111,7 +111,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
             onClick={() => setIsManageModalOpen(true)}
           >
             <svg
-              className="w-4 h-4 mr-1"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -135,10 +135,10 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
       >
         <div className="space-y-4 mt-4">
           {/* User Count Summary */}
-          <div className="flex items-center justify-between p-3 bg-blue-electric/5 dark:bg-blue-electric/10 rounded-lg border border-blue-electric/20">
+          <div className="flex items-center justify-between p-3 bg-surface-alt rounded-lg border border-border">
             <div className="flex items-center space-x-2">
               <svg
-                className="w-5 h-5 text-blue-electric"
+                className="w-5 h-5 text-text-muted"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -150,7 +150,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                 />
               </svg>
-              <span className="text-sm font-medium text-gray-slate dark:text-white">
+              <span className="text-sm font-medium text-text">
                 {isLoading ? 'Loading...' : `${members.length} ${members.length === 1 ? 'member' : 'members'}`}
               </span>
             </div>
@@ -160,7 +160,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
               onClick={() => setIsInviteModalOpen(true)}
             >
               <svg
-                className="w-4 h-4 mr-1"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -179,14 +179,14 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
           {/* Members List */}
           {isLoading ? (
             <div className="text-center py-4">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
             </div>
           ) : members.length > 0 ? (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {members.map((member) => (
                 <div
                   key={member.user_id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate hover:shadow-sm transition-shadow"
+                  className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface shadow-sm"
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {/* Avatar */}
@@ -195,11 +195,11 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                         <img
                           src={member.avatar}
                           alt={member.name}
-                          className="w-10 h-10 rounded-full"
+                          className="w-10 h-10 rounded-xl"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center">
-                          <span className="text-sm font-bold text-orange">
+                        <div className="w-10 h-10 rounded-xl border border-border bg-surface-alt flex items-center justify-center">
+                          <span className="text-sm font-bold text-text">
                             {getInitials(member.name)}
                           </span>
                         </div>
@@ -208,21 +208,17 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
 
                     {/* Member Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-slate dark:text-white truncate">
+                      <p className="text-sm font-medium text-text truncate">
                         {member.name}
                       </p>
-                      <p className="text-xs text-gray-slate dark:text-gray-light truncate">
+                      <p className="text-xs text-text-muted dark:text-gray-light truncate">
                         {member.email}
                       </p>
                     </div>
 
                     {/* Role Badge */}
                     <div className="flex-shrink-0">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full border font-medium ${getRoleColor(
-                          member.role
-                        )}`}
-                      >
+                      <span className="inline-flex items-center text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
                         {member.role}
                       </span>
                     </div>
@@ -233,7 +229,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
           ) : (
             <div className="text-center py-8">
               <svg
-                className="w-12 h-12 text-gray-slate dark:text-gray-light mx-auto mb-3 opacity-50"
+                className="w-12 h-12 text-text-muted dark:text-gray-light mx-auto mb-3 opacity-50"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -245,7 +241,7 @@ export function InviteUsersBox({ organizationId, organizationName }: InviteUsers
                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                 />
               </svg>
-              <p className="text-sm text-gray-slate dark:text-gray-light">
+              <p className="text-sm text-text-muted dark:text-gray-light">
                 No team members yet
               </p>
             </div>

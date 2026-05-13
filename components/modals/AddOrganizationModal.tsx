@@ -23,7 +23,7 @@ import {
 interface AddOrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (organizationId: string) => void;
+  onSuccess?: (organizationId: string, organizationName: string) => void;
   selectedPlan?: Plan | null; // Optional plan for billing integration
 }
 
@@ -166,9 +166,9 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
       setName('');
       setDescription('');
       
-      // Call success callback with organization ID
+      // Call success callback with organization ID and name
       if (onSuccess) {
-        onSuccess(organizationId);
+        onSuccess(organizationId, organizationName);
       }
       
       // Close modal
@@ -224,40 +224,33 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange/20 bg-white/70 text-orange dark:bg-orange/15">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Plan Summary</p>
+          <div className="rounded-[22px] border border-border bg-surface-alt p-5">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Plan Summary</p>
                 <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
-                  <h3 className="text-xl font-semibold text-orange-dark dark:text-[#fff3ea]">
+                  <h3 className="text-xl font-semibold text-text">
                     {selectedPlan ? selectedPlan.name : 'Organization setup'}
                   </h3>
-                  <span className="text-sm font-medium text-gray-slate dark:text-white/70">
+                  <span className="text-sm font-medium text-text-muted">
                     {planPriceLabel}
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/70">
+                <p className="mt-2 text-sm leading-6 text-text-muted">
                   {selectedPlan
                     ? selectedPlan.description
                     : 'Create the organization now and attach or change the plan afterward if needed.'}
                 </p>
-                <p className="mt-3 text-sm text-gray-slate dark:text-white/55">
+                <p className="mt-3 text-sm text-text-faint">
                   {selectedPlan
                     ? 'Submitting this form creates the organization and carries the selected plan details into the billing flow.'
                     : 'This form creates the organization and stores the required billing and admin contacts.'}
                 </p>
-              </div>
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">Setup Flow</p>
-            <ol className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
+          <div className="rounded-[22px] border border-border bg-surface-alt p-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Setup Flow</p>
+            <ol className="mt-3 space-y-3 text-sm text-text-muted">
               <li>1. Name the organization and add team-facing context.</li>
               <li>2. Add billing contact and address details.</li>
               <li>3. Confirm the administrative owner and submit.</li>
@@ -266,16 +259,16 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
         </div>
 
         {errors.general && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/25 dark:bg-red-500/10">
-            <p className="text-sm text-red-800">{errors.general}</p>
+          <div className="rounded-2xl border border-danger/25 bg-danger/5 p-4">
+            <p className="text-sm text-danger">{errors.general}</p>
           </div>
         )}
 
-        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+        <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm bg-surface-alt">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 1</p>
-            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Organization profile</h3>
-            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Section 1</p>
+            <h3 className="mt-2 text-lg font-semibold text-text">Organization profile</h3>
+            <p className="mt-1 text-sm text-text-muted">
               Start with the name and description your teammates will recognize first.
             </p>
           </div>
@@ -296,7 +289,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
             />
 
             <div>
-              <label htmlFor="org-description" className="mb-2 block text-sm font-medium text-orange-dark dark:text-white">
+              <label htmlFor="org-description" className="mb-2 block text-sm font-medium text-text">
                 Description
               </label>
               <textarea
@@ -307,9 +300,9 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
                 disabled={isSubmitting}
                 rows={4}
                 maxLength={500}
-                className="w-full rounded-xl border border-gray-light bg-white px-4 py-3 text-orange-dark placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-orange disabled:cursor-not-allowed disabled:bg-gray-light dark:border-white/10 dark:bg-[#0f151d] dark:text-white dark:placeholder:text-white/25"
+                className="w-full rounded-xl border border-border bg-surface-alt px-4 py-3 text-text placeholder:text-text-faint transition-colors focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
               />
-              <div className="mt-2 flex items-center justify-between text-xs text-gray-slate dark:text-white/45">
+              <div className="mt-2 flex items-center justify-between text-xs text-text-faint">
                 <span>Give teammates a short explanation of what this workspace is for.</span>
                 <span>{description.length}/500 characters</span>
               </div>
@@ -317,11 +310,11 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
           </div>
         </section>
 
-        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+        <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm bg-surface-alt">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 2</p>
-            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Billing contact</h3>
-            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Section 2</p>
+            <h3 className="mt-2 text-lg font-semibold text-text">Billing contact</h3>
+            <p className="mt-1 text-sm text-text-muted">
               These details are used for invoices, receipts, and billing follow-up.
             </p>
           </div>
@@ -399,8 +392,8 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
               />
 
               <div>
-                <label htmlFor="billing-state" className="mb-2 block text-sm font-medium text-orange-dark dark:text-white">
-                  State <span className="text-red-500">*</span>
+                <label htmlFor="billing-state" className="mb-2 block text-sm font-medium text-text">
+                  State <span className="text-danger" aria-hidden="true">*</span>
                 </label>
                 <Dropdown
                   value={billingState}
@@ -440,18 +433,18 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
           </div>
         </section>
 
-        <section className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+        <section className="rounded-[22px] border border-border bg-surface p-5 shadow-sm bg-surface-alt">
           <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Section 3</p>
-            <h3 className="mt-2 text-lg font-semibold text-orange-dark dark:text-[#fff3ea]">Administrative contact</h3>
-            <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">Section 3</p>
+            <h3 className="mt-2 text-lg font-semibold text-text">Administrative contact</h3>
+            <p className="mt-1 text-sm text-text-muted">
               Choose who should receive operational and account-level follow-up.
             </p>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
-              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+            <div className="rounded-2xl border border-border bg-surface-alt p-4">
+              <label className="mb-3 flex items-center text-sm font-medium text-text-muted">
                 <input
                   type="checkbox"
                   checked={copyBillingEmail}
@@ -480,8 +473,8 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
               />
             </div>
 
-            <div className="rounded-2xl border border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20">
-              <label className="mb-3 flex items-center text-sm font-medium text-gray-slate dark:text-white/65">
+            <div className="rounded-2xl border border-border bg-surface-alt p-4">
+              <label className="mb-3 flex items-center text-sm font-medium text-text-muted">
                 <input
                   type="checkbox"
                   checked={copyBillingPhone}
@@ -534,7 +527,7 @@ export function AddOrganizationModal({ isOpen, onClose, onSuccess, selectedPlan 
           >
             {isSubmitting ? (
               <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

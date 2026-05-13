@@ -69,10 +69,10 @@ export default function DomainSearchResults({
         {pagedResults.map((result) => (
           <div
             key={result.domain}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md transition-shadow"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 rounded-lg border border-border bg-surface/50 hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="font-medium text-orange-dark dark:text-white truncate">
+              <span className="font-medium text-text truncate">
                 {result.domain}
               </span>
               <StatusBadge status={result.status} />

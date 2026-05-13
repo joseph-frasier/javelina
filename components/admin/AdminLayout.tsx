@@ -193,19 +193,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <aside
           ref={sidebarRef}
           className={clsx(
-            'fixed top-16 left-0 bottom-0 bg-white overflow-hidden flex flex-col z-50 md:hidden',
+            'fixed top-16 left-0 bottom-0 bg-surface overflow-hidden flex flex-col z-50 md:hidden',
             'w-full -translate-x-full'
           )}
         >
           {/* Sidebar Header */}
-          <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
-            <h2 className="font-bold text-orange-dark">Admin Panel</h2>
+          <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-bold text-text">Admin Panel</h2>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 rounded-md transition-colors hover:bg-gray-light"
+              className="p-2 rounded-md transition-colors hover:bg-surface-hover"
               aria-label="Close menu"
             >
-              <svg className="w-5 h-5 text-gray-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -223,8 +223,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     className={clsx(
                       'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                       isActive
-                        ? 'bg-orange-light text-orange-dark font-medium'
-                        : 'text-gray-slate hover:bg-gray-light/30'
+                        ? 'bg-accent-light text-text font-medium'
+                        : 'text-text-muted hover:bg-surface-hover'
                     )}
                   >
                     {item.icon}
@@ -236,7 +236,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-light text-xs text-gray-slate">
+          <div className="p-4 border-t border-border text-xs text-text-muted">
             <p>Irongrove Admin v1.0</p>
           </div>
         </aside>
@@ -244,14 +244,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Sidebar - Desktop */}
         <aside
           className={clsx(
-            'hidden md:flex bg-white border-r border-gray-light transition-all duration-300 overflow-hidden flex-col',
+            'hidden md:flex bg-surface border-r border-border transition-all duration-300 overflow-hidden flex-col',
             isCollapsed ? 'w-16' : 'w-64'
           )}
         >
           {/* Sidebar Header */}
-          <div className="flex-shrink-0 p-4 border-b border-gray-light flex items-center justify-between">
+          <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
             {!isCollapsed && (
-              <h2 className="font-bold text-orange-dark">Admin Panel</h2>
+              <h2 className="font-bold text-text">Admin Panel</h2>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -259,7 +259,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <svg
-                className="w-5 h-5 text-gray-slate"
+                className="w-5 h-5 text-text-muted"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -291,7 +291,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       href={item.href}
                       className={clsx(
                         'p-2 rounded-md transition-colors flex items-center justify-center',
-                        isActive ? 'text-orange-dark bg-orange-light' : 'text-gray-slate'
+                        isActive ? 'text-text bg-accent-light' : 'text-text-muted'
                       )}
                       title={item.label}
                     >
@@ -314,8 +314,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       className={clsx(
                         'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                         isActive
-                          ? 'bg-orange-light text-orange-dark font-medium'
-                          : 'text-gray-slate'
+                          ? 'bg-accent-light text-text font-medium'
+                          : 'text-text-muted'
                       )}
                     >
                       {item.icon}
@@ -329,14 +329,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Footer */}
           {!isCollapsed && (
-            <div className="p-4 border-t border-gray-light text-xs text-gray-slate">
+            <div className="p-4 border-t border-border text-xs text-text-muted">
               <p>Irongrove Admin v1.0</p>
             </div>
           )}
         </aside>
 
         {/* Main Content */}
-        <main ref={containerRef} className="flex-1 overflow-auto bg-gray-50 dark:bg-orange-dark">
+        <main ref={containerRef} className="flex-1 overflow-auto bg-surface-alt">
           <div ref={contentRef} className="p-4 sm:p-6 md:p-8 w-full">
             {children}
           </div>
