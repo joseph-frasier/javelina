@@ -667,10 +667,11 @@ export default function DomainDetailPage() {
       />
 
       {/* Email */}
-      {!hideMailboxes && domain && domain.status === 'active' && (
+      {!hideMailboxes && domain && domain.status === 'active' && zone?.organization_id && (
         <DomainEmailSection
           domainId={domain.id}
           domainName={domain.domain_name}
+          orgId={zone.organization_id}
           onOpenBillingPortal={handleOpenBillingPortal}
           openingBillingPortal={openingBillingPortal}
         />
