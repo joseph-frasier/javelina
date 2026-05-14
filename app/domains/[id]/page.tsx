@@ -569,6 +569,12 @@ export default function DomainDetailPage() {
                     .
                   </>
                 )}
+                {data.upcoming_renewal_invoice.tax != null && data.upcoming_renewal_invoice.tax > 0 && (
+                  <div className="flex justify-between text-sm mt-2">
+                    <span>Sales tax</span>
+                    <span>${(data.upcoming_renewal_invoice.tax / 100).toFixed(2)}</span>
+                  </div>
+                )}
               </div>
             )}
 

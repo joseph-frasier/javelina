@@ -147,6 +147,7 @@ export interface DomainManagementResponse {
     currency: string;
     due_date: string;
     status: 'pending' | 'paid' | 'failed';
+    tax?: number | null;
   };
 }
 

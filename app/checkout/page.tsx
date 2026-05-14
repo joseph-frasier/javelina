@@ -392,6 +392,10 @@ function CheckoutContent() {
                   </span>
                 </div>
 
+                <p className="text-xs text-text-muted font-light">
+                  Sales tax calculated at checkout.
+                </p>
+
                 {/* Proceed Button */}
                 <Button
                   variant="primary"
@@ -539,6 +543,10 @@ function CheckoutContent() {
                       ${finalPrice.toFixed(2)}
                     </span>
                   </div>
+
+                  <p className="text-xs text-text-muted font-light">
+                    Sales tax calculated at checkout.
+                  </p>
 
                   {/* Fine Print */}
                   <div className="pt-4">
