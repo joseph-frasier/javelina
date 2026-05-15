@@ -850,6 +850,12 @@ export const adminApi = {
         `/admin/intake/leads/${leadId}/mark-failed`,
         { reason }
       ),
+
+    retryAgent1: (leadId: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/retry-agent-1`,
+        {}
+      ),
     // mark-pax8-done deferred to JAV-119 1.6
 
     overrideService: (

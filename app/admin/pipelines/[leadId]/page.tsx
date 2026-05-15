@@ -6,11 +6,12 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
-import { adminApi, type LeadDetailResponse, type ActionResponse } from '@/lib/api-client';
+import { adminApi, ApiError, type LeadDetailResponse, type ActionResponse } from '@/lib/api-client';
 import { useToastStore } from '@/lib/toast-store';
 import { LeadStateHeader } from '../_components/LeadStateHeader';
 import { OperatorActions } from '../_components/OperatorActions';
 import { HaltPipelineButton } from '../_components/HaltPipelineButton';
+import { RetryAgent1Button } from '../_components/RetryAgent1Button';
 import { ServiceSection } from '../_components/PipelineDetail/ServiceSection';
 
 const PACKAGE_LABEL = {
@@ -45,6 +46,26 @@ export default function PipelineDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const retryAgent1 = useCallback(async () => {
+    setBusy(true);
+    try {
+      await adminApi.intake.retryAgent1(leadId);
+      addToast('success', 'Agent 1 retry dispatched');
+      await load();
+    } catch (e) {
+      if (e instanceof ApiError && e.statusCode === 500) {
+        addToast('error', 'Something went wrong — try again or contact engineering.');
+      } else if (e instanceof ApiError) {
+        // 409 (and other 4xx) — surface the backend message verbatim.
+        addToast('error', e.details?.error ?? e.message);
+      } else {
+        addToast('error', e instanceof Error ? e.message : 'Retry failed');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }, [leadId, addToast, load]);
 
   const runAction = useCallback(
     async (
@@ -96,13 +117,16 @@ export default function PipelineDetailPage() {
                 { label: data.lead.contact_name || data.lead.id },
               ]}
               actions={
-                <HaltPipelineButton
-                  status={data.lead.status}
-                  busy={busy}
-                  onHalt={(reason) =>
-                    runAction(() => adminApi.intake.markFailed(leadId, reason), 'Pipeline halted.')
-                  }
-                />
+                <div className="flex items-center gap-2">
+                  <RetryAgent1Button lead={data.lead} busy={busy} onRetry={retryAgent1} />
+                  <HaltPipelineButton
+                    status={data.lead.status}
+                    busy={busy}
+                    onHalt={(reason) =>
+                      runAction(() => adminApi.intake.markFailed(leadId, reason), 'Pipeline halted.')
+                    }
+                  />
+                </div>
               }
             />
             <div className="space-y-6">
