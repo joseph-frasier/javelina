@@ -9,6 +9,9 @@ export const SIMILARITY_REPORT_VERSION = 1;
 // in the runner to enforce range/length invariants.
 export const MatchedProject = z.object({
   project_id: z.string(),
+  // Added after initial rollout — historical records won't have this. Frontend
+  // falls back to project_id when missing.
+  project_name: z.string().optional(),
   similarity_score: z.number(),
   reasoning: z.string(),
 });
