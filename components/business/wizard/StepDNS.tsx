@@ -15,9 +15,9 @@ interface Props {
 }
 
 export function StepDNS({ t, data, set }: Props) {
-  // 'self' is no longer a supported option; coerce any persisted state to 'jbp'.
+  // 'self' and 'skip' are no longer supported options; coerce any persisted state to 'jbp'.
   useEffect(() => {
-    if (data.dns.mode === 'self') {
+    if (data.dns.mode === 'self' || data.dns.mode === 'skip') {
       set({ dns: { mode: 'jbp' } });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,14 +39,6 @@ export function StepDNS({ t, data, set }: Props) {
           icon={<Icon name="sparkle" size={18} />}
           label="Let Javelina manage it (recommended)"
           description="We'll point your domain at our nameservers and wire up everything (A, AAAA, CNAME, MX) automatically."
-        />
-        <Radio
-          t={t}
-          checked={data.dns.mode === 'skip'}
-          onChange={() => set({ dns: { mode: 'skip' } })}
-          icon={<Icon name="globe" size={18} />}
-          label="Skip for now"
-          description="Your site will live at a Javelina subdomain. You can add a custom domain whenever you're ready."
         />
       </div>
 
