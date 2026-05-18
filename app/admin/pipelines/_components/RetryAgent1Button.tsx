@@ -28,7 +28,7 @@ export function isAgent1Failure(
 export function RetryAgent1Button({ lead, onRetry, busy }: Props) {
   const [open, setOpen] = useState(false);
 
-  if (!isAgent1Failure(lead)) return null;
+  if (lead.status !== 'failed') return null;
 
   const close = () => setOpen(false);
 
