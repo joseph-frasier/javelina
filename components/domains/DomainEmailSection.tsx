@@ -86,6 +86,7 @@ import { Mail, Plus, Trash2, Key, Copy, Check, ChevronDown, ChevronRight } from 
 interface DomainEmailSectionProps {
   domainId: string;
   domainName: string;
+  orgId: string;
   onOpenBillingPortal?: () => void;
   openingBillingPortal?: boolean;
 }
@@ -93,6 +94,7 @@ interface DomainEmailSectionProps {
 export function DomainEmailSection({
   domainId,
   domainName,
+  orgId,
   onOpenBillingPortal,
   openingBillingPortal = false,
 }: DomainEmailSectionProps) {
@@ -196,7 +198,7 @@ export function DomainEmailSection({
     if (!selectedTier) return;
     setEnablingEmail(true);
     try {
-      await mailboxApi.enable(domainId, selectedTier);
+      await mailboxApi.enable(domainId, selectedTier, orgId);
       addToast('success', 'Email enabled successfully.');
       await fetchStatus();
     } catch (err: any) {

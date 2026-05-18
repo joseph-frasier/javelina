@@ -38,10 +38,18 @@ interface AppliedDiscount {
   final_price: number;
 }
 
+interface InvoiceSummary {
+  subtotal: number | null;
+  tax: number | null;
+  total: number | null;
+  currency: string | null;
+}
+
 interface SubscriptionIntent {
   subscriptionId: string;
   clientSecret: string;
   flow: 'payment_intent' | 'setup_intent';
+  invoice?: InvoiceSummary | null;
 }
 
 function CheckoutContent() {
@@ -56,6 +64,7 @@ function CheckoutContent() {
   // Payment state
   const [clientSecret, setClientSecret] = useState<string>('');
   const [flow, setFlow] = useState<'payment_intent' | 'setup_intent'>('payment_intent');
+  const [invoice, setInvoice] = useState<InvoiceSummary | null>(null);
   const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
   
   // Discount code state
@@ -186,6 +195,7 @@ function CheckoutContent() {
 
       setClientSecret(response.clientSecret);
       setFlow(response.flow || 'payment_intent');
+      setInvoice(response.invoice ?? null);
       setCheckoutStep('payment');
     } catch (error: any) {
       console.error('Error creating subscription:', error);
@@ -382,6 +392,24 @@ function CheckoutContent() {
                   </>
                 )}
 
+                {/* Tax breakdown (shown after subscription intent is created) */}
+                {invoice?.tax != null && invoice.tax > 0 ? (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span>${((invoice.subtotal ?? 0) / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Sales tax</span>
+                      <span>${((invoice.tax ?? 0) / 100).toFixed(2)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-text-muted font-light">
+                    Sales tax calculated at checkout.
+                  </p>
+                )}
+
                 {/* Total */}
                 <div className="flex justify-between items-center pt-4">
                   <span className="text-lg font-bold text-text">
@@ -530,13 +558,31 @@ function CheckoutContent() {
                     </div>
                   )}
 
+                  {/* Tax breakdown */}
+                  {invoice?.tax != null && invoice.tax > 0 ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>${((invoice.subtotal ?? 0) / 100).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Sales tax</span>
+                        <span>${((invoice.tax ?? 0) / 100).toFixed(2)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-text-muted font-light">
+                      Sales tax calculated at checkout.
+                    </p>
+                  )}
+
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-lg font-bold text-text">
                       {isUpgrade ? 'Upgrade Cost' : 'Total due today'}
                     </span>
                     <span className="text-2xl font-black text-text">
-                      ${finalPrice.toFixed(2)}
+                      ${invoice?.total != null ? (invoice.total / 100).toFixed(2) : finalPrice.toFixed(2)}
                     </span>
                   </div>
 

@@ -1380,8 +1380,8 @@ export const mailboxApi = {
     apiClient.get(`/mailbox/domains/${domainId}/mail/status`),
 
   // Enable/disable
-  enable: (domainId: string, tierId: string) =>
-    apiClient.post(`/mailbox/domains/${domainId}/mail/enable`, { tier_id: tierId }),
+  enable: (domainId: string, tierId: string, orgId: string) =>
+    apiClient.post(`/mailbox/domains/${domainId}/mail/enable`, { tier_id: tierId, org_id: orgId }),
 
   disable: (domainId: string) =>
     apiClient.delete(`/mailbox/domains/${domainId}/mail/disable`),
