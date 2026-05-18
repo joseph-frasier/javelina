@@ -337,7 +337,7 @@ export function StepWebsite({ t, data, set }: Props) {
         </div>
 
         <div>
-          <FieldLabel t={t} optional hint={`${(w.services || '').length}/500`}>
+          <FieldLabel t={t} hint={`${(w.services || '').length}/500`}>
             What services or products do you offer?
           </FieldLabel>
           <textarea
@@ -359,7 +359,7 @@ export function StepWebsite({ t, data, set }: Props) {
         </div>
 
         <div>
-          <FieldLabel t={t} optional>Logo</FieldLabel>
+          <FieldLabel t={t}>Logo</FieldLabel>
           <input
             ref={logoInputRef}
             type="file"
@@ -420,19 +420,6 @@ export function StepWebsite({ t, data, set }: Props) {
                 >
                   {w.logo ? 'Replace logo' : 'Upload logo'}
                 </Button>
-                <Button
-                  t={t}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    update({ logo: null });
-                    setLogoUrl(null);
-                    setLogoError(null);
-                  }}
-                  style={{ border: `1px solid ${t.border}` }}
-                >
-                  Skip, use text wordmark
-                </Button>
               </div>
               <div style={{ fontSize: 12, color: t.textMuted }}>
                 SVG or PNG, transparent background works best. We&apos;ll generate favicons automatically.
@@ -447,7 +434,7 @@ export function StepWebsite({ t, data, set }: Props) {
         </div>
 
         <div>
-          <FieldLabel t={t} optional>Photos &amp; imagery</FieldLabel>
+          <FieldLabel t={t}>Photos &amp; imagery</FieldLabel>
           <input
             ref={photoInputRef}
             type="file"
@@ -706,7 +693,7 @@ export function StepWebsite({ t, data, set }: Props) {
                   />
                 </div>
                 <div>
-                  <FieldLabel t={t} optional>Secondary color</FieldLabel>
+                  <FieldLabel t={t}>Secondary color</FieldLabel>
                   <Input
                     t={t}
                     value={w.customSecondaryColor}

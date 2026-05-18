@@ -15,10 +15,81 @@ import { StepWebsite } from './StepWebsite';
 import { StepDomain, type BundledDomainStatus } from './StepDomain';
 import { StepContact } from './StepContact';
 import { StepConfirm } from './StepConfirm';
-import { useBusinessIntakeStore } from '@/lib/business-intake-store';
+import { useBusinessIntakeStore, type BusinessIntakeData } from '@/lib/business-intake-store';
 import { organizationsApi } from '@/lib/api-client';
 
 const STEP_LABELS = ['DNS', 'Website', 'Domain', 'Contact', 'Confirm'] as const;
+
+function isValidEmail(v: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || '').trim());
+}
+
+function isValidDomain(v: string): boolean {
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test((v || '').trim());
+}
+
+// Tagline is the only intentionally optional field. Logo and at least one
+// photo are required because the automated site build can't produce a
+// competent result without brand imagery.
+function isStepValid(step: number, data: BusinessIntakeData): boolean {
+  switch (step) {
+    case 0: {
+      return data.dns.mode === 'jbp';
+    }
+    case 1: {
+      const w = data.website;
+      const baseOk =
+        w.bizName.trim() !== '' &&
+        w.bizType.trim() !== '' &&
+        w.industry.trim() !== '' &&
+        w.description.trim() !== '' &&
+        (w.services || '').trim() !== '' &&
+        (w.pages || []).length > 0 &&
+        (w.tone || '').trim() !== '' &&
+        !!w.aesthetic &&
+        !!w.logo &&
+        (w.photos || []).length > 0;
+      if (!baseOk) return false;
+      if (w.aesthetic === 'choose') {
+        if (!(w.customColor || '').trim()) return false;
+        if (!(w.customSecondaryColor || '').trim()) return false;
+        if (!(w.customFont || '').trim()) return false;
+      }
+      return true;
+    }
+    case 2: {
+      const d = data.domain;
+      if (d.mode === 'transfer') {
+        return (
+          isValidDomain(d.domain || '') &&
+          (d.epp || '').trim() !== '' &&
+          (d.registrar || '').trim() !== '' &&
+          d.unlocked === true
+        );
+      }
+      // connect + register both require a selected/entered domain.
+      return isValidDomain(d.domain || '');
+    }
+    case 3: {
+      const c = data.contact;
+      return (
+        c.firstName.trim() !== '' &&
+        c.lastName.trim() !== '' &&
+        (c.org || '').trim() !== '' &&
+        isValidEmail(c.email) &&
+        c.phone.trim() !== '' &&
+        c.address.trim() !== '' &&
+        c.city.trim() !== '' &&
+        c.state.trim() !== '' &&
+        c.zip.trim() !== ''
+      );
+    }
+    case 4:
+      return true;
+    default:
+      return true;
+  }
+}
 
 interface Props {
   orgId: string;
@@ -84,6 +155,12 @@ export function BusinessWizardShell({ orgId }: Props) {
 
   const step = data.currentStep;
   const set = (patch: Parameters<typeof update>[1]) => update(orgId, patch);
+  const canContinue = isStepValid(step, data);
+  const canLaunch =
+    isStepValid(0, data) &&
+    isStepValid(1, data) &&
+    isStepValid(2, data) &&
+    isStepValid(3, data);
 
   const onLaunch = async () => {
     if (submittingRef.current) return;
@@ -157,12 +234,13 @@ export function BusinessWizardShell({ orgId }: Props) {
               <Button
                 t={t}
                 onClick={() => setStep(orgId, step + 1)}
+                disabled={!canContinue}
                 iconRight={<Icon name="arrowRight" size={14} color="#fff" />}
               >
                 Continue
               </Button>
             ) : (
-              <Button t={t} onClick={onLaunch}>
+              <Button t={t} onClick={onLaunch} disabled={!canLaunch}>
                 Launch my site
               </Button>
             )}
