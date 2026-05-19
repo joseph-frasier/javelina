@@ -13,7 +13,8 @@ import { PageHeader, SectionHeader, StatRow } from '@/components/business/dashbo
 import { EmptyCardState } from '@/components/business/ui/EmptyCardState';
 import { MOCK_DOMAINS } from '@/lib/business/page-mocks';
 import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
-import { listDomainsForOrg, type DomainRow } from '@/lib/api/domains';
+import { listUserDomains, type DomainRow } from '@/lib/api/domains';
+import { getBusiness } from '@/lib/api/business';
 
 interface DisplayDomain {
   name: string;
@@ -24,10 +25,10 @@ interface DisplayDomain {
   expires: string | null;
 }
 
-function fromDomainRow(d: DomainRow): DisplayDomain {
+function fromDomainRow(d: DomainRow, primary: boolean): DisplayDomain {
   return {
     name: d.domain_name,
-    primary: !!d.is_primary,
+    primary,
     active: (d.status ?? '').toLowerCase() === 'active',
     autoRenew: !!d.auto_renew,
     registered: d.registered_at,
@@ -53,14 +54,32 @@ export default function BusinessDomainsPage() {
   const orgId = params?.orgId ?? '';
 
   const realQuery = useQuery({
-    queryKey: ['domains', orgId],
-    queryFn: () => listDomainsForOrg(orgId),
+    queryKey: ['domains', 'user'],
+    queryFn: () => listUserDomains(),
     enabled: !!orgId && !isMock,
   });
 
+  // Shares cache with the layout's getBusiness(orgId) query.
+  const businessQuery = useQuery({
+    queryKey: ['business', orgId],
+    queryFn: () => getBusiness(orgId),
+    enabled: !!orgId && !isMock,
+  });
+
+  const intakeDomain: string | null =
+    businessQuery.data?.kind === 'ok'
+      ? ((businessQuery.data.data.intake as Record<string, any> | null)?.domain?.domain ?? null)
+      : null;
+  const normalizedIntake = (intakeDomain || '').trim().toLowerCase();
+
+  const allUserDomains = realQuery.data ?? [];
+  const matchedDomains = normalizedIntake
+    ? allUserDomains.filter((d) => d.domain_name.trim().toLowerCase() === normalizedIntake)
+    : [];
+
   const domains: DisplayDomain[] = isMock
     ? MOCK_DOMAINS.map(fromMock)
-    : (realQuery.data ?? []).map(fromDomainRow);
+    : matchedDomains.map((d, i) => fromDomainRow(d, i === 0));
 
   const primary = domains.find((d) => d.primary) ?? domains[0];
 

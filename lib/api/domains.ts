@@ -7,7 +7,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export interface DomainRow {
   id: string;
   domain_name: string;
-  organization_id: string | null;
   status: string | null;
   registered_at: string | null;
   expires_at: string | null;
@@ -27,13 +26,16 @@ async function authedFetch(path: string, init?: RequestInit): Promise<Response> 
   return fetch(`${API_BASE_URL}${path}`, { ...init, headers, cache: 'no-store' });
 }
 
-export async function listDomainsForOrg(orgId: string): Promise<DomainRow[]> {
+// Returns all domains owned by the authenticated user. The domains table
+// has no organization_id column, so callers wanting to scope to an org
+// must filter client-side using the org's intake-recorded domain.
+export async function listUserDomains(): Promise<DomainRow[]> {
   try {
     const res = await authedFetch('/api/domains');
     if (!res.ok) return [];
     const json = await res.json();
     const all: DomainRow[] = json?.data?.domains ?? json?.domains ?? [];
-    return all.filter((d) => d.organization_id === orgId);
+    return all;
   } catch (err) {
     console.error('[domains api]', err);
     return [];
