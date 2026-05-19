@@ -138,7 +138,6 @@ export default function DomainCheckoutForm({
           )}
 
           {/* Contact */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Contact</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <Input
               label="First Name"
@@ -173,7 +172,6 @@ export default function DomainCheckoutForm({
           </div>
 
           {/* Address */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Address</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <div className="md:col-span-2">
               <Input
