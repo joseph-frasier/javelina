@@ -5,6 +5,7 @@ import type { BusinessIntakeData } from '@/lib/business-intake-store';
 import type { BusinessDetail } from '@/lib/api/business';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
 import { Card } from '@/components/business/ui/Card';
@@ -21,6 +22,7 @@ interface Props {
 
 export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
   const t = useBusinessTheme();
+  const { hideBuildProgress } = useFeatureFlags();
   const firstName = data.contact.firstName || data.website.bizName || 'there';
 
   return (
@@ -73,12 +75,14 @@ export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
         style={{
           marginTop: 28,
           display: 'grid',
-          gridTemplateColumns: '1.4fr 1fr',
+          gridTemplateColumns: hideBuildProgress ? '1fr' : '1.4fr 1fr',
           gap: 16,
         }}
       >
         <DNSStatusCard t={t} data={data} />
-        <ServiceStatusGrid t={t} provisioning={provisioning} />
+        {!hideBuildProgress && (
+          <ServiceStatusGrid t={t} provisioning={provisioning} />
+        )}
       </div>
 
       <div
