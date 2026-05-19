@@ -6,9 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FONT, MONO } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
-import { Button } from '@/components/business/ui/Button';
 import { Badge } from '@/components/business/ui/Badge';
-import { Icon } from '@/components/business/ui/Icon';
 import { PageHeader, SectionHeader, StatRow } from '@/components/business/dashboard/_pageBits';
 import { EmptyCardState } from '@/components/business/ui/EmptyCardState';
 import { MOCK_DOMAINS } from '@/lib/business/page-mocks';
@@ -89,16 +87,6 @@ export default function BusinessDomainsPage() {
         t={t}
         title="Domains"
         description="Domains attached to this business — registration, transfer, and renewal."
-        actions={
-          <>
-            <Button t={t} variant="secondary" size="md" iconLeft={<Icon name="refresh" size={14} />}>
-              Transfer in
-            </Button>
-            <Button t={t} size="md" iconLeft={<Icon name="plus" size={14} color="#fff" />}>
-              Register domain
-            </Button>
-          </>
-        }
       />
 
       {primary ? (
