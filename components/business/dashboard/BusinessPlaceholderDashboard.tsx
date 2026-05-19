@@ -63,9 +63,6 @@ export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
               Edit setup
             </Button>
           </Link>
-          <Button t={t} size="md" iconLeft={<Icon name="plus" size={14} color="#fff" />}>
-            New deploy
-          </Button>
         </div>
       </div>
 
