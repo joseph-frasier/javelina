@@ -3,19 +3,40 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { FONT, MONO } from '@/components/business/ui/tokens';
+import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Button } from '@/components/business/ui/Button';
 import { Badge } from '@/components/business/ui/Badge';
 import { Icon } from '@/components/business/ui/Icon';
 import { PageHeader, SectionHeader, StatRow } from '@/components/business/dashboard/_pageBits';
+import { organizationsApi } from '@/lib/api-client';
 import {
   getCurrentSubscription,
   createBillingPortalSession,
   type SubscriptionRow,
   type PlanRow,
 } from '@/lib/api/subscriptions';
+
+interface OrgBillingFields {
+  billing_email: string | null;
+  billing_phone: string | null;
+  billing_address: string | null;
+  billing_city: string | null;
+  billing_state: string | null;
+  billing_zip: string | null;
+}
+
+function formatAddress(o: OrgBillingFields): string | null {
+  const line1 = (o.billing_address || '').trim();
+  const city = (o.billing_city || '').trim();
+  const state = (o.billing_state || '').trim();
+  const zip = (o.billing_zip || '').trim();
+  const cityState = [city, state].filter(Boolean).join(', ');
+  const tail = [cityState, zip].filter(Boolean).join(' ').trim();
+  const parts = [line1, tail].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
 
 type StatusTone = 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -120,6 +141,12 @@ export default function BusinessBillingPage() {
     enabled: !!orgId,
   });
 
+  const { data: org } = useQuery<OrgBillingFields>({
+    queryKey: ['organization-billing', orgId],
+    queryFn: () => organizationsApi.get(orgId),
+    enabled: !!orgId,
+  });
+
   const subscription = subResult?.kind === 'ok' ? subResult.subscription : null;
   const plan = subResult?.kind === 'ok' ? subResult.plan : null;
 
@@ -141,7 +168,7 @@ export default function BusinessBillingPage() {
       <PageHeader
         t={t}
         title="Billing"
-        description="Plan, payment method, and add-ons. Past invoices and PDFs are in your billing portal."
+        description="Your plan and billing contact. Payment method, tax info, and past invoices are in your billing portal."
         actions={
           <Button
             t={t}
@@ -184,41 +211,48 @@ export default function BusinessBillingPage() {
         </Card>
 
         <Card t={t}>
-          <SectionHeader t={t} title="Payment method" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div
-              style={{
-                width: 56,
-                height: 38,
-                borderRadius: 8,
-                background: `linear-gradient(135deg, ${t.text} 0%, ${t.textMuted} 100%)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 11,
-                letterSpacing: 1,
-                fontFamily: FONT,
-                flexShrink: 0,
-              }}
-            >
-              VISA
+          <SectionHeader t={t} title="Billing contact" />
+          {org ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <StatRow t={t} label="Email" value={org.billing_email || '—'} />
+              <StatRow t={t} label="Phone" value={org.billing_phone || '—'} />
+              <StatRow t={t} label="Address" value={formatAddress(org) || '—'} />
             </div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: t.text, fontFamily: MONO, letterSpacing: 1 }}>
-                •••• •••• •••• 4242
-              </div>
-              <div style={{ fontSize: 12, color: t.textMuted, fontFamily: FONT }}>Expires 09/29</div>
-            </div>
-          </div>
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <StatRow t={t} label="Billing email" value="billing@acme.com" />
-            <StatRow t={t} label="Tax status" value="Not exempt" />
-          </div>
+          ) : (
+            <div style={{ fontSize: 13, color: t.textMuted, fontFamily: FONT }}>Loading…</div>
+          )}
         </Card>
       </div>
 
+      <Card
+        t={t}
+        style={{
+          marginTop: 16,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: t.text, fontFamily: FONT }}>
+            Manage payment method, tax info, and invoices
+          </div>
+          <div style={{ fontSize: 13, color: t.textMuted, fontFamily: FONT, lineHeight: 1.5 }}>
+            Update your card, set a tax ID, and download past invoices as PDFs in your billing portal.
+          </div>
+        </div>
+        <Button
+          t={t}
+          variant="secondary"
+          size="md"
+          iconLeft={<Icon name="external" size={14} />}
+          onClick={openPortal}
+          disabled={portalLoading || !orgId}
+        >
+          {portalLoading ? 'Opening…' : 'Open billing portal'}
+        </Button>
+      </Card>
     </div>
   );
 }
