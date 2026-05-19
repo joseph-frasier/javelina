@@ -169,18 +169,6 @@ export default function BusinessBillingPage() {
         t={t}
         title="Billing"
         description="Your plan and billing contact. Payment method, tax info, and past invoices are in your billing portal."
-        actions={
-          <Button
-            t={t}
-            variant="secondary"
-            size="md"
-            iconLeft={<Icon name="external" size={14} />}
-            onClick={openPortal}
-            disabled={portalLoading || !orgId}
-          >
-            {portalLoading ? 'Opening…' : 'Open billing portal'}
-          </Button>
-        }
       />
 
       {portalError && (
