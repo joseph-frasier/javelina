@@ -8,7 +8,7 @@ import { useBusinessTheme } from '@/lib/business-theme-store';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
 import { Card } from '@/components/business/ui/Card';
-import { SitePreview } from './SitePreview';
+import { MySiteCard } from './MySiteCard';
 import { DNSStatusCard } from './DNSStatusCard';
 import { BillingCard } from './BillingCard';
 import { AnalyticsPlaceholder } from './AnalyticsPlaceholder';
@@ -67,7 +67,7 @@ export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
         </div>
       </div>
 
-      <SitePreview t={t} data={data} />
+      <MySiteCard t={t} provisioning={provisioning} domain={data.domain.domain} />
 
       <div
         style={{
