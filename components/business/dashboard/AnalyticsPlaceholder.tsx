@@ -6,9 +6,10 @@ import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
 
 interface Props {
   t: Tokens;
+  orgId: string;
 }
 
-export function AnalyticsPlaceholder({ t }: Props) {
+export function AnalyticsPlaceholder({ t, orgId }: Props) {
   return (
     <Card t={t}>
       <div
@@ -32,7 +33,7 @@ export function AnalyticsPlaceholder({ t }: Props) {
         >
           Last 14 days
         </h3>
-        <HoverArrowLink t={t}>View analytics</HoverArrowLink>
+        <HoverArrowLink t={t} href={`/business/${orgId}/analytics`}>View analytics</HoverArrowLink>
       </div>
       <div
         style={{

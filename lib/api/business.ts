@@ -10,6 +10,8 @@ export interface BusinessSummary {
   name: string;
   intake_started_at: string | null;
   intake_completed_at: string | null;
+  plan_code: 'business_starter' | 'business_pro' | null;
+  domain: string | null;
 }
 
 export interface BusinessDetail {

@@ -40,7 +40,7 @@ export function BillingCard({ t, data }: BillingCardProps) {
         >
           Plan &amp; billing
         </h3>
-        <HoverArrowLink t={t}>Manage billing</HoverArrowLink>
+        <HoverArrowLink t={t} href={`/business/${data.orgId}/billing`}>Manage billing</HoverArrowLink>
       </div>
       <div
         style={{

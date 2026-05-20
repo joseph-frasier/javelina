@@ -19,14 +19,6 @@ const ServerIcon = () => (
   </svg>
 );
 
-const GlobeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <circle cx="8" cy="8" r="5.5" />
-    <line x1="2.5" y1="8" x2="13.5" y2="8" />
-    <path d="M8 2.5c1.7 2 1.7 9 0 11M8 2.5c-1.7 2-1.7 9 0 11" />
-  </svg>
-);
-
 const PROVIDERS = ['Cloudflare', 'Route 53', 'Google', 'Other'];
 
 export default function StepDNS() {
@@ -36,7 +28,6 @@ export default function StepDNS() {
 
   const canContinue =
     dnsMode === 'javelina' ||
-    dnsMode === 'skip' ||
     (dnsMode === 'self' && !!dnsProvider);
 
   return (
@@ -61,13 +52,6 @@ export default function StepDNS() {
           icon={<ServerIcon />}
           label="I&apos;ll manage my own DNS"
           description="Keep your current DNS provider (Cloudflare, Route 53, etc). We'll give you the records to add."
-        />
-        <RadioCard
-          checked={dnsMode === 'skip'}
-          onChange={() => setField('dnsMode', 'skip')}
-          icon={<GlobeIcon />}
-          label="Skip for now"
-          description="Your site will live at a javelina.app subdomain. You can add a custom domain whenever you're ready."
         />
       </div>
 

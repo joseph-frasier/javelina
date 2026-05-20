@@ -42,7 +42,7 @@ export function StepContact({ t, data, set }: Props) {
         </div>
 
         <div>
-          <FieldLabel t={t} optional>Organization</FieldLabel>
+          <FieldLabel t={t}>Organization</FieldLabel>
           <Input t={t} value={c.org} onChange={(v) => update({ org: v })} placeholder="Keller Studio, LLC" />
         </div>
 

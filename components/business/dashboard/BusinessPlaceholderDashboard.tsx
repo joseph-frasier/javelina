@@ -2,22 +2,27 @@
 
 import Link from 'next/link';
 import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessDetail } from '@/lib/api/business';
 import { FONT } from '@/components/business/ui/tokens';
 import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
 import { Card } from '@/components/business/ui/Card';
-import { SitePreview } from './SitePreview';
+import { MySiteCard } from './MySiteCard';
 import { DNSStatusCard } from './DNSStatusCard';
 import { BillingCard } from './BillingCard';
 import { AnalyticsPlaceholder } from './AnalyticsPlaceholder';
+import { ServiceStatusGrid } from './ServiceStatusGrid';
 
 interface Props {
   data: BusinessIntakeData;
+  provisioning: BusinessDetail['provisioning'];
 }
 
-export function BusinessPlaceholderDashboard({ data }: Props) {
+export function BusinessPlaceholderDashboard({ data, provisioning }: Props) {
   const t = useBusinessTheme();
+  const { hideBuildProgress } = useFeatureFlags();
   const firstName = data.contact.firstName || data.website.bizName || 'there';
 
   return (
@@ -58,29 +63,35 @@ export function BusinessPlaceholderDashboard({ data }: Props) {
               Edit setup
             </Button>
           </Link>
-          <Button t={t} size="md" iconLeft={<Icon name="plus" size={14} color="#fff" />}>
-            New deploy
-          </Button>
         </div>
       </div>
 
-      <SitePreview t={t} data={data} />
+      <MySiteCard t={t} provisioning={provisioning} domain={data.domain.domain} />
 
       <div
         style={{
           marginTop: 28,
           display: 'grid',
-          gridTemplateColumns: '1.4fr 1fr',
+          gridTemplateColumns: hideBuildProgress ? '1fr' : '1.4fr 1fr',
           gap: 16,
         }}
       >
         <DNSStatusCard t={t} data={data} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <AnalyticsPlaceholder t={t} />
-          <div style={{ flex: 1, display: 'flex' }}>
-            <BillingCard t={t} data={data} />
-          </div>
-        </div>
+        {!hideBuildProgress && (
+          <ServiceStatusGrid t={t} provisioning={provisioning} />
+        )}
+      </div>
+
+      <div
+        style={{
+          marginTop: 16,
+          display: 'grid',
+          gridTemplateColumns: '1.4fr 1fr',
+          gap: 16,
+        }}
+      >
+        <AnalyticsPlaceholder t={t} orgId={data.orgId} />
+        <BillingCard t={t} data={data} />
       </div>
 
       <div style={{ marginTop: 28 }}>
