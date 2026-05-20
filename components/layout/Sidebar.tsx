@@ -15,6 +15,8 @@ import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { organizationsApi } from '@/lib/api-client';
 import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
+import { useQuery } from '@tanstack/react-query';
+import { listMyBusinesses } from '@/lib/api/business';
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
@@ -30,6 +32,12 @@ export function Sidebar({
   const { user } = useAuthStore();
   const { expandedOrgs, toggleOrg, selectAndExpand } = useHierarchyStore();
   const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
+  const { data: businesses } = useQuery({
+    queryKey: ['business', 'me'],
+    queryFn: () => listMyBusinesses(),
+    staleTime: 60_000,
+  });
+  const hasBusinessIntakes = (businesses?.length ?? 0) > 0;
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -386,6 +394,29 @@ export function Sidebar({
                 </svg>
                 <span className="text-sm font-medium">Purchase domain</span>
               </a>
+            )}
+            {hasBusinessIntakes && (
+              <Link
+                href="/business"
+                onClick={onMobileMenuClose}
+                className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-text-muted hover:bg-surface-hover hover:text-text"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+                <span className="text-sm font-medium">My Business</span>
+              </Link>
             )}
           </div>
 

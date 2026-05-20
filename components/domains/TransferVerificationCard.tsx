@@ -27,7 +27,7 @@ export function TransferVerificationCard({ domain, domainLocked, verification }:
 
   return (
     <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light p-6 space-y-6">
-      <h3 className="text-base font-semibold text-orange">
+      <h3 className="text-base font-semibold text-text">
         Transfer &amp; Verification
       </h3>
 
@@ -103,7 +103,7 @@ function TransferCodeSection({
 
   return (
     <div>
-      <p className="text-sm font-medium text-orange-dark dark:text-white">
+      <p className="text-sm font-medium text-text">
         Transfer this domain away
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -122,7 +122,7 @@ function TransferCodeSection({
         </div>
       ) : code ? (
         <div className="mt-3 flex items-center gap-3">
-          <code className="px-3 py-2 rounded-md bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 font-mono text-sm text-orange-dark dark:text-white">
+          <code className="px-3 py-2 rounded-md bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 font-mono text-sm text-text">
             {code}
           </code>
           <button
@@ -201,7 +201,7 @@ function VerificationSection({
   return (
     <div>
       <div className="flex items-center gap-3">
-        <p className="text-sm font-medium text-orange-dark dark:text-white">
+        <p className="text-sm font-medium text-text">
           Registrant Verification
         </p>
         <span

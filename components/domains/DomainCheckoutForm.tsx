@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
+import { createPortal } from 'react-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -41,6 +44,37 @@ export default function DomainCheckoutForm({
   asModal = false,
 }: DomainCheckoutFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isYearModalOpen, setIsYearModalOpen] = useState(false);
+  const [shouldRenderYearModal, setShouldRenderYearModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const yearOverlayRef = useRef<HTMLDivElement>(null);
+  const yearCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
+
+  useEffect(() => { if (isYearModalOpen) setShouldRenderYearModal(true); }, [isYearModalOpen]);
+
+  useGSAP(() => {
+    if (!mounted || !shouldRenderYearModal || !isYearModalOpen) return;
+    if (!yearOverlayRef.current || !yearCardRef.current) return;
+    gsap.fromTo(yearOverlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: 'power2.out' });
+    gsap.fromTo(yearCardRef.current, { scale: 0.97, opacity: 0, y: 16 }, { scale: 1, opacity: 1, y: 0, duration: 0.3, ease: 'power3.out' });
+  }, [isYearModalOpen, mounted, shouldRenderYearModal]);
+
+  useEffect(() => {
+    if (!mounted || !shouldRenderYearModal || isYearModalOpen) return;
+    if (!yearOverlayRef.current || !yearCardRef.current) return;
+    gsap.killTweensOf([yearOverlayRef.current, yearCardRef.current]);
+    const tl = gsap.timeline({ onComplete: () => setShouldRenderYearModal(false) });
+    tl.to(yearOverlayRef.current, { opacity: 0, duration: 0.18, ease: 'power2.in' });
+    tl.to(yearCardRef.current, { scale: 0.97, opacity: 0, y: 16, duration: 0.18, ease: 'power2.in' }, 0);
+  }, [isYearModalOpen, mounted, shouldRenderYearModal]);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape' && isYearModalOpen) setIsYearModalOpen(false); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isYearModalOpen]);
   const [error, setError] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState('');
   const [years, setYears] = useState(1);
@@ -108,20 +142,84 @@ export default function DomainCheckoutForm({
     <>
       {/* Year & Price Row */}
           <div className="flex items-center justify-end gap-3 mb-5">
+            {/* Desktop: native select */}
             <select
               value={years}
               onChange={(e) => setYears(Number(e.target.value))}
-              className="px-2 py-1 rounded-md border border-border bg-surface-alt text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
+              className="hidden md:block px-2 py-1 rounded-md border border-border bg-surface-alt text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
             >
               {[1, 2, 3, 5, 10].map((y) => (
                 <option key={y} value={y}>{y}yr</option>
               ))}
             </select>
+
+            {/* Mobile: button that opens a picker modal */}
+            <button
+              type="button"
+              onClick={() => setIsYearModalOpen(true)}
+              className="md:hidden flex items-center gap-1 px-2 py-1 rounded-md border border-border bg-surface-alt text-text text-sm"
+            >
+              {years}yr
+              <svg className="w-3 h-3 text-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+
             <div className="flex items-baseline gap-1.5">
               <span className="text-xs text-text-muted">${price.toFixed(2)}/yr</span>
               <span className="font-black text-accent text-base">${totalPrice.toFixed(2)}</span>
             </div>
           </div>
+
+          {/* Mobile year picker modal — portal with GSAP animations matching Modal.tsx */}
+          {shouldRenderYearModal && mounted && createPortal(
+            <div className="md:hidden fixed inset-0 z-[99999] flex items-center justify-center px-6">
+              <div
+                ref={yearOverlayRef}
+                className="fixed inset-0 bg-[rgba(11,13,16,0.55)] backdrop-blur-[2px]"
+                onClick={() => setIsYearModalOpen(false)}
+              />
+              <div
+                ref={yearCardRef}
+                className="relative z-10 bg-surface border border-border rounded-2xl w-full max-w-xs overflow-hidden shadow-popover"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                  <p className="text-base font-semibold text-text">Registration period</p>
+                  <button
+                    type="button"
+                    onClick={() => setIsYearModalOpen(false)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-text-muted hover:bg-surface-hover hover:text-text transition-colors"
+                    aria-label="Close"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                {[1, 2, 3, 5, 10].map((y) => (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => { setYears(y); setIsYearModalOpen(false); }}
+                    className={`w-full text-left px-5 py-3.5 text-sm transition-colors flex items-center justify-between ${
+                      years === y
+                        ? 'bg-accent/10 text-accent font-medium'
+                        : 'text-text hover:bg-surface-hover'
+                    }`}
+                  >
+                    <span>{y} {y === 1 ? 'year' : 'years'}</span>
+                    {years === y && (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>,
+            document.body
+          )}
 
           {/* Auth Code - transfer only */}
           {registrationType === 'transfer' && (
@@ -138,7 +236,6 @@ export default function DomainCheckoutForm({
           )}
 
           {/* Contact */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Contact</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <Input
               label="First Name"
@@ -173,7 +270,6 @@ export default function DomainCheckoutForm({
           </div>
 
           {/* Address */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Address</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <div className="md:col-span-2">
               <Input

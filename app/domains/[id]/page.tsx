@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, FormEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, FormEvent } from 'react';
+import { createPortal } from 'react-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -157,6 +160,38 @@ export default function DomainDetailPage() {
   const [renewalPricing, setRenewalPricing] = useState<DomainPricing | null>(null);
   const [selectedYears, setSelectedYears] = useState(1);
   const [isRenewing, setIsRenewing] = useState(false);
+
+  // Renewal year picker modal (mobile)
+  const [isRenewalYearOpen, setIsRenewalYearOpen] = useState(false);
+  const [shouldRenderRenewalYear, setShouldRenderRenewalYear] = useState(false);
+  const [pageMounted, setPageMounted] = useState(false);
+  const renewalYearOverlayRef = useRef<HTMLDivElement>(null);
+  const renewalYearCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setPageMounted(true); return () => setPageMounted(false); }, []);
+  useEffect(() => { if (isRenewalYearOpen) setShouldRenderRenewalYear(true); }, [isRenewalYearOpen]);
+
+  useGSAP(() => {
+    if (!pageMounted || !shouldRenderRenewalYear || !isRenewalYearOpen) return;
+    if (!renewalYearOverlayRef.current || !renewalYearCardRef.current) return;
+    gsap.fromTo(renewalYearOverlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: 'power2.out' });
+    gsap.fromTo(renewalYearCardRef.current, { scale: 0.97, opacity: 0, y: 16 }, { scale: 1, opacity: 1, y: 0, duration: 0.3, ease: 'power3.out' });
+  }, [isRenewalYearOpen, pageMounted, shouldRenderRenewalYear]);
+
+  useEffect(() => {
+    if (!pageMounted || !shouldRenderRenewalYear || isRenewalYearOpen) return;
+    if (!renewalYearOverlayRef.current || !renewalYearCardRef.current) return;
+    gsap.killTweensOf([renewalYearOverlayRef.current, renewalYearCardRef.current]);
+    const tl = gsap.timeline({ onComplete: () => setShouldRenderRenewalYear(false) });
+    tl.to(renewalYearOverlayRef.current, { opacity: 0, duration: 0.18, ease: 'power2.in' });
+    tl.to(renewalYearCardRef.current, { scale: 0.97, opacity: 0, y: 16, duration: 0.18, ease: 'power2.in' }, 0);
+  }, [isRenewalYearOpen, pageMounted, shouldRenderRenewalYear]);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape' && isRenewalYearOpen) setIsRenewalYearOpen(false); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isRenewalYearOpen]);
 
   // URL param banners
   const renewedParam = searchParams.get('renewed');
@@ -429,17 +464,17 @@ export default function DomainDetailPage() {
           <div className="p-6 space-y-6">
             {/* Domain Settings */}
             <div>
-              <h3 className="text-base font-semibold text-orange mb-4">Domain Settings</h3>
+              <h3 className="text-base font-semibold text-text mb-4">Domain Settings</h3>
               <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-orange-dark dark:text-white">Auto-Renew</p>
+                <p className="text-sm font-medium text-text">Auto-Renew</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Automatically renew this domain before it expires.
                 </p>
@@ -465,13 +500,13 @@ export default function DomainDetailPage() {
 
           <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-orange/10 dark:bg-orange/5 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-orange" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-orange-dark dark:text-white">Domain Lock</p>
+                <p className="text-sm font-medium text-text">Domain Lock</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Prevent unauthorized transfers of this domain.
                 </p>
@@ -501,10 +536,10 @@ export default function DomainDetailPage() {
             {/* Renewal */}
             {domain.status === 'active' && domain.expires_at && (
               <div>
-                <h3 className="text-base font-semibold text-orange mb-4">Renewal</h3>
+                <h3 className="text-base font-semibold text-text mb-4">Renewal</h3>
                 <div className="space-y-4">
             <div className="text-center pb-4 mb-0">
-                    <span className={`text-3xl font-bold ${daysRemaining! < 30 ? 'text-red-500' : daysRemaining! < 90 ? 'text-yellow-500' : 'text-orange'}`}>
+                    <span className={`text-3xl font-bold ${daysRemaining! < 30 ? 'text-red-500' : daysRemaining! < 90 ? 'text-yellow-500' : 'text-text'}`}>
                       {daysRemaining}
                     </span>
                     <span className="text-sm text-gray-400 dark:text-gray-500 ml-2">days remaining</span>
@@ -512,7 +547,7 @@ export default function DomainDetailPage() {
             <div className="rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-500 dark:text-gray-400">Current expiration</p>
-                <p className="text-sm font-medium text-orange-dark dark:text-white">
+                <p className="text-sm font-medium text-text">
                   {new Date(domain.expires_at).toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'long',
@@ -525,24 +560,82 @@ export default function DomainDetailPage() {
                 <label htmlFor="renewal-years" className="text-sm text-gray-500 dark:text-gray-400">
                   Renew for
                 </label>
+                {/* Desktop: native select */}
                 <select
                   id="renewal-years"
                   value={selectedYears}
                   onChange={(e) => setSelectedYears(Number(e.target.value))}
-                  className="text-sm rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-orange-dark dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange/50"
+                  className="hidden md:block text-sm rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-text px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange/50"
                 >
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
-                    <option key={y} value={y}>
-                      {y} {y === 1 ? 'year' : 'years'}
-                    </option>
+                    <option key={y} value={y}>{y} {y === 1 ? 'year' : 'years'}</option>
                   ))}
                 </select>
+                {/* Mobile: button opens picker modal */}
+                <button
+                  type="button"
+                  onClick={() => setIsRenewalYearOpen(true)}
+                  className="md:hidden flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-text text-sm"
+                >
+                  {selectedYears} {selectedYears === 1 ? 'year' : 'years'}
+                  <svg className="w-3 h-3 text-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
               </div>
+
+              {/* Mobile renewal year picker modal */}
+              {shouldRenderRenewalYear && pageMounted && createPortal(
+                <div className="md:hidden fixed inset-0 z-[99999] flex items-center justify-center px-6">
+                  <div
+                    ref={renewalYearOverlayRef}
+                    className="fixed inset-0 bg-[rgba(11,13,16,0.55)] backdrop-blur-[2px]"
+                    onClick={() => setIsRenewalYearOpen(false)}
+                  />
+                  <div
+                    ref={renewalYearCardRef}
+                    className="relative z-10 bg-surface border border-border rounded-2xl w-full max-w-xs overflow-hidden shadow-popover"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                      <p className="text-base font-semibold text-text">Renewal period</p>
+                      <button
+                        type="button"
+                        onClick={() => setIsRenewalYearOpen(false)}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-text-muted hover:bg-surface-hover hover:text-text transition-colors"
+                        aria-label="Close"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
+                      <button
+                        key={y}
+                        type="button"
+                        onClick={() => { setSelectedYears(y); setIsRenewalYearOpen(false); }}
+                        className={`w-full text-left px-5 py-3.5 text-sm transition-colors flex items-center justify-between ${
+                          selectedYears === y ? 'bg-accent/10 text-accent font-medium' : 'text-text hover:bg-surface-hover'
+                        }`}
+                      >
+                        <span>{y} {y === 1 ? 'year' : 'years'}</span>
+                        {selectedYears === y && (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>,
+                document.body
+              )}
 
               {renewalTotalPrice && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Total</span>
-                  <span className="font-semibold text-orange-dark dark:text-white">
+                  <span className="font-semibold text-text">
                     ${renewalTotalPrice} {renewalPricing?.currency?.toUpperCase() || 'USD'}
                   </span>
                 </div>
@@ -600,7 +693,7 @@ export default function DomainDetailPage() {
 
           {/* Right column: Nameservers */}
           <div className="p-6">
-            <h3 className="text-base font-semibold text-orange mb-4">Nameservers</h3>
+            <h3 className="text-base font-semibold text-text mb-4">Nameservers</h3>
         <div className="p-3 mb-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
             Using Javelina for DNS?
@@ -686,7 +779,7 @@ export default function DomainDetailPage() {
           </Button>
         }
       >
-        <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
           {([
             { label: 'First Name', value: contact.first_name },
             { label: 'Last Name', value: contact.last_name },
@@ -699,9 +792,9 @@ export default function DomainDetailPage() {
             { label: 'Country', value: contact.country },
             { label: 'Organization', value: contact.org_name },
           ] as { label: string; value: string | undefined; fullRow?: boolean }[]).map(({ label, value, fullRow }) => (
-            <div key={label} className={fullRow ? 'md:col-span-4' : undefined}>
+            <div key={label} className={fullRow ? 'col-span-1 sm:col-span-2 md:col-span-4' : undefined}>
               <dt className="text-xs text-gray-400 dark:text-gray-500">{label}</dt>
-              <dd className="text-sm font-medium text-orange-dark dark:text-white">
+              <dd className="text-sm font-medium text-text">
                 {value || <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}
               </dd>
             </div>
@@ -714,7 +807,7 @@ export default function DomainDetailPage() {
         {zone ? (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-orange-dark dark:text-white font-medium">{zone.name}</p>
+              <p className="text-sm text-text font-medium">{zone.name}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Organization: {zone.organization_name}
               </p>
@@ -744,12 +837,7 @@ export default function DomainDetailPage() {
                     onClick={() => handleOpenZoneModal(org.id, org.name)}
                     className="w-full text-left px-4 py-3 rounded-lg border border-gray-light dark:border-gray-700 hover:border-orange dark:hover:border-orange hover:shadow-md transition-all flex items-center justify-between group"
                   >
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-orange/10 text-orange text-sm font-bold flex items-center justify-center flex-shrink-0">
-                        {org.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span className="text-sm font-medium text-orange-dark dark:text-white">{org.name}</span>
-                    </span>
+                    <span className="text-sm font-medium text-text">{org.name}</span>
                     <span className="text-xs font-medium text-orange group-hover:translate-x-0.5 transition-transform">Set up DNS &rarr;</span>
                   </button>
                 ))}
