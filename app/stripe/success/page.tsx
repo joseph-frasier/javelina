@@ -12,6 +12,20 @@ function SuccessPageContent() {
   const [countdown, setCountdown] = useState(3);
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
+  const orgId = searchParams.get('org_id');
+  const intake = searchParams.get('intake');
+  const planCode = searchParams.get('plan_code');
+  const orgName = searchParams.get('org_name');
+
+  function resolveDestination(): string {
+    if (intake === 'business' && orgId && planCode) {
+      const qs = new URLSearchParams({ org_id: orgId, plan_code: planCode });
+      if (orgName) qs.set('org_name', orgName);
+      return `/business/setup?${qs.toString()}`;
+    }
+    return orgId ? `/organization/${orgId}` : '/';
+  }
+
   useEffect(() => {
     const paymentIntent = searchParams.get('payment_intent');
     const setupIntent = searchParams.get('setup_intent');
@@ -65,21 +79,23 @@ function SuccessPageContent() {
 
   useEffect(() => {
     if (!shouldRedirect) return;
-    const orgId = searchParams.get('org_id');
-    const path = orgId ? `/organization/${orgId}` : '/';
     // Navigate after commit
-    router.push(path);
+    router.push(resolveDestination());
     // Defer toast to next tick to avoid state update during render of Providers
     setTimeout(() => {
-      try { addToast('success', 'Welcome to your new plan!'); } catch {}
+      try {
+        addToast('success', intake === 'business'
+          ? 'Welcome to Javelina Business. Let\'s set up your site.'
+          : 'Welcome to your new plan!');
+      } catch {}
     }, 0);
-  }, [shouldRedirect, searchParams, router, addToast]);
+  }, [shouldRedirect, searchParams, router, addToast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-orange-light dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-light dark:border-gray-700 shadow-lg p-8 text-center">
+          <div className="bg-surface rounded-xl border border-border shadow-lg p-8 text-center">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-8 h-8 text-red-600 dark:text-red-400"
@@ -95,15 +111,15 @@ function SuccessPageContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-orange-dark dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-text mb-2">
               Something went wrong
             </h1>
-            <p className="text-gray-slate dark:text-gray-400 mb-6">
+            <p className="text-text-muted mb-6">
               We encountered an error processing your subscription. Please contact support.
             </p>
             <button
               onClick={() => router.push('/pricing')}
-              className="w-full bg-orange hover:bg-[#d46410] text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              className="w-full bg-accent hover:bg-accent-hover text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
               Back to Pricing
             </button>
@@ -114,13 +130,12 @@ function SuccessPageContent() {
   }
 
   if (status === 'success') {
-    const orgId = searchParams.get('org_id');
-    const redirectPath = orgId ? `/organization/${orgId}` : '/';
+    const redirectPath = resolveDestination();
     
     return (
-      <div className="min-h-screen bg-orange-light dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-light dark:border-gray-700 shadow-lg p-8 text-center">
+          <div className="bg-surface rounded-xl border border-border shadow-lg p-8 text-center">
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-8 h-8 text-green-600 dark:text-green-400"
@@ -136,17 +151,19 @@ function SuccessPageContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-orange-dark dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-text mb-2">
               Payment Successful!
             </h1>
-            <p className="text-gray-slate dark:text-gray-400 mb-6">
-              Your subscription is now active. Redirecting to dashboard in {countdown}...
+            <p className="text-text-muted mb-6">
+              {intake === 'business'
+                ? `Your subscription is now active. Redirecting to setup in ${countdown}...`
+                : `Your subscription is now active. Redirecting to dashboard in ${countdown}...`}
             </p>
             <button
               onClick={() => router.push(redirectPath)}
-              className="w-full bg-orange hover:bg-[#d46410] text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              className="w-full bg-accent hover:bg-accent-hover text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
-              Go to Dashboard Now
+              {intake === 'business' ? 'Set Up My Site Now' : 'Go to Dashboard Now'}
             </button>
           </div>
         </div>
@@ -155,18 +172,18 @@ function SuccessPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-orange-light dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Processing Content */}
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-light dark:border-gray-700 shadow-lg p-8 text-center">
-            <div className="w-16 h-16 bg-orange-light dark:bg-orange/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange"></div>
+          <div className="bg-surface rounded-xl border border-border shadow-lg p-8 text-center">
+            <div className="w-16 h-16 bg-accent-light dark:bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
             </div>
-            <h1 className="text-2xl font-bold text-orange-dark dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-text mb-2">
               Processing Your Subscription
             </h1>
-            <p className="text-gray-slate dark:text-gray-400">
+            <p className="text-text-muted">
               Please wait while we activate your new plan...
             </p>
           </div>
@@ -179,8 +196,8 @@ function SuccessPageContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-orange-light dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
       </div>
     }>
       <SuccessPageContent />

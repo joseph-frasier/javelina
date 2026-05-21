@@ -61,13 +61,13 @@ export function SelectAllCheckbox({
             if (el) el.indeterminate = isPartiallySelected && !isPageFullySelected;
           }}
           onChange={handleCheckboxClick}
-          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
+          className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500 cursor-pointer"
         />
         
         {/* Dropdown Arrow */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="ml-1 p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          className="ml-1 p-0.5 hover:bg-surface-hover rounded transition-colors"
           aria-label="Selection options"
         >
           <svg 
@@ -88,13 +88,13 @@ export function SelectAllCheckbox({
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           
           {/* Menu */}
-          <div className="absolute left-0 mt-1 w-24 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20 overflow-hidden">
+          <div className="absolute left-0 mt-1 w-24 bg-surface rounded-md shadow-lg border border-border z-20 overflow-hidden">
             <button
               onClick={() => {
                 onSelectAll();
                 setIsOpen(false);
               }}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-surface-hover transition-colors"
             >
               All
             </button>
@@ -103,7 +103,7 @@ export function SelectAllCheckbox({
                 onSelectNone();
                 setIsOpen(false);
               }}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-surface-hover transition-colors"
             >
               None
             </button>

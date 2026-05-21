@@ -58,7 +58,7 @@ export default function CaaTagDropdown({
   return (
     <div ref={rootRef} className={clsx('relative', className)}>
       {label && (
-        <label htmlFor={id} className="mb-2 block text-sm font-medium text-orange-dark">
+        <label htmlFor={id} className="mb-2 block text-sm font-medium text-text">
           {label}
         </label>
       )}
@@ -93,12 +93,12 @@ export default function CaaTagDropdown({
             }
           }}
           className={clsx(
-            'w-full rounded-md border bg-white px-4 py-2.5 pr-10 text-left text-orange-dark transition-colors',
+            'w-full rounded-md border bg-surface px-4 py-2.5 pr-10 text-left text-text transition-colors',
             'font-regular dark:bg-gray-800 dark:text-gray-100',
-            'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-0',
-            'border-gray-light hover:border-orange/50 dark:border-gray-600',
-            disabled && 'cursor-not-allowed opacity-50 bg-gray-light dark:bg-gray-700'
+            'placeholder:text-text-faint',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-0',
+            'border-border hover:border-accent/50 dark:border-gray-600',
+            disabled && 'cursor-not-allowed opacity-50 bg-surface-alt dark:bg-gray-700'
           )}
         />
         <button
@@ -112,7 +112,7 @@ export default function CaaTagDropdown({
               return next;
             })
           }
-          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-orange"
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-accent"
         >
           <svg
             className={clsx('h-4 w-4 transition-transform', isOpen && 'rotate-180')}
@@ -129,7 +129,7 @@ export default function CaaTagDropdown({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute z-[9999] mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-light bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+          className="absolute z-[9999] mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-surface shadow-lg dark:border-gray-600 dark:bg-gray-800"
         >
           {filteredOptions.map((option) => (
             <button
@@ -143,15 +143,15 @@ export default function CaaTagDropdown({
                 setIsOpen(false);
               }}
               className={clsx(
-                'w-full px-3 py-2 text-left transition-colors hover:bg-orange-light/30 dark:hover:bg-orange-light/10',
-                option.value === value ? 'bg-orange-light text-orange font-medium' : 'text-orange-dark dark:text-gray-100'
+                'w-full px-3 py-2 text-left transition-colors hover:bg-accent-light/30 dark:hover:bg-accent-light/10',
+                option.value === value ? 'bg-accent-light text-accent font-medium' : 'text-text'
               )}
             >
               {option.label}
             </button>
           ))}
           {filteredOptions.length === 0 && (
-            <p className="px-3 py-2 text-sm text-gray-slate dark:text-gray-400">No matching tags</p>
+            <p className="px-3 py-2 text-sm text-text-muted">No matching tags</p>
           )}
         </div>
       )}

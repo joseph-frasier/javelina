@@ -122,8 +122,8 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
         )}
 
         <div>
-          <label htmlFor="edit-org-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-            Organization Name <span className="text-red-500">*</span>
+          <label htmlFor="edit-org-name" className="block text-sm font-medium text-text mb-2">
+            Organization Name <span className="text-danger" aria-hidden="true">*</span>
           </label>
           <Input
             id="edit-org-name"
@@ -138,13 +138,13 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
           )}
-          <p className="mt-1 text-xs text-gray-slate">
+          <p className="mt-1 text-xs text-text-muted">
             {name.length}/100 characters
           </p>
         </div>
 
         <div>
-          <label htmlFor="edit-org-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label htmlFor="edit-org-description" className="block text-sm font-medium text-text mb-2">
             Description
           </label>
           <textarea
@@ -155,9 +155,9 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
             disabled={isSubmitting}
             rows={3}
             maxLength={500}
-            className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 border border-border rounded-md bg-surface-alt text-text placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
           />
-          <p className="mt-1 text-xs text-gray-slate">
+          <p className="mt-1 text-xs text-text-muted">
             {description.length}/500 characters
           </p>
         </div>
@@ -178,7 +178,7 @@ export function EditOrganizationModal({ isOpen, onClose, organization }: EditOrg
           >
             {isSubmitting ? (
               <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

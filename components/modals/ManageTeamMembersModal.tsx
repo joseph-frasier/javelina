@@ -94,31 +94,34 @@ export function ManageTeamMembersModal({
     }
   }, [isOpen, fetchInvitations]);
 
-  const getRoleColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-orange/10 text-orange border-orange/20';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-blue-electric/10 text-blue-electric border-blue-electric/20';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+        return 'bg-blue-500';
       case 'Editor':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-gray-slate/10 text-gray-slate border-gray-slate/20';
+        return 'bg-gray-slate';
       default:
-        return 'bg-gray-light/10 text-gray-slate border-gray-light/20';
+        return 'bg-text-muted';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const ROLE_PILL_CLASSES =
+    'inline-flex items-center gap-1.5 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text';
+
+  const getStatusDotColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400';
+        return 'bg-yellow-500';
       case 'awaiting_verification':
-        return 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400';
+        return 'bg-blue-electric';
       default:
-        return 'bg-gray-light/10 text-gray-slate border-gray-light/20';
+        return 'bg-gray-slate';
     }
   };
 
@@ -257,14 +260,14 @@ export function ManageTeamMembersModal({
         bodyClassName="space-y-6"
         headerContent={
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+            <span className="rounded-full border border-border bg-surface-alt px-3 py-1 text-xs font-medium text-text-muted">
               {users.length} member{users.length === 1 ? '' : 's'}
             </span>
-            <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+            <span className="rounded-full border border-border bg-surface-alt px-3 py-1 text-xs font-medium text-text-muted">
               {invitations.length} pending invite{invitations.length === 1 ? '' : 's'}
             </span>
             {topRoleDistribution[0] && (
-              <span className="rounded-full border border-gray-light bg-white px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+              <span className="rounded-full border border-border bg-surface-alt px-3 py-1 text-xs font-medium text-text-muted">
                 Largest group: {topRoleDistribution[0][0]} ({topRoleDistribution[0][1]})
               </span>
             )}
@@ -280,31 +283,31 @@ export function ManageTeamMembersModal({
       >
         <div className="space-y-6">
           {/* Tab Strip */}
-          <div className="inline-flex rounded-full border border-gray-light bg-gray-50 p-1 dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="inline-flex rounded-full border border-border bg-surface-alt p-1">
             <button
               onClick={() => setActiveTab('members')}
-              className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === 'members'
-                  ? 'bg-orange text-white shadow-[0_10px_30px_rgba(239,114,21,0.28)]'
-                  : 'text-gray-slate hover:text-orange-dark dark:text-white/60 dark:hover:text-white'
+                  ? 'bg-accent text-[#ffffff] shadow-sm'
+                  : 'text-text-muted hover:text-text'
               }`}
             >
               Members
-              <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'members' ? 'bg-white/20 text-white' : 'bg-white text-gray-slate dark:bg-white/10 dark:text-white/60'}`}>
+              <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'members' ? 'bg-[#ffffff]/20 text-[#ffffff]' : 'bg-surface text-text-muted'}`}>
                 {users.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('invitations')}
-              className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === 'invitations'
-                  ? 'bg-orange text-white shadow-[0_10px_30px_rgba(239,114,21,0.28)]'
-                  : 'text-gray-slate hover:text-orange-dark dark:text-white/60 dark:hover:text-white'
+                  ? 'bg-accent text-[#ffffff] shadow-sm'
+                  : 'text-text-muted hover:text-text'
               }`}
             >
               Pending Invitations
               {invitations.length > 0 && (
-                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'invitations' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200'}`}>
+                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${activeTab === 'invitations' ? 'bg-[#ffffff]/20 text-[#ffffff]' : 'bg-surface text-text-muted'}`}>
                   {invitations.length}
                 </span>
               )}
@@ -315,8 +318,8 @@ export function ManageTeamMembersModal({
           {activeTab === 'members' && (
             <>
               <div className="grid gap-3 md:grid-cols-[1.3fr_1fr]">
-                <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
-                  <div className="flex items-center gap-2 text-blue-electric">
+                <div className="rounded-xl border border-border bg-surface-alt p-5">
+                  <div className="flex items-center gap-2 text-text-muted">
                     <svg
                       className="h-5 w-5"
                       fill="none"
@@ -330,30 +333,30 @@ export function ManageTeamMembersModal({
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                       />
                     </svg>
-                    <span className="text-sm font-medium uppercase tracking-[0.24em]">Team overview</span>
+                    <span className="text-sm font-semibold uppercase tracking-[0.2em]">Team overview</span>
                   </div>
-                  <p className="mt-4 text-3xl font-semibold tracking-tight text-orange-dark dark:text-white">
+                  <p className="mt-4 text-3xl font-semibold tracking-tight text-text">
                     {users.length} active member{users.length === 1 ? '' : 's'}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/65">
+                  <p className="mt-2 text-sm leading-6 text-text-muted">
                     Keep access current by promoting the right people and removing unused seats quickly.
                   </p>
                 </div>
 
-                <div className="rounded-[22px] border border-gray-light bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
-                  <p className="text-sm font-medium text-orange-dark dark:text-[#fff3ea]">Role distribution</p>
+                <div className="rounded-xl border border-border bg-surface-alt p-5">
+                  <p className="text-sm font-medium text-text">Role distribution</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {topRoleDistribution.length > 0 ? (
                       topRoleDistribution.map(([roleName, count]) => (
                         <span
                           key={roleName}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium ${getRoleColor(roleName)}`}
+                          className={`${ROLE_PILL_CLASSES} px-3 py-1 text-xs`}
                         >
                           {roleName} {count}
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm text-gray-slate dark:text-white/55">No active members yet.</span>
+                      <span className="text-sm text-text-muted">No active members yet.</span>
                     )}
                   </div>
                 </div>
@@ -364,7 +367,7 @@ export function ManageTeamMembersModal({
                 {users.map((user) => (
                   <div
                     key={user.user_id}
-                    className="rounded-[22px] border border-gray-light bg-white p-4 shadow-sm transition-colors hover:border-orange/25 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none dark:hover:border-white/20 dark:hover:bg-white/[0.06]"
+                    className="rounded-xl border border-border bg-surface p-4 shadow-sm"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex items-center space-x-3 min-w-0">
@@ -377,8 +380,8 @@ export function ManageTeamMembersModal({
                             className="h-12 w-12 rounded-full"
                           />
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange/20 bg-orange/15">
-                            <span className="text-base font-bold text-orange">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface-alt">
+                            <span className="text-base font-bold text-text">
                               {getInitials(user.name)}
                             </span>
                           </div>
@@ -387,10 +390,10 @@ export function ManageTeamMembersModal({
 
                       {/* User Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-medium text-orange-dark dark:text-white">
+                        <p className="truncate text-sm font-medium text-text">
                           {user.name}
                         </p>
-                        <p className="truncate text-sm text-gray-slate dark:text-white/55">
+                        <p className="truncate text-sm text-text-muted">
                           {user.email}
                         </p>
                       </div>
@@ -399,7 +402,7 @@ export function ManageTeamMembersModal({
                       {/* Role Management */}
                       <div className="flex items-center gap-2 self-end lg:self-auto">
                         {editingUserId === user.user_id ? (
-                          <div className="flex w-full flex-col gap-2 rounded-2xl border border-gray-light bg-gray-50 p-2 sm:w-auto sm:flex-row sm:items-center dark:border-white/10 dark:bg-black/20">
+                          <div className="flex w-full flex-col gap-2 rounded-2xl border border-border bg-surface-alt p-2 sm:w-auto sm:flex-row sm:items-center">
                             <div className="relative z-[100] sm:w-48">
                               <Dropdown
                                 value={editingRole}
@@ -432,11 +435,7 @@ export function ManageTeamMembersModal({
                           </div>
                         ) : (
                           <>
-                            <span
-                              className={`text-xs px-3 py-1 rounded-full border font-medium ${getRoleColor(
-                                user.role
-                              )}`}
-                            >
+                            <span className={`${ROLE_PILL_CLASSES} text-xs px-3 py-1`}>
                               {user.role}
                             </span>
                             <Button
@@ -472,23 +471,23 @@ export function ManageTeamMembersModal({
           {activeTab === 'invitations' && (
             <>
               {isLoadingInvitations ? (
-                <div className="rounded-[22px] border border-gray-light bg-white py-12 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-orange"></div>
+                <div className="rounded-xl border border-border bg-surface py-12 text-center shadow-sm ">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-accent"></div>
                 </div>
               ) : invitations.length > 0 ? (
                 <div className="space-y-3">
                   {invitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className="rounded-[22px] border border-gray-light bg-white p-4 shadow-sm transition-colors hover:border-orange/25 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none dark:hover:border-white/20 dark:hover:bg-white/[0.06]"
+                      className="rounded-xl border border-border bg-surface p-4 shadow-sm"
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center space-x-3 min-w-0">
                         {/* Envelope Icon */}
                         <div className="flex-shrink-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-200 bg-amber-100 dark:border-amber-500/20 dark:bg-amber-500/15">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface-alt">
                             <svg
-                              className="h-6 w-6 text-amber-600 dark:text-amber-300"
+                              className="h-6 w-6 text-text-muted"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -505,17 +504,17 @@ export function ManageTeamMembersModal({
 
                         {/* Invite Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="truncate text-sm font-medium text-orange-dark dark:text-white">
+                          <p className="truncate text-sm font-medium text-text">
                             {invitation.email}
                           </p>
-                          <p className="text-sm text-gray-slate dark:text-white/55">
+                          <p className="text-sm text-text-muted">
                             Invited {formatRelativeDate(invitation.created_at)}
                             {invitation.invited_by_name && (
                               <span> by {invitation.invited_by_name}</span>
                             )}
                           </p>
                           {invitation.expires_at && (
-                            <p className="text-sm text-gray-slate/80 dark:text-white/45">
+                            <p className="text-sm text-text-muted/80 text-text-faint">
                               Expires:{' '}
                               {new Date(invitation.expires_at).toLocaleDateString('en-US', {
                                 month: 'short',
@@ -529,18 +528,14 @@ export function ManageTeamMembersModal({
                         {/* Status + Role Badges + Revoke */}
                         <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full border font-medium ${getStatusColor(
-                                invitation.status
-                              )}`}
-                            >
+                            <span className={`${ROLE_PILL_CLASSES} text-xs px-2 py-1`}>
+                              <span
+                                aria-hidden="true"
+                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusDotColor(invitation.status)}`}
+                              />
                               {getStatusLabel(invitation.status)}
                             </span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full border font-medium ${getRoleColor(
-                                invitation.role
-                              )}`}
-                            >
+                            <span className={`${ROLE_PILL_CLASSES} text-xs px-2 py-1`}>
                               {invitation.role}
                             </span>
                           </div>
@@ -558,9 +553,9 @@ export function ManageTeamMembersModal({
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[22px] border border-dashed border-gray-light bg-white py-12 text-center shadow-sm dark:border-white/15 dark:bg-white/[0.03] dark:shadow-none">
+                <div className="rounded-xl border border-dashed border-border bg-surface py-12 text-center shadow-sm ">
                   <svg
-                    className="mx-auto mb-4 h-12 w-12 text-gray-slate/40 dark:text-white/35"
+                    className="mx-auto mb-4 h-12 w-12 text-text-muted/40 text-text-faint"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -572,8 +567,8 @@ export function ManageTeamMembersModal({
                       d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     />
                   </svg>
-                  <p className="text-base font-medium text-orange-dark dark:text-white">No pending invitations</p>
-                  <p className="mt-2 text-sm text-gray-slate dark:text-white/55">
+                  <p className="text-base font-medium text-text">No pending invitations</p>
+                  <p className="mt-2 text-sm text-text-muted">
                     New invites will appear here until the recipient accepts.
                   </p>
                 </div>

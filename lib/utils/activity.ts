@@ -50,15 +50,15 @@ export function getActivityBadge(status: string) {
     case 'recent':
       return {
         label: 'Recent',
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-400',
-        dotColor: 'bg-gray-600',
+        color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+        dotColor: 'bg-gray-500 dark:bg-gray-300',
         animate: false,
       };
     default:
       return {
         label: 'Inactive',
-        color: 'bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-500',
-        dotColor: 'bg-gray-400',
+        color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+        dotColor: 'bg-gray-400 dark:bg-gray-400',
         animate: false,
       };
   }

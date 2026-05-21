@@ -1,9 +1,22 @@
 import type { Metadata } from 'next';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Providers } from '@/app/providers';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
 import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/structured-data';
 import Script from 'next/script';
 import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-mono',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
@@ -80,9 +93,13 @@ export default function RootLayout({
   const websiteSchema = generateWebSiteSchema();
 
   return (
-    <html lang="en" className="theme-light" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`theme-dark ${inter.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Theme Script */}
+        {/* Theme bootstrap — dark is default; light requires explicit user opt-in. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -92,17 +109,11 @@ export default function RootLayout({
                   const stored = localStorage.getItem(key);
                   function apply(t) {
                     document.documentElement.classList.remove('theme-light', 'theme-dark');
-                    if (t === 'dark') document.documentElement.classList.add('theme-dark');
-                    else document.documentElement.classList.add('theme-light');
+                    document.documentElement.classList.add(t === 'light' ? 'theme-light' : 'theme-dark');
                   }
-                  if (stored === 'light' || stored === 'dark') {
-                    apply(stored);
-                  } else {
-                    // Default to light mode for first-time visitors
-                    apply('light');
-                  }
-                } catch(e) { 
-                  document.documentElement.classList.add('theme-light');
+                  apply(stored === 'light' ? 'light' : 'dark');
+                } catch(e) {
+                  document.documentElement.classList.add('theme-dark');
                 }
               })();
             `,

@@ -103,7 +103,7 @@ export interface SettingsState {
 
 // Mock data
 const mockGeneralSettings: GeneralSettings = {
-  theme: 'light',
+  theme: 'dark',
   language: 'English',
   timezone: 'America/New_York',
   dateFormat: 'MM/DD/YYYY',

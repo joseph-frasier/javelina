@@ -19,24 +19,24 @@ export function CompactStatCard({
 }: CompactStatCardProps) {
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-light dark:border-gray-slate p-4 ${className}`}
+      className={`bg-surface rounded-lg border border-border dark:border-gray-slate p-4 ${className}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-slate dark:text-gray-light mb-1">
+          <p className="text-sm font-medium text-text-muted dark:text-gray-light mb-1">
             {title}
           </p>
-          <p className="text-2xl font-bold text-orange-dark dark:text-orange">
+          <p className="text-2xl font-bold text-text">
             {value}
           </p>
           {subtitle && (
-            <p className="text-xs text-gray-slate dark:text-gray-light mt-1">
+            <p className="text-xs text-text-muted dark:text-gray-light mt-1">
               {subtitle}
             </p>
           )}
         </div>
         <div className="flex-shrink-0 ml-4">
-          <div className="w-10 h-10 rounded-lg bg-orange/10 dark:bg-orange/20 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-accent/10 dark:bg-accent/20 flex items-center justify-center">
             {icon}
           </div>
         </div>

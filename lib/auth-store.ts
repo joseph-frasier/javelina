@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { updateProfile as updateProfileAction, getProfile } from '@/lib/actions/profile'
 import { getIdleSync } from '@/lib/idle/idleSync'
+import { CURRENT_TOS_VERSION } from '@/lib/legal/versions'
 
 // API configuration for auth endpoints
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
@@ -68,6 +69,8 @@ export interface User {
   language?: string | null
   status?: string | null
   superadmin?: boolean | null
+  tos_version_accepted?: string | null
+  tos_accepted_at?: string | null
 }
 
 interface AuthState {
@@ -85,6 +88,7 @@ interface AuthState {
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
   fetchProfile: () => Promise<void>
   initializeAuth: () => Promise<void>
+  acceptTos: (context: 'signup' | 'login_regate' | 'checkout') => Promise<void>
 }
 
 // Mock users with real names and extended data
@@ -420,4 +424,33 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         authLog.log('[AUTH] Navigating to frontend logout route: /api/logout')
         window.location.href = '/api/logout'
       },
+
+      acceptTos: async (context) => {
+        const response = await fetch('/api/backend/legal/accept', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            document_type: 'terms_of_service',
+            document_version: CURRENT_TOS_VERSION,
+            context,
+          }),
+        })
+
+        if (!response.ok) {
+          const text = await response.text().catch(() => '')
+          throw new Error(`acceptTos failed (${response.status}): ${text}`)
+        }
+
+        await get().fetchProfile()
+      },
 }))
+
+export const useTosNeedsAcceptance = () => {
+  return useAuthStore(
+    (s) =>
+      s.profileReady &&
+      !!s.user &&
+      s.user.tos_version_accepted !== CURRENT_TOS_VERSION
+  )
+}

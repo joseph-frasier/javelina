@@ -80,10 +80,10 @@ function CertificateRow({ cert }: { cert: SslCertificate }) {
   return (
     <Link
       href={`/certificates/${cert.id}`}
-      className="flex items-center justify-between p-4 rounded-lg border border-gray-light dark:border-gray-700 bg-white dark:bg-gray-slate/50 hover:shadow-md hover:border-orange/50 transition-all cursor-pointer"
+      className="flex items-center justify-between p-4 rounded-lg border border-border bg-surface/50 hover:shadow-md hover:border-accent/50 transition-all cursor-pointer"
     >
       <div>
-        <p className="font-medium text-orange-dark dark:text-white">
+        <p className="font-medium text-text">
           {formatProductType(cert.product_type)}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -144,7 +144,7 @@ export function DomainCertificatesSection({ domainName }: DomainCertificatesSect
           </p>
           <Link
             href={`/certificates/new?domain=${encodeURIComponent(domainName)}`}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-md transition-colors"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors"
           >
             Purchase SSL Certificate
           </Link>
@@ -159,7 +159,7 @@ export function DomainCertificatesSection({ domainName }: DomainCertificatesSect
           <div className="flex justify-end pt-2">
             <Link
               href={`/certificates/new?domain=${encodeURIComponent(domainName)}`}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-orange-dark rounded-md transition-colors"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors"
             >
               Purchase SSL Certificate
             </Link>

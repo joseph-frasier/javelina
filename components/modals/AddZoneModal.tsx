@@ -336,15 +336,15 @@ export function AddZoneModal({
           </div>
         )}
 
-        <div className="rounded-lg border border-gray-light/60 dark:border-gray-slate/60 bg-transparent p-3">
-          <p className="text-sm text-gray-slate">
-            Adding zone to: <span className="font-semibold text-orange-dark dark:text-white">{organizationName}</span>
+        <div className="rounded-lg border border-border/60 dark:border-gray-slate/60 bg-transparent p-3">
+          <p className="text-sm text-text-muted">
+            Adding zone to: <span className="font-semibold text-text">{organizationName}</span>
           </p>
         </div>
 
         <div>
-          <label htmlFor="zone-name" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-            Zone Name <span className="text-red-500">*</span>
+          <label htmlFor="zone-name" className="block text-sm font-medium text-text mb-2">
+            Zone Name <span className="text-danger" aria-hidden="true">*</span>
           </label>
           <Input
             id="zone-name"
@@ -359,13 +359,13 @@ export function AddZoneModal({
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
           )}
-          <p className="mt-1 text-xs text-gray-slate">
+          <p className="mt-1 text-xs text-text-muted">
             Enter a valid domain name. {name.length}/253 characters
           </p>
         </div>
 
         <div>
-          <label htmlFor="zone-description" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
+          <label htmlFor="zone-description" className="block text-sm font-medium text-text mb-2">
             Description
           </label>
           <textarea
@@ -376,23 +376,23 @@ export function AddZoneModal({
             disabled={isSubmitting}
             rows={3}
             maxLength={500}
-            className="w-full px-3 py-2 border border-gray-light rounded-md focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent disabled:bg-gray-light disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 border border-border rounded-md bg-surface-alt text-text placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
           />
-          <p className="mt-1 text-xs text-gray-slate">
+          <p className="mt-1 text-xs text-text-muted">
             {description.length}/500 characters
           </p>
         </div>
 
         {/* SOA Configuration Section */}
-        <div className="rounded-lg border border-gray-light/60 dark:border-gray-slate/60 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-orange-dark dark:text-white">
+        <div className="rounded-lg border border-border/60 dark:border-gray-slate/60 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-text">
             SOA Configuration
           </h3>
           
           <div className="space-y-4">
             <div>
-              <label htmlFor="admin-email" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Admin Email <span className="text-red-500">*</span>
+              <label htmlFor="admin-email" className="block text-sm font-medium text-text mb-2">
+                Admin Email <span className="text-danger" aria-hidden="true">*</span>
               </label>
               <Input
                 id="admin-email"
@@ -406,14 +406,14 @@ export function AddZoneModal({
               {errors.admin_email && (
                 <p className="mt-1 text-sm text-red-600">{errors.admin_email}</p>
               )}
-              <p className="mt-1 text-xs text-gray-slate">
+              <p className="mt-1 text-xs text-text-muted">
                 Administrative contact email for this zone
               </p>
             </div>
 
             <div>
-              <label htmlFor="negative-ttl" className="block text-sm font-medium text-orange-dark dark:text-white mb-2">
-                Negative Caching TTL (seconds) <span className="text-red-500">*</span>
+              <label htmlFor="negative-ttl" className="block text-sm font-medium text-text mb-2">
+                Negative Caching TTL (seconds) <span className="text-danger" aria-hidden="true">*</span>
               </label>
               <Input
                 id="negative-ttl"
@@ -430,7 +430,7 @@ export function AddZoneModal({
               {errors.negative_caching_ttl && (
                 <p className="mt-1 text-sm text-red-600">{errors.negative_caching_ttl}</p>
               )}
-              <p className="mt-1 text-xs text-gray-slate">
+              <p className="mt-1 text-xs text-text-muted">
                 How long to cache negative DNS responses (0-86400 seconds)
               </p>
             </div>
@@ -455,7 +455,7 @@ export function AddZoneModal({
           >
             {isSubmitting ? (
               <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

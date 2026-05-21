@@ -27,7 +27,7 @@ export function AdminProtectedRoute({ children }: { children: React.ReactNode })
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-dark mx-auto mb-4"></div>
-          <p className="text-gray-slate">Loading admin dashboard...</p>
+          <p className="text-text-muted">Loading admin dashboard...</p>
         </div>
       </div>
     );

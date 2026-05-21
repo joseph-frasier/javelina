@@ -68,10 +68,10 @@ export default function MyDomainsContent({ success }: MyDomainsContentProps) {
   return (
     <div className="space-y-6">
       {/* Link domain callout */}
-      <div className="p-4 rounded-lg bg-orange-light dark:bg-gray-800 border border-gray-light dark:border-gray-700">
+      <div className="p-4 rounded-lg bg-accent-light dark:bg-gray-800 border border-border">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="text-sm font-medium text-orange-dark dark:text-white">
+            <p className="text-sm font-medium text-text">
               Already purchased or transferred a domain through the OpenSRS Storefront?
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">

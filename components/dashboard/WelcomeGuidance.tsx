@@ -31,7 +31,7 @@ export function WelcomeGuidance() {
     {
       icon: (
         <svg
-          className="w-6 h-6 text-orange"
+          className="w-6 h-6 text-accent"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -69,7 +69,7 @@ export function WelcomeGuidance() {
     {
       icon: (
         <svg
-          className="w-6 h-6 text-orange"
+          className="w-6 h-6 text-accent"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -95,20 +95,20 @@ export function WelcomeGuidance() {
           {steps.map((step) => (
             <div
               key={step.number}
-              className="flex items-start space-x-3 p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate hover:shadow-md transition-shadow"
+              className="flex items-start space-x-3 p-3 rounded-lg bg-surface border border-border dark:border-gray-slate hover:shadow-md transition-shadow"
             >
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-orange/10 dark:bg-orange/20 flex items-center justify-center">
-                  <span className="text-sm font-bold text-orange">
+                <div className="w-8 h-8 rounded-full bg-accent/10 dark:bg-accent/20 flex items-center justify-center">
+                  <span className="text-sm font-bold text-accent">
                     {step.number}
                   </span>
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-gray-slate dark:text-white">
+                <h4 className="text-sm font-bold text-text">
                   {step.title}
                 </h4>
-                <p className="text-xs text-gray-slate dark:text-gray-light mt-0.5">
+                <p className="text-xs text-text-muted dark:text-gray-light mt-0.5">
                   {step.description}
                 </p>
               </div>
@@ -119,21 +119,21 @@ export function WelcomeGuidance() {
 
       {/* Feature Highlights */}
       <div>
-        <h3 className="text-lg font-bold text-orange-dark dark:text-orange mb-4">
+        <h3 className="text-lg font-bold text-text mb-4">
           Why Javelina?
         </h3>
         <div className="space-y-3">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="flex items-start space-x-3 p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-light dark:border-gray-slate"
+              className="flex items-start space-x-3 p-3 rounded-lg bg-surface border border-border dark:border-gray-slate"
             >
               <div className="flex-shrink-0 mt-0.5">{feature.icon}</div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-gray-slate dark:text-white">
+                <h4 className="text-sm font-bold text-text">
                   {feature.title}
                 </h4>
-                <p className="text-xs text-gray-slate dark:text-gray-light mt-0.5">
+                <p className="text-xs text-text-muted dark:text-gray-light mt-0.5">
                   {feature.description}
                 </p>
               </div>

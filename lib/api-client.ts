@@ -309,6 +309,20 @@ export const organizationsApi = {
   },
 
   /**
+   * Get the bundled-domain entitlement status for an org.
+   * Returns { eligible, redeemed, redeemed_at, available } where `available`
+   * means the org's plan includes a bundled domain AND it hasn't been used yet.
+   */
+  getBundledDomainStatus: (id: string): Promise<{
+    eligible: boolean;
+    redeemed: boolean;
+    redeemed_at: string | null;
+    available: boolean;
+  }> => {
+    return apiClient.get(`/organizations/${id}/bundled-domain-status`);
+  },
+
+  /**
    * Create a new organization
    */
   create: (data: { 
@@ -508,6 +522,96 @@ export const dnsRecordsApi = {
     return apiClient.delete(`/dns-records/${id}`);
   },
 };
+
+// ===== Intake (admin pipelines queue) =====
+// Backend forwarder is a pure passthrough — responses are byte-identical to
+// what javelina-intake's /api/internal/leads* returns. See
+// documentation/admin-queue-api-guide.md.
+
+export type LeadStatus =
+  | 'created' | 'form_submitted' | 'agents_complete'
+  | 'scope_confirmed' | 'provisioning' | 'live'
+  | 'routed_to_custom' | 'abandoned' | 'failed';
+
+export type LeadPackage = 'business_starter' | 'business_pro';
+
+export interface LeadSummary {
+  id: string;
+  firm_id: string;
+  org_id: string;
+  package: LeadPackage;
+  contact_email: string;
+  contact_name: string;
+  status: LeadStatus;
+  version: number;
+  total_cost_cents: number;
+  created_at: string;
+  form_submitted_at: string | null;
+  agents_completed_at: string | null;
+  scope_confirmed_at: string | null;
+  scope_rejected_at: string | null;
+  scope_rejection_reason: string | null;
+  updated_at: string;
+}
+
+export interface ListLeadsResponse {
+  leads: LeadSummary[];
+  pagination: { limit: number; offset: number; total: number | null };
+}
+
+export interface LeadDetail extends LeadSummary {
+  lead_record: LeadRecord | null;
+  research_report: ResearchReport | null;
+  similarity_report: SimilarityReport | null;
+  upsell_risk_report: UpsellRiskReport | null;
+  // Agent 10 (Composer) emits both copy + page structure here. The legacy
+  // structure_prep column on the intake DB is unused (Agent 11 was folded
+  // into Agent 10) — see documentation/admin-queue-api-guide.md §3.
+  copy_prep: ContentPlanReport | null;
+  design_prep: DesignDirectionReport | null;
+}
+
+export interface LeadService {
+  lead_id: string;
+  service: 'website' | 'dns' | 'email' | 'domain';
+  state: string;
+  internal_state: string;
+  progress_label: string;
+  metadata: Record<string, unknown>;
+  updated_at: string;
+}
+
+export interface LeadDetailResponse {
+  lead: LeadDetail;
+  services: LeadService[];
+}
+
+export type ActionResponse =
+  | { result: 'applied' | 'already_applied'; status: LeadStatus; [k: string]: unknown }
+  | { error: string; from?: LeadStatus; to?: LeadStatus };
+
+export interface ListLeadsParams {
+  status?: LeadStatus;
+  package?: LeadPackage;
+  age_min_hours?: number;
+  limit?: number;
+  offset?: number;
+  order?: 'oldest' | 'newest';
+}
+
+function buildIntakeQueryString(params?: ListLeadsParams): string {
+  if (!params) return '';
+  const qs = new URLSearchParams();
+  if (params.status) qs.set('status', params.status);
+  if (params.package) qs.set('package', params.package);
+  if (typeof params.age_min_hours === 'number') {
+    qs.set('age_min_hours', String(params.age_min_hours));
+  }
+  if (typeof params.limit === 'number') qs.set('limit', String(params.limit));
+  if (typeof params.offset === 'number') qs.set('offset', String(params.offset));
+  if (params.order) qs.set('order', params.order);
+  return qs.toString();
+}
 
 // Admin API
 export const adminApi = {
@@ -716,6 +820,61 @@ export const adminApi = {
     is_active?: boolean;
   }) => {
     return apiClient.put(`/admin/mailbox-pricing/${tierId}`, updates);
+  },
+
+  intake: {
+    listLeads: (params?: ListLeadsParams) => {
+      const qs = buildIntakeQueryString(params);
+      return apiClient.get<ListLeadsResponse>(
+        `/admin/intake/leads${qs ? `?${qs}` : ''}`
+      );
+    },
+
+    getLead: (leadId: string) =>
+      apiClient.get<LeadDetailResponse>(`/admin/intake/leads/${leadId}`),
+
+    confirmScope: (leadId: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/confirm-scope`,
+        {}
+      ),
+
+    reject: (leadId: string, reason: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/reject`,
+        { reason }
+      ),
+
+    markFailed: (leadId: string, reason: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/mark-failed`,
+        { reason }
+      ),
+
+    retryAgent1: (leadId: string) =>
+      apiClient.post<ActionResponse>(
+        `/admin/intake/leads/${leadId}/retry-agent-1`,
+        {}
+      ),
+    // mark-pax8-done deferred to JAV-119 1.6
+
+    overrideService: (
+      leadId: string,
+      service: 'website' | 'dns' | 'email' | 'domain',
+      body: {
+        state: 'live' | 'not_applicable' | 'failed' | 'needs_input';
+        reason: string;
+        progress_label?: string;
+      }
+    ) =>
+      apiClient.post<{
+        status: 'applied';
+        lead_id: string;
+        service: string;
+        state: string;
+        progress_label: string | null;
+        override_id: string;
+      }>(`/admin/intake/leads/${leadId}/services/${service}/override`, body),
   },
 };
 
@@ -1259,6 +1418,15 @@ export const searchApi = {
 // ============================================================
 
 import type {
+  LeadRecord,
+  ResearchReport,
+  SimilarityReport,
+  UpsellRiskReport,
+  ContentPlanReport,
+  DesignDirectionReport,
+} from '@/lib/schemas/intake';
+
+import type {
   DomainSearchResponse,
   DomainPricingResponse,
   DomainCheckoutParams,
@@ -1270,6 +1438,9 @@ import type {
   DomainManagementResponse,
   DomainContact,
   DomainRenewalResponse,
+  DomainAuthCodeResponse,
+  DomainVerification,
+  DomainSyncResponse,
 } from "@/types/domains";
 
 import type {
@@ -1309,6 +1480,9 @@ export const domainsApi = {
   getById: (id: string): Promise<DomainDetailResponse> =>
     apiClient.get(`/domains/${id}`),
 
+  createBillingPortal: (id: string): Promise<{ url: string }> =>
+    apiClient.post(`/domains/${id}/billing-portal`, {}),
+
   link: (domain: string): Promise<DomainDetailResponse> =>
     apiClient.post("/domains/link", { domain }),
 
@@ -1332,6 +1506,18 @@ export const domainsApi = {
 
   renew: (id: string, years: number): Promise<DomainRenewalResponse> =>
     apiClient.post(`/domains/${id}/renew`, { years }),
+
+  getAuthCode: (id: string): Promise<DomainAuthCodeResponse> =>
+    apiClient.post(`/domains/${id}/auth-code`, {}),
+
+  syncDomain: (id: string): Promise<DomainSyncResponse> =>
+    apiClient.post(`/domains/${id}/sync`, {}),
+
+  getVerification: (id: string): Promise<DomainVerification> =>
+    apiClient.get(`/domains/${id}/verification`),
+
+  resendVerification: (id: string): Promise<{ success: boolean }> =>
+    apiClient.post(`/domains/${id}/verification/resend`, {}),
 };
 
 // ============================================================
@@ -1348,8 +1534,8 @@ export const mailboxApi = {
     apiClient.get(`/mailbox/domains/${domainId}/mail/status`),
 
   // Enable/disable
-  enable: (domainId: string, tierId: string) =>
-    apiClient.post(`/mailbox/domains/${domainId}/mail/enable`, { tier_id: tierId }),
+  enable: (domainId: string, tierId: string, orgId: string) =>
+    apiClient.post(`/mailbox/domains/${domainId}/mail/enable`, { tier_id: tierId, org_id: orgId }),
 
   disable: (domainId: string) =>
     apiClient.delete(`/mailbox/domains/${domainId}/mail/disable`),

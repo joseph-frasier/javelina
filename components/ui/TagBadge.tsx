@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { clsx } from 'clsx';
 
 interface TagBadgeProps {
   name: string;
@@ -28,37 +28,28 @@ export function TagBadge({
     md: 'text-sm px-3 py-1',
   };
 
-  // Memoize contrast color calculation - only recalculate when color changes
-  const textColor = useMemo(() => {
-    // Calculate if we need dark or light text based on background color
-    // Remove # if present
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    // Calculate luminance
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.5 ? '#000000' : '#FFFFFF';
-  }, [color]);
-
   return (
     <span
-      className={`
-        inline-flex items-center gap-1 rounded-full font-medium
-        ${sizeClasses[size]}
-        ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
-        ${isActive ? 'ring-2 ring-offset-1 ring-white' : ''}
-        ${className}
-      `}
-      style={{
-        backgroundColor: color,
-        color: textColor,
-      }}
+      className={clsx(
+        'inline-flex items-center gap-1.5 rounded-full font-medium border text-text',
+        sizeClasses[size],
+        isActive
+          ? 'border-accent'
+          : 'bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600',
+        onClick && 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors',
+        className
+      )}
+      style={isActive ? { backgroundColor: `${color}26` } : undefined}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
     >
+      <span
+        aria-hidden="true"
+        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+        style={{ backgroundColor: color }}
+      />
       {name}
       {showRemove && onRemove && (
         <button
@@ -66,7 +57,7 @@ export function TagBadge({
             e.stopPropagation();
             onRemove();
           }}
-          className="ml-0.5 rounded-full hover:bg-black/20 p-0.5 transition-colors"
+          className="ml-0.5 rounded-full hover:bg-surface-hover p-0.5 transition-colors"
           aria-label={`Remove ${name} tag`}
         >
           <svg
@@ -87,4 +78,3 @@ export function TagBadge({
     </span>
   );
 }
-

@@ -77,7 +77,7 @@ export function ViewOrganizationDetailsModal({
     }
     
     return (
-      <div className="grid grid-cols-3 gap-4 py-3 border-b border-gray-light dark:border-gray-700 last:border-b-0">
+      <div className="grid grid-cols-3 gap-4 py-3 border-b border-border last:border-b-0">
         <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-400">
           {label}
         </div>
@@ -115,19 +115,19 @@ export function ViewOrganizationDetailsModal({
               <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
               <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
             </div>
-            <p className="text-gray-slate dark:text-gray-300 mt-4">Loading organization details...</p>
+            <p className="text-text-muted mt-4">Loading organization details...</p>
           </div>
         ) : organization ? (
           <>
             {/* Basic Information */}
             <div>
-              <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+              <h3 className="text-lg font-semibold text-text mb-4">
                 Basic Information
               </h3>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                 <InfoRow label="Name" value={organization.name} />
                 <InfoRow label="Description" value={organization.description} />
-                <div className="grid grid-cols-3 gap-4 py-3 border-b border-gray-light dark:border-gray-700 last:border-b-0">
+                <div className="grid grid-cols-3 gap-4 py-3 border-b border-border last:border-b-0">
                   <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-400">
                     Status
                   </div>
@@ -144,25 +144,25 @@ export function ViewOrganizationDetailsModal({
 
             {/* Usage Statistics */}
             <div>
-              <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+              <h3 className="text-lg font-semibold text-text mb-4">
                 Usage Statistics
               </h3>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                 <div className="grid grid-cols-3 gap-6">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-orange-dark dark:text-orange">
+                    <div className="text-3xl font-bold text-text">
                       {organization.member_count || 0}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Members</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-orange-dark dark:text-orange">
+                    <div className="text-3xl font-bold text-text">
                       {organization.zone_count || 0}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Zones</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-orange-dark dark:text-orange">
+                    <div className="text-3xl font-bold text-text">
                       {organization.record_count || 0}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Records</div>
@@ -174,7 +174,7 @@ export function ViewOrganizationDetailsModal({
             {/* Billing Information */}
             {(organization.billing_email || organization.billing_phone || organization.billing_address) && (
               <div>
-                <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+                <h3 className="text-lg font-semibold text-text mb-4">
                   Billing Information
                 </h3>
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -191,7 +191,7 @@ export function ViewOrganizationDetailsModal({
             {/* Admin Contact Information */}
             {(organization.admin_contact_email || organization.admin_contact_phone) && (
               <div>
-                <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+                <h3 className="text-lg font-semibold text-text mb-4">
                   Administrative Contact
                 </h3>
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -203,7 +203,7 @@ export function ViewOrganizationDetailsModal({
           </>
         ) : (
           <div className="py-12 text-center">
-            <p className="text-gray-slate dark:text-gray-300">Failed to load organization details</p>
+            <p className="text-text-muted">Failed to load organization details</p>
           </div>
         )}
       </div>

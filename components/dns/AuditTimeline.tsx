@@ -54,16 +54,12 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
     }
   };
 
-  const getActionBadge = (action: string) => {
+  const getActionDotColor = (action: string) => {
     switch (action) {
-      case 'INSERT':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'UPDATE':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'DELETE':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'INSERT': return 'bg-green-500';
+      case 'UPDATE': return 'bg-blue-electric';
+      case 'DELETE': return 'bg-red-500';
+      default: return 'bg-gray-slate';
     }
   };
 
@@ -105,11 +101,11 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {filteredLogs.length === 0 ? (
           <div className="text-center py-8">
-            <svg className="mx-auto h-12 w-12 text-gray-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="mx-auto h-12 w-12 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-orange-dark">No changes found</h3>
-            <p className="mt-1 text-sm text-gray-slate">
+            <h3 className="mt-2 text-sm font-medium text-text">No changes found</h3>
+            <p className="mt-1 text-sm text-text-muted">
               Try adjusting your filters
             </p>
           </div>
@@ -117,7 +113,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
           filteredLogs.map((log, index) => (
             <div
               key={log.id}
-              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-light group"
+              className="flex items-start space-x-3 p-3 rounded-lg border border-border group"
             >
               {/* Icon */}
               <div className="flex-shrink-0 mt-0.5">
@@ -129,17 +125,17 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getActionBadge(log.action)}`}>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
                         {log.action === 'INSERT' && 'Created'}
                         {log.action === 'UPDATE' && 'Updated'}
                         {log.action === 'DELETE' && 'Deleted'}
                       </span>
-                      <span className="text-xs text-gray-slate">
+                      <span className="text-xs text-text-muted">
                         {formatRelativeTime(log.created_at)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-slate">
-                      <span className="font-medium text-orange-dark">{log.user_name}</span>
+                    <p className="text-sm text-text-muted">
+                      <span className="font-medium text-text">{log.user_name}</span>
                       {' '}
                       {/* Display different text based on table_name */}
                       {log.table_name === 'zones' && (
@@ -172,7 +168,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                         </>
                       )}
                     </p>
-                    <p className="text-xs text-gray-slate mt-1">
+                    <p className="text-xs text-text-muted mt-1">
                       {log.user_email}
                       {log.ip_address && ` • ${log.ip_address}`}
                     </p>
@@ -181,7 +177,7 @@ export function AuditTimeline({ auditLogs, onDiffClick }: AuditTimelineProps) {
                   {/* View Diff Button */}
                   <button
                     onClick={() => onDiffClick(log)}
-                    className="ml-2 px-3 py-1 text-xs font-medium text-orange hover:text-orange-dark hover:bg-orange-light/20 rounded transition-colors opacity-0 group-hover:opacity-100"
+                    className="ml-2 px-3 py-1 text-xs font-medium text-accent hover:text-text hover:bg-accent-light/20 rounded transition-colors opacity-0 group-hover:opacity-100"
                   >
                     View Diff
                   </button>

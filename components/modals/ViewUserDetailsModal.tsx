@@ -70,7 +70,7 @@ export function ViewUserDetailsModal({
     }
     
     return (
-      <div className="grid grid-cols-3 gap-4 py-3 border-b border-gray-light dark:border-gray-700 last:border-b-0">
+      <div className="grid grid-cols-3 gap-4 py-3 border-b border-border last:border-b-0">
         <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-400">
           {label}
         </div>
@@ -112,13 +112,13 @@ export function ViewUserDetailsModal({
               <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
               <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
             </div>
-            <p className="text-gray-slate dark:text-gray-300 mt-4">Loading user details...</p>
+            <p className="text-text-muted mt-4">Loading user details...</p>
           </div>
         ) : user ? (
           <>
             {/* Basic Information */}
             <div>
-              <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+              <h3 className="text-lg font-semibold text-text mb-4">
                 Basic Information
               </h3>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -126,7 +126,7 @@ export function ViewUserDetailsModal({
                 <InfoRow label="ID" value={user.id} />
                 <InfoRow label="Display Name" value={user.display_name} />
                 <InfoRow label="Email" value={user.email} />
-                <div className="grid grid-cols-3 gap-4 py-3 border-b border-gray-light dark:border-gray-700 last:border-b-0">
+                <div className="grid grid-cols-3 gap-4 py-3 border-b border-border last:border-b-0">
                   <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-400">
                     Status
                   </div>
@@ -139,7 +139,7 @@ export function ViewUserDetailsModal({
 
             {/* Contact & Profile Information */}
             <div>
-              <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+              <h3 className="text-lg font-semibold text-text mb-4">
                 Contact & Profile
               </h3>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -147,7 +147,7 @@ export function ViewUserDetailsModal({
                 <InfoRow label="Phone" value={user.phone} />
                 <InfoRow label="Timezone" value={user.timezone} />
                 {user.bio && (
-                  <div className="grid grid-cols-3 gap-4 py-3 border-b border-gray-light dark:border-gray-700 last:border-b-0">
+                  <div className="grid grid-cols-3 gap-4 py-3 border-b border-border last:border-b-0">
                     <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-400">
                       Bio
                     </div>
@@ -166,7 +166,7 @@ export function ViewUserDetailsModal({
 
             {/* Account Activity */}
             <div>
-              <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-4">
+              <h3 className="text-lg font-semibold text-text mb-4">
                 Account Activity
               </h3>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -183,7 +183,7 @@ export function ViewUserDetailsModal({
           </>
         ) : (
           <div className="py-12 text-center">
-            <p className="text-gray-slate dark:text-gray-300">User not found</p>
+            <p className="text-text-muted">User not found</p>
           </div>
         )}
       </div>

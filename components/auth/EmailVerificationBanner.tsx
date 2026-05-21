@@ -97,7 +97,7 @@ export function EmailVerificationBanner({ email, onDismiss }: EmailVerificationB
 
   return (
     <div 
-      className="bg-orange/10 dark:bg-orange/10 border-l-4 border-orange p-4 mb-6 rounded-r-lg"
+      className="bg-accent/10 dark:bg-accent/10 border-l-4 border-accent p-4 mb-6 rounded-r-lg"
       role="alert"
       aria-live="polite"
     >
@@ -105,7 +105,7 @@ export function EmailVerificationBanner({ email, onDismiss }: EmailVerificationB
         {/* Icon */}
         <div className="flex-shrink-0 mt-0.5">
           <svg 
-            className="w-5 h-5 text-orange" 
+            className="w-5 h-5 text-accent" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -122,7 +122,7 @@ export function EmailVerificationBanner({ email, onDismiss }: EmailVerificationB
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-bold text-orange-dark dark:text-orange mb-1">
+          <h3 className="text-sm font-bold text-text mb-1">
             Email Verification Required
           </h3>
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
@@ -163,7 +163,7 @@ export function EmailVerificationBanner({ email, onDismiss }: EmailVerificationB
         {onDismiss && (
           <button
             onClick={handleDismiss}
-            className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange rounded"
+            className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-accent rounded"
             aria-label="Close banner"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

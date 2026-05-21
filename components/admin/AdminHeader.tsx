@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { clsx } from 'clsx';
 import { getAdminUser } from '@/lib/admin-auth';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Logo } from '@/components/ui/Logo';
@@ -11,13 +11,12 @@ import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 
 interface AdminHeaderProps {
   onMenuToggle?: () => void;
+  isMobileMenuOpen?: boolean;
 }
 
-export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
-  const router = useRouter();
+export function AdminHeader({ onMenuToggle, isMobileMenuOpen = false }: AdminHeaderProps = {}) {
   const { general, setTheme } = useSettingsStore();
   const [admin, setAdmin] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
@@ -27,6 +26,10 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   const supportRef = useRef<HTMLDivElement>(null);
 
   const supportEmail = 'javelina@irongrove.com';
+  const search = useGlobalSearch({
+    context: 'admin',
+    enabled: true,
+  });
 
   const handleCopyEmail = async () => {
     try {
@@ -42,7 +45,6 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
     const fetchAdmin = async () => {
       const user = await getAdminUser();
       setAdmin(user);
-      setLoading(false);
     };
     fetchAdmin();
   }, []);
@@ -53,7 +55,6 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   };
 
   const cycleTheme = () => {
-    // Toggle between light and dark
     const nextTheme = general.theme === 'light' ? 'dark' : 'light';
     setTheme(nextTheme);
   };
@@ -73,7 +74,6 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
     );
   };
 
-  // Apply theme on mount and when it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       document.documentElement.classList.remove('theme-light', 'theme-dark');
@@ -81,25 +81,15 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
     }
   }, [general.theme]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setIsNotificationOpen(false);
       }
-      if (
-        supportRef.current &&
-        !supportRef.current.contains(event.target as Node)
-      ) {
+      if (supportRef.current && !supportRef.current.contains(event.target as Node)) {
         setIsSupportOpen(false);
       }
     }
@@ -116,151 +106,44 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
   const adminName = admin?.name || 'Admin User';
   const adminEmail = admin?.email || '';
   const adminInitial = adminName.charAt(0).toUpperCase();
-  const search = useGlobalSearch({
-    context: 'admin',
-    enabled: true,
-  });
+
+  const iconButtonClass =
+    'p-2 rounded-md text-text-muted hover:text-text hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:shadow-focus-ring';
 
   return (
-    <header className="bg-white border-b border-gray-light">
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            {/* Hamburger Menu Button - Mobile Only */}
+    <header
+      className="bg-surface border-b border-border sticky top-0 z-50"
+      role="banner"
+    >
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={onMenuToggle}
-              className="md:hidden p-2 rounded-md text-gray-slate hover:text-orange hover:bg-gray-light/30 transition-colors"
-              aria-label="Toggle menu"
+              className={clsx('md:hidden', iconButtonClass)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={isMobileMenuOpen}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
 
-            <Link href="/admin" className="flex items-center">
-              <Logo
-                width={325}
-                height={130}
-                priority
-                className="h-20 w-auto"
-              />
+            <Link href="/admin" className="flex items-center shrink-0" aria-label="Go to admin home">
+              <Logo width={325} height={130} priority className="h-20 w-auto" />
             </Link>
           </div>
 
-          <div className="flex items-center space-x-6">
-            {/* Notifications */}
-            <div className="relative" ref={notificationRef}>
-              <button 
-                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-              </button>
-
-              {isNotificationOpen && (
-                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="p-4 border-b border-gray-light flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Notifications</h3>
-                    <button className="text-xs text-orange hover:text-orange-dark transition-colors font-medium">
-                      Clear All
-                    </button>
-                  </div>
-                  <div className="p-8 text-center">
-                    <p className="text-sm text-gray-slate dark:text-gray-300">No new notifications</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Support */}
-            <div className="relative" ref={supportRef}>
-              <button 
-                onClick={() => setIsSupportOpen(!isSupportOpen)}
-                className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none"
-                title="Support"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </button>
-
-              {isSupportOpen && (
-                <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-white dark:bg-gray-slate rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="p-4 border-b border-gray-light">
-                    <h3 className="text-sm font-semibold text-orange-dark dark:text-orange">Need help or have feedback?</h3>
-                    <p className="text-xs text-gray-slate dark:text-gray-300 mt-1">We&apos;d love to hear from you</p>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-                      <span className="text-sm text-gray-slate dark:text-gray-300 truncate">{supportEmail}</span>
-                      <button
-                        onClick={handleCopyEmail}
-                        className="flex-shrink-0 p-1.5 text-gray-slate hover:text-orange transition-colors rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
-                        title={copied ? 'Copied!' : 'Copy email'}
-                      >
-                        {copied ? (
-                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    <a
-                      href={`mailto:${supportEmail}`}
-                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-orange hover:bg-[#d46410] rounded-lg transition-colors"
-                    >
-                      Send Email
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={cycleTheme}
-              className="p-2 text-gray-slate hover:text-orange transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 rounded-md"
-              aria-label={`Theme: ${general.theme} (press to change)`}
-              title={`Current theme: ${general.theme}`}
-            >
-              {getThemeIcon()}
-            </button>
-
+          <div className="flex items-center gap-1 sm:gap-2">
             <button
               type="button"
               onClick={search.openSearch}
-              className="hidden md:flex w-72 items-center justify-between rounded-md border border-gray-light bg-gray-50 px-4 py-2 text-left text-sm text-gray-slate transition-colors hover:border-orange hover:bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              className="hidden lg:flex w-60 xl:w-72 items-center justify-between rounded-md border border-border bg-surface-alt px-3 py-1.5 text-left text-sm text-text-muted transition-colors hover:border-border-strong hover:bg-surface-hover focus-visible:outline-none focus-visible:shadow-focus-ring"
               aria-label="Open global search"
             >
               <span className="flex items-center gap-2">
                 <svg
-                  className="h-4 w-4 text-gray-400"
+                  className="h-4 w-4 text-text-faint"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -273,50 +156,174 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps = {}) {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-                Global Search
+                Global search
               </span>
-              <span className="rounded bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              <kbd className="rounded bg-surface border border-border px-2 py-0.5 text-[11px] font-sans font-semibold tracking-wide text-text-muted">
                 {search.shortcutBadge}
-              </span>
+              </kbd>
             </button>
 
-            {/* User Dropdown */}
+            <div className="relative" ref={notificationRef}>
+              <button
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                className={iconButtonClass}
+                aria-label="View notifications"
+                aria-expanded={isNotificationOpen}
+                aria-haspopup="true"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+              </button>
+
+              {isNotificationOpen && (
+                <div
+                  className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-80 bg-surface rounded-xl shadow-popover border border-border overflow-hidden z-50"
+                  role="dialog"
+                  aria-labelledby="admin-notifications-heading"
+                >
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <h3 id="admin-notifications-heading" className="text-sm font-semibold text-text">
+                      Notifications
+                    </h3>
+                    <button
+                      className="text-xs text-accent hover:text-accent-hover transition-colors font-medium"
+                      aria-label="Clear all notifications"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                  <div className="p-8 text-center">
+                    <p className="text-sm text-text-muted">No new notifications</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="relative" ref={supportRef}>
+              <button
+                onClick={() => setIsSupportOpen(!isSupportOpen)}
+                className={iconButtonClass}
+                aria-label="Contact support"
+                aria-expanded={isSupportOpen}
+                aria-haspopup="true"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+
+              {isSupportOpen && (
+                <div
+                  className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto mt-2 sm:w-72 bg-surface rounded-xl shadow-popover border border-border overflow-hidden z-50"
+                  role="dialog"
+                  aria-labelledby="admin-support-heading"
+                >
+                  <div className="p-4 border-b border-border">
+                    <h3 id="admin-support-heading" className="text-sm font-semibold text-text">
+                      Need help or have feedback?
+                    </h3>
+                    <p className="text-xs text-text-muted mt-0.5">We&apos;d love to hear from you</p>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between gap-2 bg-surface-alt border border-border rounded-md px-3 py-2">
+                      <span className="text-sm text-text-muted truncate font-mono" aria-label="Support email address">
+                        {supportEmail}
+                      </span>
+                      <button
+                        onClick={handleCopyEmail}
+                        className="flex-shrink-0 p-1.5 text-text-muted hover:text-text transition-colors rounded-md hover:bg-surface-hover"
+                        aria-label={copied ? 'Email copied to clipboard' : 'Copy email address to clipboard'}
+                      >
+                        {copied ? (
+                          <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    <a
+                      href={`mailto:${supportEmail}`}
+                      className="mt-3 block w-full text-center px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors"
+                    >
+                      Send email
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={cycleTheme}
+              className={iconButtonClass}
+              aria-label={`Theme: ${general.theme} (press to change)`}
+              title={`Current theme: ${general.theme}`}
+            >
+              {getThemeIcon()}
+            </button>
+
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-8 h-8 bg-orange rounded-full flex items-center justify-center hover:bg-[#d46410] transition-colors focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2"
+                className="w-8 h-8 bg-accent rounded-full flex items-center justify-center hover:bg-accent-hover transition-colors focus-visible:outline-none focus-visible:shadow-focus-ring overflow-hidden ml-1"
+                aria-label={`Admin menu for ${adminName}`}
+                aria-expanded={isDropdownOpen}
+                aria-haspopup="true"
               >
-                <span className="text-white font-bold text-base">
+                <span className="text-white font-semibold text-sm" aria-hidden="true">
                   {adminInitial}
                 </span>
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-light overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="p-4 border-b border-gray-light">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">
-                          {adminInitial}
-                        </span>
+                <div
+                  className="absolute right-0 mt-2 w-64 bg-surface rounded-xl shadow-popover border border-border overflow-hidden"
+                  role="menu"
+                  aria-labelledby="admin-menu-heading"
+                >
+                  <div className="p-4 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 bg-accent rounded-full flex items-center justify-center shrink-0"
+                        aria-hidden="true"
+                      >
+                        <span className="text-white font-semibold text-base">{adminInitial}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-orange-dark truncate">
+                        <p id="admin-menu-heading" className="text-sm font-medium text-text truncate">
                           {adminName}
                         </p>
-                        <p className="text-xs text-gray-slate truncate">
-                          {adminEmail}
-                        </p>
-                        <p className="text-xs font-semibold text-orange truncate">
+                        <p className="text-xs text-text-muted truncate">{adminEmail}</p>
+                        <p className="text-xs font-semibold text-accent truncate mt-0.5">
                           Administrator
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="py-2">
+                  <div className="py-1">
                     <button
-                      className="w-full text-left px-4 py-2 text-sm text-gray-slate hover:bg-gray-light/30 hover:text-orange transition-colors"
+                      className="w-full text-left px-4 py-2 text-sm text-text hover:bg-surface-hover transition-colors"
                       onClick={handleLogout}
+                      role="menuitem"
                     >
                       Sign out
                     </button>

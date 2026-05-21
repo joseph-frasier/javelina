@@ -30,7 +30,7 @@ export function FavoriteTagsCard({
         hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="text-sm text-orange hover:text-orange-dark flex items-center gap-1 transition-colors"
+            className="text-sm text-accent hover:text-text flex items-center gap-1 transition-colors"
           >
             Clear filter
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,7 +43,7 @@ export function FavoriteTagsCard({
       {favoriteTags.length === 0 ? (
         <div className="text-center py-6">
           <svg
-            className="w-10 h-10 text-gray-slate dark:text-gray-light mx-auto mb-3 opacity-50"
+            className="w-10 h-10 text-text-muted dark:text-gray-light mx-auto mb-3 opacity-50"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -55,10 +55,10 @@ export function FavoriteTagsCard({
               d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
             />
           </svg>
-          <p className="text-gray-slate dark:text-gray-light text-sm">
+          <p className="text-text-muted dark:text-gray-light text-sm">
             No favorite tags yet
           </p>
-          <p className="text-gray-slate/70 dark:text-gray-500 text-xs mt-1">
+          <p className="text-text-muted/70 dark:text-gray-500 text-xs mt-1">
             Star tags in the Tags panel to add them here
           </p>
         </div>
@@ -66,7 +66,7 @@ export function FavoriteTagsCard({
         <div className="mt-4 space-y-3">
           {/* Active Filter Indicator */}
           {hasActiveFilters && (
-            <div className="flex items-center gap-2 p-2 bg-orange/10 rounded-lg text-sm text-orange-dark dark:text-orange">
+            <div className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg text-sm text-text">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
@@ -93,7 +93,7 @@ export function FavoriteTagsCard({
                     />
                     {/* Checkmark overlay for selected tags */}
                     {isActive && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange rounded-full flex items-center justify-center shadow-sm">
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center shadow-sm">
                         <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
@@ -106,7 +106,7 @@ export function FavoriteTagsCard({
                       e.stopPropagation();
                       onToggleFavorite(tag.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 ml-0.5 p-0.5 rounded hover:bg-gray-light dark:hover:bg-gray-600 transition-all"
+                    className="opacity-0 group-hover:opacity-100 ml-0.5 p-0.5 rounded hover:bg-surface-hover dark:hover:bg-gray-600 transition-all"
                     title="Remove from favorites"
                   >
                     <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
@@ -119,7 +119,7 @@ export function FavoriteTagsCard({
           </div>
 
           {/* Usage hint */}
-          <p className="text-xs text-gray-slate/70 dark:text-gray-500 mt-2">
+          <p className="text-xs text-text-muted/70 dark:text-gray-500 mt-2">
             Click tags to filter zones (multi-select) • Hover to unfavorite
           </p>
         </div>

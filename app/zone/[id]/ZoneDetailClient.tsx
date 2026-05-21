@@ -350,11 +350,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <svg className="animate-spin h-8 w-8 text-orange mx-auto" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-accent mx-auto" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <p className="mt-4 text-gray-slate">Loading zone data...</p>
+            <p className="mt-4 text-text-muted">Loading zone data...</p>
           </div>
         </div>
       </div>
@@ -377,11 +377,11 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-orange-dark dark:text-orange mb-3 break-words">{zone.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-text mb-3 break-words">{zone.name}</h1>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* SOA Serial Badge */}
-              <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
+                <svg className="w-3 h-3 mr-1.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                 </svg>
                 SOA Serial: {zone.soa_serial}
@@ -390,25 +390,25 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
             <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)} className="justify-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
               Edit
             </Button>
             <Button variant="primary" size="sm" onClick={() => window.location.reload()} className="justify-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Reload
             </Button>
             <Button variant="primary" size="sm" onClick={handleExport} className="justify-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Export
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(true)} className="!bg-red-600 hover:!bg-red-700 !text-white justify-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)} className="justify-center">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               Delete
@@ -420,8 +420,8 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card title="Total Records" className="p-4 sm:p-6">
-          <p className="text-2xl sm:text-3xl font-bold text-orange dark:text-orange">{zoneSummary.totalRecords}</p>
-          <p className="text-sm text-gray-slate dark:text-gray-400 mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
+          <p className="text-2xl sm:text-3xl font-bold text-accent dark:text-accent">{zoneSummary.totalRecords}</p>
+          <p className="text-sm text-text-muted mt-1">{zoneSummary.recordTypeCounts.length} record types</p>
         </Card>
         <Card title="Deployment Status" className="p-4 sm:p-6">
           <div className="space-y-2">
@@ -504,7 +504,7 @@ export function ZoneDetailClient({ zone, zoneId, organization, userOrgRole }: Zo
             size="sm"
             onClick={() => setShowAddRecordModal(true)}
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add Record

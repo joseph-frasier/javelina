@@ -48,22 +48,25 @@ export function ViewOrganizationMembersModal({
     }
   }, [isOpen, organizationId, fetchMembers]);
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'Editor':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+        return 'bg-blue-500';
+      case 'Editor':
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-gray-slate';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-text-muted';
     }
   };
+
+  const ROLE_PILL_CLASSES =
+    'inline-flex items-center gap-1.5 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text';
 
   const formatRoleName = (role: string) => {
     if (role === 'BillingContact') return 'Billing Contact';
@@ -85,7 +88,7 @@ export function ViewOrganizationMembersModal({
               <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
               <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
             </div>
-            <p className="text-gray-slate dark:text-gray-300 mt-4">Loading members...</p>
+            <p className="text-text-muted mt-4">Loading members...</p>
           </div>
         ) : members.length === 0 ? (
           <div className="py-12 text-center">
@@ -102,7 +105,7 @@ export function ViewOrganizationMembersModal({
                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
               />
             </svg>
-            <p className="text-gray-slate dark:text-gray-300 text-lg font-medium">No members found</p>
+            <p className="text-text-muted text-lg font-medium">No members found</p>
             <p className="text-gray-400 text-sm mt-2">This organization has no members.</p>
           </div>
         ) : (
@@ -129,7 +132,11 @@ export function ViewOrganizationMembersModal({
                         {member.email}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getRoleBadgeColor(member.role)}`}>
+                    <span className={`${ROLE_PILL_CLASSES} px-2 py-1 text-xs whitespace-nowrap`}>
+                      <span
+                        aria-hidden="true"
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(member.role)}`}
+                      />
                       {formatRoleName(member.role)}
                     </span>
                   </div>
@@ -141,7 +148,7 @@ export function ViewOrganizationMembersModal({
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-light dark:border-gray-700">
+                  <tr className="border-b border-border">
                     <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
                       Name
                     </th>
@@ -157,7 +164,7 @@ export function ViewOrganizationMembersModal({
                   {members.map((member) => (
                     <tr
                       key={member.user_id}
-                      className="border-b border-gray-light dark:border-gray-700 last:border-b-0"
+                      className="border-b border-border last:border-b-0"
                     >
                       <td className="py-3 px-4">
                         <p className="font-medium text-gray-900 dark:text-white">
@@ -170,7 +177,11 @@ export function ViewOrganizationMembersModal({
                         </p>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(member.role)}`}>
+                        <span className={`${ROLE_PILL_CLASSES} px-2 py-1 text-xs`}>
+                          <span
+                            aria-hidden="true"
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(member.role)}`}
+                          />
                           {formatRoleName(member.role)}
                         </span>
                       </td>

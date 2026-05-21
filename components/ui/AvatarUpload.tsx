@@ -216,7 +216,7 @@ export function AvatarUpload({
       >
         {/* Avatar Display */}
         <div 
-          className={`w-20 h-20 rounded-full overflow-hidden relative ${currentAvatarUrl ? 'cursor-pointer' : ''}`}
+          className={`w-20 h-20 rounded-3xl overflow-hidden relative ${currentAvatarUrl ? 'cursor-pointer' : ''}`}
           onClick={() => currentAvatarUrl && setShowEnlargedView(true)}
         >
           {currentAvatarUrl ? (
@@ -226,7 +226,7 @@ export function AvatarUpload({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-orange flex items-center justify-center">
+            <div className="w-full h-full bg-accent flex items-center justify-center">
               <span className="text-white text-3xl font-bold">
                 {userInitial}
               </span>
@@ -241,7 +241,7 @@ export function AvatarUpload({
               e.stopPropagation();
               fileInputRef.current?.click();
             }}
-            className="absolute bottom-0 right-0 w-8 h-8 bg-orange rounded-full flex items-center justify-center border-2 border-white hover:bg-[#d46410] transition-colors"
+            className="absolute bottom-0 right-0 w-8 h-8 bg-accent rounded-full flex items-center justify-center border-2 border-white hover:bg-accent-hover transition-colors"
             disabled={isUploading}
           >
             <svg
@@ -267,7 +267,7 @@ export function AvatarUpload({
               e.stopPropagation();
               fileInputRef.current?.click();
             }}
-            className="absolute bottom-0 right-0 w-8 h-8 bg-orange rounded-full flex items-center justify-center border-2 border-white hover:bg-[#d46410] transition-colors"
+            className="absolute bottom-0 right-0 w-8 h-8 bg-accent rounded-full flex items-center justify-center border-2 border-white hover:bg-accent-hover transition-colors"
             disabled={isUploading}
           >
             <svg
@@ -340,8 +340,8 @@ export function AvatarUpload({
       {/* Crop Modal */}
       {imageSrc && createPortal(
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center overflow-y-auto p-4" style={{ zIndex: 100 }}>
-          <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-2xl mx-auto my-auto max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-orange-dark mb-4">
+          <div className="bg-surface rounded-xl p-4 sm:p-6 w-full max-w-2xl mx-auto my-auto max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-text mb-4">
               Crop Your Photo
             </h3>
 
@@ -362,7 +362,7 @@ export function AvatarUpload({
 
             {/* Zoom Slider */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-slate mb-2">
+              <label className="block text-sm font-medium text-text-muted mb-2">
                 Zoom
               </label>
               <input
@@ -380,14 +380,14 @@ export function AvatarUpload({
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setImageSrc(null)}
-                className="px-4 py-2 border border-gray-light rounded-md text-gray-slate hover:bg-gray-light/30 transition-colors"
+                className="px-4 py-2 border border-border rounded-md text-text-muted hover:bg-surface-hover transition-colors"
                 disabled={isUploading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleCropSave}
-                className="px-4 py-2 bg-orange text-white rounded-md hover:bg-[#d46410] transition-colors"
+                className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-hover transition-colors"
                 disabled={isUploading}
               >
                 {isUploading ? 'Uploading...' : 'Save'}

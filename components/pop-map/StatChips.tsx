@@ -37,7 +37,7 @@ export function StatChips({ compact = false }: StatChipsProps) {
       {chips.map((chip) => (
         <div
           key={chip.label}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface/5 border border-white/10"
         >
           {chip.icon}
           <span className="text-sm text-white/60">{chip.label}:</span>

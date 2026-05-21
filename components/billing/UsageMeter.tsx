@@ -38,7 +38,7 @@ export function UsageMeter({
 
   // Color classes
   let progressColor = 'bg-green-500';
-  let textColor = 'text-gray-slate';
+  let textColor = 'text-text-muted';
   
   if (isAtLimit) {
     progressColor = 'bg-red-500';
@@ -52,23 +52,23 @@ export function UsageMeter({
     <div className="space-y-2">
       {/* Label and Usage */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-orange-dark">{label}</span>
+        <span className="text-sm font-medium text-text">{label}</span>
         <span className={`text-sm font-regular ${textColor}`}>
           {unlimited ? (
             <span className="text-green-600 font-medium">Unlimited</span>
           ) : limit !== null ? (
             <>
-              {current} <span className="text-gray-slate/60">of</span> {formatLimit(limit)}
+              {current} <span className="text-text-muted/60">of</span> {formatLimit(limit)}
             </>
           ) : (
-            <span className="text-gray-slate/60">No limit set</span>
+            <span className="text-text-muted/60">No limit set</span>
           )}
         </span>
       </div>
 
       {/* Progress Bar (only show if not unlimited) */}
       {!unlimited && limit !== null && limit > 0 && (
-        <div className="w-full bg-gray-light rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-surface-alt rounded-full h-2 overflow-hidden">
           <div
             className={`h-full transition-all duration-300 ${progressColor}`}
             style={{ width: `${percentage}%` }}

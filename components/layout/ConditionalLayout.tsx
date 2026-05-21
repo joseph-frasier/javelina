@@ -38,7 +38,9 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const isAuthPage = pathname === '/login' || 
                      pathname === '/forgot-password';
 
-  const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout';
+  const isPricingOrCheckout = pathname === '/pricing' || pathname === '/checkout' || pathname.startsWith('/pricing/');
+
+  const isLegalPage = pathname.startsWith('/legal') || pathname.startsWith('/terms');
 
   const isPublicMarketingPage = pathname === '/infrastructure';
   
@@ -48,8 +50,10 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
 
   const isInviteFlow = pathname.startsWith('/invite/') || pathname === '/email-verified';
 
-  // For pages without Header/Sidebar (auth, pricing, admin, public marketing, invite), render immediately
-  if (isAuthPage || isPricingOrCheckout || isStripeFlow || isAdminRoute || isPublicMarketingPage || isInviteFlow) {
+  const isBusinessRoute = pathname.startsWith('/business');
+
+  // For pages without Header/Sidebar (auth, pricing, admin, public marketing, invite, business), render immediately
+  if (isAuthPage || isPricingOrCheckout || isLegalPage || isStripeFlow || isAdminRoute || isPublicMarketingPage || isInviteFlow || isBusinessRoute) {
     return (
       <>
         <IdleLogoutGuard />
@@ -63,10 +67,10 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   // 2. Either not authenticated (will redirect) OR profile is ready
   if (!hasInitialized || isLoading || (isAuthenticated && !profileReady)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
-        <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Loading...</span>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex items-center gap-2.5 text-text-muted text-sm">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-accent border-r-transparent"></div>
+          <span>Loading…</span>
         </div>
       </div>
     );
@@ -85,12 +89,11 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
       );
     }
     
-    // Other protected pages show redirect loading
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-light">
-        <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange"></div>
-          <span className="text-orange-dark">Redirecting...</span>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex items-center gap-2.5 text-text-muted text-sm">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-accent border-r-transparent"></div>
+          <span>Redirecting…</span>
         </div>
       </div>
     );

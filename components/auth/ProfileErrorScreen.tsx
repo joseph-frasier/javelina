@@ -23,8 +23,8 @@ export function ProfileErrorScreen({ error }: ProfileErrorScreenProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-orange-light px-4">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-light p-8">
+    <div className="min-h-screen flex items-center justify-center bg-accent-light px-4">
+      <div className="max-w-md w-full bg-surface rounded-xl shadow-lg border border-border p-8">
         <div className="text-center">
           {/* Error Icon */}
           <div className="mb-6">
@@ -44,12 +44,12 @@ export function ProfileErrorScreen({ error }: ProfileErrorScreenProps) {
           </div>
 
           {/* Heading */}
-          <h1 className="text-2xl font-bold text-orange-dark dark:text-white mb-3">
+          <h1 className="text-2xl font-bold text-text mb-3">
             Profile Loading Failed
           </h1>
 
           {/* Error Message */}
-          <p className="text-gray-slate dark:text-gray-300 mb-6 leading-relaxed">
+          <p className="text-text-muted mb-6 leading-relaxed">
             {error}
           </p>
 

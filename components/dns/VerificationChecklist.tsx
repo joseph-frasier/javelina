@@ -331,18 +331,18 @@ export function VerificationChecklist({
               <p className="mt-1">If you have already updated your registrar to these nameservers, no further action is required.</p>
 
               <div className="mt-4">
-                <h5 className="text-sm font-medium text-gray-slate dark:text-gray-400 mb-2">Nameservers for Javelina</h5>
+                <h5 className="text-sm font-medium text-text-muted mb-2">Nameservers for Javelina</h5>
                 <div className="flex flex-wrap gap-2">
                   {nameservers.map((ns, index) => (
                     <div
                       key={index}
-                      className="inline-flex items-center gap-2 w-fit p-2 rounded-md bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10"
+                      className="inline-flex items-center gap-2 w-fit p-2 rounded-md bg-surface-alt border border-border"
                     >
-                      <span className="text-sm font-mono text-gray-800 dark:text-gray-200">{ns}</span>
+                      <span className="text-sm font-mono text-text">{ns}</span>
                       <button
                         type="button"
                         onClick={() => handleCopy(ns, index)}
-                        className="p-1 rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                        className="p-1 rounded text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
                         aria-label={`Copy ${ns}`}
                       >
                         {copiedIndex === index ? (

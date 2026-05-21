@@ -191,12 +191,12 @@ export default function CertificateCheckoutForm({
       <form onSubmit={handleSubmit}>
         <Card>
           {/* Order Summary Strip */}
-          <div className="flex items-center justify-between gap-4 rounded-lg bg-orange/5 dark:bg-orange/10 px-4 py-3 mb-5">
+          <div className="flex items-center justify-between gap-4 rounded-lg bg-accent/5 dark:bg-accent/10 px-4 py-3 mb-5">
             <div className="flex items-center gap-3 min-w-0">
-              <span className="shrink-0 text-xs font-medium uppercase tracking-[0.22em] text-orange">
+              <span className="shrink-0 text-xs font-medium uppercase tracking-[0.22em] text-accent">
                 SSL Certificate
               </span>
-              <span className="truncate font-bold text-orange-dark dark:text-white text-sm">
+              <span className="truncate font-bold text-text text-sm">
                 {selectedProduct.display_name}
               </span>
             </div>
@@ -208,7 +208,7 @@ export default function CertificateCheckoutForm({
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     ${selectedProduct.price.toFixed(2)}/yr
                   </span>
-                  <span className="font-black text-orange text-lg">
+                  <span className="font-black text-accent text-lg">
                     ${selectedProduct.price.toFixed(2)}
                   </span>
                 </>
@@ -217,7 +217,7 @@ export default function CertificateCheckoutForm({
           </div>
 
           {/* Domain Selection */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Domain</p>
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Domain</p>
           <div className="mb-5">
             {userDomains.length > 0 ? (
               <>
@@ -256,14 +256,14 @@ export default function CertificateCheckoutForm({
                   ]}
                 />
                 {selectedProduct.wildcard && domain && (
-                  <p className="text-xs text-gray-slate dark:text-gray-400 mt-1.5">
+                  <p className="text-xs text-text-muted mt-1.5">
                     The wildcard (*.{domain}) will be covered by this certificate.
                   </p>
                 )}
               </>
             ) : (
-              <p className="text-sm text-gray-slate dark:text-gray-400 p-3 rounded-lg border border-gray-light dark:border-gray-600">
-                No active domains found. <Link href="/domains" className="text-orange hover:underline">Register a domain</Link> first.
+              <p className="text-sm text-text-muted p-3 rounded-lg border border-border">
+                No active domains found. <Link href="/domains" className="text-accent hover:underline">Register a domain</Link> first.
               </p>
             )}
           </div>
@@ -271,27 +271,27 @@ export default function CertificateCheckoutForm({
           {/* Contact summary (auto-filled from domain) */}
           {domain && contact.first_name && (
             <div className="mb-5">
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Contact Info</p>
-              <div className="p-3 rounded-lg border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Contact Info</p>
+              <div className="p-3 rounded-lg border border-border bg-gray-50 dark:bg-gray-800/50">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <div>
-                    <span className="text-gray-slate dark:text-gray-400 text-xs">Name</span>
-                    <p className="text-orange-dark dark:text-white">{contact.first_name} {contact.last_name}</p>
+                    <span className="text-text-muted text-xs">Name</span>
+                    <p className="text-text">{contact.first_name} {contact.last_name}</p>
                   </div>
                   <div>
-                    <span className="text-gray-slate dark:text-gray-400 text-xs">Email</span>
-                    <p className="text-orange-dark dark:text-white">{contact.email}</p>
+                    <span className="text-text-muted text-xs">Email</span>
+                    <p className="text-text">{contact.email}</p>
                   </div>
                   {contact.org_name && (
                     <div>
-                      <span className="text-gray-slate dark:text-gray-400 text-xs">Organization</span>
-                      <p className="text-orange-dark dark:text-white">{contact.org_name}</p>
+                      <span className="text-text-muted text-xs">Organization</span>
+                      <p className="text-text">{contact.org_name}</p>
                     </div>
                   )}
                   {contact.city && (
                     <div>
-                      <span className="text-gray-slate dark:text-gray-400 text-xs">Location</span>
-                      <p className="text-orange-dark dark:text-white">{contact.city}{contact.state ? `, ${contact.state}` : ''} {contact.country}</p>
+                      <span className="text-text-muted text-xs">Location</span>
+                      <p className="text-text">{contact.city}{contact.state ? `, ${contact.state}` : ''} {contact.country}</p>
                     </div>
                   )}
                 </div>
@@ -300,21 +300,21 @@ export default function CertificateCheckoutForm({
           )}
 
           {/* CSR */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Security Certificate</p>
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Security Certificate</p>
 
           {/* Generate / Paste toggle */}
-          <div className="flex gap-1 p-1 rounded-lg bg-gray-light/50 dark:bg-gray-700/50 mb-4 w-fit">
+          <div className="flex gap-1 p-1 rounded-lg bg-surface-alt dark:bg-gray-700/50 mb-4 w-fit">
             <button
               type="button"
               onClick={() => { setCsrMode('generate'); setCsr(''); setCsrGenerated(false); setCsrResult(null); setCsrError(null); }}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${csrMode === 'generate' ? 'bg-white dark:bg-gray-800 text-orange-dark dark:text-white shadow-sm' : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark'}`}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${csrMode === 'generate' ? 'bg-surface text-text shadow-sm' : 'text-text-muted hover:text-text'}`}
             >
               Generate for me
             </button>
             <button
               type="button"
               onClick={() => { setCsrMode('manual'); setCsr(''); setCsrGenerated(false); setCsrResult(null); setCsrError(null); }}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${csrMode === 'manual' ? 'bg-white dark:bg-gray-800 text-orange-dark dark:text-white shadow-sm' : 'text-gray-slate dark:text-gray-400 hover:text-orange-dark'}`}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${csrMode === 'manual' ? 'bg-surface text-text shadow-sm' : 'text-text-muted hover:text-text'}`}
             >
               I have my own CSR
             </button>
@@ -323,11 +323,11 @@ export default function CertificateCheckoutForm({
           {csrMode === 'generate' ? (
             <div className="mb-5">
               {!csrGenerated ? (
-                <div className="p-4 rounded-lg border border-dashed border-gray-light dark:border-gray-600 text-center">
-                  <p className="text-sm text-gray-slate dark:text-gray-400 mb-3">
+                <div className="p-4 rounded-lg border border-dashed border-border text-center">
+                  <p className="text-sm text-text-muted mb-3">
                     We&apos;ll generate a secure certificate key pair for you. Your private key will be automatically downloaded and never sent to our servers.
                   </p>
-                  <p className="text-xs text-gray-slate/70 dark:text-gray-500 mb-4">
+                  <p className="text-xs text-text-muted/70 dark:text-gray-500 mb-4">
                     Select a domain above first.
                   </p>
                   <Button
@@ -388,7 +388,7 @@ export default function CertificateCheckoutForm({
             /* Manual CSR paste mode */
             <div className="mb-5">
               <div className="mb-3">
-                <label className="block text-sm font-medium text-orange-dark dark:text-gray-100 mb-2">
+                <label className="block text-sm font-medium text-text mb-2">
                   Paste your CSR
                 </label>
                 <textarea
@@ -401,7 +401,7 @@ export default function CertificateCheckoutForm({
                   required
                   rows={8}
                   placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;...&#10;-----END CERTIFICATE REQUEST-----"
-                  className="w-full px-4 py-2.5 rounded-md border border-gray-light dark:border-gray-600 bg-white dark:bg-gray-800 text-orange-dark dark:text-gray-100 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange hover:border-orange/50 transition-colors resize-y"
+                  className="w-full px-4 py-2.5 rounded-md border border-border bg-surface text-text font-mono text-xs focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-accent hover:border-accent/50 transition-colors resize-y"
                 />
               </div>
 
@@ -439,10 +439,10 @@ export default function CertificateCheckoutForm({
           )}
 
           {/* Domain Validation Info */}
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange mb-3">Domain Validation</p>
-          <div className="p-3 rounded-lg border border-gray-light dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 mb-5">
-            <p className="text-sm font-medium text-orange-dark dark:text-gray-100">DNS Validation</p>
-            <p className="text-xs text-gray-slate dark:text-gray-400 mt-1">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent mb-3">Domain Validation</p>
+          <div className="p-3 rounded-lg border border-border bg-gray-50 dark:bg-gray-800/50 mb-5">
+            <p className="text-sm font-medium text-text">DNS Validation</p>
+            <p className="text-xs text-text-muted mt-1">
               To prove you own this domain, you&apos;ll add a DNS record after checkout. The exact record details (type, name, and value) will be shown on your certificate page with copy buttons — just paste them into your DNS zone.
             </p>
           </div>

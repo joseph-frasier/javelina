@@ -7,12 +7,17 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import Button from '@/components/ui/Button';
+import { TosAcceptCheckbox } from '@/components/legal/TosAcceptCheckbox';
+import { useAuthStore } from '@/lib/auth-store';
 
 interface StripePaymentFormProps {
   onSuccess: () => void;
   onError: (error: string) => void;
   orgId?: string; // Optional org_id to include in return URL
   flow?: 'payment_intent' | 'setup_intent'; // Type of confirmation to perform
+  intake?: 'business' | null;
+  planCode?: string;
+  orgName?: string;
 }
 
 export function StripePaymentForm({
@@ -20,10 +25,14 @@ export function StripePaymentForm({
   onError,
   orgId,
   flow = 'payment_intent',
+  intake,
+  planCode,
+  orgName,
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -32,9 +41,28 @@ export function StripePaymentForm({
       return;
     }
 
+    if (!acceptedTerms) {
+      onError('Please accept the Terms of Service to continue.');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
+      // Record ToS acceptance with the backend before kicking off Stripe.
+      // This is the canonical legal-trail capture for the checkout context.
+      try {
+        await useAuthStore.getState().acceptTos('checkout');
+      } catch (tosErr) {
+        onError(
+          tosErr instanceof Error
+            ? tosErr.message
+            : 'Failed to record Terms acceptance. Please try again.'
+        );
+        setIsProcessing(false);
+        return;
+      }
+
       // Validate element inputs before submission
       const { error: submitError } = await elements.submit();
       if (submitError) {
@@ -43,10 +71,16 @@ export function StripePaymentForm({
         return;
       }
 
-      // Build return URL with org_id if available
-      const returnUrl = orgId 
-        ? `${window.location.origin}/stripe/success?org_id=${orgId}`
-        : `${window.location.origin}/stripe/success`;
+      // Build return URL with org_id if available; include intake params for business flows
+      const params = new URLSearchParams();
+      if (orgId) params.set('org_id', orgId);
+      if (intake === 'business') {
+        params.set('intake', 'business');
+        if (planCode) params.set('plan_code', planCode);
+        if (orgName) params.set('org_name', orgName);
+      }
+      const qs = params.toString();
+      const returnUrl = `${window.location.origin}/stripe/success${qs ? `?${qs}` : ''}`;
 
       // Use appropriate confirmation method based on flow type
       const { error } = flow === 'payment_intent'
@@ -86,9 +120,9 @@ export function StripePaymentForm({
       </div>
 
       {/* Security Notice */}
-      <div className="flex items-start space-x-2 p-4 bg-orange-light rounded-lg border border-orange/20">
+      <div className="flex items-start space-x-2 p-4 bg-accent-light rounded-lg border border-accent/20">
         <svg
-          className="w-5 h-5 text-orange flex-shrink-0 mt-0.5"
+          className="w-5 h-5 text-accent flex-shrink-0 mt-0.5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -100,11 +134,19 @@ export function StripePaymentForm({
             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
           />
         </svg>
-        <div className="text-sm text-gray-slate font-regular">
+        <div className="text-sm text-text-muted font-regular">
           Your payment information is secure and encrypted by Stripe. We never
           store your card details.
         </div>
       </div>
+
+      {/* Terms of Service acceptance — required before submit */}
+      <TosAcceptCheckbox
+        checked={acceptedTerms}
+        onChange={setAcceptedTerms}
+        variant="subscription"
+        disabled={isProcessing}
+      />
 
       {/* Submit Button */}
       <Button
@@ -112,7 +154,7 @@ export function StripePaymentForm({
         variant="primary"
         size="lg"
         className="w-full"
-        disabled={!stripe || isProcessing}
+        disabled={!stripe || isProcessing || !acceptedTerms}
       >
         {isProcessing ? (
           <div className="flex items-center justify-center">

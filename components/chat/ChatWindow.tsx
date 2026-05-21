@@ -40,7 +40,7 @@ function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
     const key = `${keyPrefix}-${idx}`;
     if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
       return (
-        <code key={key} className="px-1 py-0.5 rounded bg-gray-200 dark:bg-gray-800 text-xs font-mono">
+        <code key={key} className="px-1 py-0.5 rounded bg-surface-alt border border-border text-xs font-mono text-text">
           {part.slice(1, -1)}
         </code>
       );
@@ -138,7 +138,7 @@ function renderAssistantMessage(content: string): ReactNode {
     );
   }
 
-  return <div className="text-sm text-gray-900 dark:text-white">{nodes}</div>;
+  return <div className="text-sm text-text">{nodes}</div>;
 }
 
 function isAbortError(error: unknown): boolean {
@@ -530,27 +530,22 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
   return (
     <div
       ref={windowRef}
-      className={`fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[580px] max-h-[calc(100vh-8rem)] overflow-hidden rounded-[24px] border border-gray-light bg-white text-orange-dark shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-[#0b0f14] dark:text-white dark:shadow-[0_30px_90px_rgba(0,0,0,0.45)] flex flex-col z-50 transition-opacity duration-200 ${isTicketModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      className={`fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[580px] max-h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-border bg-surface text-text shadow-elevated flex flex-col z-50 transition-opacity duration-200 ${isTicketModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.08),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.08),transparent_32%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(239,114,21,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(0,176,255,0.14),transparent_32%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-white/40" />
 
       {/* Header */}
-      <div className="relative flex items-center justify-between border-b border-gray-light px-5 py-4 dark:border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange/20 bg-orange/10 dark:bg-orange/15">
-            <span className="text-sm font-bold text-orange">J</span>
-          </div>
+      <div className="relative flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-center gap-2">
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-blue-electric/90">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-text-faint">
               Support Assistant
             </p>
-            <h3 className="mt-1 text-[1.1rem] font-semibold tracking-tight text-orange-dark dark:text-[#fff3ea]">Javi</h3>
+            <h3 className="mt-0.5 text-base font-semibold tracking-tight text-text">Javi</h3>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-light bg-white/80 text-gray-slate transition-colors hover:border-gray-slate/30 hover:bg-gray-50 hover:text-orange-dark dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:border-white/20 dark:hover:bg-white/10 dark:hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface-alt text-text-muted transition-colors hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:shadow-focus-ring"
           aria-label="Close chat"
         >
           <svg
@@ -570,22 +565,19 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       </div>
 
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="relative flex-1 space-y-4 overflow-y-auto bg-[linear-gradient(180deg,rgba(239,114,21,0.03),rgba(255,255,255,0))] p-5 dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]">
+      <div ref={messagesContainerRef} className="relative flex-1 space-y-4 overflow-y-auto bg-surface-alt p-5">
         {messages.map((message) => (
           <div key={message.id}>
             {message.role === 'assistant' ? (
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl border border-orange/20 bg-orange/10 dark:bg-orange/15">
-                  <span className="text-sm font-bold text-orange">J</span>
-                </div>
+              <div className="flex items-start">
                 <div className="flex-1">
-                  <div className="rounded-[20px] rounded-tl-[6px] border border-gray-light bg-white px-4 py-3 text-gray-slate shadow-sm dark:border-white/10 dark:bg-white/[0.08] dark:text-white/85 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <div className="rounded-2xl rounded-tl-sm border border-border bg-surface px-4 py-3 text-text shadow-card">
                     {renderAssistantMessage(message.content)}
                     
                     {/* Citations */}
                     {message.citations && message.citations.length > 0 && (
-                      <div className="mt-3 border-t border-gray-light pt-3 dark:border-white/10">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-slate dark:text-white/45">Sources</p>
+                      <div className="mt-3 border-t border-border pt-3 ">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-text/45">Sources</p>
                         <div className="space-y-2">
                           {message.citations.map((citation, idx) => (
                             <div key={idx} className="flex flex-col gap-0.5">
@@ -594,17 +586,17 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                                   href={citation.javelinaUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs text-orange underline hover:text-[#ff9b54]"
+                                  className="text-xs text-accent underline hover:text-[#ff9b54]"
                                 >
                                   {citation.title}
                                 </a>
                               ) : (
-                                <span className="text-xs text-gray-slate dark:text-white/55">
+                                <span className="text-xs text-text/55">
                                   {citation.title}
                                 </span>
                               )}
                               {citation.lastUpdated && (
-                                <span className="text-[10px] text-gray-slate/70 dark:text-white/35">
+                                <span className="text-[10px] text-text-muted/70 text-text-faint">
                                   Updated {formatDistanceToNow(new Date(citation.lastUpdated), { addSuffix: true })}
                                 </span>
                               )}
@@ -620,14 +612,14 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
                     <div className="mt-2 flex flex-wrap gap-2">
                       <button
                         onClick={handleCreateTicket}
-                        className="rounded-full border border-orange/30 bg-orange px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#d46410]"
+                        className="rounded-full border border-accent/30 bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent-hover"
                       >
                         Create Ticket
                       </button>
                     </div>
                   )}
 
-                  <p className="mt-1 ml-1 text-xs text-gray-slate/70 dark:text-white/35">
+                  <p className="mt-1 ml-1 text-xs text-text-muted/70 text-text-faint">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -635,10 +627,10 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             ) : (
               <div className="flex items-start gap-3 justify-end">
                 <div className="flex-1 flex flex-col items-end">
-                  <div className="max-w-[85%] rounded-[20px] rounded-tr-[6px] bg-gradient-to-br from-orange to-[#c65d10] px-4 py-3 text-white shadow-[0_18px_40px_rgba(239,114,21,0.28)]">
+                  <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-accent px-4 py-3 text-[#ffffff] shadow-md">
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
-                  <p className="mt-1 mr-1 text-xs text-gray-slate/70 dark:text-white/35">
+                  <p className="mt-1 mr-1 text-xs text-text-muted/70 text-text-faint">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -651,7 +643,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
       </div>
 
       {/* Input Area */}
-      <div className="relative border-t border-gray-light bg-gray-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+      <div className="relative border-t border-border bg-surface p-4">
         <div className="relative">
           <textarea
             ref={inputRef}
@@ -661,18 +653,18 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             placeholder="Type a message..."
             maxLength={MAX_MESSAGE_LENGTH}
             rows={2}
-            className="min-h-[4.75rem] w-full resize-none overflow-y-auto rounded-[22px] border border-gray-light bg-white px-4 py-4 pr-14 text-sm text-orange-dark placeholder:text-gray-slate/50 transition-all focus:outline-none focus:ring-2 focus:ring-orange dark:border-blue-electric/20 dark:bg-[#071633] dark:text-white dark:placeholder:text-white/30"
+            className="min-h-[4.75rem] w-full resize-none overflow-y-auto rounded-xl border border-border bg-surface-alt px-4 py-4 pr-14 text-sm text-text placeholder:text-text-muted transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent/50"
             style={{ maxHeight: '11rem' }}
             disabled={loading || !isAuthenticated || !user}
           />
           <button
             onClick={handleSend}
             disabled={loading || !inputValue.trim() || inputValue.length > MAX_MESSAGE_LENGTH || !isAuthenticated || !user}
-            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange transition-colors hover:bg-[#d46410] focus:outline-none focus:ring-2 focus:ring-orange focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-[#071633]"
+            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-surface-hover border border-border transition-colors hover:bg-surface hover:border-border-strong focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Send message"
           >
             <svg
-              className="w-4 h-4 text-white"
+              className="w-4 h-4 text-text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -686,7 +678,7 @@ export function ChatWindow({ isOpen, onClose, orgId, tier, entryPoint }: ChatWin
             </svg>
           </button>
         </div>
-        <p className={`mt-2 text-right text-xs ${inputValue.length >= MAX_MESSAGE_LENGTH ? 'font-medium text-orange' : 'text-gray-slate/70 dark:text-white/35'}`}>
+        <p className={`mt-2 text-right text-xs ${inputValue.length >= MAX_MESSAGE_LENGTH ? 'font-medium text-accent' : 'text-text-muted/70 text-text-faint'}`}>
           {inputValue.length} / {MAX_MESSAGE_LENGTH}
         </p>
       </div>

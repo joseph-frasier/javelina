@@ -4,7 +4,7 @@
 // Predefined color palette for tags (16 colors in 2 rows)
 export const TAG_COLORS = [
   // Row 1 - Vibrant colors
-  { name: 'Red', value: '#EF4444' },
+  { name: 'Burgundy', value: '#991B1B' },
   { name: 'Orange', value: '#F97316' },
   { name: 'Amber', value: '#F59E0B' },
   { name: 'Yellow', value: '#EAB308' },

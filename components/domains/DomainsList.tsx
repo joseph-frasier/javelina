@@ -4,8 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Domain } from '@/types/domains';
 import { Pagination } from '@/components/admin/Pagination';
+import { domainsApi } from '@/lib/api-client';
 
 const DOMAINS_PER_PAGE = 10;
+
+// JAV-102: session-scoped set so we only sync each transferring row once per session.
+const syncedThisSession = new Set<string>();
 
 interface DomainsListProps {
   domains: Domain[];
@@ -34,6 +38,16 @@ function getRelativeExpiry(expiresAt: string) {
 export default function DomainsList({ domains, isLoading }: DomainsListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   useEffect(() => { setCurrentPage(1); }, [domains]);
+
+  // JAV-102: nudge OpenSRS reconciliation for any transferring rows we haven't synced yet this session.
+  useEffect(() => {
+    for (const d of domains) {
+      if (d.status === 'transferring' && !syncedThisSession.has(d.id)) {
+        syncedThisSession.add(d.id);
+        domainsApi.syncDomain(d.id).catch(() => {});
+      }
+    }
+  }, [domains]);
 
   const totalPages = Math.ceil(domains.length / DOMAINS_PER_PAGE);
   const pagedDomains = domains.slice(
@@ -76,38 +90,42 @@ export default function DomainsList({ domains, isLoading }: DomainsListProps) {
           <Link
             key={domain.id}
             href={`/domains/${domain.id}`}
-            className="flex items-center justify-between p-5 rounded-xl border-l-2 border-l-transparent border border-gray-light dark:border-gray-700 bg-white dark:bg-white/[0.02] hover:border-l-orange hover:shadow-md hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all"
+            className="block p-4 rounded-xl border border-border bg-surface hover:border-accent hover:shadow-md hover:bg-surface-hover transition-all"
           >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="min-w-0">
-                <p className="text-base">
-                  <span className="font-semibold text-orange-dark dark:text-white">{name}</span>
-                  <span className="text-orange font-mono font-semibold">{tld}</span>
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {domain.registration_type === 'linked' ? 'Linked' : domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
-                  {domain.registered_at && ` · ${new Date(domain.registered_at).toLocaleDateString()}`}
-                </p>
+            {/* Row 1: domain name + status + chevron */}
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-base min-w-0 truncate">
+                <span className="font-semibold text-text">{name}</span>
+                <span className="text-accent font-mono font-semibold">{tld}</span>
+              </p>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${statusConf.dotColor} ${statusConf.pulse ? 'animate-pulse' : ''}`} />
+                  <span className="text-xs font-medium text-text-muted">{statusConf.label}</span>
+                </span>
+                <svg className="w-4 h-4 text-text-faint flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
               </div>
             </div>
-            <div className="flex items-center gap-4 flex-shrink-0">
-              {expiry && (
-                <span className={`text-xs font-medium ${expiry.color}`}>
-                  {expiry.text}
+            {/* Row 2: registration type/date + expiry on left, price on right */}
+            <div className="flex items-center justify-between mt-1.5 gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs text-text-muted truncate">
+                  {domain.registration_type === 'linked' ? 'Linked' : domain.registration_type === 'transfer' ? 'Transfer' : 'Registration'}
+                  {domain.registered_at && ` · ${new Date(domain.registered_at).toLocaleDateString()}`}
                 </span>
-              )}
+                {expiry && (
+                  <span className={`text-xs font-medium flex-shrink-0 ${expiry.color}`}>
+                    · {expiry.text}
+                  </span>
+                )}
+              </div>
               {domain.amount_paid != null && (
-                <span className="font-mono text-xs bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 px-2 py-1 rounded">
+                <span className="font-mono text-xs bg-surface-alt border border-border text-text-muted px-2 py-0.5 rounded-md flex-shrink-0">
                   ${(domain.amount_paid / 100).toFixed(2)}
                 </span>
               )}
-              <span className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${statusConf.dotColor} ${statusConf.pulse ? 'animate-pulse' : ''}`} />
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{statusConf.label}</span>
-              </span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
             </div>
           </Link>
         );

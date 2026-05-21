@@ -33,11 +33,11 @@ function NewCertificateContent() {
           Certificates
         </Link>
         <span className="text-gray-light dark:text-gray-600">/</span>
-        <span className="text-sm text-gray-slate dark:text-gray-400">New</span>
+        <span className="text-sm text-text-muted">New</span>
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-orange-dark dark:text-white">
+        <h1 className="text-2xl font-bold text-text">
           Purchase SSL Certificate
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -49,8 +49,8 @@ function NewCertificateContent() {
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 text-sm">
-        <div className={`flex items-center gap-1.5 ${!selectedProduct ? 'text-orange font-medium' : 'text-gray-slate dark:text-gray-400'}`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${!selectedProduct ? 'bg-orange text-white' : 'bg-gray-light dark:bg-gray-700 text-gray-slate dark:text-gray-400'}`}>
+        <div className={`flex items-center gap-1.5 ${!selectedProduct ? 'text-accent font-medium' : 'text-text-muted'}`}>
+          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${!selectedProduct ? 'bg-accent text-white' : 'bg-surface-alt dark:bg-gray-700 text-text-muted'}`}>
             1
           </span>
           Select Product
@@ -58,8 +58,8 @@ function NewCertificateContent() {
         <svg className="w-4 h-4 text-gray-light dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        <div className={`flex items-center gap-1.5 ${selectedProduct ? 'text-orange font-medium' : 'text-gray-slate dark:text-gray-400'}`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${selectedProduct ? 'bg-orange text-white' : 'bg-gray-light dark:bg-gray-700 text-gray-slate dark:text-gray-400'}`}>
+        <div className={`flex items-center gap-1.5 ${selectedProduct ? 'text-accent font-medium' : 'text-text-muted'}`}>
+          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${selectedProduct ? 'bg-accent text-white' : 'bg-surface-alt dark:bg-gray-700 text-text-muted'}`}>
             2
           </span>
           Checkout
@@ -75,13 +75,13 @@ function NewCertificateContent() {
       {selectedProduct && (
         <div className="space-y-4">
           {/* Selected product summary + change button */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-orange/5 dark:bg-orange/10 border border-orange/20">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 dark:bg-accent/10 border border-accent/20">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Selected</span>
-              <span className="text-sm font-bold text-orange-dark dark:text-white">
+              <span className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Selected</span>
+              <span className="text-sm font-bold text-text">
                 {selectedProduct.display_name}
               </span>
-              <span className="text-sm text-gray-slate dark:text-gray-400">
+              <span className="text-sm text-text-muted">
                 &mdash; ${selectedProduct.price.toFixed(2)}/yr
               </span>
             </div>
@@ -109,11 +109,11 @@ export default function NewCertificatePage() {
   return (
     <Suspense fallback={
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-gray-light dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-6 w-64 bg-gray-light dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-surface-alt dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-6 w-64 bg-surface-alt dark:bg-gray-700 rounded animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 bg-gray-light dark:bg-gray-700 rounded-xl animate-pulse" />
+            <div key={i} className="h-40 bg-surface-alt dark:bg-gray-700 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>

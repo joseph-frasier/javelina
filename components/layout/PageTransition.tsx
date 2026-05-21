@@ -72,7 +72,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   }, [pathname, isInitialMount]);
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto bg-gray-light dark:bg-orange-dark">
+    <div ref={containerRef} className="flex-1 overflow-y-auto bg-surface-alt">
       <div ref={contentRef}>
         {children}
       </div>

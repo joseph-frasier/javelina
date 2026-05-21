@@ -222,18 +222,18 @@ export function ChangePlanModal({
     >
       <div className="space-y-6">
         <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-5 dark:border-orange/25 dark:bg-orange/10">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Current subscription context</p>
-            <p className="mt-3 text-sm leading-6 text-gray-slate dark:text-white/65">
+          <div className="rounded-[22px] border border-accent bg-accent-soft p-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Current subscription context</p>
+            <p className="mt-3 text-sm leading-6 text-text-muted">
               {currentIsLifetime
                 ? 'Select a higher-tier lifetime plan to pay the difference once. Plans below your current lifetime tier remain unavailable.'
                 : 'Select any valid upgrade or subscription change. Pricing below updates after you choose a plan.'}
             </p>
           </div>
 
-          <div className="rounded-[22px] border border-blue-200 bg-blue-50 p-5 dark:border-blue-electric/20 dark:bg-blue-electric/10">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-blue-electric">How this works</p>
-            <ol className="mt-3 space-y-3 text-sm text-gray-slate dark:text-white/70">
+          <div className="rounded-[22px] border border-info bg-surface-alt p-5">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-info">How this works</p>
+            <ol className="mt-3 space-y-3 text-sm text-text-muted">
               <li>1. Compare the plans that are available from your current tier.</li>
               <li>2. Select one plan to unlock the pricing review.</li>
               <li>3. Scroll down to the bottom to confirm the change or continue to checkout for lifetime upgrades.</li>
@@ -242,14 +242,14 @@ export function ChangePlanModal({
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center rounded-[22px] border border-gray-light bg-white py-16 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
-            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-orange"></div>
+          <div className="flex items-center justify-center rounded-[22px] border border-border bg-surface py-16 shadow-sm bg-surface-alt">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-accent"></div>
           </div>
         ) : (
           <>
               {/* Monthly plans */}
               {plans.some(p => !isLifetimePlan(p.code)) && (
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Monthly Plans</p>
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Monthly Plans</p>
               )}
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 {plans.filter(p => !isLifetimePlan(p.code)).map((plan) => {
@@ -271,68 +271,68 @@ export function ChangePlanModal({
                       key={plan.id}
                       className={`relative flex flex-col rounded-[22px] border p-6 transition-all ${
                         isCurrent
-                          ? 'border-orange bg-orange/10 dark:border-orange dark:bg-white/[0.06]'
+                          ? 'border-accent bg-accent-soft'
                           : isSelected
-                          ? 'border-orange bg-orange/10 shadow-[0_0_0_1px_rgba(239,114,21,0.12)] dark:border-orange dark:bg-white/[0.06]'
+                          ? 'border-accent bg-accent-soft shadow-[0_0_0_1px_rgba(239,114,21,0.12)]'
                           : isDisabled
-                          ? 'border-gray-light bg-gray-50/70 opacity-65 dark:border-white/10 dark:bg-white/[0.03]'
-                          : 'border-gray-light bg-white hover:border-orange/40 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-orange/40 dark:hover:bg-white/[0.06]'
+                          ? 'border-border bg-surface-alt opacity-65 '
+                          : 'border-border bg-surface hover:border-accent/40 hover:bg-accent-soft bg-surface-alt dark:hover:bg-surface/[0.06]'
                       }`}
                     >
                       <div className="mb-5 flex flex-wrap items-start justify-between gap-2">
                         <div className="flex flex-wrap gap-2">
                           {isCurrent && (
-                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-white">
+                            <span className="inline-flex items-center justify-center rounded-full border border-transparent bg-accent px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-white">
                               Current
                             </span>
                           )}
                           {plan.popular && !isCurrent && (
-                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange/15 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-orange">
+                            <span className="inline-flex items-center justify-center rounded-full border border-accent bg-accent-soft px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-accent">
                               Popular
                             </span>
                           )}
                           {planIsLifetime && (
-                            <span className="inline-flex items-center justify-center rounded-full border border-blue-electric/20 bg-blue-electric/10 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-blue-electric">
+                            <span className="inline-flex items-center justify-center rounded-full border border-info bg-surface-alt px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-info">
                               Lifetime
                             </span>
                           )}
                         </div>
                         {!isCurrent && !isValidUpgradeOption && (
-                          <span className="inline-flex items-center justify-center rounded-full border border-gray-light bg-white px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-gray-slate dark:border-white/10 dark:bg-white/[0.05] dark:text-white/55">
+                          <span className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-text-muted ">
                             Not available
                           </span>
                         )}
                       </div>
 
-                      <h3 className="text-2xl font-bold text-orange mb-2">{plan.name}</h3>
+                      <h3 className="text-2xl font-bold text-accent mb-2">{plan.name}</h3>
 
                       <div className="mb-4">
-                        <div className="text-4xl font-black text-orange">
+                        <div className="text-4xl font-black text-accent">
                           ${plan.monthly?.amount.toFixed(2)}
                         </div>
-                        <div className="mt-1 text-sm uppercase tracking-[0.22em] text-gray-slate dark:text-white/45">
+                        <div className="mt-1 text-sm uppercase tracking-[0.22em] text-text-faint">
                           {planIsLifetime ? 'One-time' : 'Per month'}
                         </div>
                       </div>
 
-                      <p className="mb-5 text-sm leading-6 text-gray-slate dark:text-white/60">
+                      <p className="mb-5 text-sm leading-6 text-text-muted">
                         {plan.description}
                       </p>
 
                       <ul className="mb-6 flex-grow space-y-3">
                         {plan.features.slice(0, 5).map((feature, idx) => (
                           <li key={idx} className="flex items-start">
-                            <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-accent mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-sm text-gray-slate dark:text-white/75">{feature.name}</span>
+                            <span className="text-sm text-text">{feature.name}</span>
                           </li>
                         ))}
                       </ul>
 
                       <div className="mt-auto">
                         {isDisabled && !isCurrent && (
-                          <p className="mb-3 text-xs leading-5 text-gray-slate dark:text-white/45">
+                          <p className="mb-3 text-xs leading-5 text-text-faint">
                             This plan cannot be selected from your current tier.
                           </p>
                         )}
@@ -341,12 +341,12 @@ export function ChangePlanModal({
                           disabled={isSubmitting || calculatingPrice || isDisabled}
                           className={`w-full rounded-md border-2 px-4 py-3 font-semibold transition-colors ${
                             isCurrent
-                              ? 'border-orange text-orange cursor-not-allowed opacity-70'
+                              ? 'border-accent text-accent cursor-not-allowed opacity-70'
                               : isDisabled
-                              ? 'border-gray-light text-gray-slate cursor-not-allowed dark:border-white/10 dark:text-white/35'
+                              ? 'border-border text-text-muted cursor-not-allowed dark:border-white/10'
                               : isSelected
-                              ? 'border-orange bg-orange text-white'
-                              : 'border-orange text-orange hover:bg-orange hover:text-white'
+                              ? 'border-accent bg-accent text-white'
+                              : 'border-accent text-accent hover:bg-accent hover:text-white'
                           }`}
                         >
                           {actionLabel}
@@ -359,7 +359,7 @@ export function ChangePlanModal({
 
               {/* Lifetime plans */}
               {plans.some(p => isLifetimePlan(p.code)) && (
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Lifetime Plans</p>
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Lifetime Plans</p>
               )}
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 {plans.filter(p => isLifetimePlan(p.code)).map((plan) => {
@@ -381,68 +381,68 @@ export function ChangePlanModal({
                       key={plan.id}
                       className={`relative flex flex-col rounded-[22px] border p-6 transition-all ${
                         isCurrent
-                          ? 'border-orange bg-orange/10 dark:border-orange dark:bg-white/[0.06]'
+                          ? 'border-accent bg-accent-soft'
                           : isSelected
-                          ? 'border-orange bg-orange/10 shadow-[0_0_0_1px_rgba(239,114,21,0.12)] dark:border-orange dark:bg-white/[0.06]'
+                          ? 'border-accent bg-accent-soft shadow-[0_0_0_1px_rgba(239,114,21,0.12)]'
                           : isDisabled
-                          ? 'border-gray-light bg-gray-50/70 opacity-65 dark:border-white/10 dark:bg-white/[0.03]'
-                          : 'border-gray-light bg-white hover:border-orange/40 hover:bg-orange/5 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-orange/40 dark:hover:bg-white/[0.06]'
+                          ? 'border-border bg-surface-alt opacity-65 '
+                          : 'border-border bg-surface hover:border-accent/40 hover:bg-accent-soft bg-surface-alt dark:hover:bg-surface/[0.06]'
                       }`}
                     >
                       <div className="mb-5 flex flex-wrap items-start justify-between gap-2">
                         <div className="flex flex-wrap gap-2">
                           {isCurrent && (
-                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-white">
+                            <span className="inline-flex items-center justify-center rounded-full border border-transparent bg-accent px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-white">
                               Current
                             </span>
                           )}
                           {plan.popular && !isCurrent && (
-                            <span className="inline-flex items-center justify-center rounded-full border border-orange/20 bg-orange/15 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-orange">
+                            <span className="inline-flex items-center justify-center rounded-full border border-accent bg-accent-soft px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-accent">
                               Popular
                             </span>
                           )}
                           {planIsLifetime && (
-                            <span className="inline-flex items-center justify-center rounded-full border border-blue-electric/20 bg-blue-electric/10 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-blue-electric">
+                            <span className="inline-flex items-center justify-center rounded-full border border-info bg-surface-alt px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-info">
                               Lifetime
                             </span>
                           )}
                         </div>
                         {!isCurrent && !isValidUpgradeOption && (
-                          <span className="inline-flex items-center justify-center rounded-full border border-gray-light bg-white px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-gray-slate dark:border-white/10 dark:bg-white/[0.05] dark:text-white/55">
+                          <span className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-text-muted ">
                             Not available
                           </span>
                         )}
                       </div>
 
-                      <h3 className="text-2xl font-bold text-orange mb-2">{plan.name}</h3>
+                      <h3 className="text-2xl font-bold text-accent mb-2">{plan.name}</h3>
 
                       <div className="mb-4">
-                        <div className="text-4xl font-black text-orange">
+                        <div className="text-4xl font-black text-accent">
                           ${plan.monthly?.amount.toFixed(2)}
                         </div>
-                        <div className="mt-1 text-sm uppercase tracking-[0.22em] text-gray-slate dark:text-white/45">
+                        <div className="mt-1 text-sm uppercase tracking-[0.22em] text-text-faint">
                           {planIsLifetime ? 'One-time' : 'Per month'}
                         </div>
                       </div>
 
-                      <p className="mb-5 text-sm leading-6 text-gray-slate dark:text-white/60">
+                      <p className="mb-5 text-sm leading-6 text-text-muted">
                         {plan.description}
                       </p>
 
                       <ul className="mb-6 flex-grow space-y-3">
                         {plan.features.slice(0, 5).map((feature, idx) => (
                           <li key={idx} className="flex items-start">
-                            <svg className="w-5 h-5 text-orange mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-accent mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-sm text-gray-slate dark:text-white/75">{feature.name}</span>
+                            <span className="text-sm text-text">{feature.name}</span>
                           </li>
                         ))}
                       </ul>
 
                       <div className="mt-auto">
                         {isDisabled && !isCurrent && (
-                          <p className="mb-3 text-xs leading-5 text-gray-slate dark:text-white/45">
+                          <p className="mb-3 text-xs leading-5 text-text-faint">
                             This plan cannot be selected from your current tier.
                           </p>
                         )}
@@ -451,12 +451,12 @@ export function ChangePlanModal({
                           disabled={isSubmitting || calculatingPrice || isDisabled}
                           className={`w-full rounded-md border-2 px-4 py-3 font-semibold transition-colors ${
                             isCurrent
-                              ? 'border-orange text-orange cursor-not-allowed opacity-70'
+                              ? 'border-accent text-accent cursor-not-allowed opacity-70'
                               : isDisabled
-                              ? 'border-gray-light text-gray-slate cursor-not-allowed dark:border-white/10 dark:text-white/35'
+                              ? 'border-border text-text-muted cursor-not-allowed dark:border-white/10'
                               : isSelected
-                              ? 'border-orange bg-orange text-white'
-                              : 'border-orange text-orange hover:bg-orange hover:text-white'
+                              ? 'border-accent bg-accent text-white'
+                              : 'border-accent text-accent hover:bg-accent hover:text-white'
                           }`}
                         >
                           {actionLabel}
@@ -469,18 +469,18 @@ export function ChangePlanModal({
 
               {selectedPlanCode && upgradePricing && !calculatingPrice && (
                 <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-                  <div className="rounded-[22px] border border-gray-light bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
-                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Review pricing</p>
+                  <div className="rounded-[22px] border border-border bg-surface p-6 shadow-sm bg-surface-alt">
+                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Review pricing</p>
                     <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
                       <div>
-                        <h3 className="text-xl font-semibold text-orange-dark dark:text-[#fff3ea]">
+                        <h3 className="text-xl font-semibold text-text dark:text-[#fff3ea]">
                           {reviewTitleByType[upgradePricing.upgradeType]}
                         </h3>
-                        <p className="mt-1 text-sm text-gray-slate dark:text-white/60">
+                        <p className="mt-1 text-sm text-text-muted">
                           {selectedPlan ? `Selected plan: ${selectedPlan.name}` : 'Selected plan'}
                         </p>
                       </div>
-                      <span className="rounded-full border border-gray-light bg-gray-50 px-3 py-1 text-xs font-medium text-gray-slate dark:border-white/10 dark:bg-white/[0.05] dark:text-white/65">
+                      <span className="rounded-full border border-border bg-gray-50 px-3 py-1 text-xs font-medium text-text-muted  dark:text-white/65">
                         {upgradePricing.upgradeType.replaceAll('-', ' ')}
                       </span>
                     </div>
@@ -488,18 +488,18 @@ export function ChangePlanModal({
                     {upgradePricing.upgradeType === 'subscription-to-lifetime' && (
                       <div className="mt-5 space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate dark:text-white/55">Lifetime plan price</span>
-                          <span className="font-semibold text-orange-dark dark:text-white">${upgradePricing.originalPrice.toFixed(2)}</span>
+                          <span className="text-text/55">Lifetime plan price</span>
+                          <span className="font-semibold text-text">${upgradePricing.originalPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate dark:text-white/55">Credit from current subscription</span>
+                          <span className="text-text/55">Credit from current subscription</span>
                           <span className="font-semibold text-green-600 dark:text-green-400">-${upgradePricing.credit.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between border-t border-gray-light pt-4 dark:border-white/10">
-                          <span className="font-bold text-orange-dark dark:text-white">Total due today</span>
-                          <span className="text-xl font-bold text-orange">${upgradePricing.finalPrice.toFixed(2)}</span>
+                        <div className="flex justify-between border-t border-border pt-4 dark:border-white/10">
+                          <span className="font-bold text-text">Total due today</span>
+                          <span className="text-xl font-bold text-accent">${upgradePricing.finalPrice.toFixed(2)}</span>
                         </div>
-                        <p className="pt-1 text-sm leading-6 text-gray-slate dark:text-white/55">
+                        <p className="pt-1 text-sm leading-6 text-text/55">
                           Your monthly subscription will be canceled, and you&apos;ll receive a prorated credit for the remaining days.
                         </p>
                       </div>
@@ -508,18 +508,18 @@ export function ChangePlanModal({
                     {upgradePricing.upgradeType === 'lifetime-to-lifetime' && (
                       <div className="mt-5 space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate dark:text-white/55">New plan price</span>
-                          <span className="font-semibold text-orange-dark dark:text-white">${upgradePricing.originalPrice.toFixed(2)}</span>
+                          <span className="text-text/55">New plan price</span>
+                          <span className="font-semibold text-text">${upgradePricing.originalPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate dark:text-white/55">Current plan credit</span>
+                          <span className="text-text/55">Current plan credit</span>
                           <span className="font-semibold text-green-600 dark:text-green-400">-${upgradePricing.credit.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between border-t border-gray-light pt-4 dark:border-white/10">
-                          <span className="font-bold text-orange-dark dark:text-white">Upgrade cost</span>
-                          <span className="text-xl font-bold text-orange">${upgradePricing.finalPrice.toFixed(2)}</span>
+                        <div className="flex justify-between border-t border-border pt-4 dark:border-white/10">
+                          <span className="font-bold text-text">Upgrade cost</span>
+                          <span className="text-xl font-bold text-accent">${upgradePricing.finalPrice.toFixed(2)}</span>
                         </div>
-                        <p className="pt-1 text-sm leading-6 text-gray-slate dark:text-white/55">
+                        <p className="pt-1 text-sm leading-6 text-text/55">
                           Pay the difference to upgrade to a higher tier lifetime plan.
                         </p>
                       </div>
@@ -528,32 +528,32 @@ export function ChangePlanModal({
                     {upgradePricing.upgradeType === 'subscription-to-subscription' && (
                       <div className="mt-5 space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate dark:text-white/55">New plan price</span>
-                          <span className="font-semibold text-orange-dark dark:text-white">${upgradePricing.originalPrice.toFixed(2)}/month</span>
+                          <span className="text-text/55">New plan price</span>
+                          <span className="font-semibold text-text">${upgradePricing.originalPrice.toFixed(2)}/month</span>
                         </div>
                         {upgradePricing.credit > 0 && (
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-slate dark:text-white/55">Credit from current subscription</span>
+                            <span className="text-text/55">Credit from current subscription</span>
                             <span className="font-semibold text-green-600 dark:text-green-400">-${upgradePricing.credit.toFixed(2)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-slate dark:text-white/55">Total due today</span>
-                          <span className="text-xl font-bold text-orange">${upgradePricing.finalPrice.toFixed(2)}</span>
+                          <span className="text-text/55">Total due today</span>
+                          <span className="text-xl font-bold text-accent">${upgradePricing.finalPrice.toFixed(2)}</span>
                         </div>
-                        <p className="border-t border-gray-light pt-4 text-sm leading-6 text-gray-slate dark:border-white/10 dark:text-white/55">
+                        <p className="border-t border-border pt-4 text-sm leading-6 text-text-muted dark:border-white/10">
                           You&apos;ll be charged the prorated difference today. Your new rate of ${upgradePricing.originalPrice.toFixed(2)}/month starts at your next billing period.
                         </p>
                       </div>
                     )}
                   </div>
 
-                  <div className="rounded-[22px] border border-orange/20 bg-orange/10 p-6 dark:border-orange/25 dark:bg-orange/10">
-                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-orange">Confirm change</p>
-                    <h3 className="mt-3 text-xl font-semibold text-orange-dark dark:text-[#fff3ea]">
+                  <div className="rounded-[22px] border border-accent bg-accent-soft p-6">
+                    <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent">Confirm change</p>
+                    <h3 className="mt-3 text-xl font-semibold text-text dark:text-[#fff3ea]">
                       {selectedPlan ? `Move to ${selectedPlan.name}` : 'Confirm selected plan'}
                     </h3>
-                    <p className="mt-2 text-sm leading-6 text-gray-slate dark:text-white/65">
+                    <p className="mt-2 text-sm leading-6 text-text-muted">
                       {upgradePricing.upgradeType === 'subscription-to-subscription'
                         ? 'Your subscription will update after confirmation, and any proration is handled automatically.'
                         : 'Lifetime upgrades continue through checkout with your pricing details prefilled.'}
@@ -584,9 +584,9 @@ export function ChangePlanModal({
               )}
 
               {calculatingPrice && (
-                <div className="flex items-center justify-center rounded-[22px] border border-gray-light bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
-                  <div className="mr-3 h-8 w-8 animate-spin rounded-full border-b-2 border-orange"></div>
-                  <span className="text-gray-slate dark:text-white/60">Calculating upgrade price...</span>
+                <div className="flex items-center justify-center rounded-[22px] border border-border bg-surface p-6 shadow-sm bg-surface-alt">
+                  <div className="mr-3 h-8 w-8 animate-spin rounded-full border-b-2 border-accent"></div>
+                  <span className="text-text-muted">Calculating upgrade price...</span>
                 </div>
               )}
           </>

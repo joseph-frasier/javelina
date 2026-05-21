@@ -84,20 +84,20 @@ export default function ProfilePage() {
     router.push('/settings?section=billing');
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleDotColor = (role: string) => {
     switch (role) {
       case 'SuperAdmin':
-        return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
+        return 'bg-accent';
       case 'Admin':
-        return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
+        return 'bg-blue-electric';
       case 'BillingContact':
-        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700';
+        return 'bg-blue-500';
       case 'Editor':
-        return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
+        return 'bg-green-500';
       case 'Viewer':
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
+        return 'bg-gray-slate';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
+        return 'bg-text-muted';
     }
   };
 
@@ -156,19 +156,20 @@ export default function ProfilePage() {
                       onAvatarUpdate={handleAvatarUpdate}
                     />
                   </div>
-                  <h2 className="text-xl font-bold text-orange-dark dark:text-orange mt-3 mb-1 truncate w-full">
+                  <h2 className="text-xl font-bold text-text mt-3 mb-1 truncate w-full">
                     {displayName}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400 truncate w-full mb-2">
                     {user.email}
                   </p>
                   {user.title && (
-                    <p className="text-sm text-orange dark:text-orange truncate w-full mb-2">
+                    <p className="text-sm text-accent dark:text-accent truncate w-full mb-2">
                       {user.title}
                     </p>
                   )}
                   {user.role === 'superuser' && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange/10 text-orange border border-orange/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
+                      <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-accent" />
                       SuperUser
                     </span>
                   )}
@@ -199,13 +200,13 @@ export default function ProfilePage() {
             {/* Billing Summary Card */}
             <Card className="p-4 sm:p-6">
               <div className="flex flex-col">
-                <h3 className="text-lg font-semibold text-orange-dark dark:text-orange mb-3">
+                <h3 className="text-lg font-semibold text-text mb-3">
                   Billing Summary
                 </h3>
-                <div className="flex items-center justify-between mb-4 p-3 bg-blue-electric/5 dark:bg-blue-electric/10 rounded-lg border border-blue-electric/20">
+                <div className="flex items-center justify-between mb-4 p-3 bg-surface-alt rounded-lg border border-border">
                   <div className="flex items-center space-x-2">
                     <svg
-                      className="w-5 h-5 text-blue-electric"
+                      className="w-5 h-5 text-text-muted"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -217,7 +218,7 @@ export default function ProfilePage() {
                         d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
                       />
                     </svg>
-                    <span className="text-sm font-medium text-gray-slate dark:text-white">
+                    <span className="text-sm font-medium text-text">
                       {billingLoading ? 'Loading...' : `${subscriptionCount} active ${subscriptionCount === 1 ? 'subscription' : 'subscriptions'}`}
                     </span>
                   </div>
@@ -259,7 +260,7 @@ export default function ProfilePage() {
             {/* Organization Membership */}
             <Card className="p-4 sm:p-6">
               <div className="mb-4 sm:mb-6">
-                <h3 className="text-lg sm:text-xl font-semibold text-orange-dark dark:text-orange">
+                <h3 className="text-lg sm:text-xl font-semibold text-text">
                   Organization Membership
                 </h3>
               </div>
@@ -278,10 +279,10 @@ export default function ProfilePage() {
                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                     />
                   </svg>
-                  <p className="text-gray-slate dark:text-gray-400 mb-2">
+                  <p className="text-text-muted mb-2">
                     You&rsquo;re not currently a member of any organizations
                   </p>
-                  <p className="text-sm text-gray-slate/70 dark:text-gray-500">
+                  <p className="text-sm text-text-muted/70 dark:text-gray-500">
                     Create an organization to get started managing your DNS zones
                   </p>
                 </div>
@@ -290,13 +291,17 @@ export default function ProfilePage() {
                   {paginatedOrganizations.map((org) => (
                     <div 
                       key={org.id} 
-                      className="border border-gray-light dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-3 sm:p-4"
+                      className="border border-border rounded-lg bg-surface p-3 sm:p-4"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                        <h4 className="font-medium text-orange-dark dark:text-orange break-words">
+                        <h4 className="font-medium text-text break-words">
                           {org.name}
                         </h4>
-                        <span className={`text-xs px-2 py-1 rounded-full border ${getRoleBadgeColor(org.role)} flex-shrink-0 self-start sm:self-auto`}>
+                        <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text flex-shrink-0 self-start sm:self-auto">
+                          <span
+                            aria-hidden="true"
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getRoleDotColor(org.role)}`}
+                          />
                           {getRoleDisplayText(org.role)}
                         </span>
                       </div>

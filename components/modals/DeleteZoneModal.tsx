@@ -105,19 +105,19 @@ export function DeleteZoneModal({
               </svg>
             </div>
             <div className="min-w-0">
-              <h3 className="text-base font-semibold text-orange-dark dark:text-white">Permanently Delete Zone</h3>
-              <p className="mt-1 text-sm text-gray-slate dark:text-gray-300">
+              <h3 className="text-base font-semibold text-text">Permanently Delete Zone</h3>
+              <p className="mt-1 text-sm text-text-muted">
                 This action <span className="font-semibold text-red-600 dark:text-red-500">cannot be undone</span>. Deleting{' '}
-                <span className="font-semibold text-orange-dark dark:text-white">{zoneName}</span> will remove {recordCount} associated DNS record{recordCount === 1 ? '' : 's'}.
+                <span className="font-semibold text-text">{zoneName}</span> will remove {recordCount} associated DNS record{recordCount === 1 ? '' : 's'}.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-light/70 bg-gray-light/20 p-3 dark:border-gray-700/70 dark:bg-gray-800/30">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-slate">Zone Name</p>
+        <div className="rounded-lg border border-border/70 bg-surface-alt/20 p-3 dark:border-gray-700/70 dark:bg-gray-800/30">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Zone Name</p>
           <div className="mt-2">
-            <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md bg-gray-100 px-2.5 py-1 text-sm font-mono text-orange-dark dark:bg-gray-800 dark:text-orange">
+            <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md bg-gray-100 px-2.5 py-1 text-sm font-mono text-text dark:bg-gray-800 dark:text-accent">
               <span className="truncate">{zoneName}</span>
               <button
                 type="button"
@@ -143,8 +143,8 @@ export function DeleteZoneModal({
         </div>
 
         <div>
-          <label htmlFor="delete-zone-confirmation" className="mb-2 block text-sm font-medium text-orange-dark dark:text-white">
-            Type <span className="font-mono rounded bg-gray-100 px-2 py-0.5 text-orange-dark dark:bg-gray-800 dark:text-orange">{zoneName}</span> to confirm
+          <label htmlFor="delete-zone-confirmation" className="mb-2 block text-sm font-medium text-text">
+            Type <span className="font-mono rounded bg-gray-100 px-2 py-0.5 text-text dark:bg-gray-800 dark:text-accent">{zoneName}</span> to confirm
           </label>
           <Input
             id="delete-zone-confirmation"
