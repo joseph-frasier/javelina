@@ -134,6 +134,7 @@ export function DomainEmailSection({
   const [showDnsRecords, setShowDnsRecords] = useState(false);
   const [showConnectGuide, setShowConnectGuide] = useState(false);
   const [confirmDeleteMailbox, setConfirmDeleteMailbox] = useState<string | null>(null);
+  const [confirmChangePlanTierId, setConfirmChangePlanTierId] = useState<string | null>(null);
 
   // Per-mailbox price for billing transparency
   const perMailboxPrice = emailStatus?.tier?.price ?? 0;
@@ -461,25 +462,43 @@ export function DomainEmailSection({
 
         {/* Increase Storage Panel */}
         {showChangePlan && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            {pricingTiers.map((tier) => (
-              <button
-                key={tier.id}
-                onClick={() => handleChangePlan(tier.id)}
-                disabled={changingPlan || tier.id === emailStatus.tier?.id}
-                className={`p-3 rounded-lg border-2 text-left transition-all ${
-                  tier.id === emailStatus.tier?.id
-                    ? 'border-orange bg-orange/5 opacity-50'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-orange'
-                }`}
-              >
-                <div className="font-semibold text-sm">{tier.tier_name}</div>
-                <div className="text-xs text-gray-500 mt-1">{tier.storage_gb}GB</div>
-                <div className="text-sm font-bold text-orange mt-1">
-                  ${tier.price.toFixed(2)}/mo
-                </div>
-              </button>
-            ))}
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {pricingTiers.map((tier) => {
+                const isCurrent = tier.id === emailStatus.tier?.id;
+                const isDowngrade =
+                  emailStatus.tier != null && tier.storage_gb < emailStatus.tier.storage_gb;
+                const isDisabled = changingPlan || isCurrent || isDowngrade;
+                return (
+                  <button
+                    key={tier.id}
+                    onClick={() => setConfirmChangePlanTierId(tier.id)}
+                    disabled={isDisabled}
+                    title={
+                      isDowngrade
+                        ? 'Downgrades are not available — contact support to switch to a smaller plan.'
+                        : undefined
+                    }
+                    className={`p-3 rounded-lg border-2 text-left transition-all ${
+                      isCurrent
+                        ? 'border-orange bg-orange/5 opacity-50'
+                        : isDowngrade
+                        ? 'border-gray-200 dark:border-gray-700 opacity-40 cursor-not-allowed'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-orange'
+                    }`}
+                  >
+                    <div className="font-semibold text-sm">{tier.tier_name}</div>
+                    <div className="text-xs text-gray-500 mt-1">{tier.storage_gb}GB</div>
+                    <div className="text-sm font-bold text-orange mt-1">
+                      ${tier.price.toFixed(2)}/mo
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Downgrades aren&apos;t available — if you need a smaller plan, please contact support.
+            </p>
           </div>
         )}
 
@@ -880,6 +899,29 @@ export function DomainEmailSection({
         onClose={() => setShowDisableConfirm(false)}
         variant="danger"
         isLoading={disablingEmail}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmChangePlanTierId !== null}
+        title="Confirm storage change"
+        message={(() => {
+          const target = pricingTiers.find((t) => t.id === confirmChangePlanTierId);
+          const current = emailStatus?.tier;
+          if (!target || !current) return '';
+          const newMonthly = target.price * mailboxCount;
+          const direction = target.price >= current.price ? 'increase' : 'decrease';
+          return `Change from ${current.tier_name} (${current.storage_gb}GB · $${formatPrice(current.price)}/mo per mailbox) to ${target.tier_name} (${target.storage_gb}GB · $${formatPrice(target.price)}/mo per mailbox). ${mailboxCount > 0 ? `Your new monthly total will be $${formatPrice(newMonthly)}/mo (${mailboxCount} × $${formatPrice(target.price)}), ` : ''}${direction === 'increase' ? 'and your card will be charged a prorated amount today for the upgrade.' : 'and the difference will be credited prorated to today.'}`;
+        })()}
+        confirmText={changingPlan ? 'Updating…' : 'Confirm change'}
+        onConfirm={async () => {
+          if (!confirmChangePlanTierId) return;
+          const tierId = confirmChangePlanTierId;
+          setConfirmChangePlanTierId(null);
+          await handleChangePlan(tierId);
+        }}
+        onClose={() => setConfirmChangePlanTierId(null)}
+        variant="warning"
+        isLoading={changingPlan}
       />
 
       <ConfirmationModal
