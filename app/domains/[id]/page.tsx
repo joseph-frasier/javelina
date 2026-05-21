@@ -388,6 +388,11 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  // Email setup doesn't require a DNS zone — users can wire MX/SPF/DKIM later.
+  // Prefer the zone's org (if any) so it stays consistent with where the
+  // domain already lives; otherwise fall back to the user's first org.
+  const mailboxOrgId = zone?.organization_id ?? user?.organizations?.[0]?.id;
+
   const daysRemaining = domain.expires_at
     ? Math.ceil((new Date(domain.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
@@ -760,11 +765,11 @@ export default function DomainDetailPage() {
       />
 
       {/* Email */}
-      {!hideMailboxes && domain && domain.status === 'active' && zone?.organization_id && (
+      {!hideMailboxes && domain && domain.status === 'active' && mailboxOrgId && (
         <DomainEmailSection
           domainId={domain.id}
           domainName={domain.domain_name}
-          orgId={zone.organization_id}
+          orgId={mailboxOrgId}
           onOpenBillingPortal={handleOpenBillingPortal}
           openingBillingPortal={openingBillingPortal}
         />
