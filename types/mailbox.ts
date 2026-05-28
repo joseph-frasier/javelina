@@ -46,6 +46,7 @@ export interface DomainEmailStatus {
   mail_client_settings?: MailClientSettings;
   required_dns_records?: RequiredMailDnsRecord[];
   created_at?: string;
+  dkim_enabled?: boolean;
 }
 
 export interface Mailbox {
