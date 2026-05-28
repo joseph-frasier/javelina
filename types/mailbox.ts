@@ -22,10 +22,12 @@ export interface MailboxPricingAdminTier {
 }
 
 export interface RequiredMailDnsRecord {
-  type: "MX" | "TXT" | "CNAME";
+  type: "MX" | "TXT" | "CNAME" | "SRV";
   host: string;
   value: string;
   priority?: number;
+  weight?: number;
+  port?: number;
   description: string;
 }
 
