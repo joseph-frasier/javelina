@@ -132,6 +132,8 @@ export function DomainEmailSection({
   const [deletingAlias, setDeletingAlias] = useState<string | null>(null);
   const [copiedRecordKey, setCopiedRecordKey] = useState<string | null>(null);
   const [showDnsRecords, setShowDnsRecords] = useState(false);
+  const [enablingDkim, setEnablingDkim] = useState(false);
+  const [dkimError, setDkimError] = useState<string | null>(null);
   const [showConnectGuide, setShowConnectGuide] = useState(false);
   const [confirmDeleteMailbox, setConfirmDeleteMailbox] = useState<string | null>(null);
   const [confirmChangePlanTierId, setConfirmChangePlanTierId] = useState<string | null>(null);
@@ -193,6 +195,19 @@ export function DomainEmailSection({
     fetchStatus();
     fetchPricing();
   }, [fetchStatus, fetchPricing]);
+
+  const handleEnableDkim = async () => {
+    setEnablingDkim(true);
+    setDkimError(null);
+    try {
+      await mailboxApi.enableDkim(domainId);
+      await fetchStatus();
+    } catch (err: any) {
+      setDkimError(extractErrorMessage(err, 'Failed to enable DKIM'));
+    } finally {
+      setEnablingDkim(false);
+    }
+  };
 
   // Handlers
   const handleEnableEmail = async () => {
@@ -874,6 +889,44 @@ export function DomainEmailSection({
             )}
           </div>
         )}
+
+        {/* DKIM Signing */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              DKIM Signing
+            </h4>
+            {emailStatus?.dkim_enabled ? (
+              <span className="px-2.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full">
+                Active{emailStatus.dkim_selector ? ` (${emailStatus.dkim_selector})` : ''}
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs font-semibold rounded-full">
+                Not Enabled
+              </span>
+            )}
+          </div>
+          {!emailStatus?.dkim_enabled && (
+            <>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Improves email deliverability by cryptographically signing outbound mail.
+              </p>
+              <button
+                type="button"
+                onClick={handleEnableDkim}
+                disabled={enablingDkim}
+                className="mt-3 inline-flex items-center gap-2 rounded-md bg-gray-900 dark:bg-white px-3 py-1.5 text-xs font-medium text-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {enablingDkim ? 'Enabling DKIM…' : 'Enable DKIM Signing'}
+              </button>
+              {dkimError && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-2" role="alert">
+                  {dkimError}
+                </p>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Disable Email */}
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">

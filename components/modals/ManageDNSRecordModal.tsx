@@ -1069,13 +1069,6 @@ export function ManageDNSRecordModal({
                 error={realtimeErrors.value || errors.value}
                 placeholder={typeInfo.placeholder}
                 helperText={typeInfo.hint}
-                suffixHint={
-                  ['CNAME', 'MX', 'NS', 'SRV', 'PTR'].includes(formData.type) &&
-                  formData.value &&
-                  !formData.value.endsWith('.')
-                    ? `.${zoneName}.`
-                    : undefined
-                }
               />
             </div>
           )}

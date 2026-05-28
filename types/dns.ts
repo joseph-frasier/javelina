@@ -96,7 +96,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     requiresPriority: false,
     defaultTTL: 3600,
     placeholder: 'example.com',
-    hint: 'Enter a domain name. CNAME cannot coexist with other records at the same name.',
+    hint: 'Enter the exact hostname to publish (e.g., mail.example.com or mail.example.com. with a trailing dot). CNAME cannot coexist with other records at the same name.',
   },
   MX: {
     label: 'MX',
@@ -104,7 +104,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     requiresPriority: false,
     defaultTTL: 3600,
     placeholder: '10 mail.example.com',
-    hint: 'Format: priority hostname (e.g., 10 mail.example.com). Lower priority = higher preference.',
+    hint: 'Format: priority hostname (e.g., 10 mail.example.com). Enter the exact hostname to publish. Lower priority = higher preference.',
   },
   NS: {
     label: 'NS',
@@ -112,7 +112,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     requiresPriority: false,
     defaultTTL: 3600,
     placeholder: 'ns1.example.com',
-    hint: 'Enter nameserver domain. Zones should have at least 2 NS records.',
+    hint: 'Enter the exact nameserver hostname to publish (e.g., ns1.example.com). Zones should have at least 2 NS records.',
   },
   TXT: {
     label: 'TXT',
@@ -128,7 +128,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     requiresPriority: false,
     defaultTTL: 3600,
     placeholder: '10 10 5060 sip.example.com',
-    hint: 'Format: priority weight port target (e.g., 10 10 5060 sip.example.com).',
+    hint: 'Format: priority weight port target (e.g., 10 10 5060 sip.example.com). Enter the exact target hostname to publish.',
   },
   CAA: {
     label: 'CAA',
@@ -152,7 +152,7 @@ export const RECORD_TYPE_INFO: Record<DNSRecordType, {
     requiresPriority: false,
     defaultTTL: 3600,
     placeholder: 'server.example.com',
-    hint: 'Enter the target hostname (e.g., server.example.com). Typically used in reverse DNS zones.',
+    hint: 'Enter the exact target hostname to publish (e.g., server.example.com). Typically used in reverse DNS zones.',
   },
 };
 

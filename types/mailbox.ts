@@ -22,10 +22,12 @@ export interface MailboxPricingAdminTier {
 }
 
 export interface RequiredMailDnsRecord {
-  type: "MX" | "TXT" | "CNAME";
+  type: "MX" | "TXT" | "CNAME" | "SRV";
   host: string;
   value: string;
   priority?: number;
+  weight?: number;
+  port?: number;
   description: string;
 }
 
@@ -46,6 +48,8 @@ export interface DomainEmailStatus {
   mail_client_settings?: MailClientSettings;
   required_dns_records?: RequiredMailDnsRecord[];
   created_at?: string;
+  dkim_enabled?: boolean;
+  dkim_selector?: string | null;
 }
 
 export interface Mailbox {
