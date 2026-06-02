@@ -232,6 +232,27 @@ describe('ManageDNSRecordModal', () => {
     expect(screen.getByText('Guided MX Value')).toBeInTheDocument();
   });
 
+  it('submits CNAME value verbatim without appending the zone name', async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByTestId('record-type-CNAME'));
+    await user.type(screen.getByLabelText('Name'), 'autodiscover');
+    await user.type(screen.getByLabelText('Target Domain'), 'mx.foo.cust.b.hostedemail.com.');
+    await user.click(screen.getByRole('button', { name: 'Create Record' }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'CNAME',
+          value: 'mx.foo.cust.b.hostedemail.com.',
+        })
+      );
+    });
+    const [[payload]] = (onSubmit as ReturnType<typeof vi.fn>).mock.calls;
+    expect(payload.value).not.toContain('example.com');
+  });
+
   it('toggles guided to raw and keeps composed SRV value', async () => {
     const user = userEvent.setup();
     renderModal();

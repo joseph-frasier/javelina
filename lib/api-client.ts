@@ -1566,6 +1566,10 @@ export const mailboxApi = {
 
   deleteAlias: (domainId: string, aliasName: string) =>
     apiClient.delete(`/mailbox/domains/${domainId}/aliases/${encodeURIComponent(aliasName)}`),
+
+  // DKIM
+  enableDkim: (domainId: string) =>
+    apiClient.post(`/mailbox/domains/${domainId}/mail/dkim/enable`, {}),
 };
 
 // ============================================================
