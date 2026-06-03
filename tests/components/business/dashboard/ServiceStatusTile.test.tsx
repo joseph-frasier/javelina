@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ServiceStatusTile } from './ServiceStatusTile';
+import { ServiceStatusTile } from '@/components/business/dashboard/ServiceStatusTile';
 import type { Tokens } from '@/components/business/ui/tokens';
 import type { ServiceTileData } from '@/lib/business/service-status';
 

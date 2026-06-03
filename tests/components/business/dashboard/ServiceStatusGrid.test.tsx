@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ServiceStatusGrid } from './ServiceStatusGrid';
+import { ServiceStatusGrid } from '@/components/business/dashboard/ServiceStatusGrid';
 import type { Tokens } from '@/components/business/ui/tokens';
 import type { BusinessDetail } from '@/lib/api/business';
 

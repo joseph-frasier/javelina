@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import DomainsPage from '../page';
+import DomainsPage from '@/app/domains/page';
 
 // Mock next/navigation
 const mockSearchParams = new URLSearchParams();
