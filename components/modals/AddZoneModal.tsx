@@ -74,6 +74,10 @@ export function AddZoneModal({
       if (!isOpen) return;
       
       try {
+        // SECURITY DEBT: direct Supabase read of ALL orgs' zone names from the
+        // browser — only RLS prevents cross-tenant enumeration, and it silently
+        // returns nothing for Auth0 users. Must move server-side.
+        // See docs/architecture/DIRECT_SUPABASE_ACCESS_DEBT.md (issue #1).
         const supabase = createClient();
         // Fetch all zone names globally (across all orgs, including deleted)
         const { data, error } = await supabase
