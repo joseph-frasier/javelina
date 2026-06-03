@@ -50,7 +50,6 @@ import {
   bulkDeleteDNSRecords,
   duplicateDNSRecord,
   getDNSRecords,
-  toggleDNSRecordStatus,
 } from '@/lib/actions/dns-records';
 
 interface ZoneDetailClientProps {

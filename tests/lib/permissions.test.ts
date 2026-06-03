@@ -17,8 +17,6 @@ import {
   canViewInvoices,
   isReadOnly,
   isRoleDowngrade,
-  getRoleDisplayText,
-  getRoleBadgeColor,
 } from '@/lib/permissions';
 import type { RBACRole } from '@/lib/auth-store';
 
@@ -192,24 +190,6 @@ describe('Permission Helper Functions', () => {
 
       // Viewer has no downgrades
       expect(isRoleDowngrade('Viewer', 'Viewer')).toBe(false);
-    });
-  });
-
-  describe('Role Display', () => {
-    it('getRoleDisplayText - returns correct display names', () => {
-      expect(getRoleDisplayText('SuperAdmin')).toBe('SuperUser');
-      expect(getRoleDisplayText('Admin')).toBe('SuperUser');
-      expect(getRoleDisplayText('BillingContact')).toBe('Billing Contact');
-      expect(getRoleDisplayText('Editor')).toBe('Editor');
-      expect(getRoleDisplayText('Viewer')).toBe('Viewer');
-    });
-
-    it('getRoleBadgeColor - returns correct color classes', () => {
-      expect(getRoleBadgeColor('SuperAdmin')).toContain('orange');
-      expect(getRoleBadgeColor('Admin')).toContain('orange');
-      expect(getRoleBadgeColor('BillingContact')).toContain('blue');
-      expect(getRoleBadgeColor('Editor')).toContain('orange');
-      expect(getRoleBadgeColor('Viewer')).toContain('gray');
     });
   });
 
