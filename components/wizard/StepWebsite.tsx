@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { clsx } from 'clsx';
-import { useWizardStore, type ToneOption, type AestheticId } from '@/lib/wizard-store';
+import { useWizardStore, type ToneOption, type AestheticId } from '@/lib/stores/wizard-store';
 import WizardShell, { StepHeader } from './WizardShell';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';

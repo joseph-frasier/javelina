@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { TransferVerificationCard } from '@/components/domains/TransferVerificationCard';
 import type { Domain } from '@/types/domains';
 
-vi.mock('@/lib/toast-store', () => ({
+vi.mock('@/lib/stores/toast-store', () => ({
   useToastStore: () => ({ addToast: vi.fn() }),
 }));
 

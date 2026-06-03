@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tagsApi, type Tag, type ZoneTagAssignment } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 /**
  * Hook to fetch tags and tag assignments for an organization

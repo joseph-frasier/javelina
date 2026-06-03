@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
 import Button from '@/components/ui/Button';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { authApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 // Session storage key to track if we've already processed verification
 const VERIFICATION_PROCESSED_KEY = 'email_verification_processed';

@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import { organizationsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import {
   validateBillingContactFields,
   formatUSPhone,

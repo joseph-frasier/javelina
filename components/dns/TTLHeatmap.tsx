@@ -1,7 +1,7 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { TTLBucket } from '@/lib/mock-dns-data';
+import { TTLBucket } from '@/lib/mocks/dns-data';
 
 interface TTLHeatmapProps {
   data: TTLBucket[];

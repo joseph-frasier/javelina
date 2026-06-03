@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { FONT } from '@/components/business/ui/tokens';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 
 interface Props {

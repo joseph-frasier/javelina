@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import { FONT, type Tokens } from '@/components/business/ui/tokens';
 import { AnimatedNavIcon, type AnimatedNavIconName } from '@/components/business/ui/AnimatedNavIcon';
 

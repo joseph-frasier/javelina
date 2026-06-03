@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useSettingsStore } from '@/lib/stores/settings-store';
 import {
   darkTokens,
   lightTokens,

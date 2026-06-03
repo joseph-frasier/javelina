@@ -13,7 +13,7 @@ import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
 import { ExportButton } from '@/components/admin/ExportButton';
 import { adminApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { type AuditLog, getActionDescription } from '@/lib/utils/audit';
 

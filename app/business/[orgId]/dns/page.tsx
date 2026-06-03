@@ -4,13 +4,13 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
 import { FONT, MONO } from '@/components/business/ui/tokens';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Badge } from '@/components/business/ui/Badge';
 import { PageHeader, SectionHeader, StatRow, TableHeader, TableCell } from '@/components/business/dashboard/_pageBits';
 import { EmptyCardState } from '@/components/business/ui/EmptyCardState';
 import { MOCK_DNS_RECORDS } from '@/lib/business/page-mocks';
-import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
+import { JAVELINA_NAMESERVERS } from '@/lib/constants/domains';
 import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 import { listZonesForOrg, type ZoneRow } from '@/lib/api/zones';
 import { listDnsRecordsForZone, type DnsRecordRow } from '@/lib/api/dns-records';

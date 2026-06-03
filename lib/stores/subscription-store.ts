@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { PLANS_CONFIG, type Plan as PlanConfig } from './plans-config';
+import { PLANS_CONFIG, type Plan as PlanConfig } from '@/lib/constants/plans';
 
 export type PlanId = 'starter' | 'basic' | 'pro' | 'enterprise';
 

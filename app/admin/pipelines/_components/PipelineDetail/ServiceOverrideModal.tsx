@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { adminApi, ApiError } from '@/lib/api-client';
 import { SERVICE_LABEL } from '@/app/admin/pipelines/_lib/runner-registry';
 import type { OverrideTargetState } from './ServiceOverrideMenu';

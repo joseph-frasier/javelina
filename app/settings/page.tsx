@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuthStore } from '@/lib/auth-store';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useSettingsStore } from '@/lib/stores/settings-store';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { SettingsLayout } from '@/components/layout/SettingsLayout';
 import { Card } from '@/components/ui/Card';
@@ -11,7 +11,7 @@ import { ChangePasswordModal } from '@/components/modals/ChangePasswordModal';
 import { ManageEmailModal } from '@/components/modals/ManageEmailModal';
 import { LegalSettings } from '@/components/legal/LegalSettings';
 import { subscriptionsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 

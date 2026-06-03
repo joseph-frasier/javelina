@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
 import { FONT, MONO } from '@/components/business/ui/tokens';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Badge } from '@/components/business/ui/Badge';
 import { PageHeader, SectionHeader, StatRow } from '@/components/business/dashboard/_pageBits';

@@ -1,7 +1,7 @@
 'use client';
 
 import { Modal } from '@/components/ui/Modal';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface ManageEmailModalProps {
   isOpen: boolean;

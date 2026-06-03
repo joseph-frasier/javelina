@@ -10,7 +10,7 @@ import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Tooltip } from '@/components/ui/Tooltip';
 import Button from '@/components/ui/Button';
 import { adminApi, type LeadSummary, type LeadStatus, type LeadPackage } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { formatAge } from './_lib/age';
 import { blockedOnLabel } from './_lib/blocked-on';
 import { STATUS_VARIANT } from './_lib/status-variant';

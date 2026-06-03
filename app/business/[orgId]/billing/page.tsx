@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { FONT } from '@/components/business/ui/tokens';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Button } from '@/components/business/ui/Button';
 import { Badge } from '@/components/business/ui/Badge';

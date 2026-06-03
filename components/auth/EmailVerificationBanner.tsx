@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import { authApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 interface EmailVerificationBannerProps {
   email: string;

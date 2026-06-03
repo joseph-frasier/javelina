@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BusinessPlaceholderDashboard } from '@/components/business/dashboard/BusinessPlaceholderDashboard';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 
 // Prevent real network calls from DNSStatusCard / BillingCard queries
 vi.mock('@/lib/api/zones', () => ({ listZonesForOrg: vi.fn().mockResolvedValue([]) }));

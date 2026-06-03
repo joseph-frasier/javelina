@@ -10,8 +10,8 @@ import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { domainsApi } from '@/lib/api-client';
-import { useAuthStore } from '@/lib/auth-store';
-import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { EditWhoisModal } from '@/components/modals/EditWhoisModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -20,7 +20,7 @@ import { DomainCertificatesSection } from '@/components/certificates/DomainCerti
 import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
 import { TransferVerificationCard } from '@/components/domains/TransferVerificationCard';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
-import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
+import { JAVELINA_NAMESERVERS } from '@/lib/constants/domains';
 import type {
   Domain,
   DomainManagementResponse,

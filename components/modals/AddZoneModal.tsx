@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createZone } from '@/lib/actions/zones';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
 import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';

@@ -17,7 +17,7 @@ import { QuickActionsDropdown, QuickAction } from '@/components/admin/QuickActio
 import { Pagination } from '@/components/admin/Pagination';
 import { ViewUserDetailsModal } from '@/components/modals/ViewUserDetailsModal';
 import { adminApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { getActivityStatus, getActivityBadge } from '@/lib/utils/activity';
 

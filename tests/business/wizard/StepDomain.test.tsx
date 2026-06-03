@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { StepDomain } from '@/components/business/wizard/StepDomain';
 import { t } from '@/components/business/ui/tokens';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 
 const data = { domain: { mode: 'connect' as const } } as BusinessIntakeData;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
 import { Badge } from '@/components/business/ui/Badge';

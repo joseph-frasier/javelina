@@ -8,7 +8,7 @@ import TransferDomainContent from '@/components/domains/TransferDomainContent';
 import MyDomainsContent from '@/components/domains/MyDomainsContent';
 import CertificatesList from '@/components/certificates/CertificatesList';
 import { DomainCheckoutModal } from '@/components/modals/DomainCheckoutModal';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import type { DomainRegistrationType } from '@/types/domains';
 

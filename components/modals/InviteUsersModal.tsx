@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
 import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
 import { organizationsApi } from '@/lib/api-client';

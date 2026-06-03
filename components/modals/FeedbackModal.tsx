@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useSettingsStore } from '@/lib/stores/settings-store';
 
 interface FeedbackModalProps {
   isOpen: boolean;

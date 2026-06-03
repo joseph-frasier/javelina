@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { Header } from '@/components/layout/Header';
-import { useAuthStore } from '@/lib/auth-store';
-import { useDashboardModeStore } from '@/lib/dashboard-mode-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useDashboardModeStore } from '@/lib/stores/dashboard-mode-store';
 
 function mountAs(opts: { superadmin: boolean }) {
   useAuthStore.setState({

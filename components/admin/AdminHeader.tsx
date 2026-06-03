@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
-import { getAdminUser } from '@/lib/admin-auth';
-import { useSettingsStore } from '@/lib/settings-store';
+import { getAdminUser } from '@/lib/admin/auth';
+import { useSettingsStore } from '@/lib/stores/settings-store';
 import { Logo } from '@/components/ui/Logo';
-import { useGlobalSearch } from '@/components/search/useGlobalSearch';
+import { useGlobalSearch } from '@/lib/hooks/useGlobalSearch';
 import { GlobalSearchModal } from '@/components/search/GlobalSearchModal';
 
 interface AdminHeaderProps {

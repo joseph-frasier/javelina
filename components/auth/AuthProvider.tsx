@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 /**
  * AuthProvider - Initializes authentication state on app load

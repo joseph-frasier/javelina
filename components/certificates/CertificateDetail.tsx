@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { certificatesApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';

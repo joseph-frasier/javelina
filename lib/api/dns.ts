@@ -5,7 +5,7 @@ import {
   RecordTypeCount,
   TTLBucket,
   AuditLog,
-} from '@/lib/mock-dns-data';
+} from '@/lib/mocks/dns-data';
 import type { DNSRecord } from '@/types/dns';
 
 export interface ZoneSummary {

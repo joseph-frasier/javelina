@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { clsx } from 'clsx';
-import { useWizardStore } from '@/lib/wizard-store';
+import { useWizardStore } from '@/lib/stores/wizard-store';
 import WizardShell, { StepHeader } from './WizardShell';
 import Input from '@/components/ui/Input';
 import DomainSearchResult from '@/components/ui/DomainSearchResult';

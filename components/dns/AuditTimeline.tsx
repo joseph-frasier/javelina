@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AuditLog, formatRelativeTime } from '@/lib/mock-dns-data';
+import { AuditLog, formatRelativeTime } from '@/lib/mocks/dns-data';
 import { getChangeSummary, isSystemOnlyChange } from '@/lib/utils/audit-formatting';
 import Dropdown from '@/components/ui/Dropdown';
 

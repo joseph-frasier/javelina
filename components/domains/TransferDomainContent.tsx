@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { domainsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import type { DomainTransferCheckResponse } from '@/types/domains';
 
 interface TransferDomainContentProps {

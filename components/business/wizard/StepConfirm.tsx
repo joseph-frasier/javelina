@@ -1,5 +1,5 @@
 'use client';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import { FONT, type Tokens } from '@/components/business/ui/tokens';
 import { StepHeader } from '@/components/business/ui/StepHeader';
 import { Card } from '@/components/business/ui/Card';

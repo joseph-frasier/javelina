@@ -29,7 +29,7 @@ vi.mock('next/cache', () => ({
 }));
 
 // Mock toast store
-vi.mock('@/lib/toast-store', () => ({
+vi.mock('@/lib/stores/toast-store', () => ({
   useToastStore: () => ({
     addToast: vi.fn(),
   }),

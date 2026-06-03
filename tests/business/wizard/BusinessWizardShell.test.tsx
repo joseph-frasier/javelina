@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BusinessWizardShell } from '@/components/business/wizard/BusinessWizardShell';
-import { useBusinessIntakeStore } from '@/lib/business-intake-store';
+import { useBusinessIntakeStore } from '@/lib/stores/business-intake-store';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),

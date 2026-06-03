@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useIdleLogout } from '@/lib/hooks/useIdleLogout';
 import { getIdleSync } from '@/lib/idle/idleSync';
 

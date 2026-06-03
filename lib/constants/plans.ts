@@ -8,7 +8,7 @@
  * To update prices, run a database migration, not a code deployment.
  */
 
-import { plansApi } from './api-client';
+import { plansApi } from '@/lib/api-client';
 
 export interface PlanFeature {
   name: string;

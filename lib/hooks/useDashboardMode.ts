@@ -1,7 +1,7 @@
 'use client';
 
-import { useDashboardModeStore, type DashboardMode } from '@/lib/dashboard-mode-store';
-import { useAuthStore } from '@/lib/auth-store';
+import { useDashboardModeStore, type DashboardMode } from '@/lib/stores/dashboard-mode-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface UseDashboardModeResult {
   mode: DashboardMode;

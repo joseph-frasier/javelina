@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
 import { StripeProvider } from '@/components/stripe/StripeProvider';
 import { StripePaymentForm } from '@/components/stripe/StripePaymentForm';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { discountsApi } from '@/lib/api-client';
 import Button from '@/components/ui/Button';

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useEffect, useState, useRef } from 'react';
 import { WelcomeGuidance } from '@/components/dashboard/WelcomeGuidance';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';

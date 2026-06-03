@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { StepConfirm } from '@/components/business/wizard/StepConfirm';
 import { t } from '@/components/business/ui/tokens';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 
 const data: BusinessIntakeData = {
   orgId: 'o1',

@@ -1,4 +1,4 @@
-import { RBACRole } from './auth-store';
+import { RBACRole } from '@/lib/stores/auth-store';
 
 /**
  * Permission helper functions for role-based access control

@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { TagBadge } from '@/components/ui/TagBadge';
-import { TAG_COLORS } from '@/lib/mock-tags-data';
+import { TAG_COLORS } from '@/lib/mocks/tags-data';
 import { type Tag } from '@/lib/api-client';
 
 interface CreateTagModalProps {

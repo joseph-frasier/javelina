@@ -24,8 +24,8 @@ import { AuditTimeline } from '@/components/dns/AuditTimeline';
 import { DiffViewer } from '@/components/dns/DiffViewer';
 import Dropdown from '@/components/ui/Dropdown';
 import { updateZone, deleteZone } from '@/lib/actions/zones';
-import { useToastStore } from '@/lib/toast-store';
-import { useAuthStore } from '@/lib/auth-store';
+import { useToastStore } from '@/lib/stores/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import { 
   getZoneSummary, 
@@ -33,7 +33,7 @@ import {
   exportZoneJSON,
   ZoneSummary
 } from '@/lib/api/dns';
-import { AuditLog } from '@/lib/mock-dns-data';
+import { AuditLog } from '@/lib/mocks/dns-data';
 import type { DNSRecord, DNSRecordFormData } from '@/types/dns';
 import { DNSRecordsTable } from '@/components/dns/DNSRecordsTable';
 import { VerificationChecklist } from '@/components/dns/VerificationChecklist';

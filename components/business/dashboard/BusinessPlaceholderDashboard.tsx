@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import type { BusinessDetail } from '@/lib/api/business';
 import { FONT } from '@/components/business/ui/tokens';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';

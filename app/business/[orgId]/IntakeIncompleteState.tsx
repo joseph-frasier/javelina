@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { FONT } from '@/components/business/ui/tokens';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
 import { Card } from '@/components/business/ui/Card';

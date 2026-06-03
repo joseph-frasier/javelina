@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useAuthStore } from '@/lib/auth-store';
-import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 interface EditProfileModalProps {
   isOpen: boolean;

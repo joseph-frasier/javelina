@@ -18,7 +18,7 @@ import {
   isReadOnly,
   isRoleDowngrade,
 } from '@/lib/permissions';
-import type { RBACRole } from '@/lib/auth-store';
+import type { RBACRole } from '@/lib/stores/auth-store';
 
 describe('Permission Helper Functions', () => {
   describe('Organization Management', () => {

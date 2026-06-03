@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { certificatesApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import type { SslCertificate, DvAuthMethod } from '@/types/certificates';

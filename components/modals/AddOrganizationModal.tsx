@@ -9,9 +9,9 @@ import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import { createOrganization } from '@/lib/actions/organizations';
 import { organizationsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
-import { useAuthStore } from '@/lib/auth-store';
-import type { Plan } from '@/lib/plans-config';
+import { useToastStore } from '@/lib/stores/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import type { Plan } from '@/lib/constants/plans';
 import {
   validateBillingContactFields,
   formatUSPhone,
