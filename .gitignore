@@ -26,13 +26,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# local env files (.env.local.example IS tracked — it's the template)
 .env*.local
+!.env.local.example
 .env
 .env.dev
 .env.production
 .env.staging
-.env.local.example
 
 # vercel
 .vercel
@@ -41,11 +41,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# cursor IDE configuration and AI assistants
+# cursor IDE configuration and AI assistants (CLAUDE.md IS tracked — it's
+# the canonical agent/architecture rules for this repo)
 .cursor/
 .agents/
 .claude/
-CLAUDE.md
 
 # next.js docs
 .next-docs/

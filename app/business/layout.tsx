@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { BusinessTopbar } from '@/components/business/dashboard/BusinessTopbar';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 
 export default function BusinessLayout({ children }: { children: ReactNode }) {
   const t = useBusinessTheme();

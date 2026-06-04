@@ -10,7 +10,7 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminStatCard } from '@/components/admin/AdminStatCard';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { adminApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 interface FlaggedZone {
   id: string;

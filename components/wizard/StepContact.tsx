@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useWizardStore } from '@/lib/wizard-store';
+import { useWizardStore } from '@/lib/stores/wizard-store';
 import WizardShell, { StepHeader } from './WizardShell';
 import Input from '@/components/ui/Input';
 import Switch from '@/components/ui/Switch';

@@ -4,7 +4,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 import Stepper from '@/components/ui/Stepper';
 import Button from '@/components/ui/Button';
-import { useWizardStore, WIZARD_STEP_COUNT } from '@/lib/wizard-store';
+import { useWizardStore, WIZARD_STEP_COUNT } from '@/lib/stores/wizard-store';
 
 const STEPS = [
   { label: 'DNS', description: 'How records are managed' },

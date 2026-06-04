@@ -3,7 +3,7 @@ import Script from 'next/script';
 import { PRICING_FAQS } from '@/lib/constants/faq';
 import { generateFAQSchema, generateSoftwareApplicationSchema } from '@/lib/utils/structured-data';
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumbs';
-import { PLANS_CONFIG } from '@/lib/plans-config';
+import { PLANS_CONFIG } from '@/lib/constants/plans';
 import PricingContent from './PricingContent';
 
 // Generate structured data at build time (server-side)

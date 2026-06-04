@@ -139,6 +139,10 @@ export function AvatarUpload({
       // Get cropped image
       const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
 
+      // ARCHITECTURE DEBT: direct Supabase Storage upload + profiles table
+      // write from the browser; likely fails RLS for Auth0 users. Must route
+      // through the backend (PATCH profiles already accepts avatar_url).
+      // See docs/architecture/DIRECT_SUPABASE_ACCESS_DEBT.md (issue #2).
       // Upload to Supabase Storage
       const fileName = `${userId}-${Date.now()}.jpg`;
       const { data, error } = await supabase.storage

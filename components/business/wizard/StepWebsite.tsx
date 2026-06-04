@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { BusinessIntakeData, LogoAsset, PhotoAsset } from '@/lib/business-intake-store';
+import type { BusinessIntakeData, LogoAsset, PhotoAsset } from '@/lib/stores/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { StepHeader } from '@/components/business/ui/StepHeader';
 import { FieldLabel } from '@/components/business/ui/FieldLabel';

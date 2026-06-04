@@ -36,7 +36,7 @@ vi.mock('next/headers', () => ({
 }));
 
 // Mock toast store
-vi.mock('@/lib/toast-store', () => ({
+vi.mock('@/lib/stores/toast-store', () => ({
   useToastStore: () => ({
     addToast: vi.fn(),
   }),

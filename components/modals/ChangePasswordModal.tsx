@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { apiClient } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
-import { useAuthStore } from '@/lib/auth-store';
+import { useToastStore } from '@/lib/stores/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;

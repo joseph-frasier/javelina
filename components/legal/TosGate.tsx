@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
-import { useAuthStore, useTosNeedsAcceptance } from "@/lib/auth-store";
+import { useAuthStore, useTosNeedsAcceptance } from "@/lib/stores/auth-store";
 import { TosAcceptCheckbox } from "@/components/legal/TosAcceptCheckbox";
 import { CURRENT_TOS_VERSION } from "@/lib/legal/versions";
 

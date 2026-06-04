@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAdminSession } from '@/lib/admin-auth';
+import { getAdminSession } from '@/lib/admin/auth';
 
 export function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();

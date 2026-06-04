@@ -35,7 +35,7 @@ vi.mock('@/lib/actions/zones', () => ({
   createZone: (...args: unknown[]) => mocks.createZone(...args),
 }));
 
-vi.mock('@/lib/toast-store', () => ({
+vi.mock('@/lib/stores/toast-store', () => ({
   useToastStore: () => ({
     addToast: mocks.addToast,
   }),

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { useGlobalSearch } from '@/components/search/useGlobalSearch';
+import { useGlobalSearch } from '@/lib/hooks/useGlobalSearch';
 import { searchApi } from '@/lib/api-client';
 
 const { pushMock } = vi.hoisted(() => ({

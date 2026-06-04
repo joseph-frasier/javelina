@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useWizardStore, WIZARD_STEP_COUNT } from '@/lib/wizard-store';
+import { useWizardStore, WIZARD_STEP_COUNT } from '@/lib/stores/wizard-store';
 import StepDNS from '@/components/wizard/StepDNS';
 import StepWebsite from '@/components/wizard/StepWebsite';
 import StepDomain from '@/components/wizard/StepDomain';

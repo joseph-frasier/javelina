@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { mailboxApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 function extractErrorMessage(err: any, fallback: string): string {
   if (err?.message) return err.message;

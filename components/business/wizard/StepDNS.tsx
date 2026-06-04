@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { StepHeader } from '@/components/business/ui/StepHeader';
 import { Radio } from '@/components/business/ui/Radio';

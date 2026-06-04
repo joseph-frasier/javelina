@@ -1,11 +1,11 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import { FONT, MONO, type Tokens } from '@/components/business/ui/tokens';
 import { Card } from '@/components/business/ui/Card';
 import { HoverArrowLink } from '@/components/business/ui/HoverArrowLink';
-import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
+import { JAVELINA_NAMESERVERS } from '@/lib/constants/domains';
 import { useQuery } from '@tanstack/react-query';
 import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 import { listZonesForOrg } from '@/lib/api/zones';

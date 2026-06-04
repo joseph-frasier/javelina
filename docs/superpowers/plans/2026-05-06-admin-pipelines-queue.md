@@ -9,7 +9,7 @@
 **Tech Stack:** Next.js 15 App Router, React 19, TypeScript, Tailwind, vitest + @testing-library/react, zod (newly added), Auth0 (existing session via `apiClient`).
 
 **Spec:** `docs/superpowers/specs/2026-05-06-admin-pipelines-queue-design.md`
-**API contract:** `documentation/admin-queue-api-guide.md`
+**API contract:** `docs/features/admin/admin-queue-api-guide.md`
 
 ---
 
@@ -386,7 +386,7 @@ Append at the bottom of the file (after the existing `adminApi` export — close
 // ===== Intake (admin pipelines queue) =====
 // Backend forwarder is a pure passthrough — responses are byte-identical to
 // what javelina-intake's /api/internal/leads* returns. See
-// documentation/admin-queue-api-guide.md.
+// docs/features/admin/admin-queue-api-guide.md.
 
 import type {
   LeadRecord,

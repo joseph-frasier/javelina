@@ -24,7 +24,7 @@ vi.mock('gsap', () => ({
 }));
 
 // Mock stores
-vi.mock('@/lib/subscription-store', () => ({
+vi.mock('@/lib/stores/subscription-store', () => ({
   useSubscriptionStore: (selector: any) => {
     const store = {
       selectPlan: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock('@/lib/subscription-store', () => ({
   },
 }));
 
-vi.mock('@/lib/auth-store', () => ({
+vi.mock('@/lib/stores/auth-store', () => ({
   useAuthStore: (selector: any) => {
     const store = {
       isAuthenticated: true, // User is logged in for this test
@@ -46,7 +46,7 @@ vi.mock('@/lib/auth-store', () => ({
   },
 }));
 
-vi.mock('@/lib/toast-store', () => ({
+vi.mock('@/lib/stores/toast-store', () => ({
   useToastStore: (selector: any) => {
     const store = {
       addToast: vi.fn(),
@@ -56,8 +56,8 @@ vi.mock('@/lib/toast-store', () => ({
 }));
 
 // Mock the fetchPlans function to avoid database calls
-vi.mock('@/lib/plans-config', async () => {
-  const actual = await vi.importActual('@/lib/plans-config');
+vi.mock('@/lib/constants/plans', async () => {
+  const actual = await vi.importActual('@/lib/constants/plans');
   return {
     ...actual,
     fetchPlans: vi.fn().mockResolvedValue(undefined),

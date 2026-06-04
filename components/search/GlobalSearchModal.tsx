@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { SearchResultList } from '@/components/search/SearchResultList';
 import type { GlobalSearchContext } from '@/lib/api-client';
-import type { UseGlobalSearchReturn } from '@/components/search/useGlobalSearch';
+import type { UseGlobalSearchReturn } from '@/lib/hooks/useGlobalSearch';
 
 interface GlobalSearchModalProps {
   context: GlobalSearchContext;

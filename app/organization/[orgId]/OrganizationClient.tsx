@@ -8,12 +8,12 @@ import Button from '@/components/ui/Button';
 import { DisabledOrganizationBanner } from '@/components/ui/DisabledOrganizationBanner';
 import { PendingCheckoutBanner } from '@/components/ui/PendingCheckoutBanner';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
-import { useHierarchyStore } from '@/lib/hierarchy-store';
+import { useHierarchyStore } from '@/lib/stores/hierarchy-store';
 import { EditOrganizationModal } from '@/components/modals/EditOrganizationModal';
 import { subscriptionsApi } from '@/lib/api-client';
 import { InviteUsersBox } from '@/components/organization/InviteUsersBox';
 import { ZonesList } from '@/components/organization/ZonesList';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 // Tagging System Imports
 import { TagsManagerCard } from '@/components/tags/TagsManagerCard';

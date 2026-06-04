@@ -29,7 +29,7 @@ interface DomainCheckoutFormProps {
   asModal?: boolean;
 }
 
-import { US_STATES, COUNTRY_OPTIONS } from '@/lib/domain-constants';
+import { US_STATES, COUNTRY_OPTIONS } from '@/lib/constants/domains';
 
 const selectClasses =
   'w-full px-4 py-2.5 rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-accent hover:border-accent/50 transition-colors';

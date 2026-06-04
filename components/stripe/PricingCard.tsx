@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx';
 import Button from '@/components/ui/Button';
-import type { Plan } from '@/lib/subscription-store';
+import type { Plan } from '@/lib/stores/subscription-store';
 
 interface PricingCardProps {
   plan: Plan;

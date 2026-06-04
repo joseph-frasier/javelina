@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getBusiness } from '@/lib/api/business';
 import { adaptDetailToLegacyIntake } from '@/lib/api/business-adapters';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { FONT } from '@/components/business/ui/tokens';
 import { SideNav } from '@/components/business/dashboard/SideNav';
 

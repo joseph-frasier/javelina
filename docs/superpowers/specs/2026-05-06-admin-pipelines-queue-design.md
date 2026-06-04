@@ -16,7 +16,7 @@ Sub-task 1.6 (Pax8 manual queue lane) is deferred to a follow-up PR.
 
 ## Context
 
-- API contract: `documentation/admin-queue-api-guide.md` (in this repo). Backend forwarders are pure passthrough — frontend sees intake's exact response shapes.
+- API contract: `docs/features/admin/admin-queue-api-guide.md` (in this repo). Backend forwarders are pure passthrough — frontend sees intake's exact response shapes.
 - Agent name → jsonb field mapping is canonical in `javelina-intake/docs/operator-queue-mvp.md` §"Operator review cards".
 - Schemas for the six agent outputs live in `javelina-intake/src/lib/schemas/<Name>/v1.ts` and will be **copied** into this repo (the two repos do not share code).
 - Existing admin UX uses a hardcoded sidebar in `components/admin/AdminLayout.tsx` and a strong component library: `AdminPageHeader`, `AdminDataTable`, `AdminStatusBadge`, `AdminStatCard`, `Pagination`, `Card`, `Button`, `ConfirmationModal`, `Tooltip`. We reuse all of it.
@@ -278,7 +278,7 @@ All six wrapped in `Card`. Header: agent name + jsonb field name (small text-mut
 
 ### `_lib/blocked-on.ts`
 
-Direct port of the table from `documentation/admin-queue-api-guide.md` §2:
+Direct port of the table from `docs/features/admin/admin-queue-api-guide.md` §2:
 
 ```ts
 export const blockedOnLabel: Record<LeadStatus, string | null> = {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import { domainsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import type { Domain, DomainVerification } from '@/types/domains';
 
 interface Props {

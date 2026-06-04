@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useSettingsStore } from '@/lib/stores/settings-store';
 
 // Generate mock data for the last 7 days
 const generateMockData = () => {

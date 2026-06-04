@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { canDeleteZone } from '@/lib/permissions';
-import type { RBACRole } from '@/lib/auth-store';
+import type { RBACRole } from '@/lib/stores/auth-store';
 
 // Simple test component that demonstrates role-based UI permissions
 // This represents how the ZoneDetailClient should check permissions before showing destructive actions

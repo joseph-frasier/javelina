@@ -1,4 +1,4 @@
-import { formatRelativeTime } from '@/lib/mock-dns-data';
+import { formatRelativeTime } from '@/lib/mocks/dns-data';
 
 interface VerificationStatusBadgeProps {
   status: 'verified' | 'pending' | 'failed' | 'unverified';

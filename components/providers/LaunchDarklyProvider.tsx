@@ -3,7 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { LDProvider, useLDClient } from 'launchdarkly-react-client-sdk';
 import type { LDContext } from 'launchdarkly-js-client-sdk';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface LaunchDarklyProviderProps {
   children: ReactNode;

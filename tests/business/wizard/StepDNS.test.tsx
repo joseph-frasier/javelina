@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { StepDNS } from '@/components/business/wizard/StepDNS';
 import { t } from '@/components/business/ui/tokens';
-import type { BusinessIntakeData } from '@/lib/business-intake-store';
+import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 
 const base: Pick<BusinessIntakeData, 'dns'> = { dns: { mode: 'jbp' } };
 

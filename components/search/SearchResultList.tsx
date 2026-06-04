@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { clsx } from 'clsx';
-import type { GlobalSearchUiResult } from '@/components/search/useGlobalSearch';
+import type { GlobalSearchUiResult } from '@/lib/hooks/useGlobalSearch';
 
 interface SearchResultListProps {
   results: GlobalSearchUiResult[];

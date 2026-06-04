@@ -4,7 +4,7 @@ import { useState } from 'react';
 import DomainSearchBar from '@/components/domains/DomainSearchBar';
 import { DomainSearchResultsModal } from '@/components/modals/DomainSearchResultsModal';
 import { domainsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import type { DomainSearchResult } from '@/types/domains';
 
 interface RegisterDomainsContentProps {

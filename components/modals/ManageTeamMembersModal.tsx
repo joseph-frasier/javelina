@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
 import { organizationsApi } from '@/lib/api-client';
 import type { Invitation } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 interface User {
   user_id: string;

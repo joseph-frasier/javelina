@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { LaunchDarklyProvider } from '@/components/providers/LaunchDarklyProvider';
 import { ToastContainer } from '@/components/ui/Toast';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { TosGate } from '@/components/legal/TosGate';
 
 export function Providers({ children }: { children: React.ReactNode }) {
