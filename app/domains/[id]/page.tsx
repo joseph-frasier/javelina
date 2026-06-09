@@ -8,6 +8,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import InfoCallout from '@/components/ui/InfoCallout';
+import { isDomainEditable } from '@/lib/utils/domain-edit';
 import Input from '@/components/ui/Input';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -388,6 +390,8 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  const isEditable = isDomainEditable(domain.status);
+
   // Email setup doesn't require a DNS zone — users can wire MX/SPF/DKIM later.
   // Prefer the zone's org (if any) so it stays consistent with where the
   // domain already lives; otherwise fall back to the user's first org.
@@ -462,6 +466,13 @@ export default function DomainDetailPage() {
         </p>
       </div>
 
+      {!isEditable && (
+        <InfoCallout tone="warning" title="Changes are locked while this domain is being set up">
+          You&apos;ll be able to edit WHOIS contacts, nameservers, auto-renew, and domain lock
+          once this domain is active. Current status: {domain.status}.
+        </InfoCallout>
+      )}
+
       {/* Combined Domain Settings + Renewal + Nameservers card */}
       <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow">
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-gray-100 dark:divide-white/5">
@@ -488,10 +499,10 @@ export default function DomainDetailPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleAutoRenew}
-                disabled={isTogglingAutoRenew}
+                disabled={isTogglingAutoRenew || !isEditable}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                   autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${isTogglingAutoRenew ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isTogglingAutoRenew || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   autoRenew ? 'translate-x-6' : 'translate-x-1'
@@ -520,10 +531,10 @@ export default function DomainDetailPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleLock}
-                disabled={isTogglingLock}
+                disabled={isTogglingLock || !isEditable}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                   domainLocked ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${isTogglingLock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isTogglingLock || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   domainLocked ? 'translate-x-6' : 'translate-x-1'
@@ -748,7 +759,7 @@ export default function DomainDetailPage() {
             >
               + Add nameserver
             </button>
-            <Button type="submit" variant="primary" size="sm" disabled={isSavingNs}>
+            <Button type="submit" variant="primary" size="sm" disabled={isSavingNs || !isEditable}>
               {isSavingNs ? 'Saving...' : 'Save nameservers'}
             </Button>
           </div>
@@ -779,7 +790,7 @@ export default function DomainDetailPage() {
       <Card
         title="WHOIS Contact Information"
         action={
-          <Button variant="secondary" size="sm" onClick={() => setIsWhoisModalOpen(true)}>
+          <Button variant="secondary" size="sm" disabled={!isEditable} onClick={() => setIsWhoisModalOpen(true)}>
             Edit
           </Button>
         }
