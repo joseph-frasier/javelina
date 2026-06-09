@@ -22,4 +22,8 @@ describe('isDomainEditable', () => {
   it('returns false for undefined', () => {
     expect(isDomainEditable(undefined)).toBe(false);
   });
+
+  it('returns false for null', () => {
+    expect(isDomainEditable(null)).toBe(false);
+  });
 });
