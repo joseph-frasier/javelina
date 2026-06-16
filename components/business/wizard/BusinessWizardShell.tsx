@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { upsertIntakeDraft, completeIntake } from '@/lib/api/business';
 import { useQueryClient } from '@tanstack/react-query';
 import { FONT } from '@/components/business/ui/tokens';
-import { useBusinessTheme } from '@/lib/business-theme-store';
+import { useBusinessTheme } from '@/lib/stores/business-theme-store';
 import { Card } from '@/components/business/ui/Card';
 import { Button } from '@/components/business/ui/Button';
 import { Icon } from '@/components/business/ui/Icon';
@@ -15,7 +15,7 @@ import { StepWebsite } from './StepWebsite';
 import { StepDomain, type BundledDomainStatus } from './StepDomain';
 import { StepContact } from './StepContact';
 import { StepConfirm } from './StepConfirm';
-import { useBusinessIntakeStore, type BusinessIntakeData } from '@/lib/business-intake-store';
+import { useBusinessIntakeStore, type BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import { organizationsApi } from '@/lib/api-client';
 
 const STEP_LABELS = ['DNS', 'Website', 'Domain', 'Contact', 'Confirm'] as const;

@@ -7,7 +7,7 @@ import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import { adminApi, ApiError, type LeadDetailResponse, type ActionResponse } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { LeadStateHeader } from '../_components/LeadStateHeader';
 import { OperatorActions } from '../_components/OperatorActions';
 import { HaltPipelineButton } from '../_components/HaltPipelineButton';

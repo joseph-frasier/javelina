@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useAuthStore } from '@/lib/auth-store';
-import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { SettingsLayout } from '@/components/layout/SettingsLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { SubscriptionManager } from '@/components/billing/SubscriptionManager';

@@ -6,8 +6,8 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { PageTransition } from './PageTransition';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
-import { useImpersonationStore } from '@/lib/admin-impersonation';
-import { useAuthStore } from '@/lib/auth-store';
+import { useImpersonationStore } from '@/lib/admin/impersonation';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { AIChatWidget } from '@/components/chat/AIChatWidget';
 import { IdleLogoutGuard } from '@/components/auth/IdleLogoutGuard';
 

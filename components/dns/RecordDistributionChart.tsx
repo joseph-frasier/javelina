@@ -1,7 +1,7 @@
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { RecordTypeCount } from '@/lib/mock-dns-data';
+import { RecordTypeCount } from '@/lib/mocks/dns-data';
 
 interface RecordDistributionChartProps {
   data: RecordTypeCount[];

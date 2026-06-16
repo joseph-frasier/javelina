@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 import { FONT } from '@/components/business/ui/tokens';
 import {
   useBusinessTheme,
   useBusinessThemeStore,
-} from '@/lib/business-theme-store';
+} from '@/lib/stores/business-theme-store';
 import { Logo } from '@/components/ui/Logo';
 
 export function BusinessTopbar() {

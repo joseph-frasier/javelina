@@ -526,7 +526,7 @@ export const dnsRecordsApi = {
 // ===== Intake (admin pipelines queue) =====
 // Backend forwarder is a pure passthrough — responses are byte-identical to
 // what javelina-intake's /api/internal/leads* returns. See
-// documentation/admin-queue-api-guide.md.
+// docs/features/admin/admin-queue-api-guide.md.
 
 export type LeadStatus =
   | 'created' | 'form_submitted' | 'agents_complete'
@@ -566,7 +566,7 @@ export interface LeadDetail extends LeadSummary {
   upsell_risk_report: UpsellRiskReport | null;
   // Agent 10 (Composer) emits both copy + page structure here. The legacy
   // structure_prep column on the intake DB is unused (Agent 11 was folded
-  // into Agent 10) — see documentation/admin-queue-api-guide.md §3.
+  // into Agent 10) — see docs/features/admin/admin-queue-api-guide.md §3.
   copy_prep: ContentPlanReport | null;
   design_prep: DesignDirectionReport | null;
 }

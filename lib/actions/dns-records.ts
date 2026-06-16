@@ -217,25 +217,6 @@ export async function duplicateDNSRecord(
 }
 
 /**
- * Toggle record active status
- * NOTE: Active field has been removed from schema. This function is deprecated.
- */
-export async function toggleDNSRecordStatus(recordId: string): Promise<DNSRecord> {
-  throw new Error('Toggle active status is no longer supported. Active field has been removed from schema.');
-}
-
-/**
- * Bulk toggle record active status
- * NOTE: Active field has been removed from schema. This function is deprecated.
- */
-export async function bulkToggleDNSRecordStatus(
-  recordIds: string[],
-  active: boolean
-): Promise<{ success: number; failed: number }> {
-  throw new Error('Bulk toggle active status is no longer supported. Active field has been removed from schema.');
-}
-
-/**
  * Get all DNS records for a zone
  */
 export async function getDNSRecords(zoneId: string): Promise<DNSRecord[]> {

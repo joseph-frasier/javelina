@@ -18,7 +18,7 @@ import { ViewOrganizationDetailsModal } from '@/components/modals/ViewOrganizati
 import { ViewOrganizationMembersModal } from '@/components/modals/ViewOrganizationMembersModal';
 import { ConfirmDisableOrganizationModal } from '@/components/modals/ConfirmDisableOrganizationModal';
 import { adminApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 
 interface Organization {

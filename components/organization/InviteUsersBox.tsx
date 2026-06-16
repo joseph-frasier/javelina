@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import { InviteUsersModal } from '@/components/modals/InviteUsersModal';
 import { ManageTeamMembersModal } from '@/components/modals/ManageTeamMembersModal';
 import { organizationsApi, subscriptionsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 interface Member {
   user_id: string;

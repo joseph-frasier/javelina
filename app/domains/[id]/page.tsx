@@ -8,10 +8,12 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import InfoCallout from '@/components/ui/InfoCallout';
+import { isDomainEditable } from '@/lib/utils/domain-edit';
 import Input from '@/components/ui/Input';
 import { domainsApi } from '@/lib/api-client';
-import { useAuthStore } from '@/lib/auth-store';
-import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { EditWhoisModal } from '@/components/modals/EditWhoisModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
@@ -20,7 +22,7 @@ import { DomainCertificatesSection } from '@/components/certificates/DomainCerti
 import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
 import { TransferVerificationCard } from '@/components/domains/TransferVerificationCard';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
-import { JAVELINA_NAMESERVERS } from '@/lib/domain-constants';
+import { JAVELINA_NAMESERVERS } from '@/lib/constants/domains';
 import type {
   Domain,
   DomainManagementResponse,
@@ -74,18 +76,19 @@ function NsCopyButton({ ns, index }: { ns: string; index: number }) {
   );
 }
 
+const statusMap: Record<string, { label: string; className: string }> = {
+  pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  processing: { label: 'Processing', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  active: { label: 'Active', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+  expired: { label: 'Expired', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  transferring: { label: 'Transferring', className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
+  transfer_complete: { label: 'Transferred', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+  failed: { label: 'Failed', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  cancelled: { label: 'Cancelled', className: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+};
+
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
-    processing: { label: 'Processing', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
-    active: { label: 'Active', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-    expired: { label: 'Expired', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-    transferring: { label: 'Transferring', className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
-    transfer_complete: { label: 'Transferred', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-    failed: { label: 'Failed', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-    cancelled: { label: 'Cancelled', className: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
-  };
-  const { label, className } = config[status] || config.pending;
+  const { label, className } = statusMap[status] || statusMap.pending;
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${className}`}>
       {label}
@@ -388,6 +391,8 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  const isEditable = isDomainEditable(domain.status);
+
   // Email setup doesn't require a DNS zone — users can wire MX/SPF/DKIM later.
   // Prefer the zone's org (if any) so it stays consistent with where the
   // domain already lives; otherwise fall back to the user's first org.
@@ -462,6 +467,13 @@ export default function DomainDetailPage() {
         </p>
       </div>
 
+      {!isEditable && (
+        <InfoCallout tone="warning" title="Domain changes are locked">
+          WHOIS contacts, nameservers, auto-renew, and domain lock can only be edited once
+          this domain is active. Current status: {statusMap[domain.status]?.label ?? domain.status}.
+        </InfoCallout>
+      )}
+
       {/* Combined Domain Settings + Renewal + Nameservers card */}
       <div className="rounded-xl bg-white dark:bg-gray-slate shadow-md border border-gray-light hover:shadow-lg transition-shadow">
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-gray-100 dark:divide-white/5">
@@ -488,10 +500,12 @@ export default function DomainDetailPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleAutoRenew}
-                disabled={isTogglingAutoRenew}
+                disabled={isTogglingAutoRenew || !isEditable}
+                aria-disabled={isTogglingAutoRenew || !isEditable}
+                title={!isEditable ? 'Locked until the domain is active' : undefined}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                   autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${isTogglingAutoRenew ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isTogglingAutoRenew || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   autoRenew ? 'translate-x-6' : 'translate-x-1'
@@ -520,10 +534,12 @@ export default function DomainDetailPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleLock}
-                disabled={isTogglingLock}
+                disabled={isTogglingLock || !isEditable}
+                aria-disabled={isTogglingLock || !isEditable}
+                title={!isEditable ? 'Locked until the domain is active' : undefined}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                   domainLocked ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${isTogglingLock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isTogglingLock || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   domainLocked ? 'translate-x-6' : 'translate-x-1'
@@ -723,13 +739,15 @@ export default function DomainDetailPage() {
                   value={ns}
                   onChange={(e) => updateNameserver(i, e.target.value)}
                   className="font-mono"
+                  disabled={!isEditable}
                 />
               </div>
               {nameservers.length > 2 && (
                 <button
                   type="button"
                   onClick={() => removeNameserverField(i)}
-                  className="px-2 py-2 text-gray-400 hover:text-red-500 transition-colors"
+                  disabled={!isEditable}
+                  className="px-2 py-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Remove"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -744,11 +762,12 @@ export default function DomainDetailPage() {
             <button
               type="button"
               onClick={addNameserverField}
-              className="text-sm text-orange hover:text-[#d46410] transition-colors"
+              disabled={!isEditable}
+              className={`text-sm transition-colors ${!isEditable ? 'text-gray-400 cursor-not-allowed' : 'text-orange hover:text-[#d46410]'}`}
             >
               + Add nameserver
             </button>
-            <Button type="submit" variant="primary" size="sm" disabled={isSavingNs}>
+            <Button type="submit" variant="primary" size="sm" disabled={isSavingNs || !isEditable}>
               {isSavingNs ? 'Saving...' : 'Save nameservers'}
             </Button>
           </div>
@@ -779,7 +798,7 @@ export default function DomainDetailPage() {
       <Card
         title="WHOIS Contact Information"
         action={
-          <Button variant="secondary" size="sm" onClick={() => setIsWhoisModalOpen(true)}>
+          <Button variant="secondary" size="sm" disabled={!isEditable} onClick={() => setIsWhoisModalOpen(true)}>
             Edit
           </Button>
         }

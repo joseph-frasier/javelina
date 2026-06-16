@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PopMapSection } from '@/components/pop-map/PopMapSection';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function InfrastructurePage() {
   const [scrolled, setScrolled] = useState(false);

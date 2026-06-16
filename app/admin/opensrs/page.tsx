@@ -8,7 +8,7 @@ import { AdminStatusBadge, type AdminStatusBadgeVariant } from '@/components/adm
 import { Pagination } from '@/components/admin/Pagination';
 import { adminApi } from '@/lib/api-client';
 import type { MailboxPricingAdminTier } from '@/types/mailbox';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';

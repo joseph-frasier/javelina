@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { formatDistanceToNow } from 'date-fns';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { supportApi, zonesApi, type SupportChatResponse, type SupportCitation, ApiError } from '@/lib/api-client';
 import { TicketCreationModal } from '@/components/support/TicketCreationModal';
 import { isJavelinaDomainUrl } from '@/lib/support/citation-mapper';

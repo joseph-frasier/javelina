@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { clsx } from 'clsx';
-import { useWizardStore } from '@/lib/wizard-store';
+import { useWizardStore } from '@/lib/stores/wizard-store';
 import WizardShell, { StepHeader } from './WizardShell';
 import RadioCard from '@/components/ui/RadioCard';
 

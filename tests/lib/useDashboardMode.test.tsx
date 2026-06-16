@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
-import { useDashboardModeStore } from '@/lib/dashboard-mode-store';
+import { useDashboardModeStore } from '@/lib/stores/dashboard-mode-store';
 import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 function setUser(opts: { superadmin: boolean } | null) {
   useAuthStore.setState({

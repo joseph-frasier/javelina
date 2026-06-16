@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { certificatesApi, domainsApi } from '@/lib/api-client';
-import { generateCSR, downloadTextFile } from '@/lib/csr-generator';
+import { generateCSR, downloadTextFile } from '@/lib/utils/csr-generator';
 import type { Domain } from '@/types/domains';
 import type {
   SslProduct,

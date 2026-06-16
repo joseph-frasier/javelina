@@ -5,7 +5,7 @@ import { BusinessWizardShell } from '@/components/business/wizard/BusinessWizard
 import {
   useBusinessIntakeStore,
   type BusinessPlanCode,
-} from '@/lib/business-intake-store';
+} from '@/lib/stores/business-intake-store';
 
 function SetupInner() {
   const router = useRouter();

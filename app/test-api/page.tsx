@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { apiClient, organizationsApi, subscriptionsApi, stripeApi } from '@/lib/api-client';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface TestResult {
   name: string;

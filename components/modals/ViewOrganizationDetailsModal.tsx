@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { adminApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 
 interface OrganizationDetails {

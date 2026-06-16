@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { Logo } from '@/components/ui/Logo';
 import HCaptchaField, { HCaptchaFieldHandle } from '@/components/auth/HCaptchaField';
 import { isHCaptchaEnabled } from '@/lib/captcha/config';

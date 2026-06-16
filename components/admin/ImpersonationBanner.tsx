@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { useImpersonationStore, endImpersonation } from '@/lib/admin-impersonation';
+import { useImpersonationStore, endImpersonation } from '@/lib/admin/impersonation';
 
 export function ImpersonationBanner() {
   const router = useRouter();

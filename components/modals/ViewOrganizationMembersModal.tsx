@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { adminApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 interface OrganizationMember {
   user_id: string;

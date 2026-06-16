@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useBusinessIntakeStore } from '@/lib/business-intake-store';
+import { useBusinessIntakeStore } from '@/lib/stores/business-intake-store';
 
 describe('business intake store', () => {
   beforeEach(() => {

@@ -37,7 +37,7 @@ vi.mock('@/lib/supabase/client', () => ({
 
 // Mock toast store
 const mockAddToast = vi.fn();
-vi.mock('@/lib/toast-store', () => ({
+vi.mock('@/lib/stores/toast-store', () => ({
   useToastStore: () => ({
     addToast: mockAddToast,
   }),
@@ -66,7 +66,7 @@ vi.mock('@/components/ui/Button', () => ({
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { Modal } from '@/components/ui/Modal';
 
 // Test component that simulates the delete zone flow

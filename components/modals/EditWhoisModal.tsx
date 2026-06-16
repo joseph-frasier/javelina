@@ -6,8 +6,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
-import { US_STATES, COUNTRY_OPTIONS } from '@/lib/domain-constants';
+import { useToastStore } from '@/lib/stores/toast-store';
+import { US_STATES, COUNTRY_OPTIONS } from '@/lib/constants/domains';
 import type { DomainContact } from '@/types/domains';
 
 interface EditWhoisModalProps {

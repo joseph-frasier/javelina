@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { fetchPlans, type Plan, isValidUpgrade, getUpgradeType, calculateLifetimeUpgradePrice, isLifetimePlan } from '@/lib/plans-config';
-import { useToastStore } from '@/lib/toast-store';
+import { fetchPlans, type Plan, isValidUpgrade, getUpgradeType, calculateLifetimeUpgradePrice, isLifetimePlan } from '@/lib/constants/plans';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { stripeApi } from '@/lib/api-client';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import Button from '@/components/ui/Button';

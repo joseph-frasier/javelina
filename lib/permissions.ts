@@ -1,4 +1,4 @@
-import { RBACRole } from './auth-store';
+import { RBACRole } from '@/lib/stores/auth-store';
 
 /**
  * Permission helper functions for role-based access control
@@ -92,11 +92,6 @@ export function isReadOnly(orgRole: RBACRole, envRole?: RBACRole): boolean {
   return effectiveRole === 'Viewer' || effectiveRole === 'BillingContact';
 }
 
-// Get effective role (environment role overrides org role if present)
-export function getEffectiveRole(orgRole: RBACRole, envRole?: RBACRole): RBACRole {
-  return envRole || orgRole;
-}
-
 // Check if environment role is more restrictive than org role
 export function isRoleDowngrade(orgRole: RBACRole, envRole: RBACRole): boolean {
   const roleHierarchy: Record<RBACRole, number> = {
@@ -108,31 +103,5 @@ export function isRoleDowngrade(orgRole: RBACRole, envRole: RBACRole): boolean {
   };
   
   return roleHierarchy[envRole] < roleHierarchy[orgRole];
-}
-
-// Get role display text
-export function getRoleDisplayText(role: RBACRole): string {
-  const roleMap: Record<RBACRole, string> = {
-    'SuperAdmin': 'SuperUser',
-    'Admin': 'SuperUser',
-    'BillingContact': 'Billing Contact',
-    'Editor': 'Editor',
-    'Viewer': 'Viewer'
-  };
-  
-  return roleMap[role] || role;
-}
-
-// Get role badge color classes
-export function getRoleBadgeColor(role: RBACRole): string {
-  const colorMap: Record<RBACRole, string> = {
-    'SuperAdmin': 'bg-orange-100 text-orange-800 border-orange-200',
-    'Admin': 'bg-orange-100 text-orange-800 border-orange-200',
-    'BillingContact': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Editor': 'bg-orange-100 text-orange-800 border-orange-200',
-    'Viewer': 'bg-gray-100 text-gray-800 border-gray-200'
-  };
-  
-  return colorMap[role] || 'bg-gray-100 text-gray-800 border-gray-200';
 }
 

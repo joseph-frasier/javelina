@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useWizardStore } from '@/lib/wizard-store';
+import { useWizardStore } from '@/lib/stores/wizard-store';
 import WizardShell, { StepHeader } from './WizardShell';
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {

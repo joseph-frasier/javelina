@@ -8,7 +8,7 @@ import {
 } from '@stripe/react-stripe-js';
 import Button from '@/components/ui/Button';
 import { TosAcceptCheckbox } from '@/components/legal/TosAcceptCheckbox';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface StripePaymentFormProps {
   onSuccess: () => void;

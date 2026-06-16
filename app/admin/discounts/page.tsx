@@ -16,7 +16,7 @@ import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
 import { Pagination } from '@/components/admin/Pagination';
 import { discountsApi, PromotionCode } from '@/lib/api-client';
-import { useToastStore } from '@/lib/toast-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative, formatExpirationDate } from '@/lib/utils/time';
 
 // Create Discount Modal — uses shared Modal/Input/Dropdown primitives.

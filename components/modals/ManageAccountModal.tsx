@@ -5,8 +5,8 @@ import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
-import { useAuthStore } from '@/lib/auth-store';
-import { useToastStore } from '@/lib/toast-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useToastStore } from '@/lib/stores/toast-store';
 
 interface ManageAccountModalProps {
   isOpen: boolean;
