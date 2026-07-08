@@ -175,7 +175,7 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
               </Link>
               {showDomainsIntegration && (
                 <Link
-                  href="/domains"
+                  href="/domains?tab=my-domains"
                   className="px-3 py-1.5 rounded-md text-sm text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
                 >
                   Domains
