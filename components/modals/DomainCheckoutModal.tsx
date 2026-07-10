@@ -11,6 +11,7 @@ interface DomainCheckoutModalProps {
   registrationType: DomainRegistrationType;
   price: number;
   currency: string;
+  orgId: string;
   onSuccess: () => void;
 }
 
@@ -21,6 +22,7 @@ export function DomainCheckoutModal({
   registrationType,
   price,
   currency,
+  orgId,
   onSuccess,
 }: DomainCheckoutModalProps) {
   const title = registrationType === 'transfer' ? `Transfer ${domain}` : `Register ${domain}`;
@@ -38,6 +40,7 @@ export function DomainCheckoutModal({
         registrationType={registrationType}
         price={price}
         currency={currency}
+        orgId={orgId}
         onCancel={onClose}
         onSuccess={onSuccess}
         asModal

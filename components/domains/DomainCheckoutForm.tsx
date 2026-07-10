@@ -24,6 +24,7 @@ interface DomainCheckoutFormProps {
   registrationType: DomainRegistrationType;
   price: number;
   currency: string;
+  orgId: string;
   onCancel: () => void;
   onSuccess: () => void;
   asModal?: boolean;
@@ -39,6 +40,7 @@ export default function DomainCheckoutForm({
   registrationType,
   price,
   currency,
+  orgId,
   onCancel,
   onSuccess,
   asModal = false,
@@ -120,6 +122,7 @@ export default function DomainCheckoutForm({
         contact_info: formattedContact,
         registration_type: registrationType,
         auth_code: registrationType === 'transfer' ? authCode : undefined,
+        org_id: orgId,
       });
 
       if (result.checkout_url) {
