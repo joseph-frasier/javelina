@@ -24,6 +24,19 @@ vi.mock('@/lib/api-client', () => ({
   },
 }));
 
+// Mock auth/hierarchy stores so MyDomainsContent renders as an org admin
+// (matches a logged-in user with edit rights, consistent with pre-existing
+// expectations that the "Link domain" callout is visible)
+vi.mock('@/lib/stores/hierarchy-store', () => ({
+  useHierarchyStore: () => ({ currentOrgId: 'org_1' }),
+}));
+
+vi.mock('@/lib/stores/auth-store', () => ({
+  useAuthStore: () => ({
+    user: { organizations: [{ id: 'org_1', name: 'Test Org', role: 'Admin' }] },
+  }),
+}));
+
 // Mock child components to simplify testing
 vi.mock('@/components/domains/DomainSearchBar', () => ({
   default: () => <div data-testid="domain-search-bar">DomainSearchBar</div>,
