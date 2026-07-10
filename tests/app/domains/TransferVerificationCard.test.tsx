@@ -17,6 +17,7 @@ vi.mock('@/lib/api-client', () => ({
 const baseDomain: Domain = {
   id: 'd1',
   user_id: 'u1',
+  organization_id: null,
   domain_name: 'example.com',
   tld: '.com',
   status: 'active',
