@@ -1,9 +1,19 @@
 # Domains: Org Scoping (User → Organization)
 
-**Status:** Proposal / not started — reference doc for a future switch
+**Status:** Approved — ready for implementation (expand phase only; see Migration Strategy)
 **Backend Status:** Pending (requires coordinated changes in `javelina-backend`)
-**Date:** 2026-07-08
+**Date:** 2026-07-08 (decisions resolved 2026-07-10)
 **Branch:** `domains/quality-of-life`
+
+## Approach: expand now, backfill later (expand/contract)
+
+Dev accounts belong to multiple orgs and the production owner→org mapping must be
+determined by hand against the real dataset, so there is **no reliable automated
+backfill**. This change therefore ships only the **expand** phase to the local branch +
+dev DB: add a nullable `organization_id`, make new domains org-scoped at creation, and
+authorize by org membership **with a legacy `user_id` fallback** so existing (un-backfilled)
+domains keep working unchanged. The data backfill, `SET NOT NULL`, and removal of the
+fallback are a **separate later effort** against production (see "Deferred — later effort").
 
 ## Motivation
 
@@ -13,9 +23,9 @@ belong to an org so any member (per role) can manage it, billing attaches to the
 and the business/org UI can list a real set of org-owned domains instead of the
 current client-side hack.
 
-The overall change is **medium difficulty**: additive DB column + backfill, a
-mechanical (but high-count) backend authorization rewrite, and a frontend change that
-includes one genuine UX decision. The org infrastructure to copy already exists.
+The overall change is **medium difficulty**: an additive nullable DB column (no backfill
+in this phase), a mechanical (but high-count) dual-mode backend authorization rewrite, and
+a frontend change with an org picker. The org infrastructure to copy already exists.
 
 ---
 
@@ -54,6 +64,14 @@ Add `domains.organization_id` as the authoritative owner, mirroring the **zones*
 `20251205000000_remove_environments.sql`). Keep `user_id` as "who registered it"
 (historical/creator), but scope access and billing by org.
 
+**Expand-phase difference vs. zones:** the zones migration added the column, backfilled,
+and set `NOT NULL` in one shot. We cannot backfill reliably (see Approach), so in this
+change `organization_id` stays **nullable** and every authorization rule is **dual-mode**:
+org membership when `organization_id` is set, else the legacy `user_id = auth.uid()` check
+when it is `NULL`. New domains are always created with a non-NULL `organization_id`, so
+NULL means "legacy, not yet backfilled". The `NOT NULL` tightening and fallback removal
+come later (Deferred).
+
 ### Template to copy
 The zones table did this exact move when environments were removed:
 `20251205000000_remove_environments.sql` — add column, backfill from the old relation,
@@ -83,12 +101,13 @@ Write policies additionally gate on `om.role IN ('SuperAdmin','Admin','Editor')`
 ## Change surface
 
 ### DB (this repo)
-1. New migration: `ALTER TABLE public.domains ADD COLUMN organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE;`
-2. Backfill (see below), then `SET NOT NULL` + `CREATE INDEX idx_domains_organization_id`.
-3. Rewrite the 4 domains RLS policies to membership-based (copy zones), deciding which
-   write ops require `role IN ('SuperAdmin','Admin','Editor')`.
-4. (Optional, for consistency) same treatment for `ssl_certificates` and
-   `domain_renewal_invoices`.
+1. New migration: `ALTER TABLE public.domains ADD COLUMN organization_id uuid REFERENCES public.organizations(id) ON DELETE SET NULL;` — **nullable, no backfill, no `NOT NULL`.** (`ON DELETE SET NULL` rather than `CASCADE`: deleting an org should not delete legacy domain rows.)
+2. `CREATE INDEX idx_domains_organization_id ON public.domains(organization_id);`
+3. Rewrite the 4 domains RLS policies to **dual-mode** (copy zones membership pattern, add the legacy fallback), with the agreed role gating:
+   - **SELECT**: any org member of `organization_id`, OR (`organization_id IS NULL` AND `user_id = auth.uid()`).
+   - **INSERT/UPDATE**: `role IN ('SuperAdmin','Admin','Editor')` for the row's org, OR the NULL-org legacy fallback.
+   - **Unlink/transfer** are enforced in the backend service-role path (no DELETE RLS policy today); gate those to `SuperAdmin/Admin` there.
+4. **SSL certificates: out of scope entirely** — `ssl_certificates` is deprecated (not developed, never exposed to end users) and is NOT touched now or later.
 
 ### Backend (`javelina-backend`)
 1. Add `organization_id` to `CreateDomainRecordParams` + insert (`domain-helpers.ts:3-46`).
@@ -96,100 +115,103 @@ Write policies additionally gate on `om.role IN ('SuperAdmin','Admin','Editor')`
    `linkDomain` (`:714-727`) must **accept and membership-check an `org_id`** from the
    request (mirror `mailboxController.enableEmail`, which already requires `org_id`).
    Add it to Stripe metadata.
-3. Change list scoping: `getUserDomains` → org-membership join like zones
-   (`zonesController.ts:58-96` is the template); `listDomains` handler.
+3. Change list scoping: `listDomains` accepts `org_id` and returns that org's domains
+   (membership-checked, org-join like zones — `zonesController.ts:58-96` is the template),
+   **plus** the caller's own legacy NULL-org domains during the transition.
 4. Replace the ~16 inline `domain.user_id !== userId` checks (14 in `domainsController`,
-   2 in `mailboxController`) with an org-membership check via `hasOrgRole(...)`. Extract
-   a shared helper (e.g. `getDomainForOrgMember`) since the pattern is copy-pasted.
-5. Fix the `unlinkDomain` delete filter (`:1134-1138`) to scope by org.
-6. Simplify owner-derived billing/renewal paths to use the new direct
-   `organization_id` instead of deriving org from `user_id`.
+   2 in `mailboxController`) with a single shared **dual-mode** helper
+   (e.g. `getDomainForOrgMember(domainId, userId, requiredRole)`): if the domain has an
+   `organization_id`, enforce `hasOrgRole(...)` with the agreed gating (view=any member,
+   edit=SuperAdmin/Admin/Editor); if `organization_id IS NULL`, fall back to
+   `domain.user_id === userId`. 404 otherwise.
+5. Fix the `unlinkDomain` delete filter (`:1134-1138`): scope by org membership
+   (`SuperAdmin/Admin`) when org-scoped, else the legacy `user_id` filter. Same dual-mode.
+6. **Renewal billing → org's default payment method.** The org is the Stripe customer, so
+   when `domain.organization_id` is set, resolve the org's Stripe customer directly from
+   the domain and bill its default payment method (`domain-renewal-billing.ts:98-124,148`).
+   When `organization_id IS NULL` (legacy), keep today's `user_id → subscriptions.org_id`
+   derivation as the fallback.
 7. Update tests: `domainEditLock.test.ts`, `domainRenewal.test.ts`,
-   `mailboxController.test.ts`.
+   `mailboxController.test.ts` — cover both org-scoped and legacy NULL-org paths.
 
 ### Frontend (this repo)
 1. Replace the client-side name-match filter in `app/business/[orgId]/domains/page.tsx:74-76`
    (and the workaround in `lib/api/domains.ts:29-31`) with a real org-scoped fetch
    (`GET /domains?org_id=…` or `listByOrg`).
-2. **Add an org concept/selector to the personal `app/domains/page.tsx`** — it has none
-   today. (This is the main UX decision — see Open Decisions.)
+2. **Add an org dropdown to the personal `app/domains/page.tsx`** (decision resolved).
+   The page keeps its own surface but gains a dedicated org picker; the selected org
+   drives `GET /domains?org_id=…`. Default the selection sensibly (e.g. `currentOrgId`
+   from `hierarchy-store`, falling back to the user's first org). Gate action buttons
+   (edit nameservers, unlink/transfer) by the user's role in the selected org.
 3. Thread `org_id` into `domainsApi.list` / `checkout` / `link` (`lib/api-client.ts:1458-1521`).
    Org context is already available (`hierarchy-store.currentOrgId`, `[orgId]` param,
    `auth-store.user.organizations`; `mailboxApi.enable` already passes `orgId`).
 
 ---
 
-## Migration / backfill
+## Migration strategy
 
-Every existing customer with a domain is believed to have exactly one straightforward
-org. Backfill maps each domain's owner to that owner's org membership:
+**No automated backfill in this change.** Dev accounts belong to multiple orgs, and the
+production owner→org mapping is not mechanically derivable — it must be determined by hand
+against the real dataset. So the expand phase adds the column and leaves existing rows
+`NULL`; the dual-mode RLS/auth (org membership, else legacy `user_id`) keeps those rows
+fully usable in the meantime. New domains are always created org-scoped and non-NULL.
+
+The migration file therefore contains only the additive, safe steps:
 
 ```sql
--- 1. Add column
+-- Expand phase (this change): additive + nullable, NO backfill, NO NOT NULL
 ALTER TABLE public.domains
-  ADD COLUMN organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE;
-
--- 2. Backfill from the owner's org membership
-UPDATE public.domains d
-SET organization_id = om.organization_id
-FROM public.organization_members om
-WHERE om.user_id = d.user_id;
-
--- 3. After verifying every domain got exactly one org:
-ALTER TABLE public.domains ALTER COLUMN organization_id SET NOT NULL;
+  ADD COLUMN organization_id uuid REFERENCES public.organizations(id) ON DELETE SET NULL;
 CREATE INDEX idx_domains_organization_id ON public.domains(organization_id);
+-- + rewrite the 4 domains RLS policies to dual-mode (see DB change surface)
 ```
 
-This mirrors the zones backfill (`20251205000000_remove_environments.sql:12-19`), joining
-through membership instead of environments.
-
-### Pre-flight validation (READ-ONLY — run before writing the migration)
-Because `organization_members` PK is `(organization_id, user_id)`, a user *can* have
-multiple memberships; the naive backfill would multi-match and pick nondeterministically,
-and users with zero memberships would be left NULL and fail `SET NOT NULL`. Confirm the
-"one org per domain owner" invariant first:
-
-```sql
--- Expect ZERO rows. Any row = a domain owner needing a manual org mapping rule.
-SELECT user_id, count(*)
-FROM organization_members
-WHERE user_id IN (SELECT user_id FROM domains)
-GROUP BY user_id
-HAVING count(*) <> 1;
-```
-
-Fallback backfill source if some owners are ambiguous: the derived zone match
-(`zones.name = domains.domain_name → zones.organization_id`).
+### Deferred — later effort (production dataset)
+Tracked separately, NOT part of this change:
+1. **Data backfill** — comb through production and assign each existing domain to the
+   correct org (manual/curated; may draw on the derived `zones.name = domains.domain_name
+   → zones.organization_id` match as a starting hint, verified by a human).
+2. **`SET NOT NULL`** on `domains.organization_id` once every row is backfilled.
+3. **Remove the legacy `user_id` fallback** from RLS and the `getDomainForOrgMember`
+   helper (contract phase) — after which access is purely org-membership-based.
 
 ---
 
-## Open decisions / risks
+## Resolved decisions (2026-07-10)
 
-1. **Multi-org ambiguity** (data correctness). The clean `NOT NULL` backfill depends on
-   the pre-flight returning zero rows. Decide a disambiguation rule for any exceptions.
-2. **Create-time org selection** (API contract change). Registering/linking must now
-   specify which org owns the domain. The register/checkout/link endpoints and the
-   personal `/domains` UI must send an `org_id` (mirror mailbox-enable). This is the one
-   new bit of product design.
-3. **Personal `/domains` page UX.** It has no org concept today. Decide whether it keeps
-   existing (with an org selector) or folds into the per-org business view. This is the
-   biggest single unknown.
-4. **Role gating.** Decide which org roles may view vs. edit vs. unlink a domain (Viewer
-   read-only? Editor can change nameservers? Admin-only for transfer/unlink?).
-5. **`user_id` semantics.** Keep it as "registered by" (creator/audit) rather than
-   dropping it, so history and owner-email fallbacks still work.
-6. **Related tables.** Decide whether `ssl_certificates` / `domain_renewal_invoices` move
-   to org scope in the same change or later.
+1. **Backfill / multi-org ambiguity** — deferred. No automated backfill; column is nullable
+   with a legacy `user_id` fallback. Production backfill is a later, manual effort.
+2. **Create-time org selection** — register/checkout/link endpoints and the personal
+   `/domains` UI must send an `org_id` (mirror mailbox-enable); membership-checked server-side.
+3. **Personal `/domains` page UX** — keep the page, add a dedicated **org dropdown**; the
+   selected org drives the fetch and role-gates the action buttons.
+4. **Role gating** — view: any org member · edit nameservers/DNS/config:
+   `SuperAdmin/Admin/Editor` · unlink/transfer: `SuperAdmin/Admin`. (Mirrors zones.)
+5. **`user_id` semantics** — kept as "registered by" (creator/audit); also serves as the
+   transition-period access fallback for NULL-org rows.
+6. **Related tables** — `ssl_certificates`: **out of scope entirely** (deprecated, never
+   user-exposed). `domain_renewal_invoices`: not re-scoped, but renewal **billing** now
+   charges the org's default payment method (org = Stripe customer) resolved directly from
+   `domain.organization_id`, with the legacy `user_id`-derived path as fallback for NULL-org.
 
 ---
 
 ## Effort estimate
 
-Roughly **a few days for one engineer** end-to-end. The migration/backfill and the
-create-time org-selection contract dominate; the ~16 authorization rewrites are
-high-count but mechanical and low-risk given the existing zone/RBAC template.
+Roughly **a few days for one engineer** for the expand phase. The create-time
+org-selection contract and the dual-mode authorization rewrite dominate; the ~16
+authorization rewrites are high-count but mechanical given the existing zone/RBAC template.
+The deferred production backfill is separate and its cost depends on the dataset.
 
 ## Out of scope
-- Actually applying any migration or DB change (this doc is a plan only).
+- **Data backfill / `SET NOT NULL` / fallback removal** — deferred later effort against
+  the production dataset (see Migration strategy).
+- **`ssl_certificates`** — deprecated; not touched now or later.
 - Search indexing of domains (domains are not in universal search today).
 - Any change to the OpenSRS integration itself.
+
+## Execution order (this change)
+Execute on the local `domains/quality-of-life` branch + **dev** DB
+(`ipfsrbxjgewhdcvonrbo`) first — never prod. Prod ship + manual customer backfill happen
+afterward as a separate step.
