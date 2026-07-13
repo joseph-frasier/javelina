@@ -13,6 +13,7 @@ import { isDomainEditable } from '@/lib/utils/domain-edit';
 import Input from '@/components/ui/Input';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { canManageBilling } from '@/lib/permissions';
 import { useToastStore } from '@/lib/stores/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { EditWhoisModal } from '@/components/modals/EditWhoisModal';
@@ -485,6 +486,15 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  // Manage Billing opens the org's Stripe customer portal, so mirror the
+  // backend gate (DOMAIN_BILLING_ROLES): for an org-scoped domain require a
+  // billing role in that org; for a legacy (NULL-org) domain fall back to
+  // ownership, matching getDomainForOrgMember's dual-mode check.
+  const domainOrgRole = user?.organizations?.find((o) => o.id === domain.organization_id)?.role;
+  const canShowManageBilling = domain.organization_id
+    ? !!domainOrgRole && canManageBilling(domainOrgRole)
+    : domain.user_id === user?.id;
+
   const isEditable = isDomainEditable(domain.status);
   // Lock toggle reads as "on" only when confirmed locked and not mid-unlock.
   const lockOn = domainLocked && !isUnlocking;
@@ -550,14 +560,16 @@ export default function DomainDetailPage() {
               </span>
             </span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenBillingPortal}
-            disabled={openingBillingPortal}
-          >
-            {openingBillingPortal ? 'Opening…' : 'Manage Billing'}
-          </Button>
+          {canShowManageBilling && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenBillingPortal}
+              disabled={openingBillingPortal}
+            >
+              {openingBillingPortal ? 'Opening…' : 'Manage Billing'}
+            </Button>
+          )}
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
           {domain.registration_type === 'linked' ? 'Linked · ' : domain.registration_type === 'transfer' ? 'Transfer · ' : ''}
