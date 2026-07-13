@@ -495,12 +495,23 @@ export default function DomainDetailPage() {
     ? !!domainOrgRole && canManageBilling(domainOrgRole)
     : domain.user_id === user?.id;
 
+  // Role gating for management actions, mirroring the backend's dual-mode check
+  // (getDomainForOrgMember): org-scoped domains require the org role; legacy
+  // NULL-org domains fall back to ownership. Editing (nameservers, lock,
+  // auto-renew, WHOIS, zone creation) needs Editor+; unlink needs Admin.
+  const canEditDomain = domain.organization_id
+    ? ['SuperAdmin', 'Admin', 'Editor'].includes(domainOrgRole ?? '')
+    : domain.user_id === user?.id;
+  const canAdminDomain = domain.organization_id
+    ? ['SuperAdmin', 'Admin'].includes(domainOrgRole ?? '')
+    : domain.user_id === user?.id;
+
   const isEditable = isDomainEditable(domain.status);
   // Lock toggle reads as "on" only when confirmed locked and not mid-unlock.
   const lockOn = domainLocked && !isUnlocking;
   // Nameserver editing is gated on the live-confirmed lock status so a save
   // never fires into a still-locked domain.
-  const nsEditingDisabled = !isEditable || domainLocked;
+  const nsEditingDisabled = !isEditable || domainLocked || !canEditDomain;
 
   // Email setup doesn't require a DNS zone — users can wire MX/SPF/DKIM later.
   // Prefer the zone's org (if any) so it stays consistent with where the
@@ -593,6 +604,11 @@ export default function DomainDetailPage() {
             {/* Domain Settings */}
             <div>
               <h3 className="text-base font-semibold text-text mb-4">Domain Settings</h3>
+              {!canEditDomain && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  You have view-only access to this domain. Contact an organization admin to make changes.
+                </p>
+              )}
               <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -611,12 +627,12 @@ export default function DomainDetailPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleAutoRenew}
-                disabled={isTogglingAutoRenew || !isEditable}
-                aria-disabled={isTogglingAutoRenew || !isEditable}
-                title={!isEditable ? 'Locked until the domain is active' : undefined}
+                disabled={isTogglingAutoRenew || !isEditable || !canEditDomain}
+                aria-disabled={isTogglingAutoRenew || !isEditable || !canEditDomain}
+                title={!canEditDomain ? 'Requires Editor role or higher' : !isEditable ? 'Locked until the domain is active' : undefined}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                   autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${(isTogglingAutoRenew || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isTogglingAutoRenew || !isEditable || !canEditDomain) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   autoRenew ? 'translate-x-6' : 'translate-x-1'
@@ -645,12 +661,12 @@ export default function DomainDetailPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleLock}
-                disabled={isTogglingLock || isUnlocking || !isEditable}
-                aria-disabled={isTogglingLock || isUnlocking || !isEditable}
-                title={!isEditable ? 'Locked until the domain is active' : undefined}
+                disabled={isTogglingLock || isUnlocking || !isEditable || !canEditDomain}
+                aria-disabled={isTogglingLock || isUnlocking || !isEditable || !canEditDomain}
+                title={!canEditDomain ? 'Requires Editor role or higher' : !isEditable ? 'Locked until the domain is active' : undefined}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                   lockOn ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${(isTogglingLock || isUnlocking || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isTogglingLock || isUnlocking || !isEditable || !canEditDomain) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   lockOn ? 'translate-x-6' : 'translate-x-1'
@@ -809,21 +825,23 @@ export default function DomainDetailPage() {
               </div>
             )}
 
-            <div>
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                disabled={isRenewing}
-                onClick={handleRenew}
-              >
-                {isRenewing
-                  ? 'Redirecting to checkout...'
-                  : renewalTotalPrice
-                  ? `Renew for $${renewalTotalPrice}`
-                  : 'Renew Domain'}
-              </Button>
-            </div>
+            {canEditDomain && (
+              <div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  disabled={isRenewing}
+                  onClick={handleRenew}
+                >
+                  {isRenewing
+                    ? 'Redirecting to checkout...'
+                    : renewalTotalPrice
+                    ? `Renew for $${renewalTotalPrice}`
+                    : 'Renew Domain'}
+                </Button>
+              </div>
+            )}
           </div>
               </div>
             )}
@@ -937,9 +955,11 @@ export default function DomainDetailPage() {
       <Card
         title="WHOIS Contact Information"
         action={
-          <Button variant="secondary" size="sm" disabled={!isEditable} onClick={() => setIsWhoisModalOpen(true)}>
-            Edit
-          </Button>
+          canEditDomain ? (
+            <Button variant="secondary" size="sm" disabled={!isEditable} onClick={() => setIsWhoisModalOpen(true)}>
+              Edit
+            </Button>
+          ) : undefined
         }
       >
         <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
@@ -987,7 +1007,11 @@ export default function DomainDetailPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               No DNS zone exists for this domain yet. Create one to manage DNS records in Javelina.
             </p>
-            {userOrgs.length > 0 ? (
+            {!canEditDomain ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                You have view-only access to this domain. Contact an organization admin to set up DNS.
+              </p>
+            ) : userOrgs.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
                   Select an organization
@@ -1024,8 +1048,8 @@ export default function DomainDetailPage() {
       {/* SSL Certificates */}
       {!hideSslCertificates && <DomainCertificatesSection domainName={domain.domain_name} />}
 
-      {/* Remove from Javelina (linked domains only) */}
-      {domain.registration_type === 'linked' && (
+      {/* Remove from Javelina (linked domains only; Admin-gated) */}
+      {domain.registration_type === 'linked' && canAdminDomain && (
         <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-6">
           <h3 className="text-base font-semibold text-red-700 dark:text-red-400">
             Remove Domain
