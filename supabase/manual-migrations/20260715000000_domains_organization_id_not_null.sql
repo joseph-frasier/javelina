@@ -1,12 +1,23 @@
 -- 20260715000000_domains_organization_id_not_null.sql
 -- Contract phase of user->org scoping for domains, completing 20260710000000.
 --
--- DO NOT APPLY until every domains row has been backfilled with an organization_id.
--- Step 1 below is a hard stop that aborts the migration if any NULL remains, so
--- running this early fails loudly instead of silently dropping rows.
+-- MANUAL, DEFERRED. Deliberately lives in manual-migrations/, not migrations/, so it
+-- is not picked up by `supabase db push`. It cannot run until every domains row has
+-- an organization_id, and that backfill is a business decision (which org owns which
+-- domain), not something a migration can infer. Move it into migrations/ only if the
+-- backfill is ever automated ahead of it.
+--
+-- Attempting to apply it on 2026-07-15 correctly aborted: 32 rows on dev still had a
+-- NULL organization_id. That is the guard in step 1 working, not a bug.
 --
 -- Pre-flight check (run this first, expect 0):
 --   select count(*) from public.domains where organization_id is null;
+--
+-- To see which rows still need an org:
+--   select id, domain_name, user_id, created_at
+--   from public.domains
+--   where organization_id is null
+--   order by created_at;
 
 -- 1. Refuse to proceed if any domain is still orgless. Post-003ea37 such rows are
 --    invisible to every org list, so they must be assigned, not left behind.

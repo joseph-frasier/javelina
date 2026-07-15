@@ -4,6 +4,46 @@ This folder contains utility migration scripts that should be run **manually** a
 
 ## Scripts
 
+### Domains org NOT NULL (`20260715000000_domains_organization_id_not_null.sql`)
+
+**Deferred — do not apply until domains are backfilled.**
+
+Completes the user→org scoping of domains started by
+`supabase/migrations/20260710000000_domains_add_organization_id.sql`, which added
+`organization_id` as a nullable column with no backfill.
+
+**Purpose:**
+- Sets `domains.organization_id NOT NULL`
+- Changes the FK from `ON DELETE SET NULL` to `ON DELETE RESTRICT`
+- Drops the now-unreachable legacy NULL-org branches from the three domains RLS policies
+
+**Why it is not in `migrations/`:** it fails by design while any domain has a NULL
+`organization_id`, and deciding which org each existing domain belongs to is a business
+call, not something a migration can infer. Applying it on 2026-07-15 correctly aborted
+with 32 orgless rows on dev.
+
+**Before running:**
+```sql
+-- expect 0
+select count(*) from public.domains where organization_id is null;
+
+-- the rows needing an org
+select id, domain_name, user_id, created_at
+from public.domains
+where organization_id is null
+order by created_at;
+```
+
+**How to run** (after the backfill):
+```bash
+supabase db execute -f supabase/manual-migrations/20260715000000_domains_organization_id_not_null.sql
+```
+
+**⚠️ Note the `ON DELETE RESTRICT` change.** After this runs, an organization with
+domains attached cannot be deleted until those domains are reassigned or removed. That is
+intentional: the previous `ON DELETE SET NULL` silently made an org's domains invisible to
+everyone, because the domain list is scoped strictly by org.
+
 ### Pre-Migration Validation (`20260128000000_pre_migration_validation.sql`)
 
 Run this **before** applying the FK refactor migration to validate data integrity.
