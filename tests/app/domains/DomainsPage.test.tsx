@@ -27,11 +27,8 @@ vi.mock('@/lib/api-client', () => ({
   },
 }));
 
-// Mock auth/hierarchy stores so MyDomainsContent renders as an org admin
-// (matches a logged-in user with edit rights, consistent with pre-existing
-// expectations that the "Link domain" callout is visible), and so checkout
-// picks up the currently selected org (o2) per the mailbox/MyDomainsContent
-// pattern.
+// MyDomainsContent still reads these to scope the list it shows. The page itself
+// no longer derives a checkout org from them - that is the point of these tests.
 vi.mock('@/lib/stores/hierarchy-store', () => ({
   useHierarchyStore: () => ({ currentOrgId: 'o2' }),
 }));
@@ -66,35 +63,16 @@ vi.mock('@/components/domains/RegisterDomainsContent', () => ({
   ),
 }));
 
-// Mock DomainCheckoutForm so we can assert the org_id it forwards to the
-// checkout API call without exercising the full contact-info form.
+// Capture the props the page hands the checkout form, so we can assert the page
+// supplies no organization of its own. Org selection belongs to the form now -
+// see tests/components/domains/DomainCheckoutForm.test.tsx.
+const formProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }));
+
 vi.mock('@/components/domains/DomainCheckoutForm', () => ({
-  default: ({
-    domain,
-    registrationType,
-    orgId,
-  }: {
-    domain: string;
-    registrationType: string;
-    orgId: string;
-  }) => (
-    <div data-testid="domain-checkout-form">
-      DomainCheckoutForm
-      <button
-        type="button"
-        onClick={() =>
-          checkout({
-            domain,
-            registration_type: registrationType,
-            org_id: orgId,
-            contact_info: {},
-          })
-        }
-      >
-        Submit Checkout
-      </button>
-    </div>
-  ),
+  default: (props: Record<string, unknown>) => {
+    formProps.current = props;
+    return <div data-testid="domain-checkout-form">DomainCheckoutForm</div>;
+  },
 }));
 
 vi.mock('@/components/domains/DomainsList', () => ({
@@ -142,11 +120,11 @@ describe('DomainsPage', () => {
     expect(hrefs).not.toContain('/domains?tab=my-domains');
   });
 
-  it('renders the link domain callout', () => {
+  it('does not render the link domain callout (link is hidden for now)', () => {
     render(<DomainsPage />);
 
-    expect(screen.getByText(/Already purchased or transferred a domain/)).toBeInTheDocument();
-    expect(screen.getByText('Link domain')).toBeInTheDocument();
+    expect(screen.queryByText(/Already purchased or transferred a domain/)).toBeNull();
+    expect(screen.queryByText('Link domain')).toBeNull();
   });
 
   it('shows success banner when success param is present', () => {
@@ -163,12 +141,17 @@ describe('DomainsPage', () => {
     expect(screen.getByText(/Checkout was cancelled/)).toBeInTheDocument();
   });
 
-  it('includes org_id from the selected org when checking out a domain registration', () => {
+  // Regression guard: the page used to compute checkoutOrgId from the persisted
+  // currentOrgId (mocked here as 'o2') or orgs[0], and inject it silently. The org
+  // must be chosen explicitly in the form, so the page must supply none.
+  it('supplies no organization to the checkout form', () => {
     render(<DomainsPage />);
 
     fireEvent.click(screen.getByText('Trigger Register Checkout'));
-    fireEvent.click(screen.getByText('Submit Checkout'));
 
-    expect(checkout).toHaveBeenCalledWith(expect.objectContaining({ org_id: 'o2' }));
+    expect(screen.getByTestId('domain-checkout-form')).toBeInTheDocument();
+    expect(formProps.current).not.toBeNull();
+    expect(formProps.current).not.toHaveProperty('orgId');
+    expect(Object.values(formProps.current ?? {})).not.toContain('o2');
   });
 });

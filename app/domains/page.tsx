@@ -10,8 +10,6 @@ import CertificatesList from '@/components/certificates/CertificatesList';
 import { DomainCheckoutModal } from '@/components/modals/DomainCheckoutModal';
 import { useToastStore } from '@/lib/stores/toast-store';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
-import { useAuthStore } from '@/lib/stores/auth-store';
-import { useHierarchyStore } from '@/lib/stores/hierarchy-store';
 import type { DomainRegistrationType } from '@/types/domains';
 
 const TABS = [
@@ -29,14 +27,6 @@ export default function DomainsPage() {
 
   const { addToast } = useToastStore();
   const toastFiredRef = useRef(false);
-
-  const { user } = useAuthStore();
-  const { currentOrgId } = useHierarchyStore();
-  const orgs = user?.organizations ?? [];
-  const checkoutOrgId =
-    (currentOrgId && orgs.some((o) => o.id === currentOrgId) ? currentOrgId : undefined) ??
-    orgs[0]?.id ??
-    '';
 
   // Checkout modal
   const [checkoutModal, setCheckoutModal] = useState<{
@@ -64,10 +54,6 @@ export default function DomainsPage() {
     price: number,
     currency: string
   ) => {
-    if (!checkoutOrgId) {
-      addToast('error', 'Select or join an organization to register a domain');
-      return;
-    }
     setCheckoutModal({ domain, registrationType, price, currency });
     setIsCheckoutOpen(true);
   };
@@ -174,7 +160,6 @@ export default function DomainsPage() {
           registrationType={checkoutModal.registrationType}
           price={checkoutModal.price}
           currency={checkoutModal.currency}
-          orgId={checkoutOrgId}
           onSuccess={handleCheckoutSuccess}
         />
       )}

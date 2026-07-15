@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 const formatPhoneNumber = (value: string): string => {
   const digits = value.replace(/\D/g, '').slice(0, 10);
@@ -24,11 +25,14 @@ interface DomainCheckoutFormProps {
   registrationType: DomainRegistrationType;
   price: number;
   currency: string;
-  orgId: string;
   onCancel: () => void;
   onSuccess: () => void;
   asModal?: boolean;
 }
+
+// POST /api/domains/checkout is gated by requireOrgRole(["SuperAdmin","Admin","Editor"]),
+// so offering an org the user only views would 403 after the form is filled in.
+const CHECKOUT_ROLES = ['SuperAdmin', 'Admin', 'Editor'];
 
 import { US_STATES, COUNTRY_OPTIONS } from '@/lib/constants/domains';
 
@@ -40,11 +44,18 @@ export default function DomainCheckoutForm({
   registrationType,
   price,
   currency,
-  orgId,
   onCancel,
   onSuccess,
   asModal = false,
 }: DomainCheckoutFormProps) {
+  // Deliberately blank: the org must be chosen, never defaulted, so a domain
+  // can't be filed into the wrong org without the user ever seeing the choice.
+  const [orgId, setOrgId] = useState('');
+  const { user } = useAuthStore();
+  const eligibleOrgs = (user?.organizations ?? []).filter((o) =>
+    CHECKOUT_ROLES.includes(o.role)
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isYearModalOpen, setIsYearModalOpen] = useState(false);
   const [shouldRenderYearModal, setShouldRenderYearModal] = useState(false);
@@ -108,6 +119,12 @@ export default function DomainCheckoutForm({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!orgId) {
+      setError('Select the organization this domain will belong to.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -143,6 +160,31 @@ export default function DomainCheckoutForm({
 
   const formContent = (
     <>
+      {/* Organization — blank by default; the user must choose where this domain lands */}
+          <div className="mb-5">
+            {eligibleOrgs.length === 0 ? (
+              <p className="text-sm text-danger">
+                You don&apos;t have permission to register domains in any of your
+                organizations. Ask an admin for the SuperAdmin, Admin, or Editor role.
+              </p>
+            ) : (
+              <>
+                <Dropdown
+                  label="Organization *"
+                  value={orgId}
+                  onChange={setOrgId}
+                  options={[
+                    { value: '', label: 'Select an organization...' },
+                    ...eligibleOrgs.map((o) => ({ value: o.id, label: o.name })),
+                  ]}
+                />
+                <p className="mt-1.5 text-xs text-text-muted">
+                  This domain will belong to this organization.
+                </p>
+              </>
+            )}
+          </div>
+
       {/* Year & Price Row */}
           <div className="flex items-center justify-end gap-3 mb-5">
             {/* Desktop: native select */}
@@ -315,11 +357,12 @@ export default function DomainCheckoutForm({
             />
           </div>
 
-          {/* Organization - half width */}
+          {/* WHOIS contact company - half width. Named "Company", not "Organization",
+              to avoid colliding with the org selector above, which is a different thing. */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             <Input
-              label="Organization"
-              helperText="Optional"
+              label="Company"
+              helperText="Appears in public WHOIS records. Optional."
               value={contact.org_name || ''}
               onChange={(e) => updateContact('org_name', e.target.value)}
               maxLength={128}
