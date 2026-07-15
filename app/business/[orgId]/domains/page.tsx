@@ -12,7 +12,6 @@ import { EmptyCardState } from '@/components/business/ui/EmptyCardState';
 import { MOCK_DOMAINS } from '@/lib/business/page-mocks';
 import { useDashboardMode } from '@/lib/hooks/useDashboardMode';
 import { listUserDomains, type DomainRow } from '@/lib/api/domains';
-import { getBusiness } from '@/lib/api/business';
 
 interface DisplayDomain {
   name: string;
@@ -52,32 +51,16 @@ export default function BusinessDomainsPage() {
   const orgId = params?.orgId ?? '';
 
   const realQuery = useQuery({
-    queryKey: ['domains', 'user'],
-    queryFn: () => listUserDomains(),
+    queryKey: ['domains', 'org', orgId],
+    queryFn: () => listUserDomains(orgId),
     enabled: !!orgId && !isMock,
   });
 
-  // Shares cache with the layout's getBusiness(orgId) query.
-  const businessQuery = useQuery({
-    queryKey: ['business', orgId],
-    queryFn: () => getBusiness(orgId),
-    enabled: !!orgId && !isMock,
-  });
-
-  const intakeDomain: string | null =
-    businessQuery.data?.kind === 'ok'
-      ? ((businessQuery.data.data.intake as Record<string, any> | null)?.domain?.domain ?? null)
-      : null;
-  const normalizedIntake = (intakeDomain || '').trim().toLowerCase();
-
-  const allUserDomains = realQuery.data ?? [];
-  const matchedDomains = normalizedIntake
-    ? allUserDomains.filter((d) => d.domain_name.trim().toLowerCase() === normalizedIntake)
-    : [];
+  const allOrgDomains = realQuery.data ?? [];
 
   const domains: DisplayDomain[] = isMock
     ? MOCK_DOMAINS.map(fromMock)
-    : matchedDomains.map((d, i) => fromDomainRow(d, i === 0));
+    : allOrgDomains.map((d, i) => fromDomainRow(d, i === 0));
 
   const primary = domains.find((d) => d.primary) ?? domains[0];
 

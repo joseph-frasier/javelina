@@ -13,6 +13,7 @@ import { isDomainEditable } from '@/lib/utils/domain-edit';
 import Input from '@/components/ui/Input';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { canManageBilling } from '@/lib/permissions';
 import { useToastStore } from '@/lib/stores/toast-store';
 import { AddZoneModal } from '@/components/modals/AddZoneModal';
 import { EditWhoisModal } from '@/components/modals/EditWhoisModal';
@@ -40,6 +41,15 @@ function extractErrorMessage(err: any, fallback: string): string {
     return 'The domain is currently locked. Disable the Domain Lock above and wait a few minutes for the change to propagate, then try again.';
   }
   return msg;
+}
+
+function Spinner() {
+  return (
+    <svg className="animate-spin h-3.5 w-3.5 text-current" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
 }
 
 function NsCopyButton({ ns, index }: { ns: string; index: number }) {
@@ -127,6 +137,15 @@ export default function DomainDetailPage() {
   // Nameservers state
   const [nameservers, setNameservers] = useState<string[]>(['', '']);
   const [isSavingNs, setIsSavingNs] = useState(false);
+  // Nameserver changes awaiting registrar confirmation (null = none pending)
+  const [pendingNameservers, setPendingNameservers] = useState<string[] | null>(null);
+  const [nsPendingTimedOut, setNsPendingTimedOut] = useState(false);
+
+  // Lock/unlock confirmation state
+  const [unlockConfirmOpen, setUnlockConfirmOpen] = useState(false);
+  // True while polling OpenSRS to confirm an unlock has taken effect
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [unlockTimedOut, setUnlockTimedOut] = useState(false);
 
   // Contact state
   const [contact, setContact] = useState<DomainContact>({
@@ -268,6 +287,58 @@ export default function DomainDetailPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Poll OpenSRS to confirm an unlock has taken effect. Editing stays gated on
+  // domainLocked, so it only re-enables once the registrar reports unlocked.
+  // Gives up after ~3 min (editing stays disabled — retry by toggling again).
+  useEffect(() => {
+    if (!isUnlocking) return;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 18; // 18 x 10s ≈ 3 minutes
+    const timer = setInterval(async () => {
+      attempts += 1;
+      try {
+        const fresh = await domainsApi.getManagement(domainId);
+        if (fresh.live?.locked === false) {
+          setDomainLocked(false);
+          setIsUnlocking(false);
+          const ns = fresh.live?.nameservers;
+          if (ns && ns.length) setNameservers(ns.length >= 2 ? ns : [...ns, ...Array(2 - ns.length).fill('')]);
+          addToast('success', 'Domain unlocked — you can now edit nameservers.');
+          return;
+        }
+      } catch { /* transient; keep polling */ }
+      if (attempts >= MAX_ATTEMPTS) {
+        setIsUnlocking(false);
+        setUnlockTimedOut(true);
+        addToast('warning', 'Unlocking is taking longer than expected. Try toggling the lock again in a few minutes.');
+      }
+    }, 10_000);
+    return () => clearInterval(timer);
+  }, [isUnlocking, domainId, addToast]);
+
+  // Poll OpenSRS to confirm a nameserver change is in effect, then clear the
+  // pending badge. Stops (badge stays) after ~3 min.
+  useEffect(() => {
+    if (!pendingNameservers || nsPendingTimedOut) return;
+    const want = [...pendingNameservers.map((n) => n.trim().toLowerCase())].sort();
+    let attempts = 0;
+    const MAX_ATTEMPTS = 18; // 18 x 10s ≈ 3 minutes
+    const timer = setInterval(async () => {
+      attempts += 1;
+      try {
+        const fresh = await domainsApi.getManagement(domainId);
+        const live = [...(fresh.live?.nameservers ?? []).map((n) => n.trim().toLowerCase())].sort();
+        if (live.length === want.length && live.every((v, i) => v === want[i])) {
+          setPendingNameservers(null);
+          addToast('success', 'Nameserver changes are now in effect.');
+          return;
+        }
+      } catch { /* transient; keep polling */ }
+      if (attempts >= MAX_ATTEMPTS) setNsPendingTimedOut(true);
+    }, 10_000);
+    return () => clearInterval(timer);
+  }, [pendingNameservers, nsPendingTimedOut, domainId, addToast]);
+
   useEffect(() => {
     if (!data?.domain) return;
     const domain = data.domain;
@@ -291,18 +362,39 @@ export default function DomainDetailPage() {
     }
   };
 
-  const handleToggleLock = async () => {
+  // Locking is instant/safe; unlocking takes a few minutes to propagate at the
+  // registrar, so we confirm the intent (modal) then poll for it to take effect.
+  const applyLock = async (locked: boolean) => {
     setIsTogglingLock(true);
     try {
-      const newVal = !domainLocked;
-      await domainsApi.setLock(domainId, newVal);
-      setDomainLocked(newVal);
-      addToast('success', `Domain ${newVal ? 'locked' : 'unlocked'}.`);
+      await domainsApi.setLock(domainId, locked);
+      if (locked) {
+        setDomainLocked(true);
+        addToast('success', 'Domain locked.');
+      } else {
+        // Keep domainLocked true (editing stays disabled) until OpenSRS confirms.
+        setUnlockTimedOut(false);
+        setIsUnlocking(true);
+        addToast('success', 'Unlock requested — confirming with the registrar…');
+      }
     } catch (err: any) {
       addToast('error', extractErrorMessage(err, 'Failed to update domain lock'));
     } finally {
       setIsTogglingLock(false);
     }
+  };
+
+  const handleToggleLock = () => {
+    if (domainLocked) {
+      setUnlockConfirmOpen(true); // confirm before unlocking
+    } else {
+      applyLock(true);
+    }
+  };
+
+  const handleConfirmUnlock = () => {
+    setUnlockConfirmOpen(false);
+    applyLock(false);
   };
 
   const handleSaveNameservers = async (e: FormEvent) => {
@@ -313,7 +405,10 @@ export default function DomainDetailPage() {
     setIsSavingNs(true);
     try {
       await domainsApi.updateNameservers(domainId, filtered);
-      addToast('success', 'Nameservers updated successfully.');
+      addToast('success', 'Nameserver update requested — confirming with the registrar…');
+      // Track the desired set and poll until the registrar reports it in effect.
+      setNsPendingTimedOut(false);
+      setPendingNameservers(filtered);
     } catch (err: any) {
       addToast('error', extractErrorMessage(err, 'Failed to update nameservers'));
     } finally {
@@ -391,7 +486,32 @@ export default function DomainDetailPage() {
 
   const { domain, zone } = data;
 
+  // Manage Billing opens the org's Stripe customer portal, so mirror the
+  // backend gate (DOMAIN_BILLING_ROLES): for an org-scoped domain require a
+  // billing role in that org; for a legacy (NULL-org) domain fall back to
+  // ownership, matching getDomainForOrgMember's dual-mode check.
+  const domainOrgRole = user?.organizations?.find((o) => o.id === domain.organization_id)?.role;
+  const canShowManageBilling = domain.organization_id
+    ? !!domainOrgRole && canManageBilling(domainOrgRole)
+    : domain.user_id === user?.id;
+
+  // Role gating for management actions, mirroring the backend's dual-mode check
+  // (getDomainForOrgMember): org-scoped domains require the org role; legacy
+  // NULL-org domains fall back to ownership. Editing (nameservers, lock,
+  // auto-renew, WHOIS, zone creation) needs Editor+; unlink needs Admin.
+  const canEditDomain = domain.organization_id
+    ? ['SuperAdmin', 'Admin', 'Editor'].includes(domainOrgRole ?? '')
+    : domain.user_id === user?.id;
+  const canAdminDomain = domain.organization_id
+    ? ['SuperAdmin', 'Admin'].includes(domainOrgRole ?? '')
+    : domain.user_id === user?.id;
+
   const isEditable = isDomainEditable(domain.status);
+  // Lock toggle reads as "on" only when confirmed locked and not mid-unlock.
+  const lockOn = domainLocked && !isUnlocking;
+  // Nameserver editing is gated on the live-confirmed lock status so a save
+  // never fires into a still-locked domain.
+  const nsEditingDisabled = !isEditable || domainLocked || !canEditDomain;
 
   // Email setup doesn't require a DNS zone — users can wire MX/SPF/DKIM later.
   // Prefer the zone's org (if any) so it stays consistent with where the
@@ -451,14 +571,16 @@ export default function DomainDetailPage() {
               </span>
             </span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenBillingPortal}
-            disabled={openingBillingPortal}
-          >
-            {openingBillingPortal ? 'Opening…' : 'Manage Billing'}
-          </Button>
+          {canShowManageBilling && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenBillingPortal}
+              disabled={openingBillingPortal}
+            >
+              {openingBillingPortal ? 'Opening…' : 'Manage Billing'}
+            </Button>
+          )}
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
           {domain.registration_type === 'linked' ? 'Linked · ' : domain.registration_type === 'transfer' ? 'Transfer · ' : ''}
@@ -482,6 +604,11 @@ export default function DomainDetailPage() {
             {/* Domain Settings */}
             <div>
               <h3 className="text-base font-semibold text-text mb-4">Domain Settings</h3>
+              {!canEditDomain && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  You have view-only access to this domain. Contact an organization admin to make changes.
+                </p>
+              )}
               <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -500,12 +627,12 @@ export default function DomainDetailPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleAutoRenew}
-                disabled={isTogglingAutoRenew || !isEditable}
-                aria-disabled={isTogglingAutoRenew || !isEditable}
-                title={!isEditable ? 'Locked until the domain is active' : undefined}
+                disabled={isTogglingAutoRenew || !isEditable || !canEditDomain}
+                aria-disabled={isTogglingAutoRenew || !isEditable || !canEditDomain}
+                title={!canEditDomain ? 'Requires Editor role or higher' : !isEditable ? 'Locked until the domain is active' : undefined}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                   autoRenew ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${(isTogglingAutoRenew || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isTogglingAutoRenew || !isEditable || !canEditDomain) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   autoRenew ? 'translate-x-6' : 'translate-x-1'
@@ -527,27 +654,33 @@ export default function DomainDetailPage() {
               <div>
                 <p className="text-sm font-medium text-text">Domain Lock</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Prevent unauthorized transfers of this domain.
+                  Prevent transfers of and nameserver changes to this domain.
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleToggleLock}
-                disabled={isTogglingLock || !isEditable}
-                aria-disabled={isTogglingLock || !isEditable}
-                title={!isEditable ? 'Locked until the domain is active' : undefined}
+                disabled={isTogglingLock || isUnlocking || !isEditable || !canEditDomain}
+                aria-disabled={isTogglingLock || isUnlocking || !isEditable || !canEditDomain}
+                title={!canEditDomain ? 'Requires Editor role or higher' : !isEditable ? 'Locked until the domain is active' : undefined}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                  domainLocked ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
-                } ${(isTogglingLock || !isEditable) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  lockOn ? 'bg-orange' : 'bg-gray-300 dark:bg-gray-600'
+                } ${(isTogglingLock || isUnlocking || !isEditable || !canEditDomain) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  domainLocked ? 'translate-x-6' : 'translate-x-1'
+                  lockOn ? 'translate-x-6' : 'translate-x-1'
                 }`} />
               </button>
-              <span className={`text-xs font-medium w-14 ${domainLocked ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`}>
-                {domainLocked ? 'Enabled' : 'Disabled'}
-              </span>
+              {isUnlocking ? (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 w-14">
+                  <Spinner /> Unlocking
+                </span>
+              ) : (
+                <span className={`text-xs font-medium w-14 ${lockOn ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`}>
+                  {lockOn ? 'Enabled' : 'Disabled'}
+                </span>
+              )}
             </div>
           </div>
 
@@ -692,21 +825,23 @@ export default function DomainDetailPage() {
               </div>
             )}
 
-            <div>
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                disabled={isRenewing}
-                onClick={handleRenew}
-              >
-                {isRenewing
-                  ? 'Redirecting to checkout...'
-                  : renewalTotalPrice
-                  ? `Renew for $${renewalTotalPrice}`
-                  : 'Renew Domain'}
-              </Button>
-            </div>
+            {canEditDomain && (
+              <div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  disabled={isRenewing}
+                  onClick={handleRenew}
+                >
+                  {isRenewing
+                    ? 'Redirecting to checkout...'
+                    : renewalTotalPrice
+                    ? `Renew for $${renewalTotalPrice}`
+                    : 'Renew Domain'}
+                </Button>
+              </div>
+            )}
           </div>
               </div>
             )}
@@ -714,7 +849,14 @@ export default function DomainDetailPage() {
 
           {/* Right column: Nameservers */}
           <div className="p-6">
-            <h3 className="text-base font-semibold text-text mb-4">Nameservers</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-base font-semibold text-text">Nameservers</h3>
+              {pendingNameservers && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 rounded-full bg-gray-100 dark:bg-white/5 px-2 py-0.5">
+                  {!nsPendingTimedOut && <Spinner />} Pending
+                </span>
+              )}
+            </div>
         <div className="p-3 mb-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
             Using Javelina for DNS?
@@ -739,14 +881,14 @@ export default function DomainDetailPage() {
                   value={ns}
                   onChange={(e) => updateNameserver(i, e.target.value)}
                   className="font-mono"
-                  disabled={!isEditable}
+                  disabled={nsEditingDisabled}
                 />
               </div>
               {nameservers.length > 2 && (
                 <button
                   type="button"
                   onClick={() => removeNameserverField(i)}
-                  disabled={!isEditable}
+                  disabled={nsEditingDisabled}
                   className="px-2 py-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Remove"
                 >
@@ -762,15 +904,30 @@ export default function DomainDetailPage() {
             <button
               type="button"
               onClick={addNameserverField}
-              disabled={!isEditable}
-              className={`text-sm transition-colors ${!isEditable ? 'text-gray-400 cursor-not-allowed' : 'text-orange hover:text-[#d46410]'}`}
+              disabled={nsEditingDisabled}
+              className={`text-sm transition-colors ${nsEditingDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-orange hover:text-[#d46410]'}`}
             >
               + Add nameserver
             </button>
-            <Button type="submit" variant="primary" size="sm" disabled={isSavingNs || !isEditable}>
+            <Button type="submit" variant="primary" size="sm" disabled={isSavingNs || nsEditingDisabled}>
               {isSavingNs ? 'Saving...' : 'Save nameservers'}
             </Button>
           </div>
+
+          {/* Status line: explains why editing is disabled or what's pending */}
+          {isEditable && (isUnlocking || domainLocked || pendingNameservers) && (
+            <p className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 pt-1">
+              {isUnlocking ? (
+                <><Spinner /> Unlocking… you can edit nameservers once the registrar confirms (usually a few minutes).</>
+              ) : domainLocked ? (
+                <>Unlock the domain to make changes.{unlockTimedOut ? ' Unlocking is still confirming — you can toggle the lock again to retry.' : ''}</>
+              ) : nsPendingTimedOut ? (
+                <>Nameserver changes are taking longer than expected to confirm at the registrar.</>
+              ) : (
+                <><Spinner /> Confirming your nameserver changes with the registrar…</>
+              )}
+            </p>
+          )}
 
         </form>
           </div>{/* end right column */}
@@ -798,9 +955,11 @@ export default function DomainDetailPage() {
       <Card
         title="WHOIS Contact Information"
         action={
-          <Button variant="secondary" size="sm" disabled={!isEditable} onClick={() => setIsWhoisModalOpen(true)}>
-            Edit
-          </Button>
+          canEditDomain ? (
+            <Button variant="secondary" size="sm" disabled={!isEditable} onClick={() => setIsWhoisModalOpen(true)}>
+              Edit
+            </Button>
+          ) : undefined
         }
       >
         <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
@@ -848,7 +1007,11 @@ export default function DomainDetailPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               No DNS zone exists for this domain yet. Create one to manage DNS records in Javelina.
             </p>
-            {userOrgs.length > 0 ? (
+            {!canEditDomain ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                You have view-only access to this domain. Contact an organization admin to set up DNS.
+              </p>
+            ) : userOrgs.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
                   Select an organization
@@ -885,8 +1048,8 @@ export default function DomainDetailPage() {
       {/* SSL Certificates */}
       {!hideSslCertificates && <DomainCertificatesSection domainName={domain.domain_name} />}
 
-      {/* Remove from Javelina (linked domains only) */}
-      {domain.registration_type === 'linked' && (
+      {/* Remove from Javelina (linked domains only; Admin-gated) */}
+      {domain.registration_type === 'linked' && canAdminDomain && (
         <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-6">
           <h3 className="text-base font-semibold text-red-700 dark:text-red-400">
             Remove Domain
@@ -917,6 +1080,19 @@ export default function DomainDetailPage() {
           />
         </div>
       )}
+
+      {/* Unlock confirmation — unlocking propagates slowly at the registrar */}
+      <ConfirmationModal
+        isOpen={unlockConfirmOpen}
+        onClose={() => setUnlockConfirmOpen(false)}
+        onConfirm={handleConfirmUnlock}
+        title="Unlock this domain?"
+        message="Unlocking takes a few minutes to take effect at the registrar. Nameserver and transfer changes will fail until it completes — the page will let you know when editing is ready."
+        confirmText="Unlock domain"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={isTogglingLock}
+      />
 
       {/* WHOIS Edit Modal */}
       <EditWhoisModal

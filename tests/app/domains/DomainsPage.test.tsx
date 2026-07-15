@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import DomainsPage from '@/app/domains/page';
 
 // Mock next/navigation
@@ -14,6 +14,8 @@ vi.mock('@/components/auth/ProtectedRoute', () => ({
   ProtectedRoute: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+const { checkout } = vi.hoisted(() => ({ checkout: vi.fn().mockResolvedValue({}) }));
+
 // Mock API client
 vi.mock('@/lib/api-client', () => ({
   domainsApi: {
@@ -21,7 +23,25 @@ vi.mock('@/lib/api-client', () => ({
     checkTransfer: vi.fn().mockResolvedValue({ transferable: false }),
     list: vi.fn().mockResolvedValue({ domains: [] }),
     link: vi.fn().mockResolvedValue({}),
+    checkout,
   },
+}));
+
+// MyDomainsContent still reads these to scope the list it shows. The page itself
+// no longer derives a checkout org from them - that is the point of these tests.
+vi.mock('@/lib/stores/hierarchy-store', () => ({
+  useHierarchyStore: () => ({ currentOrgId: 'o2' }),
+}));
+
+vi.mock('@/lib/stores/auth-store', () => ({
+  useAuthStore: () => ({
+    user: {
+      organizations: [
+        { id: 'o1', name: 'Acme', role: 'Viewer' },
+        { id: 'o2', name: 'Globex', role: 'Admin' },
+      ],
+    },
+  }),
 }));
 
 // Mock child components to simplify testing
@@ -33,8 +53,26 @@ vi.mock('@/components/domains/DomainSearchResults', () => ({
   default: () => <div data-testid="domain-search-results">DomainSearchResults</div>,
 }));
 
+// Mock RegisterDomainsContent with an interactive stand-in so we can trigger
+// the page's onCheckout callback directly (bypassing the real search flow).
+vi.mock('@/components/domains/RegisterDomainsContent', () => ({
+  default: ({ onCheckout }: { onCheckout: (domain: string, price: number, currency: string) => void }) => (
+    <button type="button" onClick={() => onCheckout('example.com', 12.99, 'USD')}>
+      Trigger Register Checkout
+    </button>
+  ),
+}));
+
+// Capture the props the page hands the checkout form, so we can assert the page
+// supplies no organization of its own. Org selection belongs to the form now -
+// see tests/components/domains/DomainCheckoutForm.test.tsx.
+const formProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }));
+
 vi.mock('@/components/domains/DomainCheckoutForm', () => ({
-  default: () => <div data-testid="domain-checkout-form">DomainCheckoutForm</div>,
+  default: (props: Record<string, unknown>) => {
+    formProps.current = props;
+    return <div data-testid="domain-checkout-form">DomainCheckoutForm</div>;
+  },
 }));
 
 vi.mock('@/components/domains/DomainsList', () => ({
@@ -53,6 +91,7 @@ function setSearchParams(params: Record<string, string>) {
 describe('DomainsPage', () => {
   beforeEach(() => {
     setSearchParams({});
+    checkout.mockClear();
   });
 
   it('renders all sections on a single page without tabs', () => {
@@ -81,11 +120,11 @@ describe('DomainsPage', () => {
     expect(hrefs).not.toContain('/domains?tab=my-domains');
   });
 
-  it('renders the link domain callout', () => {
+  it('does not render the link domain callout (link is hidden for now)', () => {
     render(<DomainsPage />);
 
-    expect(screen.getByText(/Already purchased or transferred a domain/)).toBeInTheDocument();
-    expect(screen.getByText('Link domain')).toBeInTheDocument();
+    expect(screen.queryByText(/Already purchased or transferred a domain/)).toBeNull();
+    expect(screen.queryByText('Link domain')).toBeNull();
   });
 
   it('shows success banner when success param is present', () => {
@@ -100,5 +139,19 @@ describe('DomainsPage', () => {
     render(<DomainsPage />);
 
     expect(screen.getByText(/Checkout was cancelled/)).toBeInTheDocument();
+  });
+
+  // Regression guard: the page used to compute checkoutOrgId from the persisted
+  // currentOrgId (mocked here as 'o2') or orgs[0], and inject it silently. The org
+  // must be chosen explicitly in the form, so the page must supply none.
+  it('supplies no organization to the checkout form', () => {
+    render(<DomainsPage />);
+
+    fireEvent.click(screen.getByText('Trigger Register Checkout'));
+
+    expect(screen.getByTestId('domain-checkout-form')).toBeInTheDocument();
+    expect(formProps.current).not.toBeNull();
+    expect(formProps.current).not.toHaveProperty('orgId');
+    expect(Object.values(formProps.current ?? {})).not.toContain('o2');
   });
 });

@@ -66,6 +66,7 @@ export interface DomainCheckoutParams {
   contact_info: DomainContact;
   registration_type?: DomainRegistrationType;
   auth_code?: string;
+  org_id: string;
 }
 
 export interface DomainCheckoutResponse {
@@ -94,6 +95,7 @@ export interface DomainTransferStatusResponse {
 export interface Domain {
   id: string;
   user_id: string;
+  organization_id: string | null;
   domain_name: string;
   tld: string;
   status: DomainStatus;

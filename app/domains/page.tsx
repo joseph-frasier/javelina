@@ -13,9 +13,9 @@ import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import type { DomainRegistrationType } from '@/types/domains';
 
 const TABS = [
+  { param: 'my-domains', href: '/domains?tab=my-domains', label: 'My Domains' },
   { param: 'register', href: '/domains', label: 'Register Domains' },
   { param: 'transfer', href: '/domains?tab=transfer', label: 'Transfer Domain' },
-  { param: 'my-domains', href: '/domains?tab=my-domains', label: 'My Domains' },
 ] as const;
 
 export default function DomainsPage() {
