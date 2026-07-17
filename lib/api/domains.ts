@@ -13,6 +13,7 @@ export interface DomainRow {
   auto_renew: boolean | null;
   is_primary: boolean | null;
   registrar: string | null;
+  organization_id: string | null;
 }
 
 async function authedFetch(path: string, init?: RequestInit): Promise<Response> {
@@ -26,12 +27,12 @@ async function authedFetch(path: string, init?: RequestInit): Promise<Response> 
   return fetch(`${API_BASE_URL}${path}`, { ...init, headers, cache: 'no-store' });
 }
 
-// Returns all domains owned by the authenticated user. The domains table
-// has no organization_id column, so callers wanting to scope to an org
-// must filter client-side using the org's intake-recorded domain.
-export async function listUserDomains(): Promise<DomainRow[]> {
+// Returns domains for the given org (and the caller's own legacy domains). With no
+// orgId, returns just the caller's own domains (legacy behavior).
+export async function listUserDomains(orgId?: string): Promise<DomainRow[]> {
   try {
-    const res = await authedFetch('/api/domains');
+    const path = orgId ? `/api/domains?org_id=${encodeURIComponent(orgId)}` : '/api/domains';
+    const res = await authedFetch(path);
     if (!res.ok) return [];
     const json = await res.json();
     const all: DomainRow[] = json?.data?.domains ?? json?.domains ?? [];

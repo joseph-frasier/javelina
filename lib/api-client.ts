@@ -1474,8 +1474,8 @@ export const domainsApi = {
   getTransferStatus: (id: string): Promise<DomainTransferStatusResponse> =>
     apiClient.get(`/domains/transfer/${id}/status`),
 
-  list: (): Promise<DomainsListResponse> =>
-    apiClient.get("/domains"),
+  list: (orgId?: string): Promise<DomainsListResponse> =>
+    apiClient.get(orgId ? `/domains?org_id=${encodeURIComponent(orgId)}` : "/domains"),
 
   getById: (id: string): Promise<DomainDetailResponse> =>
     apiClient.get(`/domains/${id}`),
@@ -1483,8 +1483,8 @@ export const domainsApi = {
   createBillingPortal: (id: string): Promise<{ url: string }> =>
     apiClient.post(`/domains/${id}/billing-portal`, {}),
 
-  link: (domain: string): Promise<DomainDetailResponse> =>
-    apiClient.post("/domains/link", { domain }),
+  link: (domain: string, orgId: string): Promise<DomainDetailResponse> =>
+    apiClient.post("/domains/link", { domain, org_id: orgId }),
 
   getManagement: (id: string): Promise<DomainManagementResponse> =>
     apiClient.get(`/domains/${id}/manage`),
