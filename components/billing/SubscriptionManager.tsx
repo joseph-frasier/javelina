@@ -97,8 +97,11 @@ export function SubscriptionManager({
     ? statusColors[subscription.subscription.status] || 'bg-gray-100 text-gray-800'
     : 'bg-gray-100 text-gray-800';
 
-  // Check if this is a subscription plan (not lifetime)
+  // Distinguish an active subscription plan, a lifetime plan, and no plan at all.
+  const hasPlan = Boolean(subscription?.plan);
   const isSubscriptionPlan = subscription?.plan?.billing_interval === 'month';
+  const isLifetimePlan = hasPlan && subscription?.plan?.billing_interval !== 'month';
+  const hasNoPlan = !hasPlan;
   const currentPlanCode = subscription?.plan?.code || '';
 
   const handleChangePlan = () => {
@@ -120,7 +123,8 @@ export function SubscriptionManager({
               {subscription?.plan?.name || 'Current Plan'}
             </h3>
             <p className="text-sm text-text-muted mt-1">
-              {subscription?.plan?.metadata?.description || 'Loading plan details...'}
+              {subscription?.plan?.metadata?.description ||
+                (hasNoPlan ? 'No active subscription' : 'Loading plan details...')}
             </p>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
@@ -211,7 +215,7 @@ export function SubscriptionManager({
           )}
           
           {/* Lifetime plan actions - only for lifetime plans */}
-          {!isSubscriptionPlan && (
+          {isLifetimePlan && (
             <>
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4 w-fit">
                 <p className="text-sm text-blue-900">
@@ -241,6 +245,34 @@ export function SubscriptionManager({
                       strokeWidth={2}
                       d="M15 19l-7-7 7-7"
                     />
+                  </svg>
+                  <span>Back to Organization</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* No active plan - offer a re-subscribe path */}
+          {hasNoPlan && (
+            <>
+              <div className="bg-gray-50 border border-border rounded-md p-4 w-fit">
+                <p className="text-sm text-text-muted">
+                  This organization has no active plan.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleChangePlan}
+                  className="px-4 py-2 bg-accent text-white rounded-md font-medium hover:bg-accent-hover transition-colors"
+                >
+                  Choose a Plan
+                </button>
+                <button
+                  onClick={() => router.push(`/organization/${orgId}`)}
+                  className="ml-auto px-4 py-2 bg-surface text-accent border border-accent rounded-md font-medium hover:bg-accent-light transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   <span>Back to Organization</span>
                 </button>

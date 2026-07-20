@@ -514,9 +514,10 @@ export default function DomainDetailPage() {
   const nsEditingDisabled = !isEditable || domainLocked || !canEditDomain;
 
   // Email setup doesn't require a DNS zone — users can wire MX/SPF/DKIM later.
-  // Prefer the zone's org (if any) so it stays consistent with where the
-  // domain already lives; otherwise fall back to the user's first org.
-  const mailboxOrgId = zone?.organization_id ?? user?.organizations?.[0]?.id;
+  // The mailbox MUST bill the org that owns this domain. Never fall back to the
+  // user's first org: that billed a different org's Stripe customer (the
+  // mailbox-billed-to-wrong-org bug). If the domain has no org, gate the UI.
+  const mailboxOrgId = domain.organization_id ?? zone?.organization_id ?? null;
 
   const daysRemaining = domain.expires_at
     ? Math.ceil((new Date(domain.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
