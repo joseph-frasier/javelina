@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Tooltip, InfoIcon } from '@/components/ui/Tooltip';
@@ -20,6 +20,7 @@ import { ConfirmDisableOrganizationModal } from '@/components/modals/ConfirmDisa
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
+import { pricingStatusBadge } from './pricingBadge';
 
 interface Organization {
   id: string;
@@ -41,9 +42,11 @@ interface Organization {
   zone_count?: number;
   record_count?: number;
   organization_members?: Array<{ organization_id: string }>;
+  has_custom_pricing?: boolean;
 }
 
 function AdminOrganizationsPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -268,6 +271,17 @@ function AdminOrganizationsPageContent() {
         },
       },
       {
+        label: 'Custom pricing',
+        icon: (
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m0-12a9 9 0 100 18 9 9 0 000-18z" />
+          </svg>
+        ),
+        onClick: () => {
+          router.push(`/admin/organizations/${org.id}`);
+        },
+      },
+      {
         label: isDisabled ? 'Enable Organization' : 'Disable Organization',
         icon: isDisabled ? (
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,11 +371,18 @@ function AdminOrganizationsPageContent() {
         ),
         align: 'center',
         sortable: false,
-        render: (o) => {
-          if (o.deleted_at) return <AdminStatusBadge variant="neutral" label="Deleted" />;
-          if (o.is_active === false) return <AdminStatusBadge variant="danger" label="Disabled" />;
-          return <AdminStatusBadge variant="success" label="Active" />;
-        },
+        render: (o) => (
+          <span className="inline-flex items-center justify-center gap-1.5 flex-wrap">
+            {o.deleted_at ? (
+              <AdminStatusBadge variant="neutral" label="Deleted" />
+            ) : o.is_active === false ? (
+              <AdminStatusBadge variant="danger" label="Disabled" />
+            ) : (
+              <AdminStatusBadge variant="success" label="Active" />
+            )}
+            {pricingStatusBadge(o)}
+          </span>
+        ),
       },
       {
         key: 'created_at',
@@ -531,13 +552,16 @@ function AdminOrganizationsPageContent() {
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-text-muted">Status:</span>
-                          {isDeleted ? (
-                            <AdminStatusBadge variant="neutral" label="Deleted" />
-                          ) : isDisabled ? (
-                            <AdminStatusBadge variant="danger" label="Disabled" />
-                          ) : (
-                            <AdminStatusBadge variant="success" label="Active" />
-                          )}
+                          <span className="inline-flex items-center gap-1.5 flex-wrap justify-end">
+                            {isDeleted ? (
+                              <AdminStatusBadge variant="neutral" label="Deleted" />
+                            ) : isDisabled ? (
+                              <AdminStatusBadge variant="danger" label="Disabled" />
+                            ) : (
+                              <AdminStatusBadge variant="success" label="Active" />
+                            )}
+                            {pricingStatusBadge(org)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-text-muted">Created:</span>
