@@ -9,7 +9,9 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminStatCard } from '@/components/admin/AdminStatCard';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
-import { adminApi } from '@/lib/api-client';
+import CustomPricingPanel from '@/components/admin/CustomPricingPanel';
+import { adminApi, pricingApi } from '@/lib/api-client';
+import { hasActivePricing } from '@/lib/pricing/format';
 import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 
@@ -53,6 +55,10 @@ const ROLE_LABEL_MAP: Record<string, string> = {
   BillingContact: 'Billing Contact',
 };
 
+const TAB_LABEL_MAP: Record<string, string> = {
+  pricing: 'Custom Pricing',
+};
+
 export default function AdminOrganizationDetailPage() {
   const params = useParams();
   const orgId = params.id as string;
@@ -60,7 +66,8 @@ export default function AdminOrganizationDetailPage() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'pricing'>('overview');
+  const [hasCustomPricing, setHasCustomPricing] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -79,6 +86,9 @@ export default function AdminOrganizationDetailPage() {
           },
         }))
       );
+
+      const { active } = await pricingApi.list(orgId);
+      setHasCustomPricing(hasActivePricing(active));
     } catch (error: any) {
       console.error('Failed to fetch organization data:', error);
       addToast('error', error.message || 'Failed to fetch organization data');
@@ -191,7 +201,7 @@ export default function AdminOrganizationDetailPage() {
 
         <Card>
           <div className="flex gap-4 mb-6 border-b border-border pb-4">
-            {(['overview', 'members'] as const).map((tab) => (
+            {(['overview', 'members', 'pricing'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -201,7 +211,7 @@ export default function AdminOrganizationDetailPage() {
                     : 'text-text-muted hover:text-text'
                 }`}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {TAB_LABEL_MAP[tab] ?? tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
@@ -215,10 +225,15 @@ export default function AdminOrganizationDetailPage() {
                 <div className="rounded-lg border border-border bg-surface-alt p-4 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-text-muted">Status</span>
-                    <AdminStatusBadge
-                      variant={org.is_active === false ? 'danger' : 'success'}
-                      label={org.is_active === false ? 'Disabled' : 'Active'}
-                    />
+                    <div className="flex items-center gap-2">
+                      <AdminStatusBadge
+                        variant={org.is_active === false ? 'danger' : 'success'}
+                        label={org.is_active === false ? 'Disabled' : 'Active'}
+                      />
+                      {hasCustomPricing && (
+                        <AdminStatusBadge variant="info" label="Custom Pricing" />
+                      )}
+                    </div>
                   </div>
                   {org.created_at && (
                     <div className="flex justify-between items-center">
@@ -273,6 +288,10 @@ export default function AdminOrganizationDetailPage() {
                 }
               />
             </div>
+          )}
+
+          {activeTab === 'pricing' && (
+            <CustomPricingPanel orgId={org.id} orgName={org.name} onPricingChange={fetchData} />
           )}
         </Card>
       </AdminLayout>
