@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
+import Dropdown from '@/components/ui/Dropdown';
 import Button from '@/components/ui/Button';
 import { useToastStore } from '@/lib/stores/toast-store';
 import {
@@ -109,41 +110,21 @@ export default function SetPricingRuleModal({ isOpen, orgId, onClose, onSaved }:
       }
     >
       <div className="space-y-4">
-        <div>
-          <label htmlFor="pricing-rule-target" className="block text-sm font-medium text-text mb-1.5">
-            Applies to
-          </label>
-          <select
-            id="pricing-rule-target"
-            value={target}
-            onChange={(e) => setTarget(e.target.value as Target)}
-            className="w-full h-10 px-3 rounded-md border border-border bg-surface text-text text-sm focus-visible:outline-none focus-visible:shadow-focus-ring hover:border-border-strong"
-          >
-            {TARGET_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Dropdown
+          label="Applies to"
+          value={target}
+          options={TARGET_OPTIONS}
+          onChange={(v) => setTarget(v as Target)}
+          disabled={saving}
+        />
 
-        <div>
-          <label htmlFor="pricing-rule-discount-type" className="block text-sm font-medium text-text mb-1.5">
-            Discount type
-          </label>
-          <select
-            id="pricing-rule-discount-type"
-            value={discountType}
-            onChange={(e) => setDiscountType(e.target.value as PricingDiscountType)}
-            className="w-full h-10 px-3 rounded-md border border-border bg-surface text-text text-sm focus-visible:outline-none focus-visible:shadow-focus-ring hover:border-border-strong"
-          >
-            {DISCOUNT_TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Dropdown
+          label="Discount type"
+          value={discountType}
+          options={DISCOUNT_TYPE_OPTIONS}
+          onChange={(v) => setDiscountType(v as PricingDiscountType)}
+          disabled={saving}
+        />
 
         {discountType === 'percent' && (
           <Input

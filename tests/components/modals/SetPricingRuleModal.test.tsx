@@ -1,7 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SetPricingRuleModal from '@/components/modals/SetPricingRuleModal';
+
+// The shared `Dropdown` component (components/ui/Dropdown.tsx) is a custom
+// listbox: a trigger `<button>` next to a plain `<label>` (no `htmlFor`),
+// which opens a `<ul role="listbox">` of `<button role="option">`s. It is
+// not a native `<select>`, so `userEvent.selectOptions` cannot drive it.
+// Locate the trigger by its label text, then click to open and pick the
+// option by its visible label.
+async function chooseDropdownOption(labelText: string, optionName: RegExp) {
+  const label = screen.getByText(labelText);
+  const container = label.parentElement as HTMLElement;
+  const trigger = within(container).getByRole('button');
+  await userEvent.click(trigger);
+  const option = await screen.findByRole('option', { name: optionName });
+  await userEvent.click(option);
+}
 
 const create = vi.fn();
 vi.mock('@/lib/api-client', async (orig) => ({
@@ -23,8 +38,8 @@ describe('SetPricingRuleModal', () => {
     const onSaved = vi.fn();
     render(<SetPricingRuleModal isOpen orgId="org1" onClose={vi.fn()} onSaved={onSaved} />);
 
-    await userEvent.selectOptions(screen.getByLabelText(/applies to/i), 'domain');
-    await userEvent.selectOptions(screen.getByLabelText(/discount type/i), 'percent');
+    await chooseDropdownOption('Applies to', /domains/i);
+    await chooseDropdownOption('Discount type', /^percentage off$/i);
     await userEvent.type(screen.getByLabelText(/percentage/i), '40');
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
@@ -37,8 +52,8 @@ describe('SetPricingRuleModal', () => {
   it('submits a price override in cents', async () => {
     create.mockResolvedValue({ id: 'rule2' });
     render(<SetPricingRuleModal isOpen orgId="org1" onClose={vi.fn()} onSaved={vi.fn()} />);
-    await userEvent.selectOptions(screen.getByLabelText(/applies to/i), 'plan');
-    await userEvent.selectOptions(screen.getByLabelText(/discount type/i), 'price_override');
+    await chooseDropdownOption('Applies to', /^plan$/i);
+    await chooseDropdownOption('Discount type', /price override/i);
     await userEvent.type(screen.getByLabelText(/custom price/i), '99');
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => expect(create).toHaveBeenCalledWith('org1', expect.objectContaining({
@@ -49,8 +64,8 @@ describe('SetPricingRuleModal', () => {
   it('waive submits no value fields', async () => {
     create.mockResolvedValue({ id: 'rule3' });
     render(<SetPricingRuleModal isOpen orgId="org1" onClose={vi.fn()} onSaved={vi.fn()} />);
-    await userEvent.selectOptions(screen.getByLabelText(/applies to/i), 'all');
-    await userEvent.selectOptions(screen.getByLabelText(/discount type/i), 'waive');
+    await chooseDropdownOption('Applies to', /all products/i);
+    await chooseDropdownOption('Discount type', /waive/i);
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => expect(create).toHaveBeenCalledWith('org1', expect.objectContaining({
       scope: 'all', category: null, discount_type: 'waive',
