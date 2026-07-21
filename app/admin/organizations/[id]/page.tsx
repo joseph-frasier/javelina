@@ -86,14 +86,22 @@ export default function AdminOrganizationDetailPage() {
           },
         }))
       );
-
-      const { active } = await pricingApi.list(orgId);
-      setHasCustomPricing(hasActivePricing(active));
     } catch (error: any) {
       console.error('Failed to fetch organization data:', error);
       addToast('error', error.message || 'Failed to fetch organization data');
     } finally {
       setLoading(false);
+    }
+
+    // Non-fatal: the pricing header badge reads a superadmin endpoint backed by
+    // org_pricing_rules, whose migration may not be applied yet. Isolate it so a
+    // pricing-endpoint failure never breaks the org/members view above.
+    try {
+      const { active } = await pricingApi.list(orgId);
+      setHasCustomPricing(hasActivePricing(active));
+    } catch (error) {
+      console.error('Failed to fetch org pricing status:', error);
+      setHasCustomPricing(false);
     }
   }, [orgId, addToast]);
 

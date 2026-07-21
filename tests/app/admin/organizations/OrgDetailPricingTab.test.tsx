@@ -73,4 +73,12 @@ describe('Org detail — Custom Pricing tab', () => {
     await waitFor(() => expect(screen.getAllByText('Acme').length).toBeGreaterThan(0));
     await waitFor(() => expect(screen.getAllByText('Custom Pricing').length).toBeGreaterThan(1));
   });
+
+  it('still renders the org when the pricing fetch fails (non-fatal)', async () => {
+    list.mockRejectedValue(new Error('org_pricing_rules relation does not exist'));
+    render(<AdminOrganizationDetailPage />);
+    await waitFor(() => expect(screen.getAllByText('Acme').length).toBeGreaterThan(0));
+    await waitFor(() => expect(list).toHaveBeenCalledWith('org1'));
+    expect(screen.queryByText('Failed to fetch organization data')).not.toBeInTheDocument();
+  });
 });
