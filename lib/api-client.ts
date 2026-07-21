@@ -878,6 +878,47 @@ export const adminApi = {
   },
 };
 
+// Org Custom Pricing API
+export type PricingCategory = 'plan' | 'mailbox' | 'domain';
+export type PricingScope = 'all' | 'category';
+export type PricingDiscountType = 'percent' | 'waive' | 'price_override';
+
+export interface PricingRule {
+  id: string;
+  org_id: string;
+  scope: PricingScope;
+  category: PricingCategory | null;
+  discount_type: PricingDiscountType;
+  value_bps: number | null;
+  value_cents: number | null;
+  effective_from: string;
+  effective_until: string | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  archived_at: string | null;
+}
+
+export interface CreatePricingRuleInput {
+  scope: PricingScope;
+  category: PricingCategory | null;
+  discount_type: PricingDiscountType;
+  value_bps?: number | null;
+  value_cents?: number | null;
+  effective_from?: string;
+  effective_until?: string | null;
+  note?: string | null;
+}
+
+export const pricingApi = {
+  list: (orgId: string): Promise<{ active: PricingRule[]; history: PricingRule[] }> =>
+    apiClient.get(`/admin/organizations/${orgId}/pricing-rules`),
+  create: (orgId: string, input: CreatePricingRuleInput): Promise<PricingRule> =>
+    apiClient.post(`/admin/organizations/${orgId}/pricing-rules`, input),
+  archive: (orgId: string, ruleId: string): Promise<void> =>
+    apiClient.delete(`/admin/organizations/${orgId}/pricing-rules/${ruleId}`),
+};
+
 // Discounts/Promotion Codes API
 export const discountsApi = {
   /**
