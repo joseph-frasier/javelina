@@ -143,6 +143,11 @@ export function SubscriptionManager({
                 {subscription.plan.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
               </span>
             </div>
+            {subscription?.custom_pricing && (
+              <p className="mt-1 text-sm text-blue-teal">
+                Custom pricing applied — see your invoice for exact amounts.
+              </p>
+            )}
           </div>
         )}
 

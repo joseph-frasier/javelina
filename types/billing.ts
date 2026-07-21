@@ -109,6 +109,8 @@ export interface OrgSubscriptionDetails {
 export interface CurrentSubscriptionResponse {
   subscription: OrgSubscriptionDetails | null;
   plan: Plan | null;
+  /** True when an active org-level pricing rule applies to this org's billing. */
+  custom_pricing?: boolean;
 }
 
 // =====================================================
