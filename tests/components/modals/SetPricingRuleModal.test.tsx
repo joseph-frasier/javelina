@@ -75,20 +75,22 @@ describe('SetPricingRuleModal', () => {
     expect(arg.value_cents ?? null).toBeNull();
   });
 
-  it('offers only the all-products target when a baseline rule is active', async () => {
+  it('grays out (disables) product-specific targets when a baseline rule is active', async () => {
     render(<SetPricingRuleModal isOpen orgId="org1" hasBaseline onClose={vi.fn()} onSaved={vi.fn()} />);
     const container = screen.getByText('Applies to').parentElement as HTMLElement;
     await userEvent.click(within(container).getByRole('button'));
-    expect(await screen.findByRole('option', { name: /all products/i })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: /^plan$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: /domains/i })).not.toBeInTheDocument();
+    // All targets remain visible (discoverable)...
+    expect(await screen.findByRole('option', { name: /all products/i })).toBeEnabled();
+    // ...but the conflicting ones are disabled, not hidden.
+    expect(screen.getByRole('option', { name: /^plan$/i })).toBeDisabled();
+    expect(screen.getByRole('option', { name: /domains/i })).toBeDisabled();
   });
 
-  it('excludes the all-products target when a product-specific rule is active', async () => {
+  it('grays out (disables) the all-products target when a product-specific rule is active', async () => {
     render(<SetPricingRuleModal isOpen orgId="org1" hasCategoryRules onClose={vi.fn()} onSaved={vi.fn()} />);
     const container = screen.getByText('Applies to').parentElement as HTMLElement;
     await userEvent.click(within(container).getByRole('button'));
-    expect(await screen.findByRole('option', { name: /^plan$/i })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: /all products/i })).not.toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /^plan$/i })).toBeEnabled();
+    expect(screen.getByRole('option', { name: /all products/i })).toBeDisabled();
   });
 });

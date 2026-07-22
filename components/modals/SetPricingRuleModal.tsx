@@ -50,14 +50,27 @@ export default function SetPricingRuleModal({
   const addToast = useToastStore((s) => s.addToast);
 
   // An all-products rule and product-specific rules are mutually exclusive.
-  // Offer only the valid targets so the admin can't pick a conflicting one
-  // (the backend also rejects it with 409 as the source of truth).
-  const targetOptions = useMemo(() => {
-    if (hasBaseline) return TARGET_OPTIONS.filter((o) => o.value === 'all');
-    if (hasCategoryRules) return TARGET_OPTIONS.filter((o) => o.value !== 'all');
-    return TARGET_OPTIONS;
-  }, [hasBaseline, hasCategoryRules]);
-  const defaultTarget = targetOptions[0].value;
+  // Keep every target visible but gray out the ones that would conflict, with
+  // a hover reason — so the constraint is discoverable, not hidden. The backend
+  // also rejects a conflicting rule with 409 as the source of truth.
+  const targetOptions = useMemo(
+    () =>
+      TARGET_OPTIONS.map((o) => {
+        const disabled =
+          (hasBaseline && o.value !== 'all') || (hasCategoryRules && o.value === 'all');
+        return {
+          ...o,
+          disabled,
+          title: disabled
+            ? o.value === 'all'
+              ? 'Archive the product-specific rule(s) first'
+              : 'Archive the all-products rule first'
+            : undefined,
+        };
+      }),
+    [hasBaseline, hasCategoryRules],
+  );
+  const defaultTarget = (targetOptions.find((o) => !o.disabled) ?? targetOptions[0]).value;
 
   const [target, setTarget] = useState<Target>(defaultTarget);
   const [discountType, setDiscountType] = useState<PricingDiscountType>('percent');
