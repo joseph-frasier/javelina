@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
@@ -18,6 +18,10 @@ type Target = 'all' | PricingCategory;
 interface Props {
   isOpen: boolean;
   orgId: string;
+  /** An all-products baseline rule is already active for this org. */
+  hasBaseline?: boolean;
+  /** At least one product-specific rule is already active for this org. */
+  hasCategoryRules?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -35,9 +39,27 @@ const DISCOUNT_TYPE_OPTIONS: { value: PricingDiscountType; label: string }[] = [
   { value: 'price_override', label: 'Price override' },
 ];
 
-export default function SetPricingRuleModal({ isOpen, orgId, onClose, onSaved }: Props) {
+export default function SetPricingRuleModal({
+  isOpen,
+  orgId,
+  hasBaseline = false,
+  hasCategoryRules = false,
+  onClose,
+  onSaved,
+}: Props) {
   const addToast = useToastStore((s) => s.addToast);
-  const [target, setTarget] = useState<Target>('all');
+
+  // An all-products rule and product-specific rules are mutually exclusive.
+  // Offer only the valid targets so the admin can't pick a conflicting one
+  // (the backend also rejects it with 409 as the source of truth).
+  const targetOptions = useMemo(() => {
+    if (hasBaseline) return TARGET_OPTIONS.filter((o) => o.value === 'all');
+    if (hasCategoryRules) return TARGET_OPTIONS.filter((o) => o.value !== 'all');
+    return TARGET_OPTIONS;
+  }, [hasBaseline, hasCategoryRules]);
+  const defaultTarget = targetOptions[0].value;
+
+  const [target, setTarget] = useState<Target>(defaultTarget);
   const [discountType, setDiscountType] = useState<PricingDiscountType>('percent');
   const [value, setValue] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState('');
@@ -45,8 +67,14 @@ export default function SetPricingRuleModal({ isOpen, orgId, onClose, onSaved }:
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Re-seed the target each time the modal opens — the valid options may have
+  // changed as rules were added/archived while it was closed.
+  useEffect(() => {
+    if (isOpen) setTarget(defaultTarget);
+  }, [isOpen, defaultTarget]);
+
   const reset = () => {
-    setTarget('all');
+    setTarget(defaultTarget);
     setDiscountType('percent');
     setValue('');
     setEffectiveFrom('');
@@ -113,10 +141,18 @@ export default function SetPricingRuleModal({ isOpen, orgId, onClose, onSaved }:
         <Dropdown
           label="Applies to"
           value={target}
-          options={TARGET_OPTIONS}
+          options={targetOptions}
           onChange={(v) => setTarget(v as Target)}
           disabled={saving}
         />
+
+        {(hasBaseline || hasCategoryRules) && (
+          <p className="text-xs text-gray-slate">
+            {hasBaseline
+              ? 'Archive the all-products rule to set product-specific pricing.'
+              : 'Archive product-specific rules to set an all-products baseline.'}
+          </p>
+        )}
 
         <Dropdown
           label="Discount type"

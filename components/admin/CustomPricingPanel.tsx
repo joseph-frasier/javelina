@@ -141,6 +141,8 @@ export default function CustomPricingPanel({ orgId, orgName, onPricingChange }: 
       <SetPricingRuleModal
         isOpen={addOpen}
         orgId={orgId}
+        hasBaseline={active.some((r) => r.scope === 'all')}
+        hasCategoryRules={active.some((r) => r.scope === 'category')}
         onClose={() => setAddOpen(false)}
         onSaved={() => {
           setAddOpen(false);
