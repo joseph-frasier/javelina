@@ -31,8 +31,8 @@ function PricingRuleRow({
   onArchive: (rule: PricingRule) => void;
 }) {
   return (
-    <li className="flex items-center justify-between gap-4 p-4">
-      <div>
+    <li className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4">
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
           <span className="font-bold text-text">{categoryLabel(rule.category)}</span>
           <AdminStatusBadge variant="accent" label={formatRule(rule)} />
@@ -109,7 +109,7 @@ export default function CustomPricingPanel({ orgId, orgName, onPricingChange }: 
           No custom pricing &mdash; {orgName} is billed at catalog prices.
         </p>
       ) : (
-        <ul className="divide-y divide-gray-light rounded-lg border border-gray-light">
+        <ul className="space-y-3">
           {active.map((rule) => (
             <PricingRuleRow key={rule.id} rule={rule} onArchive={setArchiveTarget} />
           ))}
