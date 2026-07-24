@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UsageMeter } from './UsageMeter';
 import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
+import { formatUsdCents } from '@/lib/billing/format';
 
 interface SubscriptionManagerProps {
   orgId: string;
@@ -136,18 +137,30 @@ export function SubscriptionManager({
         {subscription?.plan?.metadata?.price && (
           <div className="mb-4 pb-4 border-b border-border -mx-6 px-6">
             <div className="flex flex-col">
-              <span className="text-3xl font-black text-text">
-                ${Number(subscription.plan.metadata.price).toFixed(2)}
-              </span>
+              {subscription?.effective_pricing?.active &&
+              subscription.effective_pricing.effective_cents != null ? (
+                <div className="flex items-baseline gap-2">
+                  {subscription.effective_pricing.base_cents != null && (
+                    <span className="text-lg text-text-muted line-through">
+                      {formatUsdCents(subscription.effective_pricing.base_cents)}
+                    </span>
+                  )}
+                  <span className="text-3xl font-black text-text">
+                    {formatUsdCents(subscription.effective_pricing.effective_cents)}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-teal/10 text-blue-teal">
+                    Custom pricing
+                  </span>
+                </div>
+              ) : (
+                <span className="text-3xl font-black text-text">
+                  ${Number(subscription.plan.metadata.price).toFixed(2)}
+                </span>
+              )}
               <span className="text-xs text-text-muted font-light uppercase tracking-wide mt-1">
                 {subscription.plan.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
               </span>
             </div>
-            {subscription?.custom_pricing && (
-              <p className="mt-1 text-sm text-blue-teal">
-                Custom pricing applied — see your invoice for exact amounts.
-              </p>
-            )}
           </div>
         )}
 
