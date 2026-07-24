@@ -6,8 +6,10 @@ import Button from '@/components/ui/Button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import SetPricingRuleModal from '@/components/modals/SetPricingRuleModal';
 import { useToastStore } from '@/lib/stores/toast-store';
-import { pricingApi, type PricingRule } from '@/lib/api-client';
+import { adminApi, pricingApi, type PricingRule } from '@/lib/api-client';
 import { formatRule, categoryLabel } from '@/lib/pricing/format';
+import { formatUsdCents } from '@/lib/billing/format';
+import type { PlanPricing } from '@/types/billing';
 
 interface Props {
   orgId: string;
@@ -58,6 +60,15 @@ export default function CustomPricingPanel({ orgId, orgName, onPricingChange }: 
   const [showHistory, setShowHistory] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<PricingRule | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const [planPricing, setPlanPricing] = useState<PlanPricing | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    adminApi.getOrgPlanPricing(orgId)
+      .then((p) => { if (!cancelled) setPlanPricing(p); })
+      .catch(() => { if (!cancelled) setPlanPricing(null); });
+    return () => { cancelled = true; };
+  }, [orgId]);
 
   const load = useCallback(async () => {
     try {
@@ -101,6 +112,18 @@ export default function CustomPricingPanel({ orgId, orgName, onPricingChange }: 
           Add rule
         </Button>
       </div>
+
+      {planPricing?.active &&
+        planPricing.effective_cents != null &&
+        planPricing.base_cents != null && (
+          <p className="text-sm text-gray-slate">
+            Effective plan price:{' '}
+            <span className="font-medium text-text">
+              {formatUsdCents(planPricing.effective_cents)}/mo
+            </span>{' '}
+            (catalog {formatUsdCents(planPricing.base_cents)})
+          </p>
+        )}
 
       {loading ? (
         <p className="text-gray-slate">Loading&hellip;</p>
