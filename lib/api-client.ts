@@ -1503,8 +1503,11 @@ export const domainsApi = {
     return apiClient.get(`/domains/search?${params.toString()}`);
   },
 
-  getPricing: (domain: string): Promise<DomainPricingResponse> =>
-    apiClient.get(`/domains/pricing?domain=${encodeURIComponent(domain)}`),
+  getPricing: (domain: string, orgId?: string): Promise<DomainPricingResponse> => {
+    const params = new URLSearchParams({ domain });
+    if (orgId) params.set("org_id", orgId);
+    return apiClient.get(`/domains/pricing?${params.toString()}`);
+  },
 
   checkout: (params: DomainCheckoutParams): Promise<DomainCheckoutResponse> =>
     apiClient.post("/domains/checkout", params),
