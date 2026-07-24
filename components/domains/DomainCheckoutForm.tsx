@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { domainYearOptions } from '@/lib/domains/year-options';
 
 const formatPhoneNumber = (value: string): string => {
   const digits = value.replace(/\D/g, '').slice(0, 10);
@@ -91,6 +92,25 @@ export default function DomainCheckoutForm({
   const [error, setError] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState('');
   const [years, setYears] = useState(1);
+  const [maxYears, setMaxYears] = useState<number | undefined>(undefined);
+
+  // The year ceiling is per-org (a discount rule caps it to 1). Re-fetch when the
+  // chosen org changes; clear back to "no ceiling" when no org is selected.
+  useEffect(() => {
+    if (!orgId) { setMaxYears(undefined); return; }
+    let cancelled = false;
+    domainsApi.getPricing(domain, orgId)
+      .then((res) => { if (!cancelled) setMaxYears(res.maxYears); })
+      .catch(() => { if (!cancelled) setMaxYears(undefined); });
+    return () => { cancelled = true; };
+  }, [orgId, domain]);
+
+  // Never leave a now-disallowed selection in state.
+  useEffect(() => {
+    if (maxYears != null && years > maxYears) setYears(1);
+  }, [maxYears, years]);
+
+  const yearChoices = domainYearOptions([1, 2, 3, 5, 10], maxYears);
   const [contact, setContact] = useState<DomainContact>({
     first_name: '',
     last_name: '',
@@ -193,7 +213,7 @@ export default function DomainCheckoutForm({
               onChange={(e) => setYears(Number(e.target.value))}
               className="hidden md:block px-2 py-1 rounded-md border border-border bg-surface-alt text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
             >
-              {[1, 2, 3, 5, 10].map((y) => (
+              {yearChoices.map((y) => (
                 <option key={y} value={y}>{y}yr</option>
               ))}
             </select>
@@ -215,6 +235,12 @@ export default function DomainCheckoutForm({
               <span className="font-black text-accent text-base">${totalPrice.toFixed(2)}</span>
             </div>
           </div>
+
+          {maxYears === 1 && (
+            <p className="mb-5 text-xs text-text-muted">
+              Discounted pricing is limited to 1 year at a time.
+            </p>
+          )}
 
           {/* Mobile year picker modal — portal with GSAP animations matching Modal.tsx */}
           {shouldRenderYearModal && mounted && createPortal(
@@ -242,7 +268,7 @@ export default function DomainCheckoutForm({
                     </svg>
                   </button>
                 </div>
-                {[1, 2, 3, 5, 10].map((y) => (
+                {yearChoices.map((y) => (
                   <button
                     key={y}
                     type="button"
