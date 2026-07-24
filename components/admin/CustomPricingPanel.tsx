@@ -119,7 +119,7 @@ export default function CustomPricingPanel({ orgId, orgName, onPricingChange }: 
           <p className="text-sm text-gray-slate">
             Effective plan price:{' '}
             <span className="font-medium text-text">
-              {formatUsdCents(planPricing.effective_cents)}/mo
+              {formatUsdCents(planPricing.effective_cents)}
             </span>{' '}
             (catalog {formatUsdCents(planPricing.base_cents)})
           </p>

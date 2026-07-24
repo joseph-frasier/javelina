@@ -161,6 +161,11 @@ export function SubscriptionManager({
                 {subscription.plan.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
               </span>
             </div>
+            {subscription?.custom_pricing && !subscription?.effective_pricing?.active && (
+              <p className="mt-1 text-sm text-blue-teal">
+                Custom pricing applied to your account.
+              </p>
+            )}
           </div>
         )}
 
