@@ -9,6 +9,7 @@
  */
 
 import { getIdleSync } from '@/lib/idle/idleSync';
+import type { PlanPricing } from '@/types/billing';
 
 // Error class for API errors
 export class ApiError extends Error {
@@ -728,6 +729,13 @@ export const adminApi = {
    */
   enableOrganization: (orgId: string) => {
     return apiClient.put(`/admin/organizations/${orgId}/enable`);
+  },
+
+  /**
+   * Get effective plan pricing for an organization (admin only)
+   */
+  getOrgPlanPricing: (orgId: string): Promise<PlanPricing> => {
+    return apiClient.get(`/admin/organizations/${orgId}/plan-pricing`);
   },
 
   /**
