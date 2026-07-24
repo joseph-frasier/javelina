@@ -24,6 +24,7 @@ import { DomainEmailSection } from '@/components/domains/DomainEmailSection';
 import { TransferVerificationCard } from '@/components/domains/TransferVerificationCard';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { JAVELINA_NAMESERVERS } from '@/lib/constants/domains';
+import { domainYearOptions } from '@/lib/domains/year-options';
 import type {
   Domain,
   DomainManagementResponse,
@@ -180,6 +181,7 @@ export default function DomainDetailPage() {
 
   // Renewal state
   const [renewalPricing, setRenewalPricing] = useState<DomainPricing | null>(null);
+  const [renewalMaxYears, setRenewalMaxYears] = useState<number | undefined>(undefined);
   const [selectedYears, setSelectedYears] = useState(1);
   const [isRenewing, setIsRenewing] = useState(false);
 
@@ -343,10 +345,14 @@ export default function DomainDetailPage() {
     if (!data?.domain) return;
     const domain = data.domain;
     if (domain.status !== 'active' || !domain.expires_at) return;
-    domainsApi.getPricing(domain.domain_name)
-      .then((res) => setRenewalPricing(res.pricing))
+    domainsApi.getPricing(domain.domain_name, domain.organization_id ?? undefined)
+      .then((res) => { setRenewalPricing(res.pricing); setRenewalMaxYears(res.maxYears); })
       .catch(() => { /* non-critical, silently ignore */ });
   }, [data]);
+
+  useEffect(() => {
+    if (renewalMaxYears != null && selectedYears > renewalMaxYears) setSelectedYears(1);
+  }, [renewalMaxYears, selectedYears]);
 
   const handleToggleAutoRenew = async () => {
     setIsTogglingAutoRenew(true);
@@ -527,6 +533,11 @@ export default function DomainDetailPage() {
     renewalPricing && renewalPricing.price > 0
       ? (renewalPricing.price * selectedYears).toFixed(2)
       : null;
+
+  const renewalYearChoices = domainYearOptions(
+    Array.from({ length: 10 }, (_, i) => i + 1),
+    renewalMaxYears,
+  );
 
   return (
     <div className="space-y-6">
@@ -722,7 +733,7 @@ export default function DomainDetailPage() {
                   onChange={(e) => setSelectedYears(Number(e.target.value))}
                   className="hidden md:block text-sm rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-text px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange/50"
                 >
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
+                  {renewalYearChoices.map((y) => (
                     <option key={y} value={y}>{y} {y === 1 ? 'year' : 'years'}</option>
                   ))}
                 </select>
@@ -738,6 +749,12 @@ export default function DomainDetailPage() {
                   </svg>
                 </button>
               </div>
+
+              {renewalMaxYears === 1 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Discounted pricing is limited to 1 year at a time.
+                </p>
+              )}
 
               {/* Mobile renewal year picker modal */}
               {shouldRenderRenewalYear && pageMounted && createPortal(
@@ -765,7 +782,7 @@ export default function DomainDetailPage() {
                         </svg>
                       </button>
                     </div>
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((y) => (
+                    {renewalYearChoices.map((y) => (
                       <button
                         key={y}
                         type="button"
