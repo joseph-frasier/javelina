@@ -166,6 +166,7 @@ export default function CustomPricingPanel({ orgId, orgName, onPricingChange }: 
         orgId={orgId}
         hasBaseline={active.some((r) => r.scope === 'all')}
         hasCategoryRules={active.some((r) => r.scope === 'category')}
+        activeTargets={active.map((r) => (r.scope === 'all' ? 'all' : r.category!))}
         onClose={() => setAddOpen(false)}
         onSaved={() => {
           setAddOpen(false);

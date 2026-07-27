@@ -22,6 +22,8 @@ interface Props {
   hasBaseline?: boolean;
   /** At least one product-specific rule is already active for this org. */
   hasCategoryRules?: boolean;
+  /** Targets that already have an active rule — saving over one replaces it. */
+  activeTargets?: Target[];
   onClose: () => void;
   onSaved: () => void;
 }
@@ -44,6 +46,7 @@ export default function SetPricingRuleModal({
   orgId,
   hasBaseline = false,
   hasCategoryRules = false,
+  activeTargets = [],
   onClose,
   onSaved,
 }: Props) {
@@ -85,6 +88,14 @@ export default function SetPricingRuleModal({
   useEffect(() => {
     if (isOpen) setTarget(defaultTarget);
   }, [isOpen, defaultTarget]);
+
+  // Saving archives the active rule for this target and inserts the new one, so
+  // a future start date does NOT keep the current rule running until then — it
+  // ends the discount now and leaves a gap. Nothing in the form conveys that,
+  // so warn; scheduling is still a legitimate thing to want, so don't block it.
+  const replacesActiveRule = activeTargets.includes(target);
+  const startsInFuture = effectiveFrom !== '' && new Date(effectiveFrom).getTime() > Date.now();
+  const showScheduleWarning = replacesActiveRule && startsInFuture;
 
   const reset = () => {
     setTarget(defaultTarget);
@@ -210,6 +221,18 @@ export default function SetPricingRuleModal({
           onChange={(e) => setEffectiveFrom(e.target.value)}
           disabled={saving}
         />
+
+        {showScheduleWarning && (
+          <p
+            role="alert"
+            className="rounded-md border border-orange/40 bg-orange/10 px-3 py-2 text-sm text-orange-dark dark:text-orange-light"
+          >
+            This replaces the existing{' '}
+            {TARGET_OPTIONS.find((o) => o.value === target)?.label.toLowerCase()} rule, and the
+            current discount ends immediately when you save — it will not stay active until the
+            start date above. Scheduled rule changes are not supported yet.
+          </p>
+        )}
 
         <Input
           id="pricing-rule-effective-until"

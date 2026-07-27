@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SetPricingRuleModal from '@/components/modals/SetPricingRuleModal';
 
@@ -92,5 +92,85 @@ describe('SetPricingRuleModal', () => {
     await userEvent.click(within(container).getByRole('button'));
     expect(await screen.findByRole('option', { name: /^plan$/i })).toBeEnabled();
     expect(screen.getByRole('option', { name: /all products/i })).toBeDisabled();
+  });
+
+  describe('scheduling a future start over an existing rule', () => {
+    // Saving archives the current rule for that target and inserts the new one,
+    // so a future `effective_from` ends today's discount NOW and leaves a gap
+    // until the new rate begins. The admin has no way to know that from the
+    // form. Warn, but let them proceed.
+    // A datetime-local value is LOCAL time — `new Date(value)` parses it in the
+    // browser's zone. Building these from toISOString() would shift them by the
+    // UTC offset and silently flip past/future in any non-UTC zone.
+    const toLocalInput = (d: Date) => {
+      const p = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    };
+    const future = () => toLocalInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+    const past = () => toLocalInput(new Date(Date.now() - 60 * 60 * 1000));
+
+    const setEffectiveFrom = async (value: string) => {
+      const input = screen.getByLabelText(/effective from/i);
+      fireEvent.change(input, { target: { value } });
+    };
+
+    it('warns when the selected target already has an active rule', async () => {
+      render(
+        <SetPricingRuleModal
+          isOpen orgId="org1" hasCategoryRules activeTargets={['plan']}
+          onClose={vi.fn()} onSaved={vi.fn()}
+        />,
+      );
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await setEffectiveFrom(future());
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/ends? (the current discount )?immediately|current rule .*immediately/i);
+    });
+
+    it('does not warn when that target has no active rule', async () => {
+      render(
+        <SetPricingRuleModal
+          isOpen orgId="org1" hasCategoryRules activeTargets={['mailbox']}
+          onClose={vi.fn()} onSaved={vi.fn()}
+        />,
+      );
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await setEffectiveFrom(future());
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('does not warn for a start date that is not in the future', async () => {
+      render(
+        <SetPricingRuleModal
+          isOpen orgId="org1" hasCategoryRules activeTargets={['plan']}
+          onClose={vi.fn()} onSaved={vi.fn()}
+        />,
+      );
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await setEffectiveFrom(past());
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('still lets the admin save through the warning', async () => {
+      create.mockResolvedValue({ id: 'rule9' });
+      const onSaved = vi.fn();
+      render(
+        <SetPricingRuleModal
+          isOpen orgId="org1" hasCategoryRules activeTargets={['plan']}
+          onClose={vi.fn()} onSaved={onSaved}
+        />,
+      );
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await chooseDropdownOption('Discount type', /^percentage off$/i);
+      await userEvent.type(screen.getByLabelText(/percentage/i), '20');
+      await setEffectiveFrom(future());
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    });
   });
 });
