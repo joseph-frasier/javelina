@@ -62,20 +62,18 @@ export default function CustomPricingPanel({ orgId, orgName, onPricingChange }: 
   const [archiving, setArchiving] = useState(false);
   const [planPricing, setPlanPricing] = useState<PlanPricing | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    adminApi.getOrgPlanPricing(orgId)
-      .then((p) => { if (!cancelled) setPlanPricing(p); })
-      .catch(() => { if (!cancelled) setPlanPricing(null); });
-    return () => { cancelled = true; };
-  }, [orgId]);
-
   const load = useCallback(async () => {
     try {
       setLoading(true);
       const { active: activeRules, history: historyRules } = await pricingApi.list(orgId);
       setActive(activeRules);
       setHistory(historyRules);
+      // Refetched with the rules, not once on mount: this line shows staff the
+      // price the customer sees, so it has to move when a rule is added or
+      // archived. Non-fatal — a pricing outage must not blank the panel.
+      await adminApi.getOrgPlanPricing(orgId)
+        .then(setPlanPricing)
+        .catch(() => setPlanPricing(null));
     } catch (err: unknown) {
       addToast('error', err instanceof Error ? err.message : 'Failed to load pricing rules');
     } finally {
