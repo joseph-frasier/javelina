@@ -112,6 +112,20 @@ export default function SetPricingRuleModal({
   };
 
   const handleSubmit = async () => {
+    // Validate before building the payload. parseFloat('') is NaN, which passes
+    // both `== null` and `< 0`, and JSON.stringify serializes it to null — so a
+    // blank custom price reached the backend as price_override with no value
+    // and came back as a raw API error. (The percent branch was only safe by
+    // accident, via `!input.value_bps` catching NaN as falsy.)
+    const needsValue = discountType === 'percent' || discountType === 'price_override';
+    if (needsValue && !Number.isFinite(Number.parseFloat(value))) {
+      addToast(
+        'error',
+        discountType === 'percent' ? 'Enter a percentage' : 'Enter a custom price',
+      );
+      return;
+    }
+
     const input: CreatePricingRuleInput = {
       scope: target === 'all' ? 'all' : 'category',
       category: target === 'all' ? null : target,

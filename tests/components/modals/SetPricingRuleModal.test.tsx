@@ -94,6 +94,58 @@ describe('SetPricingRuleModal', () => {
     expect(screen.getByRole('option', { name: /all products/i })).toBeDisabled();
   });
 
+  describe('numeric validation', () => {
+    // parseFloat('') is NaN, and NaN passes both `== null` and `< 0`, so the
+    // payload went out with value_cents serialized to null by JSON.stringify —
+    // rejected by the backend, surfacing as a raw API error instead of a
+    // useful message.
+    it('rejects an empty custom price without calling the API', async () => {
+      render(<SetPricingRuleModal isOpen orgId="org1" onClose={vi.fn()} onSaved={vi.fn()} />);
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await chooseDropdownOption('Discount type', /price override/i);
+
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('rejects a non-numeric custom price without calling the API', async () => {
+      render(<SetPricingRuleModal isOpen orgId="org1" onClose={vi.fn()} onSaved={vi.fn()} />);
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await chooseDropdownOption('Discount type', /price override/i);
+      fireEvent.change(screen.getByLabelText(/custom price/i), { target: { value: 'abc' } });
+
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('rejects an empty percentage without calling the API', async () => {
+      render(<SetPricingRuleModal isOpen orgId="org1" onClose={vi.fn()} onSaved={vi.fn()} />);
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await chooseDropdownOption('Discount type', /^percentage off$/i);
+
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('still accepts a valid zero-dollar override', async () => {
+      // 0 is a legitimate override (comped) and must not be caught by the guard.
+      create.mockResolvedValue({ id: 'rule0' });
+      render(<SetPricingRuleModal isOpen orgId="org1" onClose={vi.fn()} onSaved={vi.fn()} />);
+      await chooseDropdownOption('Applies to', /^plan$/i);
+      await chooseDropdownOption('Discount type', /price override/i);
+      fireEvent.change(screen.getByLabelText(/custom price/i), { target: { value: '0' } });
+
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(create).toHaveBeenCalledWith('org1', expect.objectContaining({
+        discount_type: 'price_override', value_cents: 0,
+      })));
+    });
+  });
+
   describe('scheduling a future start over an existing rule', () => {
     // Saving archives the current rule for that target and inserts the new one,
     // so a future `effective_from` ends today's discount NOW and leaves a gap
