@@ -61,6 +61,39 @@ describe('CustomPricingPanel', () => {
     await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   });
 
+  // A rule stays in the backend's active list until it is archived, so an
+  // expired or not-yet-started rule sits alongside live ones with nothing to
+  // distinguish it. Staff reading the panel would take it as currently applying.
+  it('marks an expired rule rather than showing it as live', async () => {
+    list.mockResolvedValue({
+      active: [rule({ effective_until: '2020-06-01T00:00:00Z' })],
+      history: [],
+    });
+    render(<CustomPricingPanel orgId="org1" orgName="Acme" />);
+
+    await waitFor(() => expect(screen.getByText('40% off')).toBeInTheDocument());
+    expect(screen.getByText(/expired/i)).toBeInTheDocument();
+  });
+
+  it('marks a rule whose start date has not arrived as scheduled', async () => {
+    list.mockResolvedValue({
+      active: [rule({ effective_from: '2099-01-01T00:00:00Z' })],
+      history: [],
+    });
+    render(<CustomPricingPanel orgId="org1" orgName="Acme" />);
+
+    await waitFor(() => expect(screen.getByText('40% off')).toBeInTheDocument());
+    expect(screen.getByText(/scheduled/i)).toBeInTheDocument();
+  });
+
+  it('adds no status marker to a rule that is currently in effect', async () => {
+    list.mockResolvedValue({ active: [rule({})], history: [] });
+    render(<CustomPricingPanel orgId="org1" orgName="Acme" />);
+
+    await waitFor(() => expect(screen.getByText('40% off')).toBeInTheDocument());
+    expect(screen.queryByText(/expired|scheduled/i)).not.toBeInTheDocument();
+  });
+
   // The effective-price line exists so staff see the number the customer sees.
   // It was fetched once on mount and never again, so it kept showing the
   // pre-change value after every save and archive — the one line in the panel

@@ -7,7 +7,7 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import SetPricingRuleModal from '@/components/modals/SetPricingRuleModal';
 import { useToastStore } from '@/lib/stores/toast-store';
 import { adminApi, pricingApi, type PricingRule } from '@/lib/api-client';
-import { formatRule, categoryLabel } from '@/lib/pricing/format';
+import { formatRule, categoryLabel, ruleStatus } from '@/lib/pricing/format';
 import { formatUsdCents } from '@/lib/billing/format';
 import type { PlanPricing } from '@/types/billing';
 
@@ -32,12 +32,17 @@ function PricingRuleRow({
   rule: PricingRule;
   onArchive: (rule: PricingRule) => void;
 }) {
+  const status = ruleStatus(rule);
   return (
     <li className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <span className="font-bold text-text">{categoryLabel(rule.category)}</span>
           <AdminStatusBadge variant="accent" label={formatRule(rule)} />
+          {/* A rule stays in the active list until archived, so one outside its
+              window sits beside live rules with nothing to tell them apart. */}
+          {status === 'expired' && <AdminStatusBadge variant="danger" label="Expired" />}
+          {status === 'scheduled' && <AdminStatusBadge variant="neutral" label="Scheduled" />}
         </div>
         <p className="text-sm text-gray-slate">
           {effectiveWindow(rule)}

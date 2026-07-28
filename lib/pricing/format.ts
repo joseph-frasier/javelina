@@ -21,6 +21,21 @@ export function formatRule(rule: PricingRule): string {
   }
 }
 
+export type RuleStatus = 'in_effect' | 'scheduled' | 'expired' | 'archived';
+
+/**
+ * Where a rule sits relative to now. The backend's "active" list means
+ * `archived_at is null` — not "in effect right now" — so scheduled and expired
+ * rules arrive in it and must not be presented as live. Boundaries match the
+ * backend resolver: start inclusive, end exclusive.
+ */
+export function ruleStatus(rule: PricingRule, at: Date = new Date()): RuleStatus {
+  if (rule.archived_at !== null) return 'archived';
+  if (new Date(rule.effective_from) > at) return 'scheduled';
+  if (rule.effective_until !== null && new Date(rule.effective_until) <= at) return 'expired';
+  return 'in_effect';
+}
+
 export function isRuleActive(rule: PricingRule, at: Date = new Date()): boolean {
   if (rule.archived_at !== null) return false;
   if (new Date(rule.effective_from) > at) return false;
