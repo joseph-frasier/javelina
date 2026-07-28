@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface QuickAction {
   label: string;
@@ -17,25 +18,63 @@ interface QuickActionsDropdownProps {
 
 export function QuickActionsDropdown({ actions, align = 'right' }: QuickActionsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  // Hidden until measured so the menu never paints at the wrong spot for a frame.
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({ visibility: 'hidden' });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen && buttonRef.current && dropdownRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect();
-      const dropdownHeight = dropdownRef.current.offsetHeight;
-      const spaceBelow = window.innerHeight - buttonRect.bottom;
-      const spaceAbove = buttonRect.top;
+    setMounted(true);
+  }, []);
 
-      // If there's not enough space below but there is above, open upward
-      if (spaceBelow < dropdownHeight + 20 && spaceAbove > dropdownHeight + 20) {
-        setOpenUpward(true);
-      } else {
-        setOpenUpward(false);
-      }
+  // Position the menu with fixed coordinates derived from the trigger's viewport
+  // rect. The menu is portaled to <body>, so it escapes the admin table's
+  // overflow-x-auto/overflow-hidden ancestors that otherwise clip an absolutely
+  // positioned menu when a row sits near the bottom of the list.
+  const position = useCallback(() => {
+    if (!buttonRef.current || !dropdownRef.current) return;
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const menuRect = dropdownRef.current.getBoundingClientRect();
+    const spacing = 8;
+
+    const spaceBelow = window.innerHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+    // Flip upward only when there isn't room below but there is above.
+    const openUpward =
+      spaceBelow < menuRect.height + spacing + 12 && spaceAbove > menuRect.height + spacing + 12;
+
+    const top = openUpward
+      ? buttonRect.top - menuRect.height - spacing
+      : buttonRect.bottom + spacing;
+    const left = align === 'right' ? buttonRect.right - menuRect.width : buttonRect.left;
+
+    setMenuStyle({
+      position: 'fixed',
+      top: `${Math.round(top)}px`,
+      left: `${Math.round(left)}px`,
+      visibility: 'visible',
+    });
+  }, [align]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setMenuStyle({ visibility: 'hidden' });
+      return;
     }
-  }, [isOpen]);
+    // Measure after the menu has painted, then keep it pinned to the trigger.
+    requestAnimationFrame(() => requestAnimationFrame(position));
+    // The menu is fixed-positioned, so any scroll (including the table's inner
+    // scroll container — hence capture) or resize would detach it. Close instead
+    // of trying to chase the moving trigger.
+    const close = () => setIsOpen(false);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [isOpen, position]);
 
   const handleActionClick = (action: QuickAction) => {
     setIsOpen(false);
@@ -58,47 +97,45 @@ export function QuickActionsDropdown({ actions, align = 'right' }: QuickActionsD
         </svg>
       </button>
 
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Dropdown Menu */}
-          <div
-            ref={dropdownRef}
-            className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} ${
-              openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
-            } w-56 bg-surface rounded-lg shadow-lg border border-border z-20 overflow-hidden`}
-          >
-            <div className="py-1">
-              {actions.map((action, index) => (
-                <div key={index}>
-                  {action.divider && index > 0 && (
-                    <div className="my-1 border-t border-border"></div>
-                  )}
-                  <button
-                    onClick={() => handleActionClick(action)}
-                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${
-                      action.variant === 'danger'
-                        ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                        : 'text-gray-700 dark:text-gray-200 hover:bg-surface-hover'
-                    }`}
-                  >
-                    <div className="w-5 h-5 flex-shrink-0">
-                      {action.icon}
-                    </div>
-                    <span className="font-medium">{action.label}</span>
-                  </button>
-                </div>
-              ))}
+      {isOpen &&
+        mounted &&
+        createPortal(
+          <>
+            {/* Backdrop: click-outside to close */}
+            <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
+
+            {/* Dropdown Menu */}
+            <div
+              ref={dropdownRef}
+              style={menuStyle}
+              className="w-56 bg-surface rounded-lg shadow-lg border border-border z-[9999] overflow-hidden"
+            >
+              <div className="py-1">
+                {actions.map((action, index) => (
+                  <div key={index}>
+                    {action.divider && index > 0 && (
+                      <div className="my-1 border-t border-border"></div>
+                    )}
+                    <button
+                      onClick={() => handleActionClick(action)}
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${
+                        action.variant === 'danger'
+                          ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                          : 'text-gray-700 dark:text-gray-200 hover:bg-surface-hover'
+                      }`}
+                    >
+                      <div className="w-5 h-5 flex-shrink-0">
+                        {action.icon}
+                      </div>
+                      <span className="font-medium">{action.label}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>,
+          document.body
+        )}
     </div>
   );
 }
-

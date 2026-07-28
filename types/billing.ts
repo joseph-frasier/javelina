@@ -103,12 +103,22 @@ export interface OrgSubscriptionDetails {
 // API RESPONSE TYPES
 // =====================================================
 
+export interface PlanPricing {
+  active: boolean;
+  discount_type: 'percent' | 'waive' | 'price_override' | null;
+  base_cents: number | null;
+  effective_cents: number | null;
+}
+
 /**
  * Response from /api/subscriptions/current
  */
 export interface CurrentSubscriptionResponse {
   subscription: OrgSubscriptionDetails | null;
   plan: Plan | null;
+  /** True when an active org-level pricing rule applies to this org's billing. */
+  custom_pricing?: boolean;
+  effective_pricing?: PlanPricing;
 }
 
 // =====================================================

@@ -58,6 +58,7 @@ export interface DomainPricingResponse {
   domain: string;
   available: boolean;
   pricing: DomainPricing;
+  maxYears?: number;
 }
 
 export interface DomainCheckoutParams {

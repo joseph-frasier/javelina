@@ -1,84 +1,33 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
-import { AdminStatCard } from '@/components/admin/AdminStatCard';
-import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
-import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/AdminDataTable';
+import CustomPricingPanel from '@/components/admin/CustomPricingPanel';
 import { adminApi } from '@/lib/api-client';
 import { useToastStore } from '@/lib/stores/toast-store';
-import { formatDateWithRelative } from '@/lib/utils/time';
 
 interface Organization {
   id: string;
   name: string;
   description?: string;
-  created_at: string;
-  updated_at?: string;
   is_active?: boolean;
-  billing_phone?: string;
-  billing_email?: string;
-  billing_address?: string;
-  billing_city?: string;
-  billing_state?: string;
-  billing_zip?: string;
-  admin_contact_email?: string;
-  admin_contact_phone?: string;
-  member_count?: number;
-  zone_count?: number;
-  record_count?: number;
 }
-
-interface Member {
-  organization_id: string;
-  user_id: string;
-  role: string;
-  profiles: { name: string; email: string };
-}
-
-const ROLE_DOT_COLOR: Record<string, string> = {
-  SuperAdmin: 'bg-accent',
-  Admin: 'bg-blue-electric',
-  BillingContact: 'bg-blue-500',
-  Editor: 'bg-green-500',
-  Viewer: 'bg-gray-slate',
-};
-
-const ROLE_LABEL_MAP: Record<string, string> = {
-  SuperAdmin: 'Super Admin',
-  BillingContact: 'Billing Contact',
-};
 
 export default function AdminOrganizationDetailPage() {
   const params = useParams();
   const orgId = params.id as string;
   const { addToast } = useToastStore();
   const [org, setOrg] = useState<Organization | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
 
   const fetchData = useCallback(async () => {
     try {
       const orgData = await adminApi.getOrganization(orgId);
       setOrg(orgData as Organization);
-
-      const membersData = await adminApi.getOrganizationMembers(orgId);
-      setMembers(
-        (membersData || []).map((m: any) => ({
-          organization_id: orgId,
-          user_id: m.user_id,
-          role: m.role,
-          profiles: {
-            name: m.name,
-            email: m.email,
-          },
-        }))
-      );
     } catch (error: any) {
       console.error('Failed to fetch organization data:', error);
       addToast('error', error.message || 'Failed to fetch organization data');
@@ -92,38 +41,6 @@ export default function AdminOrganizationDetailPage() {
       fetchData();
     }
   }, [orgId, fetchData]);
-
-  const memberColumns: AdminDataTableColumn<Member>[] = useMemo(
-    () => [
-      {
-        key: 'name',
-        header: 'Name',
-        sortValue: (m) => (m.profiles?.name ?? '').toLowerCase(),
-        render: (m) => <span className="text-text">{m.profiles?.name}</span>,
-      },
-      {
-        key: 'email',
-        header: 'Email',
-        sortValue: (m) => (m.profiles?.email ?? '').toLowerCase(),
-        render: (m) => <span className="text-text-muted">{m.profiles?.email}</span>,
-      },
-      {
-        key: 'role',
-        header: 'Role',
-        sortValue: (m) => (m.role ?? '').toLowerCase(),
-        render: (m) => (
-          <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-medium border bg-white dark:bg-gray-700 border-border-strong dark:border-gray-600 text-text">
-            <span
-              aria-hidden="true"
-              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ROLE_DOT_COLOR[m.role] ?? 'bg-text-muted'}`}
-            />
-            {ROLE_LABEL_MAP[m.role] ?? m.role}
-          </span>
-        ),
-      },
-    ],
-    []
-  );
 
   if (loading) {
     return (
@@ -190,90 +107,7 @@ export default function AdminOrganizationDetailPage() {
         )}
 
         <Card>
-          <div className="flex gap-4 mb-6 border-b border-border pb-4">
-            {(['overview', 'members'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 font-medium transition-colors ${
-                  activeTab === tab
-                    ? 'text-text border-b-2 border-accent'
-                    : 'text-text-muted hover:text-text'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-text mb-4">
-                  Basic Information
-                </h3>
-                <div className="rounded-lg border border-border bg-surface-alt p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-text-muted">Status</span>
-                    <AdminStatusBadge
-                      variant={org.is_active === false ? 'danger' : 'success'}
-                      label={org.is_active === false ? 'Disabled' : 'Active'}
-                    />
-                  </div>
-                  {org.created_at && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-text-muted">Created</span>
-                      <span className="text-sm text-text">
-                        {formatDateWithRelative(org.created_at).absolute}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-text mb-4">
-                  Usage Statistics
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <AdminStatCard
-                    label="Members"
-                    tone="info"
-                    value={org.member_count || 0}
-                  />
-                  <AdminStatCard
-                    label="Zones"
-                    tone="accent"
-                    value={org.zone_count || 0}
-                  />
-                  <AdminStatCard
-                    label="Records"
-                    tone="success"
-                    value={org.record_count || 0}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'members' && (
-            <div className="space-y-4">
-              <p className="text-sm text-text-muted">
-                {members.length} {members.length === 1 ? 'member' : 'members'}
-              </p>
-              <AdminDataTable<Member>
-                data={members}
-                columns={memberColumns}
-                getRowId={(m) => m.user_id}
-                pageSize={25}
-                emptyState={
-                  <div className="py-8 text-center">
-                    <p className="text-text-muted text-sm">No members</p>
-                  </div>
-                }
-              />
-            </div>
-          )}
+          <CustomPricingPanel orgId={org.id} orgName={org.name} />
         </Card>
       </AdminLayout>
     </AdminProtectedRoute>

@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/Card';
 import Dropdown from '@/components/ui/Dropdown';
 import { domainsApi } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { domainYearOptions } from '@/lib/domains/year-options';
 
 const formatPhoneNumber = (value: string): string => {
   const digits = value.replace(/\D/g, '').slice(0, 10);
@@ -91,6 +92,37 @@ export default function DomainCheckoutForm({
   const [error, setError] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState('');
   const [years, setYears] = useState(1);
+  const [maxYears, setMaxYears] = useState<number | undefined>(undefined);
+  const [orgPrice, setOrgPrice] = useState<number | undefined>(undefined);
+
+  // Pricing and the year ceiling are both per-org (a discount rule cuts the
+  // price and caps the term to 1). Re-fetch when the chosen org changes; clear
+  // both back to the catalog defaults when no org is selected or on failure —
+  // showing the catalog price is the safe wrong answer, an unrelated org's
+  // discounted one is not.
+  useEffect(() => {
+    if (!orgId) { setMaxYears(undefined); setOrgPrice(undefined); return; }
+    let cancelled = false;
+    domainsApi.getPricing(domain, orgId)
+      .then((res) => {
+        if (cancelled) return;
+        setMaxYears(res.maxYears);
+        setOrgPrice(res.pricing?.price);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMaxYears(undefined);
+        setOrgPrice(undefined);
+      });
+    return () => { cancelled = true; };
+  }, [orgId, domain]);
+
+  // Never leave a now-disallowed selection in state.
+  useEffect(() => {
+    if (maxYears != null && years > maxYears) setYears(1);
+  }, [maxYears, years]);
+
+  const yearChoices = domainYearOptions([1, 2, 3, 5, 10], maxYears);
   const [contact, setContact] = useState<DomainContact>({
     first_name: '',
     last_name: '',
@@ -155,7 +187,11 @@ export default function DomainCheckoutForm({
     }
   };
 
-  const totalPrice = price * years;
+  // Prefer the org-aware price from the pricing endpoint over the catalog price
+  // carried in from search — otherwise a discounted org is quoted full price
+  // here and then charged the discounted amount at Stripe.
+  const unitPrice = orgPrice ?? price;
+  const totalPrice = unitPrice * years;
   const type = registrationType === 'transfer' ? 'Transfer' : 'Register';
 
   const formContent = (
@@ -193,7 +229,7 @@ export default function DomainCheckoutForm({
               onChange={(e) => setYears(Number(e.target.value))}
               className="hidden md:block px-2 py-1 rounded-md border border-border bg-surface-alt text-text text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
             >
-              {[1, 2, 3, 5, 10].map((y) => (
+              {yearChoices.map((y) => (
                 <option key={y} value={y}>{y}yr</option>
               ))}
             </select>
@@ -211,10 +247,16 @@ export default function DomainCheckoutForm({
             </button>
 
             <div className="flex items-baseline gap-1.5">
-              <span className="text-xs text-text-muted">${price.toFixed(2)}/yr</span>
+              <span className="text-xs text-text-muted">${unitPrice.toFixed(2)}/yr</span>
               <span className="font-black text-accent text-base">${totalPrice.toFixed(2)}</span>
             </div>
           </div>
+
+          {maxYears === 1 && (
+            <p className="mb-5 text-xs text-text-muted">
+              Discounted pricing is limited to 1 year at a time.
+            </p>
+          )}
 
           {/* Mobile year picker modal — portal with GSAP animations matching Modal.tsx */}
           {shouldRenderYearModal && mounted && createPortal(
@@ -242,7 +284,7 @@ export default function DomainCheckoutForm({
                     </svg>
                   </button>
                 </div>
-                {[1, 2, 3, 5, 10].map((y) => (
+                {yearChoices.map((y) => (
                   <button
                     key={y}
                     type="button"

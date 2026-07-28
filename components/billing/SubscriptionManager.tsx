@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UsageMeter } from './UsageMeter';
 import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import type { CurrentSubscriptionResponse, OrgUsageWithLimits } from '@/types/billing';
+import { formatUsdCents } from '@/lib/billing/format';
 
 interface SubscriptionManagerProps {
   orgId: string;
@@ -132,17 +133,50 @@ export function SubscriptionManager({
           </span>
         </div>
 
-        {/* Price */}
-        {subscription?.plan?.metadata?.price && (
+        {/* Price
+            `metadata.price` is a JSON number and the enterprise plans store 0,
+            so a truthiness check hides this whole block — discounted price,
+            chip and note included — for precisely the negotiated-pricing
+            customers it exists to serve. Show it whenever there is either an
+            effective price or a catalog price to render. */}
+        {(subscription?.effective_pricing?.active ||
+          subscription?.plan?.metadata?.price != null) && (
           <div className="mb-4 pb-4 border-b border-border -mx-6 px-6">
             <div className="flex flex-col">
-              <span className="text-3xl font-black text-text">
-                ${Number(subscription.plan.metadata.price).toFixed(2)}
-              </span>
+              {subscription?.effective_pricing?.active &&
+              subscription.effective_pricing.effective_cents != null ? (
+                <div className="flex items-baseline gap-2">
+                  {/* Only strike through a catalog price that is genuinely
+                      higher. Enterprise catalog price is 0, and "$0.00" struck
+                      through beside the real price reads as a rise from free. */}
+                  {subscription.effective_pricing.base_cents != null &&
+                    subscription.effective_pricing.base_cents >
+                      subscription.effective_pricing.effective_cents && (
+                      <span className="text-lg text-text-muted line-through">
+                        {formatUsdCents(subscription.effective_pricing.base_cents)}
+                      </span>
+                    )}
+                  <span className="text-3xl font-black text-text">
+                    {formatUsdCents(subscription.effective_pricing.effective_cents)}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-teal/10 text-blue-teal">
+                    Custom pricing
+                  </span>
+                </div>
+              ) : subscription?.plan?.metadata?.price != null ? (
+                <span className="text-3xl font-black text-text">
+                  ${Number(subscription.plan.metadata.price).toFixed(2)}
+                </span>
+              ) : null}
               <span className="text-xs text-text-muted font-light uppercase tracking-wide mt-1">
-                {subscription.plan.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
+                {subscription?.plan?.billing_interval ? `/${subscription.plan.billing_interval}` : 'ONE-TIME'}
               </span>
             </div>
+            {subscription?.custom_pricing && !subscription?.effective_pricing?.active && (
+              <p className="mt-1 text-sm text-blue-teal">
+                Custom pricing applied to your account.
+              </p>
+            )}
           </div>
         )}
 
