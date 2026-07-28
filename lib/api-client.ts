@@ -9,6 +9,7 @@
  */
 
 import { getIdleSync } from '@/lib/idle/idleSync';
+import type { PlanPricing } from '@/types/billing';
 
 // Error class for API errors
 export class ApiError extends Error {
@@ -731,6 +732,13 @@ export const adminApi = {
   },
 
   /**
+   * Get effective plan pricing for an organization (admin only)
+   */
+  getOrgPlanPricing: (orgId: string): Promise<PlanPricing> => {
+    return apiClient.get(`/admin/organizations/${orgId}/plan-pricing`);
+  },
+
+  /**
    * Get all audit logs (admin only)
    */
   getAuditLogs: (params?: { page?: number; limit?: number; table_name?: string; action?: string; actor_type?: string }) => {
@@ -876,6 +884,47 @@ export const adminApi = {
         override_id: string;
       }>(`/admin/intake/leads/${leadId}/services/${service}/override`, body),
   },
+};
+
+// Org Custom Pricing API
+export type PricingCategory = 'plan' | 'mailbox' | 'domain';
+export type PricingScope = 'all' | 'category';
+export type PricingDiscountType = 'percent' | 'waive' | 'price_override';
+
+export interface PricingRule {
+  id: string;
+  org_id: string;
+  scope: PricingScope;
+  category: PricingCategory | null;
+  discount_type: PricingDiscountType;
+  value_bps: number | null;
+  value_cents: number | null;
+  effective_from: string;
+  effective_until: string | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  archived_at: string | null;
+}
+
+export interface CreatePricingRuleInput {
+  scope: PricingScope;
+  category: PricingCategory | null;
+  discount_type: PricingDiscountType;
+  value_bps?: number | null;
+  value_cents?: number | null;
+  effective_from?: string;
+  effective_until?: string | null;
+  note?: string | null;
+}
+
+export const pricingApi = {
+  list: (orgId: string): Promise<{ active: PricingRule[]; history: PricingRule[] }> =>
+    apiClient.get(`/admin/organizations/${orgId}/pricing-rules`),
+  create: (orgId: string, input: CreatePricingRuleInput): Promise<PricingRule> =>
+    apiClient.post(`/admin/organizations/${orgId}/pricing-rules`, input),
+  archive: (orgId: string, ruleId: string): Promise<void> =>
+    apiClient.delete(`/admin/organizations/${orgId}/pricing-rules/${ruleId}`),
 };
 
 // Discounts/Promotion Codes API
@@ -1462,8 +1511,11 @@ export const domainsApi = {
     return apiClient.get(`/domains/search?${params.toString()}`);
   },
 
-  getPricing: (domain: string): Promise<DomainPricingResponse> =>
-    apiClient.get(`/domains/pricing?domain=${encodeURIComponent(domain)}`),
+  getPricing: (domain: string, orgId?: string): Promise<DomainPricingResponse> => {
+    const params = new URLSearchParams({ domain });
+    if (orgId) params.set("org_id", orgId);
+    return apiClient.get(`/domains/pricing?${params.toString()}`);
+  },
 
   checkout: (params: DomainCheckoutParams): Promise<DomainCheckoutResponse> =>
     apiClient.post("/domains/checkout", params),

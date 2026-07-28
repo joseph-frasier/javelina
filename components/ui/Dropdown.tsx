@@ -6,6 +6,10 @@ import { clsx } from 'clsx';
 interface DropdownOption {
   value: string;
   label: string;
+  /** Render the option grayed-out and non-selectable. */
+  disabled?: boolean;
+  /** Optional hover tooltip — useful to explain why an option is disabled. */
+  title?: string;
 }
 
 interface DropdownProps {
@@ -106,12 +110,17 @@ export default function Dropdown({
                 type="button"
                 role="option"
                 aria-selected={option.value === value}
-                onClick={() => handleSelect(option.value)}
+                aria-disabled={option.disabled || undefined}
+                disabled={option.disabled}
+                title={option.title}
+                onClick={() => !option.disabled && handleSelect(option.value)}
                 className={clsx(
                   'w-full px-3 py-2 text-left text-sm transition-colors duration-100',
-                  option.value === value
-                    ? 'bg-accent-soft text-accent font-medium'
-                    : 'text-text hover:bg-surface-hover'
+                  option.disabled
+                    ? 'text-text-muted opacity-50 cursor-not-allowed'
+                    : option.value === value
+                      ? 'bg-accent-soft text-accent font-medium'
+                      : 'text-text hover:bg-surface-hover'
                 )}
               >
                 {option.label}
