@@ -93,15 +93,27 @@ export default function DomainCheckoutForm({
   const [authCode, setAuthCode] = useState('');
   const [years, setYears] = useState(1);
   const [maxYears, setMaxYears] = useState<number | undefined>(undefined);
+  const [orgPrice, setOrgPrice] = useState<number | undefined>(undefined);
 
-  // The year ceiling is per-org (a discount rule caps it to 1). Re-fetch when the
-  // chosen org changes; clear back to "no ceiling" when no org is selected.
+  // Pricing and the year ceiling are both per-org (a discount rule cuts the
+  // price and caps the term to 1). Re-fetch when the chosen org changes; clear
+  // both back to the catalog defaults when no org is selected or on failure —
+  // showing the catalog price is the safe wrong answer, an unrelated org's
+  // discounted one is not.
   useEffect(() => {
-    if (!orgId) { setMaxYears(undefined); return; }
+    if (!orgId) { setMaxYears(undefined); setOrgPrice(undefined); return; }
     let cancelled = false;
     domainsApi.getPricing(domain, orgId)
-      .then((res) => { if (!cancelled) setMaxYears(res.maxYears); })
-      .catch(() => { if (!cancelled) setMaxYears(undefined); });
+      .then((res) => {
+        if (cancelled) return;
+        setMaxYears(res.maxYears);
+        setOrgPrice(res.pricing?.price);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMaxYears(undefined);
+        setOrgPrice(undefined);
+      });
     return () => { cancelled = true; };
   }, [orgId, domain]);
 
@@ -175,7 +187,11 @@ export default function DomainCheckoutForm({
     }
   };
 
-  const totalPrice = price * years;
+  // Prefer the org-aware price from the pricing endpoint over the catalog price
+  // carried in from search — otherwise a discounted org is quoted full price
+  // here and then charged the discounted amount at Stripe.
+  const unitPrice = orgPrice ?? price;
+  const totalPrice = unitPrice * years;
   const type = registrationType === 'transfer' ? 'Transfer' : 'Register';
 
   const formContent = (
@@ -231,7 +247,7 @@ export default function DomainCheckoutForm({
             </button>
 
             <div className="flex items-baseline gap-1.5">
-              <span className="text-xs text-text-muted">${price.toFixed(2)}/yr</span>
+              <span className="text-xs text-text-muted">${unitPrice.toFixed(2)}/yr</span>
               <span className="font-black text-accent text-base">${totalPrice.toFixed(2)}</span>
             </div>
           </div>
