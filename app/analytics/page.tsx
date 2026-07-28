@@ -1,32 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import Dropdown from '@/components/ui/Dropdown';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuthStore } from '@/lib/stores/auth-store';
 // No longer need Supabase client - using Express API with session cookies
 // Recharts is imported but not currently used (shows placeholder messages)
 // When analytics are implemented, consider dynamic imports to reduce bundle size
 
-// All API calls routed through same-origin proxy (see next.config.ts rewrites)
-const API_PROXY_BASE = '/api/backend';
-
-interface Organization {
-  id: string;
-  name: string;
-}
-
 interface Zone {
   id: string;
   name: string;
-  organization_id: string;
 }
 
 export default function AnalyticsPage() {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [zones, setZones] = useState<Zone[]>([]);
-  
+  const user = useAuthStore((s) => s.user);
+
+  // Sourced from the profile the auth store already holds rather than
+  // refetching it. This page renders a "Coming soon" placeholder behind
+  // pointer-events-none, so it must not issue requests of its own.
+  const organizations = useMemo(
+    () => (user?.organizations || []).map((org) => ({ id: org.id, name: org.name })),
+    [user?.organizations]
+  );
+
+  // The zone filter is inert while analytics is a placeholder. Populating it
+  // previously cost one sequential request per organization on every visit.
+  const zones: Zone[] = [];
+
+
   const [selectedOrg, setSelectedOrg] = useState('all');
   const [selectedZone, setSelectedZone] = useState('all');
   const [startDate, setStartDate] = useState(() => {
@@ -37,106 +41,12 @@ export default function AnalyticsPage() {
   const [endDate, setEndDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
   });
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [lastRefresh] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
-
-  // Fetch organizations via Express API (uses session cookie)
-  useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        // apiClient handles session cookies automatically
-        const response = await fetch(`${API_PROXY_BASE}/users/profile`, {
-          credentials: 'include',
-        });
-
-        if (!response.ok) return;
-
-        const result = await response.json();
-        const profileData = result.data || result;
-        
-        const orgs = (profileData.organizations || []).map((org: any) => ({
-          id: org.id,
-          name: org.name,
-        }));
-
-        setOrganizations(orgs);
-      } catch (error) {
-        console.error('Error fetching organizations:', error);
-      }
-    };
-
-    fetchOrganizations();
-  }, []);
-
-  // Fetch zones when organization changes via Express API (uses session cookie)
-  useEffect(() => {
-    const fetchZones = async () => {
-      try {
-        if (selectedOrg === 'all') {
-          // Fetch zones from all user's orgs
-          const allZones: Zone[] = [];
-          
-          for (const org of organizations) {
-            const response = await fetch(`${API_PROXY_BASE}/zones/organization/${org.id}`, {
-              credentials: 'include',
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              const zonesData = result.data || result || [];
-              allZones.push(...zonesData.map((z: any) => ({
-                id: z.id,
-                name: z.name,
-                organization_id: z.organization_id,
-              })));
-            }
-          }
-
-          setZones(allZones);
-        } else {
-          // Fetch zones for selected org
-          const response = await fetch(`${API_PROXY_BASE}/zones/organization/${selectedOrg}`, {
-            credentials: 'include',
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            const zonesData = result.data || result || [];
-            setZones(zonesData.map((z: any) => ({
-              id: z.id,
-              name: z.name,
-              organization_id: z.organization_id,
-            })));
-          } else {
-            setZones([]);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching zones:', error);
-        setZones([]);
-      }
-      
-      // Reset zone selection
-      setSelectedZone('all');
-    };
-
-    if (organizations.length > 0) {
-      fetchZones();
-    }
-  }, [selectedOrg, organizations]);
 
   // Set mounted state on client
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastRefresh(new Date());
-    }, 30000);
-
-    return () => clearInterval(interval);
   }, []);
 
   return (
