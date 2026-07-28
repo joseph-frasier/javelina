@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -29,7 +29,7 @@ export function Sidebar({
 }: SidebarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const { expandedOrgs, toggleOrg, selectAndExpand } = useHierarchyStore();
   const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
   const { data: businesses } = useQuery({
@@ -44,7 +44,9 @@ export function Sidebar({
   const zoneContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const prevExpandedOrgs = useRef<Set<string>>(new Set());
 
-  const userOrganizations = user?.organizations || [];
+  // Memoized so the array identity is stable across renders - it feeds child
+  // props and effect dependency lists further down.
+  const userOrganizations = useMemo(() => user?.organizations || [], [user?.organizations]);
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 

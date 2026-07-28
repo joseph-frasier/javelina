@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        // Avatars in Supabase Storage. Subdomain is wildcarded because the dev
+        // and production projects are different Supabase instances.
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/**",
+      },
+    ],
+  },
   experimental: {
     // The wizard's photo upload server action passes multipart bodies up to
     // 10 × 25 MB. Default cap is 1 MB.
