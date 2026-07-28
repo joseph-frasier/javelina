@@ -11,6 +11,11 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 const topology = worldData as unknown as Topology<{ countries: GeometryCollection }>;
 const countries = feature(topology, topology.objects.countries);
 
+// Both `countries` and `pathGenerator` are module-scope constants, so every
+// country's path string is static. Projecting ~180 features on each render was
+// pure waste.
+const COUNTRY_PATHS: string[] = countries.features.map((f) => pathGenerator(f) ?? '');
+
 interface WorldMapSvgProps {
   selectedId: string | null;
   hoveredId: string | null;
@@ -40,10 +45,10 @@ export function WorldMapSvg({ selectedId, hoveredId, onSelect, onHover }: WorldM
       <rect width="2000" height="1000" fill="url(#grid)" />
 
       {/* Country paths */}
-      {countries.features.map((f, i) => (
+      {COUNTRY_PATHS.map((d, i) => (
         <path
           key={i}
-          d={pathGenerator(f) ?? ''}
+          d={d}
           fill="rgba(255,255,255,0.04)"
           stroke="rgba(255,255,255,0.08)"
           strokeWidth="0.5"
