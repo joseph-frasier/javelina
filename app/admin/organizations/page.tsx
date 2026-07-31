@@ -22,6 +22,13 @@ import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { pricingStatusBadge } from './pricingBadge';
 
+/**
+ * Upper bound on pages fetched concurrently (100 records each). Bounded rather
+ * than unbounded so a large tenant cannot fan out arbitrarily; the UI surfaces
+ * a notice when the cap is reached so truncation is never silent.
+ */
+const MAX_PAGES = 20;
+
 interface Organization {
   id: string;
   name: string;
@@ -50,6 +57,7 @@ function AdminOrganizationsPageContent() {
   const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [resultsTruncated, setResultsTruncated] = useState(false);
   const [filteredOrgs, setFilteredOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
@@ -93,17 +101,31 @@ function AdminOrganizationsPageContent() {
 
   const fetchOrganizations = useCallback(async () => {
     try {
-      // Fetch all pages (backend caps at 100 per request)
+      // Backend caps at 100 per request. Previously this walked pages in a
+      // sequential do/while, so every page was a serial round-trip before
+      // anything rendered. Fetch page 1, then the rest concurrently.
       const pageSize = 100;
-      let allOrgs: Organization[] = [];
-      let page = 1;
-      let batch: Organization[];
-      do {
-        batch = ((await adminApi.listOrganizations({ page, limit: pageSize })) || []) as Organization[];
-        allOrgs = allOrgs.concat(batch);
-        page++;
-      } while (batch.length === pageSize);
+      const first = ((await adminApi.listOrganizations({ page: 1, limit: pageSize })) ||
+        []) as Organization[];
+
+      let allOrgs: Organization[] = [...first];
+
+      if (first.length === pageSize) {
+        const rest = await Promise.all(
+          Array.from({ length: MAX_PAGES - 1 }, (_, i) =>
+            adminApi
+              .listOrganizations({ page: i + 2, limit: pageSize })
+              .then((b) => (b || []) as Organization[])
+              .catch(() => [] as Organization[])
+          )
+        );
+        for (const batch of rest) {
+          allOrgs = allOrgs.concat(batch);
+        }
+      }
+
       setOrgs(allOrgs);
+      setResultsTruncated(allOrgs.length >= MAX_PAGES * pageSize);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
       addToast('error', 'Failed to load organizations from API');
@@ -473,6 +495,11 @@ function AdminOrganizationsPageContent() {
         )}
 
         <Card title="Organizations List" description="User groups">
+          {resultsTruncated && (
+            <div className="mb-4 rounded-md border border-border bg-surface-alt px-3 py-2 text-sm text-text-muted">
+              Showing the first {MAX_PAGES * 100} organizations. Use search to narrow results.
+            </div>
+          )}
           <div className="mb-4">
             <div className="relative">
               <input

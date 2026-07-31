@@ -38,14 +38,27 @@ export default async function OrganizationPage({
     );
   }
 
-  // Fetch organization data from Express API
-  const orgResponse = await fetch(`${API_BASE_URL}/api/organizations/${orgId}`, {
-    method: 'GET',
-    headers: {
-      'Cookie': `javelina_session=${sessionCookie.value}`,
-    },
-    cache: 'no-store',
-  });
+  const authHeaders = {
+    'Cookie': `javelina_session=${sessionCookie.value}`,
+  };
+
+  // All four reads are independent of each other's data — only the error
+  // checks below are ordered. Awaiting them serially cost ~4x the necessary
+  // TTFB on what is one of the two heaviest pages in the app.
+  const [orgResponse, userRole, zonesResponse, auditLogs] = await Promise.all([
+    fetch(`${API_BASE_URL}/api/organizations/${orgId}`, {
+      method: 'GET',
+      headers: authHeaders,
+      cache: 'no-store',
+    }),
+    getUserRoleInOrganization(orgId),
+    fetch(`${API_BASE_URL}/api/zones/organization/${orgId}`, {
+      method: 'GET',
+      headers: authHeaders,
+      cache: 'no-store',
+    }),
+    getOrganizationAuditLogs(orgId, 10).catch(() => []),
+  ]);
 
   if (!orgResponse.ok) {
     const errorData = await orgResponse.json().catch(() => ({}));
@@ -81,9 +94,6 @@ export default async function OrganizationPage({
   const orgResult = await orgResponse.json();
   const org = orgResult.data || orgResult;
 
-  // Fetch user's role in this organization
-  const userRole = await getUserRoleInOrganization(orgId);
-  
   if (!userRole) {
     return (
       <div className="max-w-[1600px] 2xl:max-w-[1900px] 3xl:max-w-full mx-auto lg:px-6 py-8">
@@ -92,15 +102,6 @@ export default async function OrganizationPage({
       </div>
     );
   }
-
-  // Fetch zones for this organization from Express API
-  const zonesResponse = await fetch(`${API_BASE_URL}/api/zones/organization/${orgId}`, {
-    method: 'GET',
-    headers: {
-      'Cookie': `javelina_session=${sessionCookie.value}`,
-    },
-    cache: 'no-store',
-  });
 
   let zonesWithData = [];
   let zonesCount = 0;
@@ -120,12 +121,13 @@ export default async function OrganizationPage({
     }));
   }
 
-  // Editors only see DNS-related audit logs — skip org-level audit fetch for them
+  // Editors only see DNS-related audit logs. The fetch above runs
+  // unconditionally so it can be parallelized with the other three reads; the
+  // role gate is applied here instead. The response is discarded for Editors,
+  // so nothing they shouldn't see is ever rendered.
   const recentActivity =
     userRole !== 'Editor'
-      ? await Promise.all(
-          (await getOrganizationAuditLogs(orgId, 10)).map(log => formatAuditLog(log))
-        )
+      ? await Promise.all(auditLogs.map(log => formatAuditLog(log)))
       : [];
 
   // Prepare organization data for client component

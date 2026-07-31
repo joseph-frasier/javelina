@@ -193,23 +193,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           return
         }
 
-        // Check session with Express backend
+        // Fetch the profile directly. It already returns 401 for an invalid
+        // session, so a separate /auth/me probe would only add a serial
+        // round-trip to the critical path of every authenticated page load.
         try {
-          authLog.log('[AUTH] Checking session with backend')
-          const response = await fetch('/api/backend-auth/me', {
-            credentials: 'include',
-          })
-
-          authLog.log('[AUTH] Session check response:', response.status)
-
-          if (response.ok) {
-            // Session is valid, fetch full profile
-            await get().fetchProfile()
-          } else {
-            // No valid session
-            authLog.log('[AUTH] No valid session, setting unauthenticated state')
-            set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
-          }
+          await get().fetchProfile()
         } catch (error) {
           authLog.error('[AUTH] Error initializing auth:', error)
           set({ user: null, isAuthenticated: false, profileReady: false, profileError: null })
@@ -233,12 +221,19 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           if (!response.ok) {
             const errorText = await response.text()
             authLog.error('[AUTH] Error fetching profile:', response.status, errorText)
-            
+
+            // 401/403 simply means "not signed in" — a normal state, not a
+            // failure. This path is now reached by logged-out visitors too,
+            // since initializeAuth no longer probes /auth/me first.
+            const isUnauthenticated = response.status === 401 || response.status === 403
+
             set({
               user: null,
               isAuthenticated: false,
               profileReady: false,
-              profileError: 'We could not load your profile. Please sign out and try again.',
+              profileError: isUnauthenticated
+                ? null
+                : 'We could not load your profile. Please sign out and try again.',
             })
             return
           }

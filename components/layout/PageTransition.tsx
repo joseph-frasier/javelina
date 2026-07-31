@@ -22,12 +22,12 @@ export function PageTransition({ children }: PageTransitionProps) {
         contentRef.current,
         {
           opacity: 0,
-          x: 30,
+          x: 12,
         },
         {
           opacity: 1,
           x: 0,
-          duration: 0.5,
+          duration: 0.25,
           ease: 'power2.out',
           onComplete: () => {
             setIsInitialMount(false);
@@ -37,37 +37,32 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [isInitialMount]);
 
-  // Animate on route change
+  // Animate on route change: fade the incoming content in only.
+  //
+  // There is deliberately no fade-OUT leg. Animating the outgoing page to
+  // opacity 0 blanks the screen for the duration of that tween before the new
+  // page starts appearing, which the user feels as latency on every single
+  // navigation regardless of how fast the data actually loads.
   useEffect(() => {
     if (!isInitialMount && contentRef.current) {
       // Scroll to top immediately
       if (containerRef.current) {
         containerRef.current.scrollTop = 0;
       }
-      
-      // Slide out to left + fade out, then slide in from right + fade in
-      const timeline = gsap.timeline();
-      
-      timeline
-        .to(contentRef.current, {
+
+      gsap.fromTo(
+        contentRef.current,
+        {
           opacity: 0,
-          x: -30,
-          duration: 0.3,
-          ease: 'power2.in',
-        })
-        .fromTo(
-          contentRef.current,
-          {
-            opacity: 0,
-            x: 30,
-          },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.5,
-            ease: 'power2.out',
-          }
-        );
+          x: 12,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.18,
+          ease: 'power2.out',
+        }
+      );
     }
   }, [pathname, isInitialMount]);
 

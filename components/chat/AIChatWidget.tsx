@@ -1,8 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { ChatBubble } from './ChatBubble';
-import { ChatWindow } from './ChatWindow';
+
+// Loaded on demand. AIChatWidget renders on every authenticated route via
+// ConditionalLayout, but the window starts closed - so ChatWindow (and the
+// GSAP/date-fns it pulls in) has no business being in the initial bundle.
+const ChatWindow = dynamic(
+  () => import('./ChatWindow').then((m) => m.ChatWindow),
+  { ssr: false }
+);
 
 interface AIChatWidgetProps {
   orgId?: string;

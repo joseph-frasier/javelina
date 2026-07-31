@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { clsx } from 'clsx';
@@ -22,7 +23,11 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps = {}) {
   const router = useRouter();
-  const { user, logout, profileReady } = useAuthStore();
+  // One selector per field. Destructuring the whole store re-renders this
+  // 450-line always-mounted component on every unrelated auth-store write.
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const profileReady = useAuthStore((state) => state.profileReady);
   const { general, setTheme } = useSettingsStore();
   const { currentOrgId } = useHierarchyStore();
   const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
@@ -356,9 +361,11 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                 aria-haspopup="true"
               >
                 {userAvatarUrl ? (
-                  <img
+                  <Image
                     src={userAvatarUrl}
                     alt={`${userName} avatar`}
+                    width={32}
+                    height={32}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -381,7 +388,13 @@ export function Header({ onMenuToggle, isMobileMenuOpen = false }: HeaderProps =
                         aria-hidden="true"
                       >
                         {userAvatarUrl ? (
-                          <img src={userAvatarUrl} alt="" className="w-full h-full object-cover" />
+                          <Image
+                            src={userAvatarUrl}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <span className="text-white font-semibold text-base">{userInitial}</span>
                         )}
