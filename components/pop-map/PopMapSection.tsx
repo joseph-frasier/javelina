@@ -1,11 +1,25 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { MapPin } from 'lucide-react';
-import { MapCard } from './MapCard';
 import { StatChips } from './StatChips';
 import { LocationDrawer } from './LocationDrawer';
 import { POPS } from './popData';
+
+// Deferred: MapCard pulls in a ~105KB TopoJSON world atlas plus topojson-client
+// and d3-geo, all of which were landing in the initial bundle of this marketing
+// page. The placeholder mirrors the card's real layout (header strip + 2:1 map)
+// so nothing shifts when it swaps in.
+const MapCard = dynamic(() => import('./MapCard').then((m) => m.MapCard), {
+  ssr: false,
+  loading: () => (
+    <div className="relative bg-[#131521] border border-white/10 rounded-2xl overflow-hidden">
+      <div className="h-[45px] border-b border-white/10" />
+      <div className="aspect-[2/1] w-full animate-pulse bg-white/5" />
+    </div>
+  ),
+});
 
 export function PopMapSection() {
   const [selectedId, setSelectedId] = useState<string | null>(null);

@@ -21,6 +21,13 @@ import { useToastStore } from '@/lib/stores/toast-store';
 import { formatDateWithRelative } from '@/lib/utils/time';
 import { getActivityStatus, getActivityBadge } from '@/lib/utils/activity';
 
+/**
+ * Upper bound on pages fetched concurrently (100 records each). Bounded rather
+ * than unbounded so a large tenant cannot fan out arbitrarily; the UI surfaces
+ * a notice when the cap is reached so truncation is never silent.
+ */
+const MAX_PAGES = 20;
+
 type ActivityVariant = 'success' | 'info' | 'neutral' | 'accent';
 
 const ACTIVITY_VARIANT_MAP: Record<string, ActivityVariant> = {
@@ -45,6 +52,7 @@ function AdminUsersPageContent() {
   const searchParams = useSearchParams();
   const { addToast } = useToastStore();
   const [users, setUsers] = useState<User[]>([]);
+  const [resultsTruncated, setResultsTruncated] = useState(false);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
@@ -85,17 +93,30 @@ function AdminUsersPageContent() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      // Fetch all pages (backend caps at 100 per request)
+      // Backend caps at 100 per request. Previously this walked pages in a
+      // sequential do/while, so 1,000 users meant 10 serial round-trips before
+      // anything rendered. Fetch page 1, then the rest concurrently.
       const pageSize = 100;
-      let allUsers: User[] = [];
-      let page = 1;
-      let batch: User[];
-      do {
-        batch = ((await adminApi.listUsers({ page, limit: pageSize })) || []) as User[];
-        allUsers = allUsers.concat(batch);
-        page++;
-      } while (batch.length === pageSize);
+      const first = ((await adminApi.listUsers({ page: 1, limit: pageSize })) || []) as User[];
+
+      let allUsers: User[] = [...first];
+
+      if (first.length === pageSize) {
+        const rest = await Promise.all(
+          Array.from({ length: MAX_PAGES - 1 }, (_, i) =>
+            adminApi
+              .listUsers({ page: i + 2, limit: pageSize })
+              .then((b) => (b || []) as User[])
+              .catch(() => [] as User[])
+          )
+        );
+        for (const batch of rest) {
+          allUsers = allUsers.concat(batch);
+        }
+      }
+
       setUsers(allUsers);
+      setResultsTruncated(allUsers.length >= MAX_PAGES * pageSize);
     } catch (error) {
       console.error('Failed to fetch users:', error);
       addToast('error', 'Failed to load users from API');
@@ -475,6 +496,11 @@ function AdminUsersPageContent() {
         )}
 
         <Card title="Users List" description="All registered users">
+          {resultsTruncated && (
+            <div className="mb-4 rounded-md border border-border bg-surface-alt px-3 py-2 text-sm text-text-muted">
+              Showing the first {MAX_PAGES * 100} users. Use search to narrow results.
+            </div>
+          )}
           {/* Lifted search input — preserves URL ?search= sync from searchParams effect */}
           <div className="mb-4">
             <div className="relative">

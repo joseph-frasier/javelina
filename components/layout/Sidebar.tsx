@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -12,7 +12,6 @@ import { useZones } from '@/lib/hooks/useZones';
 import { useTags } from '@/lib/hooks/useTags';
 import { AddOrganizationModal } from '@/components/modals/AddOrganizationModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
-import { organizationsApi } from '@/lib/api-client';
 import { type Tag, type ZoneTagAssignment } from '@/lib/api-client';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
 import { useQuery } from '@tanstack/react-query';
@@ -29,7 +28,7 @@ export function Sidebar({
 }: SidebarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const { expandedOrgs, toggleOrg, selectAndExpand } = useHierarchyStore();
   const { showDomainsIntegration, showOpenSrsStorefront } = useFeatureFlags();
   const { data: businesses } = useQuery({
@@ -44,40 +43,11 @@ export function Sidebar({
   const zoneContainerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const prevExpandedOrgs = useRef<Set<string>>(new Set());
 
-  const userOrganizations = user?.organizations || [];
+  // Memoized so the array identity is stable across renders - it feeds child
+  // props and effect dependency lists further down.
+  const userOrganizations = useMemo(() => user?.organizations || [], [user?.organizations]);
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-
-  const [pendingCheckoutOrgIds, setPendingCheckoutOrgIds] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    if (!user?.organizations?.length) {
-      setPendingCheckoutOrgIds(new Set());
-      return;
-    }
-    const fromProfile = new Set(
-      user.organizations
-        .filter((org) => org.pending_plan_code)
-        .map((org) => org.id)
-    );
-    if (fromProfile.size > 0) {
-      setPendingCheckoutOrgIds(fromProfile);
-      return;
-    }
-    Promise.all(
-      user.organizations.map((org) =>
-        organizationsApi.get(org.id).catch(() => null)
-      )
-    )
-      .then((results) => {
-        const pending = new Set(
-          results
-            .filter((o: any) => o?.pending_plan_code)
-            .map((o: any) => o.id)
-        );
-        setPendingCheckoutOrgIds(pending);
-      })
-      .catch(() => setPendingCheckoutOrgIds(new Set()));
-  }, [user?.organizations]);
 
   useEffect(() => {
     if (sidebarRef.current) {
@@ -171,8 +141,11 @@ export function Sidebar({
     return (
       <div className="space-y-0.5">
         {userOrganizations.map((org) => {
-          const hasPendingCheckout =
-            !!org.pending_plan_code || pendingCheckoutOrgIds.has(org.id);
+          // Straight from the profile payload. This used to OR in a Set built by
+          // fetching every org individually, because the profile endpoint did
+          // not return pending_plan_code. It does now, so the N-request fan-out
+          // from global chrome on every page load is gone.
+          const hasPendingCheckout = !!org.pending_plan_code;
           const isExpanded = expandedOrgs.has(org.id);
           return (
             <div key={org.id}>

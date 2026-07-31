@@ -55,12 +55,8 @@ export function Logo({ className = '', width = 150, height = 40, priority = fals
       attributeFilter: ['class'],
     });
     
-    // Fallback: Also check periodically in case observer fails
-    const intervalId = setInterval(checkTheme, 500);
-
     return () => {
       observer.disconnect();
-      clearInterval(intervalId);
     };
   }, []);
 

@@ -60,26 +60,31 @@ export default async function ZonePage({
 
   // If backend doesn't return organization, fetch it separately
   let organization = zoneData.organization || zoneData.organizations || null;
-  
-  if (!organization && zoneData.organization_id) {
-    const orgResponse = await fetch(`${API_BASE_URL}/api/organizations/${zoneData.organization_id}`, {
-      method: 'GET',
-      headers: {
-        'Cookie': `javelina_session=${sessionCookie.value}`,
-      },
-      cache: 'no-store',
-    });
 
-    if (orgResponse.ok) {
-      const orgResult = await orgResponse.json();
-      organization = orgResult.data || orgResult;
-    }
-  }
+  // Both remaining reads depend only on organization_id, so run them together
+  // rather than chaining the role lookup behind the organization fetch.
+  const needsOrgFetch = !organization && Boolean(zoneData.organization_id);
 
-  // Fetch user's role in the organization (needed for audit log visibility)
-  let userOrgRole: string | null = null;
-  if (zoneData.organization_id) {
-    userOrgRole = await getUserRoleInOrganization(zoneData.organization_id);
+  const [fetchedOrg, userOrgRole] = await Promise.all([
+    needsOrgFetch
+      ? fetch(`${API_BASE_URL}/api/organizations/${zoneData.organization_id}`, {
+          method: 'GET',
+          headers: {
+            'Cookie': `javelina_session=${sessionCookie.value}`,
+          },
+          cache: 'no-store',
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((r) => (r ? r.data || r : null))
+          .catch(() => null)
+      : Promise.resolve(null),
+    zoneData.organization_id
+      ? getUserRoleInOrganization(zoneData.organization_id)
+      : Promise.resolve(null),
+  ]);
+
+  if (fetchedOrg) {
+    organization = fetchedOrg;
   }
 
   return (
