@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION redeem_discount_code(
 ) RETURNS uuid[]
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_code   discount_codes%ROWTYPE;
@@ -35,6 +35,12 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'not_found' USING ERRCODE = 'P0001';
   END IF;
+
+  -- Serialize all redemptions for this org. The code row lock alone does not
+  -- cover the org_has_pricing guard below: two different codes redeemed for
+  -- the same org lock different rows, so without this they never serialize
+  -- and both can pass a guard that neither has yet invalidated.
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_org_id::text, 0));
 
   IF NOT v_code.is_active THEN
     RAISE EXCEPTION 'inactive' USING ERRCODE = 'P0001';

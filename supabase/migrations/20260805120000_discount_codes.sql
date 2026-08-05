@@ -23,7 +23,8 @@ CREATE TABLE discount_codes (
 
   CONSTRAINT duration_mode CHECK (num_nonnulls(duration_months, grant_ends_at) <= 1),
   CONSTRAINT duration_positive CHECK (duration_months IS NULL OR duration_months > 0),
-  CONSTRAINT max_redemptions_positive CHECK (max_redemptions IS NULL OR max_redemptions > 0)
+  CONSTRAINT max_redemptions_positive CHECK (max_redemptions IS NULL OR max_redemptions > 0),
+  CONSTRAINT code_is_upper CHECK (code = upper(code))
 );
 
 CREATE TABLE discount_code_rules (
