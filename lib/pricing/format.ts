@@ -9,7 +9,9 @@ export function categoryLabel(category: PricingCategory | null): string {
   }
 }
 
-export function formatRule(rule: PricingRule): string {
+export function formatRule(
+  rule: Pick<PricingRule, 'discount_type'> & Partial<Pick<PricingRule, 'value_bps' | 'value_cents'>>,
+): string {
   switch (rule.discount_type) {
     case 'percent': {
       const pct = (rule.value_bps ?? 0) / 100;
