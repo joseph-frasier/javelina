@@ -45,8 +45,13 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
   // once any draft targets 'all', a second rule can't be added at all, and
   // vice versa the 'all' option is disabled once a category rule exists.
   const hasAllRule = drafts.some((d) => d.target === 'all');
-  const hasCategoryRule = drafts.some((d) => d.target !== 'all');
   const canAddRule = !hasAllRule;
+
+  // Whether some OTHER draft targets a category — used to disable 'all' for a
+  // given row. Must exclude the row's own target, otherwise a lone category
+  // rule would disable switching itself back to 'all'.
+  const otherHasCategoryRule = (skipIndex: number) =>
+    drafts.some((d, i) => i !== skipIndex && d.target !== 'all');
 
   const reset = () => {
     setCode('');
@@ -84,6 +89,12 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
   const isGiveaway = drafts.some((d) => d.target === 'all' && d.discount_type === 'waive');
   const giveawayConfirmed = !isGiveaway || confirmText.trim().toUpperCase() === code.trim().toUpperCase();
 
+  // A blank field means "unlimited" and is legitimate. "0" or negative is not
+  // a valid limit — Number.parseInt('0.trim()') would otherwise pass the old
+  // `!maxRedemptions.trim()` check since "0" is a non-empty string.
+  const parsedMaxRedemptions = Number.parseInt(maxRedemptions, 10);
+  const hasValidMaxRedemptions = Number.isInteger(parsedMaxRedemptions) && parsedMaxRedemptions > 0;
+
   const handleSubmit = async () => {
     if (!code.trim()) {
       addToast('error', 'Enter a code');
@@ -105,7 +116,7 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
     }
 
     const hasPriceOverride = drafts.some((d) => d.discount_type === 'price_override');
-    if (hasPriceOverride && !maxRedemptions.trim()) {
+    if (hasPriceOverride && !hasValidMaxRedemptions) {
       addToast('error', 'A price override requires a redemption limit.');
       return;
     }
@@ -213,7 +224,7 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
                   hasAllRule && draft.target !== 'all'
                     ? []
                     : [
-                        ...(hasCategoryRule ? (['all'] as RuleTarget[]) : []),
+                        ...(otherHasCategoryRule(index) ? (['all'] as RuleTarget[]) : []),
                         ...usedTargets(drafts, index).filter((t) => t !== 'all'),
                       ]
                 }
@@ -245,7 +256,14 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
             label="Duration type"
             value={durationMode}
             options={durationOptions}
-            onChange={(v) => setDurationMode(v as DurationMode)}
+            onChange={(v) => {
+              const next = v as DurationMode;
+              setDurationMode(next);
+              // Clear the non-selected mode's field so a stale value from an
+              // earlier mode can't silently reappear if the admin switches back.
+              if (next !== 'months') setDurationMonths('');
+              if (next !== 'date') setGrantEndsAt('');
+            }}
             disabled={saving}
           />
           {durationMode === 'months' && (
@@ -292,7 +310,7 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
             value={maxRedemptions}
             onChange={(e) => setMaxRedemptions(e.target.value)}
             error={
-              drafts.some((d) => d.discount_type === 'price_override') && !maxRedemptions.trim()
+              drafts.some((d) => d.discount_type === 'price_override') && !hasValidMaxRedemptions
                 ? 'A price override requires a redemption limit.'
                 : undefined
             }
