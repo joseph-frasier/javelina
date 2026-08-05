@@ -13,7 +13,7 @@ export function summarizeRules(rules: DiscountCodeRuleInput[]): string {
     .map((rule) => {
       const value = formatRule(rule);
       return rule.scope === 'all'
-        ? `${value} all products`
+        ? `${value} ${categoryLabel(rule.category).toLowerCase()}`
         : `${value} on ${categoryLabel(rule.category).toLowerCase()}`;
     })
     .join(', ');
@@ -26,7 +26,11 @@ export function summarizeDuration(
     return `for ${code.duration_months} month${code.duration_months === 1 ? '' : 's'}`;
   }
   if (code.grant_ends_at != null) {
-    return `through ${new Date(code.grant_ends_at).toLocaleDateString()}`;
+    return `through ${new Date(code.grant_ends_at).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })}`;
   }
   return 'ongoing';
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { summarizeRules, summarizeDuration } from './format';
+import { summarizeRules, summarizeDuration } from '@/lib/discounts/format';
 
 describe('summarizeRules', () => {
   it('summarizes an all-products percent rule', () => {
@@ -37,7 +37,7 @@ describe('summarizeDuration', () => {
 
   it('describes an absolute end date', () => {
     expect(summarizeDuration({ duration_months: null, grant_ends_at: '2027-01-01T00:00:00.000Z' }))
-      .toMatch(/^through /);
+      .toBe('through Dec 31, 2026');
   });
 
   it('describes an open-ended grant', () => {
