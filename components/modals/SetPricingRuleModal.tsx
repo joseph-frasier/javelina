@@ -151,6 +151,7 @@ export default function SetPricingRuleModal({
           onChange={setDraft}
           disabledTargets={disabledTargets}
           disabledReason={disabledReason}
+          disabled={saving}
         />
 
         {(hasBaseline || hasCategoryRules) && (

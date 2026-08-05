@@ -28,10 +28,18 @@ export function draftToRuleInput(draft: RuleDraft): DiscountCodeRuleInput {
   const category = draft.target === 'all' ? null : draft.target;
 
   if (draft.discount_type === 'percent') {
-    return { scope, category, discount_type: 'percent', value_bps: Math.round(Number(draft.percent) * 100) };
+    // Number.parseFloat('') and Number.parseFloat('abc') both yield NaN, so a
+    // blank or non-numeric field is caught here rather than silently becoming
+    // value_bps: NaN in the payload. Callers that pre-validate (the modal) never
+    // reach this throw; callers that don't get a clear, immediate error instead.
+    const percent = Number.parseFloat(draft.percent);
+    if (!Number.isFinite(percent)) throw new Error('Percent must be a number');
+    return { scope, category, discount_type: 'percent', value_bps: Math.round(percent * 100) };
   }
   if (draft.discount_type === 'price_override') {
-    return { scope, category, discount_type: 'price_override', value_cents: Math.round(Number(draft.price) * 100) };
+    const price = Number.parseFloat(draft.price);
+    if (!Number.isFinite(price)) throw new Error('Price must be a number');
+    return { scope, category, discount_type: 'price_override', value_cents: Math.round(price * 100) };
   }
   return { scope, category, discount_type: 'waive' };
 }
@@ -56,6 +64,10 @@ interface Props {
   disabledTargets?: RuleTarget[];
   /** Hover/title text explaining why the disabled targets above are disabled. */
   disabledReason?: string;
+  /** Disables all four fields, e.g. while a parent form is saving. Individual
+   *  targets already disabled via `disabledTargets` stay disabled either way —
+   *  this is combined with, not a replacement for, that per-option state. */
+  disabled?: boolean;
 }
 
 export default function PricingRuleFields({
@@ -63,6 +75,7 @@ export default function PricingRuleFields({
   onChange,
   disabledTargets = [],
   disabledReason,
+  disabled = false,
 }: Props) {
   // An all-products rule and product-specific rules are mutually exclusive.
   // Keep every target visible but gray out the ones that would conflict, with
@@ -71,10 +84,10 @@ export default function PricingRuleFields({
   const targetOptions = useMemo(
     () =>
       TARGET_OPTIONS.map((o) => {
-        const disabled = disabledTargets.includes(o.value);
-        return { ...o, disabled, title: disabled ? disabledReason : undefined };
+        const conflicts = disabledTargets.includes(o.value);
+        return { ...o, disabled: disabled || conflicts, title: conflicts ? disabledReason : undefined };
       }),
-    [disabledTargets, disabledReason],
+    [disabledTargets, disabledReason, disabled],
   );
 
   return (
@@ -84,6 +97,7 @@ export default function PricingRuleFields({
         value={value.target}
         options={targetOptions}
         onChange={(v) => onChange({ ...value, target: v as RuleTarget })}
+        disabled={disabled}
       />
 
       <Dropdown
@@ -91,6 +105,7 @@ export default function PricingRuleFields({
         value={value.discount_type}
         options={DISCOUNT_TYPE_OPTIONS}
         onChange={(v) => onChange({ ...value, discount_type: v as PricingDiscountType })}
+        disabled={disabled}
       />
 
       {value.discount_type === 'percent' && (
@@ -103,6 +118,7 @@ export default function PricingRuleFields({
           min={0}
           max={100}
           step={0.01}
+          disabled={disabled}
         />
       )}
 
@@ -115,6 +131,7 @@ export default function PricingRuleFields({
           onChange={(e) => onChange({ ...value, price: e.target.value })}
           min={0}
           step={0.01}
+          disabled={disabled}
         />
       )}
     </>
