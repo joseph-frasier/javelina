@@ -61,3 +61,6 @@ next-env.d.ts
 docs/superpowers/plans/
 docs/superpowers/specs/
 .superpowers/
+
+# Subagent-driven-development scratch
+.superpowers/
