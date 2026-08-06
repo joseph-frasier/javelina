@@ -155,9 +155,14 @@ function CheckoutContent() {
     // if the org already has an active grant, render it as satisfied on load.
     if (data.billing_interval !== 'lifetime') {
       pricingApi
-        .list(data.org_id)
-        .then(({ active }) => {
-          const rules = activeRules(active);
+        .listForOrg(data.org_id)
+        .then(({ rules: orgRules, from_discount_code }) => {
+          // Only a grant that actually came from a code may render as
+          // "discount applied". An org on negotiated contract pricing has
+          // active rules too, and hiding the code input from them would leave
+          // them unable to enter one.
+          if (!from_discount_code) return;
+          const rules = activeRules(orgRules);
           if (rules.length === 0) return;
           // Don't clobber a preview/applied grant the customer set up while
           // this fetch was in flight.
@@ -171,8 +176,11 @@ function CheckoutContent() {
             duration: summarizeDuration({ duration_months: null, grant_ends_at: durationSource.effective_until }),
           });
         })
-        .catch(() => {
-          // Non-fatal: discount box just stays empty if this fails.
+        .catch((error) => {
+          // Non-fatal: the discount box just stays empty and the customer can
+          // still type their code. But it must not vanish silently — a 403 here
+          // is exactly how the superadmin-only version of this read hid itself.
+          console.error('Failed to load existing org pricing rules:', error);
         });
     }
 

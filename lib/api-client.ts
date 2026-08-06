@@ -920,6 +920,13 @@ export interface CreatePricingRuleInput {
 export const pricingApi = {
   list: (orgId: string): Promise<{ active: PricingRule[]; history: PricingRule[] }> =>
     apiClient.get(`/admin/organizations/${orgId}/pricing-rules`),
+  // Member-scoped: any member of the org may read their own org's active
+  // pricing. `from_discount_code` is true only when one of those live rules
+  // was issued by a discount code redemption.
+  listForOrg: (
+    orgId: string
+  ): Promise<{ rules: PricingRule[]; from_discount_code: boolean }> =>
+    apiClient.get(`/organizations/${orgId}/pricing-rules`),
   create: (orgId: string, input: CreatePricingRuleInput): Promise<PricingRule> =>
     apiClient.post(`/admin/organizations/${orgId}/pricing-rules`, input),
   archive: (orgId: string, ruleId: string): Promise<void> =>
