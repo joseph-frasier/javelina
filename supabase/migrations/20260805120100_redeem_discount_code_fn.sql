@@ -89,7 +89,14 @@ BEGIN
     ) VALUES (
       p_org_id, v_rule.scope, v_rule.category, v_rule.discount_type,
       v_rule.value_bps, v_rule.value_cents,
-      v_now, v_until,
+      -- Backdate the start by a minute. resolvePricing filters
+      -- effective_from <= now() using the API server's clock; if that clock
+      -- trails the database's at all, a rule stamped with exactly now() is not
+      -- yet effective when the subscription is created milliseconds later, and
+      -- Stripe bills the first invoice at catalog price while the UI shows the
+      -- discounted total. Only the start is backdated — v_until still runs from
+      -- v_now, so the grant length is unchanged.
+      v_now - interval '1 minute', v_until,
       'Granted by discount code ' || v_code.code, p_user_id
     )
     RETURNING id INTO v_new_id;

@@ -37,7 +37,10 @@ function priceAfterRule(
 ): number {
   switch (rule.discount_type) {
     case 'percent':
-      return Math.max(0, originalCents - Math.round((originalCents * (rule.value_bps ?? 0)) / 10000));
+      // Same formula as the backend's amountFor (services/pricing/apply.ts) —
+      // subtracting a rounded discount instead diverges by a cent on an exact
+      // half-cent, so the preview would not match the invoice.
+      return Math.max(0, Math.round((originalCents * (10000 - (rule.value_bps ?? 0))) / 10000));
     case 'waive':
       return 0;
     case 'price_override':
@@ -249,7 +252,10 @@ function CheckoutContent() {
           setDiscountRules(rules);
           setDiscountState({
             kind: 'applied',
-            summary: summarizeRules(rules),
+            // summarizeRules([]) renders "No discount" — wrong inside a
+            // success-styled box. Same guard as the billing-settings card.
+            summary:
+              rules.length > 0 ? summarizeRules(rules) : 'Applied to this organization.',
             duration: summarizeDuration(discountState.evaluation.code),
           });
         } catch (redeemError) {
