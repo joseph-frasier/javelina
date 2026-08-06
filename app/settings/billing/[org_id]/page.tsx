@@ -18,6 +18,7 @@ import {
   type RejectionReason,
 } from '@/lib/api-client';
 import { summarizeRules, summarizeDuration } from '@/lib/discounts/format';
+import { canManageBilling } from '@/lib/permissions';
 
 type RedeemState =
   | { kind: 'none' }
@@ -47,6 +48,15 @@ export default function OrganizationBillingPage() {
   const [redeemCode, setRedeemCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemState, setRedeemState] = useState<RedeemState>({ kind: 'none' });
+
+  // Redeeming writes pricing onto the org, and the backend requires a billing
+  // role for it (requireOrgRole SuperAdmin/Admin/BillingContact on
+  // POST /discounts/redeem). Mirror that here so an Editor or Viewer is not
+  // offered a box that only fails after a successful preview. An org missing
+  // from the profile (e.g. just created, store not yet refreshed) leaves the
+  // box in place rather than hiding it from someone who can use it.
+  const billingOrgRole = user?.organizations?.find((o) => o.id === orgId)?.role;
+  const canRedeemCode = !billingOrgRole || canManageBilling(billingOrgRole);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -324,7 +334,8 @@ export default function OrganizationBillingPage() {
             />
           )}
 
-          {/* Redeem a Discount Code Section */}
+          {/* Redeem a Discount Code Section — billing roles only, matching the server */}
+          {canRedeemCode && (
           <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6">
             <h3 className="text-xl font-bold text-text">Redeem a Code</h3>
             <p className="text-sm text-text-muted mt-1 mb-4">
@@ -391,6 +402,7 @@ export default function OrganizationBillingPage() {
               <p className="mt-2 text-sm text-red-600">{redeemState.message}</p>
             )}
           </div>
+          )}
 
           {/* Billing Contact Information Section */}
           <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6">

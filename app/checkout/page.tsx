@@ -20,6 +20,8 @@ import {
 } from '@/lib/api-client';
 import { summarizeRules, summarizeDuration } from '@/lib/discounts/format';
 import { activeRules } from '@/lib/pricing/format';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { canManageBilling } from '@/lib/permissions';
 import Button from '@/components/ui/Button';
 import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
 
@@ -90,7 +92,8 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const addToast = useToastStore((state) => state.addToast);
-  
+  const user = useAuthStore((state) => state.user);
+
   // Checkout state
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [checkoutStep, setCheckoutStep] = useState<'review' | 'payment'>('review');
@@ -332,6 +335,15 @@ function CheckoutContent() {
   const includedBenefitRules = discountRules?.filter((rule) => !isPlanOrAllRule(rule)) ?? [];
   const discountedCents = planDiscountRule ? priceAfterRule(planDiscountRule, originalCents) : originalCents;
   const discountAmountCents = originalCents - discountedCents;
+
+  // POST /discounts/redeem requires a billing role (SuperAdmin/Admin/
+  // BillingContact), so don't offer the input to someone whose redeem would be
+  // refused after a successful preview. An org the profile doesn't know about
+  // yet (just created during this flow) keeps the input rather than losing it.
+  // An already-granted discount still renders — that is information, not an action.
+  const checkoutOrgRole = user?.organizations?.find((o) => o.id === checkoutData.org_id)?.role;
+  const canRedeemCode = !checkoutOrgRole || canManageBilling(checkoutOrgRole);
+  const showDiscountBox = canRedeemCode || discountState.kind !== 'none';
   const finalPrice = !isUpgrade && discountRules ? discountedCents / 100 : checkoutData.plan_price || 0;
 
   return (
@@ -412,9 +424,11 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                {/* Discount Code Input - Hidden for lifetime plans */}
+                {/* Discount Code Input - Hidden for lifetime plans, and for
+                    members without the billing role redeem requires */}
                 {!isLifetime && (
                   <>
+                    {showDiscountBox && (
                     <div>
                       <label className="block text-sm font-medium text-text mb-2">
                         Have a discount code?
@@ -488,6 +502,7 @@ function CheckoutContent() {
                         <p className="mt-2 text-sm text-red-600">{discountState.message}</p>
                       )}
                     </div>
+                    )}
 
                     {/* Discount Breakdown - only a plan/all-scoped rule changes this total */}
                     {planDiscountRule && (
