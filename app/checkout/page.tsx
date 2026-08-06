@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
@@ -106,6 +106,14 @@ function CheckoutContent() {
   // so the total can be computed in cents without smuggling numbers into the
   // display-only DiscountState.
   const [discountRules, setDiscountRules] = useState<DiscountRuleForMath[] | null>(null);
+  // Tracks the latest discountState.kind for the mount-fetch effect below, so
+  // that effect (which only runs once) can check "is a preview/applied grant
+  // already in flight" without a stale closure and without depending on
+  // discountState — which would refetch on every discount interaction.
+  const discountKindRef = useRef<DiscountState['kind']>('none');
+  useEffect(() => {
+    discountKindRef.current = discountState.kind;
+  }, [discountState.kind]);
 
   // Parse checkout data from URL on mount
   useEffect(() => {
@@ -148,6 +156,9 @@ function CheckoutContent() {
         .then(({ active }) => {
           const rules = activeRules(active);
           if (rules.length === 0) return;
+          // Don't clobber a preview/applied grant the customer set up while
+          // this fetch was in flight.
+          if (discountKindRef.current !== 'none') return;
           const planRule = rules.find(isPlanOrAllRule);
           const durationSource = planRule ?? rules[0];
           setDiscountRules(rules);
@@ -248,6 +259,11 @@ function CheckoutContent() {
           const message =
             details?.message ||
             (redeemError instanceof Error ? redeemError.message : 'Failed to apply discount code');
+          // Clear the preview's rules too — otherwise the review step keeps
+          // showing a discounted total for a code that was never redeemed,
+          // and a retry would create the subscription at full price while
+          // the UI still displays the (unredeemed) discount.
+          setDiscountRules(null);
           setDiscountState({ kind: 'error', message });
           return;
         }
@@ -646,6 +662,14 @@ function CheckoutContent() {
                         <span className="text-green-600">-${(discountAmountCents / 100).toFixed(2)}</span>
                       </div>
                     </div>
+                  )}
+
+                  {/* Domain/mailbox grants have nothing on this invoice to discount,
+                      but shouldn't vanish once the customer advances past review. */}
+                  {includedBenefitRules.length > 0 && !isUpgrade && !isLifetime && (
+                    <p className="text-xs text-text-muted font-light">
+                      Also includes: {summarizeRules(includedBenefitRules)}
+                    </p>
                   )}
 
                   {/* Tax breakdown */}
