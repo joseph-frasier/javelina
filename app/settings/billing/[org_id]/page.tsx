@@ -189,7 +189,7 @@ export default function OrganizationBillingPage() {
   // already has a plan never passes back through checkout, so this is the
   // only place domain- and mailbox-only codes can ever be redeemed.
   const handleRedeemCode = async () => {
-    if (!redeemCode.trim() || !orgId) return;
+    if (isRedeeming || !redeemCode.trim() || !orgId) return;
 
     setIsRedeeming(true);
 
@@ -205,6 +205,7 @@ export default function OrganizationBillingPage() {
             duration: summarizeDuration(evaluation.code),
           });
           setRedeemCode('');
+          addToast('success', 'Discount code applied!');
           // Re-fetch the plan/pricing data that SubscriptionManager and this
           // page render, rather than hand-patching local state from the
           // redeem response, so the granted rules appear in the existing
@@ -221,9 +222,18 @@ export default function OrganizationBillingPage() {
           setRedeemState({ kind: 'error', message });
         }
       } else if (evaluation.status === 'already_applied') {
+        // evaluation.rules here is every live rule on the org, not
+        // necessarily what this code granted — the backend returns []
+        // when a superadmin has since archived the grant (evaluate.ts).
+        // summarizeRules([]) would render "No discount" inside a
+        // success-styled box, so fall back to checkout's static sentence
+        // whenever there's nothing concrete to describe.
         setRedeemState({
           kind: 'applied',
-          summary: summarizeRules(evaluation.rules),
+          summary:
+            evaluation.rules.length > 0
+              ? summarizeRules(evaluation.rules)
+              : 'Already applied to this organization.',
           duration: summarizeDuration(evaluation.code),
         });
         setRedeemCode('');
@@ -358,6 +368,7 @@ export default function OrganizationBillingPage() {
                     }
                   }}
                   placeholder="Enter code"
+                  aria-label="Discount code"
                   className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   disabled={isRedeeming}
                 />
