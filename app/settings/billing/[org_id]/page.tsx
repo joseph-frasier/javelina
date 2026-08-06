@@ -11,6 +11,18 @@ import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import { EditBillingInfoModal } from '@/components/modals/EditBillingInfoModal';
 // No longer need Supabase client - using Express API with session cookies
 import type { Organization } from '@/types/supabase';
+import {
+  discountsApi,
+  ApiError,
+  type CodeEvaluation,
+  type RejectionReason,
+} from '@/lib/api-client';
+import { summarizeRules, summarizeDuration } from '@/lib/discounts/format';
+
+type RedeemState =
+  | { kind: 'none' }
+  | { kind: 'applied'; summary: string; duration: string }
+  | { kind: 'error'; message: string };
 
 export default function OrganizationBillingPage() {
   const router = useRouter();
@@ -30,6 +42,11 @@ export default function OrganizationBillingPage() {
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Discount code redemption state
+  const [redeemCode, setRedeemCode] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redeemState, setRedeemState] = useState<RedeemState>({ kind: 'none' });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -167,6 +184,62 @@ export default function OrganizationBillingPage() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  // Validate then redeem a discount code onto this org. Unlike checkout,
+  // there is no separate preview step to hold for later — an org that
+  // already has a plan never passes back through checkout, so this is the
+  // only place domain- and mailbox-only codes can ever be redeemed.
+  const handleRedeemCode = async () => {
+    if (!redeemCode.trim() || !orgId) return;
+
+    setIsRedeeming(true);
+
+    try {
+      const evaluation: CodeEvaluation = await discountsApi.validate(redeemCode.trim(), orgId);
+
+      if (evaluation.status === 'valid') {
+        try {
+          const { rules } = await discountsApi.redeem(redeemCode.trim(), orgId);
+          setRedeemState({
+            kind: 'applied',
+            summary: summarizeRules(rules),
+            duration: summarizeDuration(evaluation.code),
+          });
+          setRedeemCode('');
+          // Re-fetch the plan/pricing data that SubscriptionManager and this
+          // page render, rather than hand-patching local state from the
+          // redeem response, so the granted rules appear in the existing
+          // effective-pricing display.
+          await fetchCurrentPlan();
+          setRefreshTrigger((prev) => prev + 1);
+        } catch (redeemError) {
+          const details = (redeemError as ApiError).details as
+            | { reason?: RejectionReason; message?: string }
+            | undefined;
+          const message =
+            details?.message ||
+            (redeemError instanceof Error ? redeemError.message : 'Failed to redeem discount code');
+          setRedeemState({ kind: 'error', message });
+        }
+      } else if (evaluation.status === 'already_applied') {
+        setRedeemState({
+          kind: 'applied',
+          summary: summarizeRules(evaluation.rules),
+          duration: summarizeDuration(evaluation.code),
+        });
+        setRedeemCode('');
+      } else {
+        setRedeemState({ kind: 'error', message: evaluation.message });
+      }
+    } catch (error) {
+      setRedeemState({
+        kind: 'error',
+        message: error instanceof Error ? error.message : 'Failed to validate discount code',
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+
   // Check if billing information is missing
   const isBillingInfoMissing = organizationData && (
     !organizationData.billing_email ||
@@ -240,6 +313,73 @@ export default function OrganizationBillingPage() {
               refreshTrigger={refreshTrigger}
             />
           )}
+
+          {/* Redeem a Discount Code Section */}
+          <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6">
+            <h3 className="text-xl font-bold text-text">Redeem a Code</h3>
+            <p className="text-sm text-text-muted mt-1 mb-4">
+              Have a discount code? Apply it to this organization.
+            </p>
+
+            {redeemState.kind === 'applied' ? (
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <div>
+                    <p className="font-medium text-green-700 text-sm">{redeemState.summary}</p>
+                    <p className="text-xs text-green-600">{redeemState.duration}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setRedeemState({ kind: 'none' })}
+                  className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                  aria-label="Redeem another code"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={redeemCode}
+                  onChange={(e) => {
+                    setRedeemCode(e.target.value.toUpperCase());
+                    if (redeemState.kind === 'error') setRedeemState({ kind: 'none' });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleRedeemCode();
+                    }
+                  }}
+                  placeholder="Enter code"
+                  className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  disabled={isRedeeming}
+                />
+                <button
+                  onClick={handleRedeemCode}
+                  disabled={!redeemCode.trim() || isRedeeming}
+                  className="px-4 py-2 bg-accent text-white rounded-md text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isRedeeming ? (
+                    <div className="flex items-center space-x-1">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    </div>
+                  ) : (
+                    'Apply'
+                  )}
+                </button>
+              </div>
+            )}
+            {redeemState.kind === 'error' && (
+              <p className="mt-2 text-sm text-red-600">{redeemState.message}</p>
+            )}
+          </div>
 
           {/* Billing Contact Information Section */}
           <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6">
