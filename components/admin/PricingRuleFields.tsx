@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import Input from '@/components/ui/Input';
 import Dropdown from '@/components/ui/Dropdown';
 import type { DiscountCodeRuleInput, PricingCategory, PricingDiscountType } from '@/lib/api-client';
@@ -95,6 +95,10 @@ export default function PricingRuleFields({
   disabledReason,
   disabled = false,
 }: Props) {
+  // Rendered once per rule row — hardcoded ids would collide and misdirect
+  // every label after the first.
+  const fieldId = useId();
+
   // An all-products rule and product-specific rules are mutually exclusive.
   // Keep every target visible but gray out the ones that would conflict, with
   // a hover reason — so the constraint is discoverable, not hidden. The backend
@@ -128,7 +132,7 @@ export default function PricingRuleFields({
 
       {value.discount_type === 'percent' && (
         <Input
-          id="pricing-rule-percentage"
+          id={`${fieldId}-percentage`}
           type="number"
           label="Percentage (%)"
           value={value.percent}
@@ -142,7 +146,7 @@ export default function PricingRuleFields({
 
       {value.discount_type === 'price_override' && (
         <Input
-          id="pricing-rule-custom-price"
+          id={`${fieldId}-custom-price`}
           type="number"
           label="Custom price ($)"
           value={value.price}

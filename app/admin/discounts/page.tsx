@@ -33,6 +33,11 @@ function getDiscountStatus(code: DiscountCodeWithRules): {
   if (code.redeemable_until && new Date(code.redeemable_until) < new Date()) {
     return { label: 'Expired', variant: 'danger' };
   }
+  // redeem_discount_code raises 'expired' for this too — a code whose grant
+  // window has closed would grant rules that expire the moment they are written.
+  if (code.grant_ends_at && new Date(code.grant_ends_at) < new Date()) {
+    return { label: 'Expired', variant: 'danger' };
+  }
   if (code.max_redemptions != null && code.times_redeemed >= code.max_redemptions) {
     return { label: 'Limit Reached', variant: 'warning' };
   }

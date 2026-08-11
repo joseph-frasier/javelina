@@ -269,7 +269,8 @@ function CheckoutContent() {
           setDiscountState({
             kind: 'applied',
             // summarizeRules([]) renders "No discount" — wrong inside a
-            // success-styled box. Same guard as the billing-settings card.
+            // success-styled box. Same guard as the billing-settings card
+            // (settings/billing/[org_id]/page.tsx).
             summary:
               rules.length > 0 ? summarizeRules(rules) : 'Applied to this organization.',
             duration: summarizeDuration(discountState.evaluation.code),

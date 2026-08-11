@@ -151,6 +151,25 @@ describe('CreateDiscountCodeModal validation', () => {
     expect(targetOf(1)).not.toBe('all');
   });
 
+  // PricingRuleFields is rendered once per rule row; hardcoded ids would
+  // collide and misdirect every label after the first (F13). Both rows
+  // default to 'percent', so both render a "Percentage (%)" field — their
+  // ids must differ, and each label must resolve to its own row's input.
+  it('gives each rule row distinct field ids', async () => {
+    renderModal();
+    await selectTarget(0, 'plan');
+    await clickAddRule();
+    await selectTarget(1, 'domain');
+
+    const inputs = screen.getAllByLabelText(/percentage/i);
+    expect(inputs).toHaveLength(2);
+
+    const ids = inputs.map((el) => el.id);
+    expect(ids[0]).not.toBe('');
+    expect(ids[1]).not.toBe('');
+    expect(ids[0]).not.toBe(ids[1]);
+  });
+
   // With rows on all three categories (plan/domain/mailbox), there is no
   // non-conflicting target left for a 4th row — the button must go disabled
   // rather than let nextRuleDraft's fallback hand out a duplicate target.

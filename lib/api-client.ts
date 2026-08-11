@@ -940,7 +940,8 @@ export type RejectionReason =
   | 'expired'
   | 'fully_redeemed'
   | 'org_has_pricing'
-  | 'lifetime_plan';
+  | 'lifetime_plan'
+  | 'already_applied';
 
 export interface DiscountCode {
   id: string;

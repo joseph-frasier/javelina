@@ -216,7 +216,9 @@ export default function OrganizationBillingPage() {
           const { rules } = await discountsApi.redeem(redeemCode.trim(), orgId);
           setRedeemState({
             kind: 'applied',
-            summary: summarizeRules(rules),
+            // summarizeRules([]) renders "No discount" — wrong inside a
+            // success-styled box. Same guard as the checkout page.
+            summary: rules.length > 0 ? summarizeRules(rules) : 'Discount applied to this organization.',
             duration: summarizeDuration(evaluation.code),
           });
           setRedeemCode('');
