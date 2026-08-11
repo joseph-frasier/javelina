@@ -17,7 +17,12 @@ import {
   type CodeEvaluation,
   type RejectionReason,
 } from '@/lib/api-client';
-import { summarizeRules, summarizeDuration } from '@/lib/discounts/format';
+import {
+  summarizeRules,
+  summarizeDuration,
+  alreadyAppliedDetail,
+  ALREADY_APPLIED_SUMMARY,
+} from '@/lib/discounts/format';
 import { canManageBilling } from '@/lib/permissions';
 
 type RedeemState =
@@ -232,19 +237,14 @@ export default function OrganizationBillingPage() {
           setRedeemState({ kind: 'error', message });
         }
       } else if (evaluation.status === 'already_applied') {
-        // evaluation.rules here is every live rule on the org, not
-        // necessarily what this code granted — the backend returns []
-        // when a superadmin has since archived the grant (evaluate.ts).
-        // summarizeRules([]) would render "No discount" inside a
-        // success-styled box, so fall back to checkout's static sentence
-        // whenever there's nothing concrete to describe.
+        // Nothing was redeemed here — validate answered `already_applied`, so
+        // the redeem call above never ran. The headline has to say so: this
+        // box is the same green success panel a fresh grant renders, and
+        // leading with the rule summary made a spent code look newly applied.
         setRedeemState({
           kind: 'applied',
-          summary:
-            evaluation.rules.length > 0
-              ? summarizeRules(evaluation.rules)
-              : 'Already applied to this organization.',
-          duration: summarizeDuration(evaluation.code),
+          summary: ALREADY_APPLIED_SUMMARY,
+          duration: alreadyAppliedDetail(evaluation.rules, evaluation.code),
         });
         setRedeemCode('');
       } else {

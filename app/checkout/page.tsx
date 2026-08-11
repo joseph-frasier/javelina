@@ -18,7 +18,12 @@ import {
   type PricingDiscountType,
   type PricingCategory,
 } from '@/lib/api-client';
-import { summarizeRules, summarizeDuration } from '@/lib/discounts/format';
+import {
+  summarizeRules,
+  summarizeDuration,
+  alreadyAppliedDetail,
+  ALREADY_APPLIED_SUMMARY,
+} from '@/lib/discounts/format';
 import { activeRules } from '@/lib/pricing/format';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { canManageBilling } from '@/lib/permissions';
@@ -214,8 +219,8 @@ function CheckoutContent() {
         setDiscountRules(evaluation.rules);
         setDiscountState({
           kind: 'applied',
-          summary: 'Already applied to this organization.',
-          duration: summarizeDuration(evaluation.code),
+          summary: ALREADY_APPLIED_SUMMARY,
+          duration: alreadyAppliedDetail(evaluation.rules, evaluation.code),
         });
       } else {
         setDiscountRules(null);

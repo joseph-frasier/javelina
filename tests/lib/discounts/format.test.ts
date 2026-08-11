@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { summarizeRules, summarizeDuration } from '@/lib/discounts/format';
+import {
+  summarizeRules,
+  summarizeDuration,
+  alreadyAppliedDetail,
+  ALREADY_APPLIED_SUMMARY,
+} from '@/lib/discounts/format';
 
 describe('summarizeRules', () => {
   it('summarizes an all-products percent rule', () => {
@@ -23,6 +28,36 @@ describe('summarizeRules', () => {
 
   it('handles an empty rule set', () => {
     expect(summarizeRules([])).toBe('No discount');
+  });
+});
+
+describe('alreadyAppliedDetail', () => {
+  const threeMonths = { duration_months: 3, grant_ends_at: null };
+
+  // The regression: a re-entered code on an org that still holds live rules
+  // used to render the rule summary as the headline, which is exactly what a
+  // fresh redemption renders. The two states were indistinguishable, so a
+  // second attempt read as a second grant. The "already applied" sentence is
+  // the headline now, and the rules are detail.
+  it('keeps the rule summary as detail when live rules exist', () => {
+    expect(
+      alreadyAppliedDetail(
+        [{ scope: 'all', category: null, discount_type: 'percent', value_bps: 2500 }],
+        threeMonths,
+      ),
+    ).toBe('25% off all products for 3 months');
+  });
+
+  it('falls back to the duration alone when the grant has been archived', () => {
+    expect(alreadyAppliedDetail([], threeMonths)).toBe('for 3 months');
+  });
+
+  it('never describes an archived grant as "No discount"', () => {
+    expect(alreadyAppliedDetail([], threeMonths)).not.toContain('No discount');
+  });
+
+  it('states plainly that the code was already applied', () => {
+    expect(ALREADY_APPLIED_SUMMARY).toBe('Already applied to this organization.');
   });
 });
 
