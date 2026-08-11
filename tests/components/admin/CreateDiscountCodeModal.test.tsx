@@ -182,7 +182,8 @@ describe('CreateDiscountCodeModal validation', () => {
     await selectTarget(2, 'mailbox');
 
     expect(screen.getAllByText('Applies to')).toHaveLength(3);
-    expect(screen.getByRole('button', { name: /add another product rule/i })).toBeDisabled();
+    const addButton = screen.getByRole('button', { name: /add another product rule/i }) as HTMLButtonElement;
+    expect(addButton.disabled).toBe(true);
 
     await clickAddRule();
 
