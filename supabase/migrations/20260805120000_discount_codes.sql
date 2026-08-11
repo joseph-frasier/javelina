@@ -82,4 +82,4 @@ ALTER TABLE IF EXISTS promotion_codes      RENAME TO promotion_codes_deprecated;
 
 -- Orphaned by the rename: its body references promotion_codes and nothing
 -- calls it now that the Stripe promo path is gone.
-DROP FUNCTION IF EXISTS public.increment_promotion_code_redemption();
+DROP FUNCTION IF EXISTS public.increment_promotion_code_redemption(uuid);
