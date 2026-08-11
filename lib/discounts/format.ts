@@ -52,7 +52,10 @@ export function summarizeDuration(
     return `for ${code.duration_months} month${code.duration_months === 1 ? '' : 's'}`;
   }
   if (code.grant_ends_at != null) {
+    // UTC, not local: grant_ends_at is an instant, and rendering it in the
+    // viewer's zone shows two customers different end dates for one grant.
     return `through ${new Date(code.grant_ends_at).toLocaleDateString('en-US', {
+      timeZone: 'UTC',
       year: 'numeric',
       month: 'short',
       day: 'numeric',

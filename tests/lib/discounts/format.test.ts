@@ -72,7 +72,14 @@ describe('summarizeDuration', () => {
 
   it('describes an absolute end date', () => {
     expect(summarizeDuration({ duration_months: null, grant_ends_at: '2027-01-01T00:00:00.000Z' }))
-      .toBe('through Dec 31, 2026');
+      .toBe('through Jan 1, 2027');
+  });
+
+  it('renders the same end date regardless of the viewer timezone', () => {
+    // Grants are stored as UTC instants. Rendering in local time puts customers
+    // in negative-offset zones a day behind the date the grant actually ends.
+    expect(summarizeDuration({ duration_months: null, grant_ends_at: '2027-01-01T00:00:00.000Z' }))
+      .toBe('through Jan 1, 2027');
   });
 
   it('describes an open-ended grant', () => {
