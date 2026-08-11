@@ -71,5 +71,15 @@ ALTER TABLE discount_code_rules        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE discount_code_redemptions  ENABLE ROW LEVEL SECURITY;
 
 -- The superseded system. Confirm production counts before this runs.
-DROP TABLE IF EXISTS discount_redemptions;
-DROP TABLE IF EXISTS promotion_codes;
+-- Retained rather than dropped. These are settled money records tied to live
+-- Stripe invoices, and nothing migrates them into the new tables — the schemas
+-- are not compatible (per-invoice money records vs per-org grants). Renaming
+-- keeps the history queryable and makes this migration reversible. Drop the
+-- _deprecated tables in a follow-up once accounting confirms they are not
+-- needed.
+ALTER TABLE IF EXISTS discount_redemptions RENAME TO discount_redemptions_deprecated;
+ALTER TABLE IF EXISTS promotion_codes      RENAME TO promotion_codes_deprecated;
+
+-- Orphaned by the rename: its body references promotion_codes and nothing
+-- calls it now that the Stripe promo path is gone.
+DROP FUNCTION IF EXISTS public.increment_promotion_code_redemption();
