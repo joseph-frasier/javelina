@@ -11,6 +11,7 @@ import PricingRuleFields, {
   emptyRuleDraft,
   nextRuleDraft,
   draftToRuleInput,
+  CATEGORY_TARGETS,
   type RuleDraft,
   type RuleTarget,
 } from '@/components/admin/PricingRuleFields';
@@ -46,7 +47,11 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
   // once any draft targets 'all', a second rule can't be added at all, and
   // vice versa the 'all' option is disabled once a category rule exists.
   const hasAllRule = drafts.some((d) => d.target === 'all');
-  const canAddRule = !hasAllRule;
+  // Also stop once every category (plan/domain/mailbox) already has a row —
+  // otherwise nextRuleDraft has no non-conflicting target left to hand out.
+  const usedCategoryTargets = drafts.map((d) => d.target).filter((t) => t !== 'all');
+  const categoriesExhausted = usedCategoryTargets.length >= CATEGORY_TARGETS.length;
+  const canAddRule = !hasAllRule && !categoriesExhausted;
 
   // Whether some OTHER draft targets a category — used to disable 'all' for a
   // given row. Must exclude the row's own target, otherwise a lone category
@@ -74,7 +79,10 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
 
   const addRule = () => {
     if (!canAddRule) return;
-    setDrafts((prev) => [...prev, nextRuleDraft(prev.map((d) => d.target))]);
+    setDrafts((prev) => {
+      const next = nextRuleDraft(prev.map((d) => d.target));
+      return next ? [...prev, next] : prev;
+    });
   };
 
   const removeRule = (index: number) => {
@@ -264,7 +272,13 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
             size="sm"
             onClick={addRule}
             disabled={saving || !canAddRule}
-            title={!canAddRule ? 'An all-products rule cannot be combined with product-specific rules.' : undefined}
+            title={
+              hasAllRule
+                ? 'An all-products rule cannot be combined with product-specific rules.'
+                : categoriesExhausted
+                  ? 'Every product category already has a rule.'
+                  : undefined
+            }
           >
             Add another product rule
           </Button>

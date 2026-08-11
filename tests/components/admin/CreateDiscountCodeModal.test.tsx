@@ -116,8 +116,13 @@ describe('CreateDiscountCodeModal validation', () => {
     await enterCode('FLAT');
     await selectDiscountType('price_override');
     await enterPrice('-5');
+    // A price override also requires a redemption limit (a separate, earlier
+    // gate) — set one so that gate is satisfied and this test isolates the
+    // F4 price-bound path rather than incidentally passing because of it.
+    await userEvent.type(screen.getByLabelText(/max redemptions/i), '10');
     await submit();
 
+    expect(addToast).toHaveBeenCalledWith('error', expect.stringMatching(/0 or more/i));
     expect(create).not.toHaveBeenCalled();
   });
 
@@ -144,5 +149,24 @@ describe('CreateDiscountCodeModal validation', () => {
     await clickAddRule();
 
     expect(targetOf(1)).not.toBe('all');
+  });
+
+  // With rows on all three categories (plan/domain/mailbox), there is no
+  // non-conflicting target left for a 4th row — the button must go disabled
+  // rather than let nextRuleDraft's fallback hand out a duplicate target.
+  it('disables adding a rule once every product category is used', async () => {
+    renderModal();
+    await selectTarget(0, 'plan');
+    await clickAddRule();
+    await selectTarget(1, 'domain');
+    await clickAddRule();
+    await selectTarget(2, 'mailbox');
+
+    expect(screen.getAllByText('Applies to')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: /add another product rule/i })).toBeDisabled();
+
+    await clickAddRule();
+
+    expect(screen.getAllByText('Applies to')).toHaveLength(3);
   });
 });

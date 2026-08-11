@@ -7,6 +7,9 @@ import type { DiscountCodeRuleInput, PricingCategory, PricingDiscountType } from
 
 export type RuleTarget = 'all' | PricingCategory;
 
+/** Every non-'all' target a rule can apply to. */
+export const CATEGORY_TARGETS: RuleTarget[] = ['plan', 'domain', 'mailbox'];
+
 export interface RuleDraft {
   target: RuleTarget;
   discount_type: PricingDiscountType;
@@ -23,11 +26,16 @@ export function emptyRuleDraft(): RuleDraft {
 /**
  * A row added alongside existing rules. Defaults to the first category not
  * already used — never 'all', which is mutually exclusive with category rules
- * and would arrive preselected-but-disabled.
+ * and would arrive preselected-but-disabled. Returns null once every category
+ * is already used — callers must gate the "add rule" action on that (e.g. via
+ * `CATEGORY_TARGETS.length`) so this is never called in that state; there is
+ * no safe fallback target to hand back, since any target returned here would
+ * be a duplicate of an existing row.
  */
-export function nextRuleDraft(used: RuleTarget[]): RuleDraft {
-  const free = (['plan', 'domain', 'mailbox'] as RuleTarget[]).find((t) => !used.includes(t));
-  return { target: free ?? 'plan', discount_type: 'percent', percent: '', price: '' };
+export function nextRuleDraft(used: RuleTarget[]): RuleDraft | null {
+  const free = CATEGORY_TARGETS.find((t) => !used.includes(t));
+  if (!free) return null;
+  return { target: free, discount_type: 'percent', percent: '', price: '' };
 }
 
 // Unit conversion lives here, and only here — no float ever leaves this
