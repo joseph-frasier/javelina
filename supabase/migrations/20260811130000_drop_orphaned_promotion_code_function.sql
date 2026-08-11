@@ -1,0 +1,14 @@
+-- Cleanup for the Stripe promotion-code path removed in 20260805120000.
+--
+-- increment_promotion_code_redemption(uuid) updates public.promotion_codes,
+-- a table 20260805120000 drops. Nothing calls the function any more (verified:
+-- zero references in the frontend app code and in javelina-backend/src), so
+-- after that migration it is a SECURITY DEFINER function whose body names a
+-- relation that no longer exists.
+--
+-- Separate migration rather than an edit to 20260805120000: that migration is
+-- already applied on dev and would never re-run there.
+--
+-- IF EXISTS makes this safe on environments that have already dropped the
+-- table and on any that somehow never had the function.
+DROP FUNCTION IF EXISTS public.increment_promotion_code_redemption(uuid);
