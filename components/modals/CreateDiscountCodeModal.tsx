@@ -9,6 +9,7 @@ import { useToastStore } from '@/lib/stores/toast-store';
 import { discountsApi, type CreateDiscountCodeInput } from '@/lib/api-client';
 import PricingRuleFields, {
   emptyRuleDraft,
+  nextRuleDraft,
   draftToRuleInput,
   type RuleDraft,
   type RuleTarget,
@@ -73,7 +74,7 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
 
   const addRule = () => {
     if (!canAddRule) return;
-    setDrafts((prev) => [...prev, emptyRuleDraft()]);
+    setDrafts((prev) => [...prev, nextRuleDraft(prev.map((d) => d.target))]);
   };
 
   const removeRule = (index: number) => {
@@ -103,21 +104,41 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
 
     // draftToRuleInput() throws on a non-numeric percent/price, so pre-validate
     // every draft here rather than letting that escape as an unhandled crash.
+    // The percent bound also mirrors the value_matches_type CHECK constraint
+    // (value_bps between 1 and 10000) — an out-of-range value reaches the API
+    // as a raw 500 rather than a useful inline message.
     for (const draft of drafts) {
-      const needsValue = draft.discount_type === 'percent' || draft.discount_type === 'price_override';
-      const rawValue = draft.discount_type === 'percent' ? draft.percent : draft.price;
-      if (needsValue && !Number.isFinite(Number.parseFloat(rawValue))) {
-        addToast(
-          'error',
-          draft.discount_type === 'percent' ? 'Enter a percentage for every rule' : 'Enter a custom price for every rule',
-        );
-        return;
+      if (draft.discount_type === 'percent') {
+        const percent = Number.parseFloat(draft.percent);
+        if (!Number.isFinite(percent) || percent <= 0 || percent > 100) {
+          addToast('error', 'Enter a percentage between 1 and 100 for every rule');
+          return;
+        }
+      }
+      if (draft.discount_type === 'price_override') {
+        const price = Number.parseFloat(draft.price);
+        if (!Number.isFinite(price) || price < 0) {
+          addToast('error', 'Enter a custom price of 0 or more for every rule');
+          return;
+        }
       }
     }
 
     const hasPriceOverride = drafts.some((d) => d.discount_type === 'price_override');
     if (hasPriceOverride && !hasValidMaxRedemptions) {
       addToast('error', 'A price override requires a redemption limit.');
+      return;
+    }
+
+    // A bounded duration mode with a blank value would otherwise produce
+    // duration_months = null AND grant_ends_at = null — a permanent,
+    // open-ended discount on every org that redeems the code.
+    if (durationMode === 'months' && !durationMonths.trim()) {
+      addToast('error', 'Enter a number of months, or choose Ongoing');
+      return;
+    }
+    if (durationMode === 'date' && !grantEndsAt.trim()) {
+      addToast('error', 'Choose an end date, or choose Ongoing');
       return;
     }
 

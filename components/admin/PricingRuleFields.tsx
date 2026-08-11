@@ -20,6 +20,16 @@ export function emptyRuleDraft(): RuleDraft {
   return { target: 'all', discount_type: 'percent', percent: '', price: '' };
 }
 
+/**
+ * A row added alongside existing rules. Defaults to the first category not
+ * already used — never 'all', which is mutually exclusive with category rules
+ * and would arrive preselected-but-disabled.
+ */
+export function nextRuleDraft(used: RuleTarget[]): RuleDraft {
+  const free = (['plan', 'domain', 'mailbox'] as RuleTarget[]).find((t) => !used.includes(t));
+  return { target: free ?? 'plan', discount_type: 'percent', percent: '', price: '' };
+}
+
 // Unit conversion lives here, and only here — no float ever leaves this
 // function. `value_bps`/`value_cents` are the integer units the backend
 // stores; `percent`/`price` are the strings the admin actually typed.
