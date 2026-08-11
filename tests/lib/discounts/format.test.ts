@@ -5,6 +5,8 @@ import {
   alreadyAppliedDetail,
   ALREADY_APPLIED_SUMMARY,
 } from '@/lib/discounts/format';
+import { activeRules } from '@/lib/pricing/format';
+import type { PricingRule } from '@/lib/api-client';
 
 describe('summarizeRules', () => {
   it('summarizes an all-products percent rule', () => {
@@ -84,5 +86,52 @@ describe('summarizeDuration', () => {
 
   it('describes an open-ended grant', () => {
     expect(summarizeDuration({ duration_months: null, grant_ends_at: null })).toBe('ongoing');
+  });
+});
+
+describe('activeRules composed with alreadyAppliedDetail', () => {
+  // The seam both already_applied handlers use (checkout review + billing
+  // settings). The backend's already_applied response returns every unarchived
+  // rule with no effective-window filter, and nothing archives a rule when
+  // effective_until passes — so an expired grant arrives in that list. Passing
+  // it straight to alreadyAppliedDetail describes a discount the customer no
+  // longer has, next to a total Stripe will not charge.
+  const CODE = { duration_months: 3, grant_ends_at: null };
+
+  function rule(overrides: Partial<PricingRule>): PricingRule {
+    return {
+      id: 'r1',
+      org_id: 'org1',
+      scope: 'all',
+      category: null,
+      discount_type: 'percent',
+      value_bps: 2000,
+      value_cents: null,
+      effective_from: '2026-01-01T00:00:00.000Z',
+      effective_until: null,
+      note: null,
+      created_by: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+      archived_at: null,
+      ...overrides,
+    } as PricingRule;
+  }
+
+  const NOW = new Date('2026-08-11T00:00:00.000Z');
+
+  it('describes a rule that is still in effect', () => {
+    const rules = activeRules([rule({ effective_until: '2026-12-01T00:00:00.000Z' })], NOW);
+    expect(alreadyAppliedDetail(rules, CODE)).toBe('20% off all products for 3 months');
+  });
+
+  it('drops an expired-but-unarchived rule, leaving the duration alone', () => {
+    const rules = activeRules([rule({ effective_until: '2026-07-01T00:00:00.000Z' })], NOW);
+    expect(rules).toHaveLength(0);
+    expect(alreadyAppliedDetail(rules, CODE)).toBe('for 3 months');
+  });
+
+  it('drops a rule a superadmin archived', () => {
+    const rules = activeRules([rule({ archived_at: '2026-07-01T00:00:00.000Z' })], NOW);
+    expect(alreadyAppliedDetail(rules, CODE)).toBe('for 3 months');
   });
 });

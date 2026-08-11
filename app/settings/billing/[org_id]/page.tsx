@@ -23,6 +23,7 @@ import {
   alreadyAppliedDetail,
   ALREADY_APPLIED_SUMMARY,
 } from '@/lib/discounts/format';
+import { activeRules } from '@/lib/pricing/format';
 import { canManageBilling } from '@/lib/permissions';
 
 type RedeemState =
@@ -243,10 +244,14 @@ export default function OrganizationBillingPage() {
         // the redeem call above never ran. The headline has to say so: this
         // box is the same green success panel a fresh grant renders, and
         // leading with the rule summary made a spent code look newly applied.
+        //
+        // The backend returns every unarchived rule with no effective-window
+        // filter, so an expired-but-unarchived rule can still be in the list.
+        // Filter to what is actually in effect now, same as checkout.
         setRedeemState({
           kind: 'applied',
           summary: ALREADY_APPLIED_SUMMARY,
-          duration: alreadyAppliedDetail(evaluation.rules, evaluation.code),
+          duration: alreadyAppliedDetail(activeRules(evaluation.rules), evaluation.code),
         });
         setRedeemCode('');
       } else {

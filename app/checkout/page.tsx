@@ -216,11 +216,17 @@ function CheckoutContent() {
         setDiscountState({ kind: 'preview', evaluation });
         addToast('success', 'Discount code applied!');
       } else if (evaluation.status === 'already_applied') {
-        setDiscountRules(evaluation.rules);
+        // The backend's already_applied response returns every unarchived
+        // rule with no effective-window filter, so an expired-but-unarchived
+        // rule can still be in the list. Filter to what is actually in effect
+        // now, same as the mount-time load above — otherwise the review step
+        // renders a discounted total for a grant Stripe will not honor.
+        const rules = activeRules(evaluation.rules);
+        setDiscountRules(rules);
         setDiscountState({
           kind: 'applied',
           summary: ALREADY_APPLIED_SUMMARY,
-          duration: alreadyAppliedDetail(evaluation.rules, evaluation.code),
+          duration: alreadyAppliedDetail(rules, evaluation.code),
         });
       } else {
         setDiscountRules(null);
