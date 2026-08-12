@@ -190,10 +190,9 @@ export const stripeApi = {
    * @param org_id - Organization ID
    * @param plan_code - Plan code to subscribe to
    * @param price_id - Optional Stripe price ID
-   * @param promotion_code - Optional promotion code to apply discount
    */
-  createSubscription: (org_id: string, plan_code: string, price_id?: string, promotion_code?: string) => {
-    return apiClient.post('/stripe/subscriptions', { org_id, plan_code, price_id, promotion_code });
+  createSubscription: (org_id: string, plan_code: string, price_id?: string) => {
+    return apiClient.post('/stripe/subscriptions', { org_id, plan_code, price_id });
   },
 
   /**
@@ -921,124 +920,155 @@ export interface CreatePricingRuleInput {
 export const pricingApi = {
   list: (orgId: string): Promise<{ active: PricingRule[]; history: PricingRule[] }> =>
     apiClient.get(`/admin/organizations/${orgId}/pricing-rules`),
+  // Member-scoped: any member of the org may read their own org's active
+  // pricing. `from_discount_code` is true only when one of those live rules
+  // was issued by a discount code redemption.
+  listForOrg: (
+    orgId: string
+  ): Promise<{ rules: PricingRule[]; from_discount_code: boolean }> =>
+    apiClient.get(`/organizations/${orgId}/pricing-rules`),
   create: (orgId: string, input: CreatePricingRuleInput): Promise<PricingRule> =>
     apiClient.post(`/admin/organizations/${orgId}/pricing-rules`, input),
   archive: (orgId: string, ruleId: string): Promise<void> =>
     apiClient.delete(`/admin/organizations/${orgId}/pricing-rules/${ruleId}`),
 };
 
-// Discounts/Promotion Codes API
-export const discountsApi = {
-  /**
-   * Validate a promotion code
-   * Returns discount details if valid, error if invalid
-   */
-  validate: (code: string, plan_code?: string): Promise<{
-    valid: boolean;
-    promotion_code_id?: string;
-    stripe_promotion_code_id?: string;
-    discount_type?: 'percent_off' | 'amount_off';
-    discount_value?: number;
-    code?: string;
-    message?: string;
-  }> => {
-    return apiClient.post('/discounts/validate', { code, plan_code });
-  },
+// Discount Codes API (rule-issuing discount codes)
+/**
+ * Why /discounts/validate refused a code. Mirrors the backend's
+ * RejectionReason (src/types/discounts.ts).
+ *
+ * `already_applied` is deliberately NOT here. On the backend it is a
+ * RejectionOutcome — something redeem can raise — never a `rejected` verdict
+ * from validate, which answers `status: 'already_applied'` as its own variant
+ * and has no MESSAGES entry for it. Including it admitted a
+ * `{status:'rejected', reason:'already_applied'}` response that cannot occur,
+ * which is exactly the case the surrounding code handles separately.
+ */
+export type RejectionReason =
+  | 'not_found'
+  | 'inactive'
+  | 'expired'
+  | 'fully_redeemed'
+  | 'org_has_pricing'
+  | 'lifetime_plan';
 
-  /**
-   * List all promotion codes (admin only)
-   */
-  list: (params?: { active_only?: boolean; page?: number; limit?: number }): Promise<{
-    promotion_codes: PromotionCode[];
-    total: number;
-    page: number;
-    limit: number;
-  }> => {
-    const query = new URLSearchParams();
-    if (params?.active_only !== undefined) query.append('active_only', params.active_only.toString());
-    if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('limit', params.limit.toString());
-    const queryString = query.toString();
-    return apiClient.get(`/discounts${queryString ? `?${queryString}` : ''}`);
-  },
+/** Reasons redeem can refuse: every validate reason, plus the redeem-only one. */
+export type RedeemRejectionReason = RejectionReason | 'already_applied';
 
-  /**
-   * Create a new promotion code (admin only)
-   */
-  create: (data: {
-    code: string;
-    discount_type: 'percent_off' | 'amount_off';
-    discount_value: number;
-    max_redemptions?: number;
-    expires_at?: string;
-    first_time_transaction_only?: boolean;
-  }): Promise<PromotionCode> => {
-    return apiClient.post('/discounts', data);
-  },
-
-  /**
-   * Deactivate a promotion code (admin only)
-   */
-  deactivate: (id: string): Promise<{ success: boolean }> => {
-    return apiClient.delete(`/discounts/${id}`);
-  },
-
-  /**
-   * Get promotion code redemption history (admin only)
-   */
-  getRedemptions: (params?: { promotion_code_id?: string; page?: number; limit?: number }): Promise<{
-    redemptions: DiscountRedemption[];
-    total: number;
-    page: number;
-    limit: number;
-  }> => {
-    const query = new URLSearchParams();
-    if (params?.promotion_code_id) query.append('promotion_code_id', params.promotion_code_id);
-    if (params?.page) query.append('page', params.page.toString());
-    if (params?.limit) query.append('limit', params.limit.toString());
-    const queryString = query.toString();
-    return apiClient.get(`/discounts/redemptions${queryString ? `?${queryString}` : ''}`);
-  },
-};
-
-// Types for discount API
-export interface PromotionCode {
+export interface DiscountCode {
   id: string;
-  stripe_promotion_code_id: string;
-  stripe_coupon_id: string;
   code: string;
-  discount_type: 'percent_off' | 'amount_off';
-  discount_value: number;
-  currency: string;
+  description: string | null;
+  customer_blurb: string | null;
+  duration_months: number | null;
+  grant_ends_at: string | null;
+  redeemable_until: string | null;
   max_redemptions: number | null;
   times_redeemed: number;
-  first_time_transaction_only: boolean;
-  applies_to_plans: string[] | null;
-  expires_at: string | null;
   is_active: boolean;
-  metadata: Record<string, any>;
   created_by: string | null;
-  creator_name: string | null;
-  creator_email: string | null;
   created_at: string;
-  updated_at: string;
 }
 
-export interface DiscountRedemption {
+export interface DiscountCodeRule {
   id: string;
-  promotion_code_id: string;
-  org_id: string;
-  subscription_id: string | null;
-  user_id: string | null;
-  stripe_invoice_id: string | null;
-  amount_discounted: number;
-  original_amount: number;
-  final_amount: number;
-  created_at: string;
-  // Joined fields
-  promotion_code?: PromotionCode;
-  organization_name?: string;
+  discount_code_id: string;
+  scope: 'all' | 'category';
+  category: PricingCategory | null;
+  discount_type: PricingDiscountType;
+  value_bps: number | null;
+  value_cents: number | null;
 }
+
+export interface DiscountCodeRuleInput {
+  scope: 'all' | 'category';
+  category: PricingCategory | null;
+  discount_type: PricingDiscountType;
+  value_bps?: number | null;
+  value_cents?: number | null;
+}
+
+export interface DiscountCodeWithRules extends DiscountCode {
+  rules: DiscountCodeRule[];
+}
+
+export interface CreateDiscountCodeInput {
+  code: string;
+  description?: string | null;
+  customer_blurb?: string | null;
+  duration_months?: number | null;
+  grant_ends_at?: string | null;
+  redeemable_until?: string | null;
+  max_redemptions?: number | null;
+  rules: DiscountCodeRuleInput[];
+}
+
+export interface DiscountCodeRedemption {
+  id: string;
+  discount_code_id: string;
+  org_id: string;
+  redeemed_by: string | null;
+  redeemed_at: string;
+  granted_rule_ids: string[];
+  organizations?: { name: string } | null;
+}
+
+/**
+ * What a customer-facing caller actually receives for a code.
+ *
+ * Mirrors the backend's PublicDiscountCode / toPublicCode
+ * (javelina-backend/src/types/discounts.ts), which deliberately strips the
+ * admin-only fields — there is a backend test asserting the strip. Typing these
+ * variants as the full DiscountCode claimed seven fields the API provably does
+ * not send: `code.is_active` type-checked as a boolean and was undefined at
+ * runtime.
+ */
+export type PublicDiscountCode = Pick<
+  DiscountCode,
+  'id' | 'code' | 'customer_blurb' | 'duration_months' | 'grant_ends_at'
+>;
+
+export type CodeEvaluation =
+  | { status: 'valid'; code: PublicDiscountCode; rules: DiscountCodeRule[]; grant_ends: string | null }
+  | { status: 'already_applied'; code: PublicDiscountCode; rules: PricingRule[] }
+  | { status: 'rejected'; reason: RejectionReason; message: string };
+
+/** The 409 body /discounts/redeem returns when it refuses. */
+export interface DiscountRejectionBody {
+  message?: string;
+  details?: { reason?: RedeemRejectionReason };
+}
+
+export const discountsApi = {
+  /** Preview what a code would grant. A rejected code returns 200 with status:'rejected'. */
+  validate: (code: string, org_id?: string, plan_code?: string): Promise<CodeEvaluation> =>
+    apiClient.post('/discounts/validate', { code, org_id, plan_code }),
+
+  /**
+   * Write the code's rules onto the org. Throws on 409 rejection.
+   *
+   * `stripe_sync: 'deferred'` means the grant is committed and effective
+   * pricing honours it, but no Stripe subscription was reconciled — the org's
+   * subscription is not active/trialing. The hourly pricing sweep applies it
+   * once the subscription returns to a live status.
+   */
+  redeem: (
+    code: string,
+    org_id: string,
+  ): Promise<{ rules: PricingRule[]; stripe_sync: 'applied' | 'deferred' }> =>
+    apiClient.post('/discounts/redeem', { code, org_id }),
+
+  list: (): Promise<{ codes: DiscountCodeWithRules[] }> => apiClient.get('/discounts'),
+
+  create: (data: CreateDiscountCodeInput): Promise<DiscountCodeWithRules> =>
+    apiClient.post('/discounts', data),
+
+  deactivate: (id: string): Promise<DiscountCode> => apiClient.delete(`/discounts/${id}`),
+
+  redemptions: (id: string): Promise<{ redemptions: DiscountCodeRedemption[] }> =>
+    apiClient.get(`/discounts/${id}/redemptions`),
+};
 
 // Auth API
 export const authApi = {

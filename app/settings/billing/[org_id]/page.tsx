@@ -11,6 +11,35 @@ import { ChangePlanModal } from '@/components/modals/ChangePlanModal';
 import { EditBillingInfoModal } from '@/components/modals/EditBillingInfoModal';
 // No longer need Supabase client - using Express API with session cookies
 import type { Organization } from '@/types/supabase';
+import {
+  discountsApi,
+  ApiError,
+  type CodeEvaluation,
+  type DiscountRejectionBody,
+} from '@/lib/api-client';
+import {
+  summarizeRules,
+  summarizeDuration,
+  alreadyAppliedDetail,
+  ALREADY_APPLIED_SUMMARY,
+  EMPTY_GRANT_SUMMARY,
+} from '@/lib/discounts/format';
+import { activeRules } from '@/lib/pricing/format';
+import { canManageBilling } from '@/lib/permissions';
+import { GrantAppliedPanel } from '@/components/billing/GrantAppliedPanel';
+
+type RedeemState =
+  | { kind: 'none' }
+  | {
+      kind: 'applied';
+      summary: string;
+      duration: string;
+      /** The code's customer-facing blurb, when it has one. */
+      blurb?: string | null;
+      /** Stripe has not been reconciled yet; the UI says "applying", not "applied". */
+      pendingSync?: boolean;
+    }
+  | { kind: 'error'; message: string };
 
 export default function OrganizationBillingPage() {
   const router = useRouter();
@@ -31,6 +60,20 @@ export default function OrganizationBillingPage() {
   const [hasAccess, setHasAccess] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Discount code redemption state
+  const [redeemCode, setRedeemCode] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redeemState, setRedeemState] = useState<RedeemState>({ kind: 'none' });
+
+  // Redeeming writes pricing onto the org, and the backend requires a billing
+  // role for it (requireOrgRole SuperAdmin/Admin/BillingContact on
+  // POST /discounts/redeem). Mirror that here so an Editor or Viewer is not
+  // offered a box that only fails after a successful preview. An org missing
+  // from the profile (e.g. just created, store not yet refreshed) leaves the
+  // box in place rather than hiding it from someone who can use it.
+  const billingOrgRole = user?.organizations?.find((o) => o.id === orgId)?.role;
+  const canRedeemCode = !billingOrgRole || canManageBilling(billingOrgRole);
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login?redirect=/settings/billing');
@@ -46,6 +89,20 @@ export default function OrganizationBillingPage() {
     verifyAccessAndFetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, orgId]);
+
+  // Deep-link handling, deliberately NOT inside fetchCurrentPlan. It used to
+  // live there, and fetchCurrentPlan is re-run after a successful discount
+  // redemption to refresh the effective-pricing display — which re-read
+  // ?openModal=true and popped the Change Plan modal on top of the success
+  // panel. Reading it once on mount keeps the deep link working without tying
+  // it to every refetch.
+  useEffect(() => {
+    if (!orgId) return;
+    if (searchParams.get('openModal') !== 'true') return;
+    setShowPlanModal(true);
+    router.replace(`/settings/billing/${orgId}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId]);
 
   const verifyAccessAndFetchData = async () => {
     if (!orgId || !user?.id) {
@@ -98,13 +155,6 @@ export default function OrganizationBillingPage() {
         setCurrentPlanCode('free');
       }
       
-      // Check if we should auto-open the modal (from query parameter)
-      const shouldOpenModal = searchParams.get('openModal');
-      if (shouldOpenModal === 'true') {
-        setShowPlanModal(true);
-        // Clean up URL
-        router.replace(`/settings/billing/${orgId}`, { scroll: false });
-      }
     } catch (error) {
       console.error('Error fetching current plan:', error);
       setCurrentPlanCode('free');
@@ -165,6 +215,77 @@ export default function OrganizationBillingPage() {
     // Refresh organization data after billing info is updated
     await verifyAccessAndFetchData();
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Validate then redeem a discount code onto this org. Unlike checkout,
+  // there is no separate preview step to hold for later — an org that
+  // already has a plan never passes back through checkout, so this is the
+  // only place domain- and mailbox-only codes can ever be redeemed.
+  const handleRedeemCode = async () => {
+    if (isRedeeming || !redeemCode.trim() || !orgId) return;
+
+    setIsRedeeming(true);
+
+    try {
+      const evaluation: CodeEvaluation = await discountsApi.validate(redeemCode.trim(), orgId);
+
+      if (evaluation.status === 'valid') {
+        try {
+          const { rules, stripe_sync } = await discountsApi.redeem(redeemCode.trim(), orgId);
+          setRedeemState({
+            kind: 'applied',
+            // summarizeRules([]) renders "No discount" — wrong inside a
+            // success-styled box. Shared with checkout via EMPTY_GRANT_SUMMARY
+            // so the two cannot drift again.
+            summary: rules.length > 0 ? summarizeRules(rules) : EMPTY_GRANT_SUMMARY,
+            duration: summarizeDuration(evaluation.code),
+            blurb: evaluation.code.customer_blurb,
+            pendingSync: stripe_sync === 'deferred',
+          });
+          setRedeemCode('');
+          addToast('success', 'Discount code applied!');
+          // Re-fetch the plan/pricing data that SubscriptionManager and this
+          // page render, rather than hand-patching local state from the
+          // redeem response, so the granted rules appear in the existing
+          // effective-pricing display.
+          await fetchCurrentPlan();
+          setRefreshTrigger((prev) => prev + 1);
+        } catch (redeemError) {
+          const details = (redeemError as ApiError).details as
+            | DiscountRejectionBody
+            | undefined;
+          const message =
+            details?.message ||
+            (redeemError instanceof Error ? redeemError.message : 'Failed to redeem discount code');
+          setRedeemState({ kind: 'error', message });
+        }
+      } else if (evaluation.status === 'already_applied') {
+        // Nothing was redeemed here — validate answered `already_applied`, so
+        // the redeem call above never ran. The headline has to say so: this
+        // box is the same green success panel a fresh grant renders, and
+        // leading with the rule summary made a spent code look newly applied.
+        //
+        // The backend returns every unarchived rule with no effective-window
+        // filter, so an expired-but-unarchived rule can still be in the list.
+        // Filter to what is actually in effect now, same as checkout.
+        setRedeemState({
+          kind: 'applied',
+          summary: ALREADY_APPLIED_SUMMARY,
+          duration: alreadyAppliedDetail(activeRules(evaluation.rules), evaluation.code),
+          blurb: evaluation.code.customer_blurb,
+        });
+        setRedeemCode('');
+      } else {
+        setRedeemState({ kind: 'error', message: evaluation.message });
+      }
+    } catch (error) {
+      setRedeemState({
+        kind: 'error',
+        message: error instanceof Error ? error.message : 'Failed to validate discount code',
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   // Check if billing information is missing
@@ -239,6 +360,64 @@ export default function OrganizationBillingPage() {
               onCancelSubscription={handleCancelSubscription}
               refreshTrigger={refreshTrigger}
             />
+          )}
+
+          {/* Redeem a Discount Code Section — billing roles only, matching the server */}
+          {canRedeemCode && (
+          <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6">
+            <h3 className="text-xl font-bold text-text">Redeem a Code</h3>
+            <p className="text-sm text-text-muted mt-1 mb-4">
+              Have a discount code? Apply it to this organization.
+            </p>
+
+            {redeemState.kind === 'applied' ? (
+              <GrantAppliedPanel
+                summary={redeemState.summary}
+                duration={redeemState.duration}
+                blurb={redeemState.blurb}
+                pendingSync={redeemState.pendingSync}
+                onDismiss={() => setRedeemState({ kind: 'none' })}
+                dismissLabel="Redeem another code"
+              />
+            ) : (
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={redeemCode}
+                  onChange={(e) => {
+                    setRedeemCode(e.target.value.toUpperCase());
+                    if (redeemState.kind === 'error') setRedeemState({ kind: 'none' });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleRedeemCode();
+                    }
+                  }}
+                  placeholder="Enter code"
+                  aria-label="Discount code"
+                  className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  disabled={isRedeeming}
+                />
+                <button
+                  onClick={handleRedeemCode}
+                  disabled={!redeemCode.trim() || isRedeeming}
+                  className="px-4 py-2 bg-accent text-white rounded-md text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isRedeeming ? (
+                    <div className="flex items-center space-x-1">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    </div>
+                  ) : (
+                    'Apply'
+                  )}
+                </button>
+              </div>
+            )}
+            {redeemState.kind === 'error' && (
+              <p className="mt-2 text-sm text-red-600">{redeemState.message}</p>
+            )}
+          </div>
           )}
 
           {/* Billing Contact Information Section */}

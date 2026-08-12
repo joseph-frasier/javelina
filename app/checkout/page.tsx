@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
@@ -8,9 +8,50 @@ import { StripeProvider } from '@/components/stripe/StripeProvider';
 import { StripePaymentForm } from '@/components/stripe/StripePaymentForm';
 import { useToastStore } from '@/lib/stores/toast-store';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { discountsApi } from '@/lib/api-client';
+import {
+  discountsApi,
+  pricingApi,
+  ApiError,
+  type CodeEvaluation,
+  type PricingRule,
+  type DiscountRejectionBody,
+  type PricingDiscountType,
+  type PricingCategory,
+} from '@/lib/api-client';
+import {
+  summarizeRules,
+  summarizeDuration,
+  alreadyAppliedDetail,
+  ALREADY_APPLIED_SUMMARY,
+  EMPTY_GRANT_SUMMARY,
+} from '@/lib/discounts/format';
+import {
+  isPlanOrAllRule,
+  computeDiscountedTotal,
+  type DiscountRuleForMath,
+} from '@/lib/discounts/pricing';
+import { activeRules } from '@/lib/pricing/format';
+import { GrantAppliedPanel } from '@/components/billing/GrantAppliedPanel';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { canManageBilling } from '@/lib/permissions';
 import Button from '@/components/ui/Button';
 import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
+
+
+
+type DiscountState =
+  | { kind: 'none' }
+  | { kind: 'preview'; evaluation: Extract<CodeEvaluation, { status: 'valid' }> }
+  | {
+      kind: 'applied';
+      summary: string;
+      duration: string;
+      /** The code's customer-facing blurb, when the grant came from a preview. */
+      blurb?: string | null;
+      /** Stripe has not been reconciled yet; the UI says "applying", not "applied". */
+      pendingSync?: boolean;
+    }
+  | { kind: 'error'; message: string };
 
 interface CheckoutData {
   org_id: string;
@@ -26,16 +67,6 @@ interface CheckoutData {
   original_price?: number;
   credit_amount?: number;
   from_plan_code?: string;
-}
-
-interface AppliedDiscount {
-  code: string;
-  promotion_code_id: string;
-  stripe_promotion_code_id: string;
-  discount_type: 'percent_off' | 'amount_off';
-  discount_value: number;
-  discounted_amount: number;
-  final_price: number;
 }
 
 interface InvoiceSummary {
@@ -56,7 +87,8 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const addToast = useToastStore((state) => state.addToast);
-  
+  const user = useAuthStore((state) => state.user);
+
   // Checkout state
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [checkoutStep, setCheckoutStep] = useState<'review' | 'payment'>('review');
@@ -70,8 +102,19 @@ function CheckoutContent() {
   // Discount code state
   const [discountCode, setDiscountCode] = useState('');
   const [isValidatingDiscount, setIsValidatingDiscount] = useState(false);
-  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
-  const [discountError, setDiscountError] = useState<string | null>(null);
+  const [discountState, setDiscountState] = useState<DiscountState>({ kind: 'none' });
+  // Raw rule data backing whichever grant discountState describes, kept separately
+  // so the total can be computed in cents without smuggling numbers into the
+  // display-only DiscountState.
+  const [discountRules, setDiscountRules] = useState<DiscountRuleForMath[] | null>(null);
+  // Tracks the latest discountState.kind for the mount-fetch effect below, so
+  // that effect (which only runs once) can check "is a preview/applied grant
+  // already in flight" without a stale closure and without depending on
+  // discountState — which would refetch on every discount interaction.
+  const discountKindRef = useRef<DiscountState['kind']>('none');
+  useEffect(() => {
+    discountKindRef.current = discountState.kind;
+  }, [discountState.kind]);
 
   // Parse checkout data from URL on mount
   useEffect(() => {
@@ -105,92 +148,155 @@ function CheckoutContent() {
     };
 
     setCheckoutData(data);
-    
+
+    // A customer returning mid-payment shouldn't see an empty discount box —
+    // if the org already has an active grant, render it as satisfied on load.
+    if (data.billing_interval !== 'lifetime') {
+      pricingApi
+        .listForOrg(data.org_id)
+        .then(({ rules: orgRules, from_discount_code }) => {
+          // Only a grant that actually came from a code may render as
+          // "discount applied". An org on negotiated contract pricing has
+          // active rules too, and hiding the code input from them would leave
+          // them unable to enter one.
+          if (!from_discount_code) return;
+          const rules = activeRules(orgRules);
+          if (rules.length === 0) return;
+          // Don't clobber a preview/applied grant the customer set up while
+          // this fetch was in flight.
+          if (discountKindRef.current !== 'none') return;
+          const planRule = rules.find(isPlanOrAllRule);
+          const durationSource = planRule ?? rules[0];
+          setDiscountRules(rules);
+          setDiscountState({
+            kind: 'applied',
+            summary: summarizeRules(rules),
+            duration: summarizeDuration({ duration_months: null, grant_ends_at: durationSource.effective_until }),
+          });
+        })
+        .catch((error) => {
+          // Non-fatal: the discount box just stays empty and the customer can
+          // still type their code. But it must not vanish silently — a 403 here
+          // is exactly how the superadmin-only version of this read hid itself.
+          console.error('Failed to load existing org pricing rules:', error);
+        });
+    }
+
     // For upgrades, skip review step and go directly to payment
     if (upgrade_type) {
-      handleProceedToPayment(data, null);
+      handleProceedToPayment(data);
     }
   }, [searchParams, router, addToast]);
 
   // Handle discount code validation
   const handleApplyDiscount = async () => {
     if (!discountCode.trim() || !checkoutData) return;
-    
+
     setIsValidatingDiscount(true);
-    setDiscountError(null);
-    
+
     try {
-      const result = await discountsApi.validate(discountCode.trim(), checkoutData.plan_code);
-      
-      if (result.valid && result.discount_type && result.discount_value !== undefined) {
-        const originalPrice = checkoutData.plan_price || 0;
-        let discountedAmount = 0;
-        let finalPrice = originalPrice;
-        
-        if (result.discount_type === 'percent_off') {
-          discountedAmount = (originalPrice * result.discount_value) / 100;
-          finalPrice = originalPrice - discountedAmount;
-        } else {
-          // amount_off is in cents, convert to dollars
-          discountedAmount = result.discount_value / 100;
-          finalPrice = Math.max(0, originalPrice - discountedAmount);
-        }
-        
-        setAppliedDiscount({
-          code: discountCode.trim().toUpperCase(),
-          promotion_code_id: result.promotion_code_id || '',
-          stripe_promotion_code_id: result.stripe_promotion_code_id || '',
-          discount_type: result.discount_type,
-          discount_value: result.discount_value,
-          discounted_amount: discountedAmount,
-          final_price: finalPrice,
-        });
-        
+      const evaluation = await discountsApi.validate(
+        discountCode.trim(),
+        checkoutData.org_id,
+        checkoutData.plan_code
+      );
+
+      if (evaluation.status === 'valid') {
+        setDiscountRules(evaluation.rules);
+        setDiscountState({ kind: 'preview', evaluation });
         addToast('success', 'Discount code applied!');
+      } else if (evaluation.status === 'already_applied') {
+        // The backend's already_applied response returns every unarchived
+        // rule with no effective-window filter, so an expired-but-unarchived
+        // rule can still be in the list. Filter to what is actually in effect
+        // now, same as the mount-time load above — otherwise the review step
+        // renders a discounted total for a grant Stripe will not honor.
+        const rules = activeRules(evaluation.rules);
+        setDiscountRules(rules);
+        setDiscountState({
+          kind: 'applied',
+          summary: ALREADY_APPLIED_SUMMARY,
+          duration: alreadyAppliedDetail(rules, evaluation.code),
+          blurb: evaluation.code.customer_blurb,
+        });
       } else {
-        setDiscountError(result.message || 'Invalid discount code');
+        setDiscountRules(null);
+        setDiscountState({ kind: 'error', message: evaluation.message });
       }
-    } catch (error: any) {
-      setDiscountError(error.message || 'Failed to validate discount code');
+    } catch (error) {
+      setDiscountRules(null);
+      setDiscountState({
+        kind: 'error',
+        message: error instanceof Error ? error.message : 'Failed to validate discount code',
+      });
     } finally {
       setIsValidatingDiscount(false);
     }
   };
-  
-  // Remove applied discount
+
+  // Remove a not-yet-redeemed preview
   const handleRemoveDiscount = () => {
-    setAppliedDiscount(null);
+    setDiscountState({ kind: 'none' });
+    setDiscountRules(null);
     setDiscountCode('');
-    setDiscountError(null);
   };
 
-  // Proceed to payment - create subscription with optional discount
-  const handleProceedToPayment = async (data?: CheckoutData, discount?: AppliedDiscount | null) => {
+  // Proceed to payment - redeem any previewed discount, then create the subscription
+  const handleProceedToPayment = async (data?: CheckoutData) => {
     const checkout = data || checkoutData;
-    const appliedPromo = discount !== undefined ? discount : appliedDiscount;
-    
+
     if (!checkout) return;
-    
+
     setIsCreatingSubscription(true);
-    
+
     try {
       const { stripeApi } = await import('@/lib/api-client');
-      
+
       const { org_id, plan_code, price_id, upgrade_type } = checkout;
-      
+
+      // The rules must exist on the org before the subscription is created,
+      // or Stripe bills the first invoice at full price. Do not roll back on
+      // a later payment failure — the grant clock starts at redemption, an
+      // unpaid org has no subscription to discount, and the resume-checkout
+      // flow (Step 4) lets the customer finish.
+      if (discountState.kind === 'preview') {
+        try {
+          const { rules, stripe_sync } = await discountsApi.redeem(discountCode.trim(), org_id);
+          setDiscountRules(rules);
+          setDiscountState({
+            kind: 'applied',
+            // summarizeRules([]) renders "No discount" — wrong inside a
+            // success-styled box. Shared with the billing-settings card via
+            // EMPTY_GRANT_SUMMARY so the two cannot drift again.
+            summary: rules.length > 0 ? summarizeRules(rules) : EMPTY_GRANT_SUMMARY,
+            duration: summarizeDuration(discountState.evaluation.code),
+            blurb: discountState.evaluation.code.customer_blurb,
+            pendingSync: stripe_sync === 'deferred',
+          });
+        } catch (redeemError) {
+          const details = (redeemError as ApiError).details as
+            | DiscountRejectionBody
+            | undefined;
+          const message =
+            details?.message ||
+            (redeemError instanceof Error ? redeemError.message : 'Failed to apply discount code');
+          // Clear the preview's rules too — otherwise the review step keeps
+          // showing a discounted total for a code that was never redeemed,
+          // and a retry would create the subscription at full price while
+          // the UI still displays the (unredeemed) discount.
+          setDiscountRules(null);
+          setDiscountState({ kind: 'error', message });
+          return;
+        }
+      }
+
       // Use upgrade endpoint for lifetime upgrades, regular for new subscriptions
       let response;
       if (upgrade_type === 'subscription-to-lifetime' || upgrade_type === 'lifetime-to-lifetime') {
         // Call the upgrade endpoint which returns a PaymentIntent
         response = await stripeApi.upgradeToLifetime(org_id, plan_code);
       } else {
-        // Regular subscription creation - include promotion code if applied
-        response = await stripeApi.createSubscription(
-          org_id, 
-          plan_code, 
-          price_id || undefined,
-          appliedPromo?.stripe_promotion_code_id
-        );
+        response = await stripeApi.createSubscription(org_id, plan_code, price_id || undefined);
       }
 
       setClientSecret(response.clientSecret);
@@ -224,9 +330,22 @@ function CheckoutContent() {
 
   const isUpgrade = !!checkoutData.upgrade_type;
   const isLifetime = checkoutData.billing_interval === 'lifetime';
-  const finalPrice = appliedDiscount && !isUpgrade 
-    ? appliedDiscount.final_price 
-    : checkoutData.plan_price || 0;
+
+  // Only a plan-scoped or all-scoped rule changes this checkout's total;
+  // domain/mailbox grants render as included-benefit copy instead, since this
+  // invoice has nothing for them to discount.
+  const { originalCents, discountedCents, discountAmountCents, planDiscountRule, includedBenefitRules } =
+    computeDiscountedTotal(Math.round((checkoutData.plan_price || 0) * 100), discountRules);
+
+  // POST /discounts/redeem requires a billing role (SuperAdmin/Admin/
+  // BillingContact), so don't offer the input to someone whose redeem would be
+  // refused after a successful preview. An org the profile doesn't know about
+  // yet (just created during this flow) keeps the input rather than losing it.
+  // An already-granted discount still renders — that is information, not an action.
+  const checkoutOrgRole = user?.organizations?.find((o) => o.id === checkoutData.org_id)?.role;
+  const canRedeemCode = !checkoutOrgRole || canManageBilling(checkoutOrgRole);
+  const showDiscountBox = canRedeemCode || discountState.kind !== 'none';
+  const finalPrice = !isUpgrade && discountRules ? discountedCents / 100 : checkoutData.plan_price || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -306,45 +425,53 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                {/* Discount Code Input - Hidden for lifetime plans */}
+                {/* Discount Code Input - Hidden for lifetime plans, and for
+                    members without the billing role redeem requires */}
                 {!isLifetime && (
                   <>
+                    {showDiscountBox && (
                     <div>
-                      <label className="block text-sm font-medium text-text mb-2">
+                      <label
+                        htmlFor="checkout-discount-code"
+                        className="block text-sm font-medium text-text mb-2"
+                      >
                         Have a discount code?
                       </label>
-                      {appliedDiscount ? (
-                        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span className="font-medium text-green-700">{appliedDiscount.code}</span>
-                            <span className="text-sm text-green-600">
-                              {appliedDiscount.discount_type === 'percent_off' 
-                                ? `${appliedDiscount.discount_value}% off`
-                                : `-$${(appliedDiscount.discount_value / 100).toFixed(2)}`
-                              }
-                            </span>
-                          </div>
-                          <button
-                            onClick={handleRemoveDiscount}
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                            aria-label="Remove discount"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
+                      {discountState.kind === 'preview' || discountState.kind === 'applied' ? (
+                        <GrantAppliedPanel
+                          summary={
+                            discountState.kind === 'preview'
+                              ? summarizeRules(discountState.evaluation.rules)
+                              : discountState.summary
+                          }
+                          duration={
+                            discountState.kind === 'preview'
+                              ? summarizeDuration(discountState.evaluation.code)
+                              : discountState.duration
+                          }
+                          blurb={
+                            discountState.kind === 'preview'
+                              ? discountState.evaluation.code.customer_blurb
+                              : discountState.blurb
+                          }
+                          pendingSync={
+                            discountState.kind === 'applied' && discountState.pendingSync
+                          }
+                          onDismiss={
+                            discountState.kind === 'preview' ? handleRemoveDiscount : undefined
+                          }
+                          dismissLabel="Remove discount"
+                        />
                       ) : (
                         <div className="flex space-x-2">
                           <input
+                            id="checkout-discount-code"
+                            aria-label="Discount code"
                             type="text"
                             value={discountCode}
                             onChange={(e) => {
                               setDiscountCode(e.target.value.toUpperCase());
-                              setDiscountError(null);
+                              if (discountState.kind === 'error') setDiscountState({ kind: 'none' });
                             }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -371,23 +498,31 @@ function CheckoutContent() {
                           </button>
                         </div>
                       )}
-                      {discountError && (
-                        <p className="mt-2 text-sm text-red-600">{discountError}</p>
+                      {discountState.kind === 'error' && (
+                        <p className="mt-2 text-sm text-red-600">{discountState.message}</p>
                       )}
                     </div>
+                    )}
 
-                    {/* Discount Breakdown */}
-                    {appliedDiscount && (
+                    {/* Discount Breakdown - only a plan/all-scoped rule changes this total */}
+                    {planDiscountRule && (
                       <div className="space-y-2 py-3 border-t border-border">
                         <div className="flex justify-between text-sm">
                           <span className="text-text-muted">Subtotal</span>
                           <span className="text-gray-700">${Number(checkoutData.plan_price).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-green-600">Discount ({appliedDiscount.code})</span>
-                          <span className="text-green-600">-${appliedDiscount.discounted_amount.toFixed(2)}</span>
+                          <span className="text-green-600">Discount</span>
+                          <span className="text-green-600">-${(discountAmountCents / 100).toFixed(2)}</span>
                         </div>
                       </div>
+                    )}
+
+                    {/* Domain/mailbox grants have nothing on this invoice to discount */}
+                    {includedBenefitRules.length > 0 && (
+                      <p className="text-xs text-text-muted font-light">
+                        Also includes: {summarizeRules(includedBenefitRules)}
+                      </p>
                     )}
                   </>
                 )}
@@ -545,17 +680,25 @@ function CheckoutContent() {
                   )}
 
                   {/* Discount Applied Badge - Hidden for lifetime plans */}
-                  {appliedDiscount && !isUpgrade && !isLifetime && (
+                  {planDiscountRule && !isUpgrade && !isLifetime && (
                     <div className="space-y-2 py-3 border-t border-border">
                       <div className="flex justify-between text-sm">
                         <span className="text-text-muted">Subtotal</span>
                         <span className="text-gray-700 dark:text-gray-300">${Number(checkoutData.plan_price).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-600">Discount ({appliedDiscount.code})</span>
-                        <span className="text-green-600">-${appliedDiscount.discounted_amount.toFixed(2)}</span>
+                        <span className="text-green-600">Discount</span>
+                        <span className="text-green-600">-${(discountAmountCents / 100).toFixed(2)}</span>
                       </div>
                     </div>
+                  )}
+
+                  {/* Domain/mailbox grants have nothing on this invoice to discount,
+                      but shouldn't vanish once the customer advances past review. */}
+                  {includedBenefitRules.length > 0 && !isUpgrade && !isLifetime && (
+                    <p className="text-xs text-text-muted font-light">
+                      Also includes: {summarizeRules(includedBenefitRules)}
+                    </p>
                   )}
 
                   {/* Tax breakdown */}
