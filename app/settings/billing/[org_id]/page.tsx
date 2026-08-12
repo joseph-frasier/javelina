@@ -15,7 +15,7 @@ import {
   discountsApi,
   ApiError,
   type CodeEvaluation,
-  type RejectionReason,
+  type DiscountRejectionBody,
 } from '@/lib/api-client';
 import {
   summarizeRules,
@@ -232,7 +232,7 @@ export default function OrganizationBillingPage() {
           setRefreshTrigger((prev) => prev + 1);
         } catch (redeemError) {
           const details = (redeemError as ApiError).details as
-            | { reason?: RejectionReason; message?: string }
+            | DiscountRejectionBody
             | undefined;
           const message =
             details?.message ||

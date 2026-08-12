@@ -934,14 +934,27 @@ export const pricingApi = {
 };
 
 // Discount Codes API (rule-issuing discount codes)
+/**
+ * Why /discounts/validate refused a code. Mirrors the backend's
+ * RejectionReason (src/types/discounts.ts).
+ *
+ * `already_applied` is deliberately NOT here. On the backend it is a
+ * RejectionOutcome — something redeem can raise — never a `rejected` verdict
+ * from validate, which answers `status: 'already_applied'` as its own variant
+ * and has no MESSAGES entry for it. Including it admitted a
+ * `{status:'rejected', reason:'already_applied'}` response that cannot occur,
+ * which is exactly the case the surrounding code handles separately.
+ */
 export type RejectionReason =
   | 'not_found'
   | 'inactive'
   | 'expired'
   | 'fully_redeemed'
   | 'org_has_pricing'
-  | 'lifetime_plan'
-  | 'already_applied';
+  | 'lifetime_plan';
+
+/** Reasons redeem can refuse: every validate reason, plus the redeem-only one. */
+export type RedeemRejectionReason = RejectionReason | 'already_applied';
 
 export interface DiscountCode {
   id: string;
@@ -1001,18 +1014,49 @@ export interface DiscountCodeRedemption {
   organizations?: { name: string } | null;
 }
 
+/**
+ * What a customer-facing caller actually receives for a code.
+ *
+ * Mirrors the backend's PublicDiscountCode / toPublicCode
+ * (javelina-backend/src/types/discounts.ts), which deliberately strips the
+ * admin-only fields — there is a backend test asserting the strip. Typing these
+ * variants as the full DiscountCode claimed seven fields the API provably does
+ * not send: `code.is_active` type-checked as a boolean and was undefined at
+ * runtime.
+ */
+export type PublicDiscountCode = Pick<
+  DiscountCode,
+  'id' | 'code' | 'customer_blurb' | 'duration_months' | 'grant_ends_at'
+>;
+
 export type CodeEvaluation =
-  | { status: 'valid'; code: DiscountCode; rules: DiscountCodeRule[]; grant_ends: string | null }
-  | { status: 'already_applied'; code: DiscountCode; rules: PricingRule[] }
+  | { status: 'valid'; code: PublicDiscountCode; rules: DiscountCodeRule[]; grant_ends: string | null }
+  | { status: 'already_applied'; code: PublicDiscountCode; rules: PricingRule[] }
   | { status: 'rejected'; reason: RejectionReason; message: string };
+
+/** The 409 body /discounts/redeem returns when it refuses. */
+export interface DiscountRejectionBody {
+  message?: string;
+  details?: { reason?: RedeemRejectionReason };
+}
 
 export const discountsApi = {
   /** Preview what a code would grant. A rejected code returns 200 with status:'rejected'. */
   validate: (code: string, org_id?: string, plan_code?: string): Promise<CodeEvaluation> =>
     apiClient.post('/discounts/validate', { code, org_id, plan_code }),
 
-  /** Write the code's rules onto the org. Throws on 409 rejection. */
-  redeem: (code: string, org_id: string): Promise<{ rules: PricingRule[] }> =>
+  /**
+   * Write the code's rules onto the org. Throws on 409 rejection.
+   *
+   * `stripe_sync: 'deferred'` means the grant is committed and effective
+   * pricing honours it, but no Stripe subscription was reconciled — the org's
+   * subscription is not active/trialing. The hourly pricing sweep applies it
+   * once the subscription returns to a live status.
+   */
+  redeem: (
+    code: string,
+    org_id: string,
+  ): Promise<{ rules: PricingRule[]; stripe_sync: 'applied' | 'deferred' }> =>
     apiClient.post('/discounts/redeem', { code, org_id }),
 
   list: (): Promise<{ codes: DiscountCodeWithRules[] }> => apiClient.get('/discounts'),

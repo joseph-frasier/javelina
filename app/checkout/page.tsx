@@ -14,7 +14,7 @@ import {
   ApiError,
   type CodeEvaluation,
   type PricingRule,
-  type RejectionReason,
+  type DiscountRejectionBody,
   type PricingDiscountType,
   type PricingCategory,
 } from '@/lib/api-client';
@@ -24,38 +24,18 @@ import {
   alreadyAppliedDetail,
   ALREADY_APPLIED_SUMMARY,
 } from '@/lib/discounts/format';
+import {
+  isPlanOrAllRule,
+  computeDiscountedTotal,
+  type DiscountRuleForMath,
+} from '@/lib/discounts/pricing';
 import { activeRules } from '@/lib/pricing/format';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { canManageBilling } from '@/lib/permissions';
 import Button from '@/components/ui/Button';
 import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
 
-/** A code's rules can include a plan/all-scoped grant (changes this invoice's
- * total) alongside domain/mailbox grants (nothing on this invoice for them to
- * discount, so they render as included-benefit copy instead). */
-function isPlanOrAllRule(rule: { scope: 'all' | 'category'; category: PricingCategory | null }): boolean {
-  return rule.scope === 'all' || (rule.scope === 'category' && rule.category === 'plan');
-}
 
-/** Apply a single rule to a cents amount. Cents in, cents out — never floats. */
-function priceAfterRule(
-  rule: { discount_type: PricingDiscountType; value_bps: number | null; value_cents: number | null },
-  originalCents: number
-): number {
-  switch (rule.discount_type) {
-    case 'percent':
-      // Same formula as the backend's amountFor (services/pricing/apply.ts) —
-      // subtracting a rounded discount instead diverges by a cent on an exact
-      // half-cent, so the preview would not match the invoice.
-      return Math.max(0, Math.round((originalCents * (10000 - (rule.value_bps ?? 0))) / 10000));
-    case 'waive':
-      return 0;
-    case 'price_override':
-      return Math.max(0, rule.value_cents ?? 0);
-  }
-}
-
-type DiscountRuleForMath = Pick<PricingRule, 'scope' | 'category' | 'discount_type' | 'value_bps' | 'value_cents'>;
 
 type DiscountState =
   | { kind: 'none' }
@@ -283,7 +263,7 @@ function CheckoutContent() {
           });
         } catch (redeemError) {
           const details = (redeemError as ApiError).details as
-            | { reason?: RejectionReason; message?: string }
+            | DiscountRejectionBody
             | undefined;
           const message =
             details?.message ||
@@ -342,11 +322,8 @@ function CheckoutContent() {
   // Only a plan-scoped or all-scoped rule changes this checkout's total;
   // domain/mailbox grants render as included-benefit copy instead, since this
   // invoice has nothing for them to discount.
-  const originalCents = Math.round((checkoutData.plan_price || 0) * 100);
-  const planDiscountRule = discountRules?.find(isPlanOrAllRule) ?? null;
-  const includedBenefitRules = discountRules?.filter((rule) => !isPlanOrAllRule(rule)) ?? [];
-  const discountedCents = planDiscountRule ? priceAfterRule(planDiscountRule, originalCents) : originalCents;
-  const discountAmountCents = originalCents - discountedCents;
+  const { originalCents, discountedCents, discountAmountCents, planDiscountRule, includedBenefitRules } =
+    computeDiscountedTotal(Math.round((checkoutData.plan_price || 0) * 100), discountRules);
 
   // POST /discounts/redeem requires a billing role (SuperAdmin/Admin/
   // BillingContact), so don't offer the input to someone whose redeem would be
