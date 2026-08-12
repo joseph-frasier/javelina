@@ -23,6 +23,7 @@ import {
   summarizeDuration,
   alreadyAppliedDetail,
   ALREADY_APPLIED_SUMMARY,
+  EMPTY_GRANT_SUMMARY,
 } from '@/lib/discounts/format';
 import {
   isPlanOrAllRule,
@@ -30,6 +31,7 @@ import {
   type DiscountRuleForMath,
 } from '@/lib/discounts/pricing';
 import { activeRules } from '@/lib/pricing/format';
+import { GrantAppliedPanel } from '@/components/billing/GrantAppliedPanel';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { canManageBilling } from '@/lib/permissions';
 import Button from '@/components/ui/Button';
@@ -40,7 +42,15 @@ import { LegalFooterLinks } from '@/components/legal/LegalFooterLinks';
 type DiscountState =
   | { kind: 'none' }
   | { kind: 'preview'; evaluation: Extract<CodeEvaluation, { status: 'valid' }> }
-  | { kind: 'applied'; summary: string; duration: string }
+  | {
+      kind: 'applied';
+      summary: string;
+      duration: string;
+      /** The code's customer-facing blurb, when the grant came from a preview. */
+      blurb?: string | null;
+      /** Stripe has not been reconciled yet; the UI says "applying", not "applied". */
+      pendingSync?: boolean;
+    }
   | { kind: 'error'; message: string };
 
 interface CheckoutData {
@@ -207,6 +217,7 @@ function CheckoutContent() {
           kind: 'applied',
           summary: ALREADY_APPLIED_SUMMARY,
           duration: alreadyAppliedDetail(rules, evaluation.code),
+          blurb: evaluation.code.customer_blurb,
         });
       } else {
         setDiscountRules(null);
@@ -250,16 +261,17 @@ function CheckoutContent() {
       // flow (Step 4) lets the customer finish.
       if (discountState.kind === 'preview') {
         try {
-          const { rules } = await discountsApi.redeem(discountCode.trim(), org_id);
+          const { rules, stripe_sync } = await discountsApi.redeem(discountCode.trim(), org_id);
           setDiscountRules(rules);
           setDiscountState({
             kind: 'applied',
             // summarizeRules([]) renders "No discount" — wrong inside a
-            // success-styled box. Same guard as the billing-settings card
-            // (settings/billing/[org_id]/page.tsx).
-            summary:
-              rules.length > 0 ? summarizeRules(rules) : 'Applied to this organization.',
+            // success-styled box. Shared with the billing-settings card via
+            // EMPTY_GRANT_SUMMARY so the two cannot drift again.
+            summary: rules.length > 0 ? summarizeRules(rules) : EMPTY_GRANT_SUMMARY,
             duration: summarizeDuration(discountState.evaluation.code),
+            blurb: discountState.evaluation.code.customer_blurb,
+            pendingSync: stripe_sync === 'deferred',
           });
         } catch (redeemError) {
           const details = (redeemError as ApiError).details as
@@ -419,43 +431,42 @@ function CheckoutContent() {
                   <>
                     {showDiscountBox && (
                     <div>
-                      <label className="block text-sm font-medium text-text mb-2">
+                      <label
+                        htmlFor="checkout-discount-code"
+                        className="block text-sm font-medium text-text mb-2"
+                      >
                         Have a discount code?
                       </label>
                       {discountState.kind === 'preview' || discountState.kind === 'applied' ? (
-                        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <div>
-                              <p className="font-medium text-green-700 text-sm">
-                                {discountState.kind === 'preview'
-                                  ? summarizeRules(discountState.evaluation.rules)
-                                  : discountState.summary}
-                              </p>
-                              <p className="text-xs text-green-600">
-                                {discountState.kind === 'preview'
-                                  ? summarizeDuration(discountState.evaluation.code)
-                                  : discountState.duration}
-                              </p>
-                            </div>
-                          </div>
-                          {discountState.kind === 'preview' && (
-                            <button
-                              onClick={handleRemoveDiscount}
-                              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                              aria-label="Remove discount"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
+                        <GrantAppliedPanel
+                          summary={
+                            discountState.kind === 'preview'
+                              ? summarizeRules(discountState.evaluation.rules)
+                              : discountState.summary
+                          }
+                          duration={
+                            discountState.kind === 'preview'
+                              ? summarizeDuration(discountState.evaluation.code)
+                              : discountState.duration
+                          }
+                          blurb={
+                            discountState.kind === 'preview'
+                              ? discountState.evaluation.code.customer_blurb
+                              : discountState.blurb
+                          }
+                          pendingSync={
+                            discountState.kind === 'applied' && discountState.pendingSync
+                          }
+                          onDismiss={
+                            discountState.kind === 'preview' ? handleRemoveDiscount : undefined
+                          }
+                          dismissLabel="Remove discount"
+                        />
                       ) : (
                         <div className="flex space-x-2">
                           <input
+                            id="checkout-discount-code"
+                            aria-label="Discount code"
                             type="text"
                             value={discountCode}
                             onChange={(e) => {

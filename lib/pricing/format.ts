@@ -9,9 +9,55 @@ export function categoryLabel(category: PricingCategory | null): string {
   }
 }
 
-export function formatRule(
-  rule: Pick<PricingRule, 'discount_type'> & Partial<Pick<PricingRule, 'value_bps' | 'value_cents'>>,
-): string {
+/**
+ * A rule this function can format, discriminated on `discount_type` so each
+ * variant requires the field it actually needs.
+ *
+ * This was previously
+ * `Pick<PricingRule,'discount_type'> & Partial<Pick<PricingRule,'value_bps'|'value_cents'>>`,
+ * widened so DiscountCodeRuleInput would fit. That let a percent rule missing
+ * its value_bps format as "0% off" — a wrong number rendered inside a green
+ * success box — instead of failing where the value went missing. The nullable
+ * fields stay nullable (the DB column is), but a percent rule can no longer
+ * omit value_bps entirely.
+ */
+export type FormattableRule =
+  | { discount_type: 'percent'; value_bps: number | null; value_cents?: number | null }
+  | { discount_type: 'waive'; value_bps?: number | null; value_cents?: number | null }
+  | { discount_type: 'price_override'; value_cents: number | null; value_bps?: number | null };
+
+/**
+ * Narrow a loosely-typed rule (e.g. DiscountCodeRuleInput, whose value fields
+ * are optional) to something formatRule will accept, or null when the value the
+ * type requires is absent.
+ *
+ * Returning null rather than defaulting to zero is the point: a percent rule
+ * with no value_bps used to format as "0% off" and render that inside a green
+ * success box. A caller that gets null can say "discount" instead of stating a
+ * number it does not have.
+ */
+export function toFormattableRule(rule: {
+  discount_type: PricingRule['discount_type'];
+  value_bps?: number | null;
+  value_cents?: number | null;
+}): FormattableRule | null {
+  switch (rule.discount_type) {
+    case 'percent':
+      return rule.value_bps == null
+        ? null
+        : { discount_type: 'percent', value_bps: rule.value_bps };
+    case 'waive':
+      return { discount_type: 'waive' };
+    case 'price_override':
+      return rule.value_cents == null
+        ? null
+        : { discount_type: 'price_override', value_cents: rule.value_cents };
+    default:
+      return null;
+  }
+}
+
+export function formatRule(rule: FormattableRule): string {
   switch (rule.discount_type) {
     case 'percent': {
       const pct = (rule.value_bps ?? 0) / 100;

@@ -94,6 +94,18 @@ const clickAddRule = async () => {
   await userEvent.click(screen.getByRole('button', { name: /add another product rule/i }));
 };
 
+const enterMaxRedemptions = async (value: string) => {
+  const input = screen.getByLabelText(/max redemptions/i);
+  await userEvent.clear(input);
+  await userEvent.type(input, value);
+};
+
+const enterDurationMonths = async (value: string) => {
+  const input = screen.getByLabelText(/^months$/i);
+  await userEvent.clear(input);
+  await userEvent.type(input, value);
+};
+
 const submit = async () => {
   await userEvent.click(screen.getByRole('button', { name: /create code/i }));
 };
@@ -136,7 +148,47 @@ describe('CreateDiscountCodeModal validation', () => {
 
     await submit();
 
-    expect(addToast).toHaveBeenCalledWith('error', expect.stringMatching(/enter a number of months/i));
+    expect(addToast).toHaveBeenCalledWith(
+      'error',
+      expect.stringMatching(/whole number of months/i),
+    );
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  // Number.parseInt stops at the first non-digit, so "1e5" parsed to 1 and an
+  // admin who typed 100000 silently got a 1-redemption code. Number() is used
+  // now, with an integer guard behind it.
+  it('does not silently turn a 1e5 redemption limit into 1', async () => {
+    renderModal();
+    await enterCode('EXPO');
+    await enterPercent('25');
+    await selectDurationMode('open'); // isolate the limit field from duration validation
+    await enterMaxRedemptions('1e5');
+
+    await submit();
+
+    // Either it is accepted at its real value or it is refused — what it must
+    // never do is create a code capped at 1.
+    if (create.mock.calls.length > 0) {
+      expect(create.mock.calls[0][0].max_redemptions).toBe(100000);
+    } else {
+      expect(addToast).toHaveBeenCalledWith('error', expect.stringMatching(/redemption limit/i));
+    }
+  });
+
+  it('refuses a fractional duration', async () => {
+    renderModal();
+    await enterCode('HALF');
+    await enterPercent('25');
+    await selectDurationMode('months');
+    await enterDurationMonths('1.5');
+
+    await submit();
+
+    expect(addToast).toHaveBeenCalledWith(
+      'error',
+      expect.stringMatching(/whole number of months/i),
+    );
     expect(create).not.toHaveBeenCalled();
   });
 

@@ -1,4 +1,4 @@
-import { formatRule, categoryLabel } from '@/lib/pricing/format';
+import { formatRule, categoryLabel, toFormattableRule } from '@/lib/pricing/format';
 import type { DiscountCode, DiscountCodeRuleInput } from '@/lib/api-client';
 
 /**
@@ -11,7 +11,11 @@ export function summarizeRules(rules: DiscountCodeRuleInput[]): string {
 
   return rules
     .map((rule) => {
-      const value = formatRule(rule);
+      // A rule whose required value is missing is described generically rather
+      // than as "0% off" — a wrong number inside a success-styled box is worse
+      // than a vague one.
+      const formattable = toFormattableRule(rule);
+      const value = formattable ? formatRule(formattable) : 'Discount';
       return rule.scope === 'all'
         ? `${value} ${categoryLabel(rule.category).toLowerCase()}`
         : `${value} on ${categoryLabel(rule.category).toLowerCase()}`;
@@ -27,6 +31,17 @@ export function summarizeRules(rules: DiscountCodeRuleInput[]): string {
  * code read as a second redemption.
  */
 export const ALREADY_APPLIED_SUMMARY = 'Already applied to this organization.';
+
+/**
+ * Headline for a grant that carries no describable rules — a superadmin has
+ * archived them, so summarizeRules([]) would put "No discount" inside a
+ * success-styled box.
+ *
+ * Shared because checkout and billing settings had already drifted here:
+ * "Applied to this organization." versus "Discount applied to this
+ * organization." for the same state, each with a comment pointing at the other.
+ */
+export const EMPTY_GRANT_SUMMARY = 'Discount applied to this organization.';
 
 /**
  * The supporting line beneath {@link ALREADY_APPLIED_SUMMARY}.

@@ -22,13 +22,23 @@ import {
   summarizeDuration,
   alreadyAppliedDetail,
   ALREADY_APPLIED_SUMMARY,
+  EMPTY_GRANT_SUMMARY,
 } from '@/lib/discounts/format';
 import { activeRules } from '@/lib/pricing/format';
 import { canManageBilling } from '@/lib/permissions';
+import { GrantAppliedPanel } from '@/components/billing/GrantAppliedPanel';
 
 type RedeemState =
   | { kind: 'none' }
-  | { kind: 'applied'; summary: string; duration: string }
+  | {
+      kind: 'applied';
+      summary: string;
+      duration: string;
+      /** The code's customer-facing blurb, when it has one. */
+      blurb?: string | null;
+      /** Stripe has not been reconciled yet; the UI says "applying", not "applied". */
+      pendingSync?: boolean;
+    }
   | { kind: 'error'; message: string };
 
 export default function OrganizationBillingPage() {
@@ -79,6 +89,20 @@ export default function OrganizationBillingPage() {
     verifyAccessAndFetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, orgId]);
+
+  // Deep-link handling, deliberately NOT inside fetchCurrentPlan. It used to
+  // live there, and fetchCurrentPlan is re-run after a successful discount
+  // redemption to refresh the effective-pricing display — which re-read
+  // ?openModal=true and popped the Change Plan modal on top of the success
+  // panel. Reading it once on mount keeps the deep link working without tying
+  // it to every refetch.
+  useEffect(() => {
+    if (!orgId) return;
+    if (searchParams.get('openModal') !== 'true') return;
+    setShowPlanModal(true);
+    router.replace(`/settings/billing/${orgId}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId]);
 
   const verifyAccessAndFetchData = async () => {
     if (!orgId || !user?.id) {
@@ -131,13 +155,6 @@ export default function OrganizationBillingPage() {
         setCurrentPlanCode('free');
       }
       
-      // Check if we should auto-open the modal (from query parameter)
-      const shouldOpenModal = searchParams.get('openModal');
-      if (shouldOpenModal === 'true') {
-        setShowPlanModal(true);
-        // Clean up URL
-        router.replace(`/settings/billing/${orgId}`, { scroll: false });
-      }
     } catch (error) {
       console.error('Error fetching current plan:', error);
       setCurrentPlanCode('free');
@@ -214,13 +231,16 @@ export default function OrganizationBillingPage() {
 
       if (evaluation.status === 'valid') {
         try {
-          const { rules } = await discountsApi.redeem(redeemCode.trim(), orgId);
+          const { rules, stripe_sync } = await discountsApi.redeem(redeemCode.trim(), orgId);
           setRedeemState({
             kind: 'applied',
             // summarizeRules([]) renders "No discount" — wrong inside a
-            // success-styled box. Same guard as the checkout page.
-            summary: rules.length > 0 ? summarizeRules(rules) : 'Discount applied to this organization.',
+            // success-styled box. Shared with checkout via EMPTY_GRANT_SUMMARY
+            // so the two cannot drift again.
+            summary: rules.length > 0 ? summarizeRules(rules) : EMPTY_GRANT_SUMMARY,
             duration: summarizeDuration(evaluation.code),
+            blurb: evaluation.code.customer_blurb,
+            pendingSync: stripe_sync === 'deferred',
           });
           setRedeemCode('');
           addToast('success', 'Discount code applied!');
@@ -252,6 +272,7 @@ export default function OrganizationBillingPage() {
           kind: 'applied',
           summary: ALREADY_APPLIED_SUMMARY,
           duration: alreadyAppliedDetail(activeRules(evaluation.rules), evaluation.code),
+          blurb: evaluation.code.customer_blurb,
         });
         setRedeemCode('');
       } else {
@@ -350,26 +371,14 @@ export default function OrganizationBillingPage() {
             </p>
 
             {redeemState.kind === 'applied' ? (
-              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <div>
-                    <p className="font-medium text-green-700 text-sm">{redeemState.summary}</p>
-                    <p className="text-xs text-green-600">{redeemState.duration}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setRedeemState({ kind: 'none' })}
-                  className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                  aria-label="Redeem another code"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+              <GrantAppliedPanel
+                summary={redeemState.summary}
+                duration={redeemState.duration}
+                blurb={redeemState.blurb}
+                pendingSync={redeemState.pendingSync}
+                onDismiss={() => setRedeemState({ kind: 'none' })}
+                dismissLabel="Redeem another code"
+              />
             ) : (
               <div className="flex space-x-2">
                 <input

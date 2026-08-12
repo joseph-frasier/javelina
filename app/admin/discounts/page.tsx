@@ -159,6 +159,16 @@ function AdminDiscountsPageContent() {
     }
   }, [loading]);
 
+  // Filtering and paging happen in the browser over the full result set:
+  // discountsApi.list() takes no params and the backend's listCodes() is
+  // deliberately unbounded. That is a considered choice, not an oversight —
+  // codes are hand-created by superadmins in a modal, there is no bulk import
+  // and no customer-facing way to create one, so the table grows by a handful
+  // per year (prod holds 3). Restoring server-side paging means route params,
+  // a count query, and reworking the rules join on both sides.
+  //
+  // Revisit if this list passes a few hundred rows: at that point the unbounded
+  // fetch is a slow page with no signal that anything is wrong.
   const filteredCodes = codes.filter((code) => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();

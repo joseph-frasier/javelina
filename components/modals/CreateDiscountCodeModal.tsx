@@ -101,8 +101,22 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
   // A blank field means "unlimited" and is legitimate. "0" or negative is not
   // a valid limit — Number.parseInt('0.trim()') would otherwise pass the old
   // `!maxRedemptions.trim()` check since "0" is a non-empty string.
-  const parsedMaxRedemptions = Number.parseInt(maxRedemptions, 10);
-  const hasValidMaxRedemptions = Number.isInteger(parsedMaxRedemptions) && parsedMaxRedemptions > 0;
+  //
+  // Number(), not Number.parseInt(): parseInt stops at the first non-digit, so
+  // "1e5" parses to 1 and an admin who typed 100000 silently gets a
+  // 1-redemption code. Number('1e5') is 100000, and Number('12abc') is NaN,
+  // which the isInteger guard then rejects outright.
+  const parsedMaxRedemptions = Number(maxRedemptions);
+  const hasValidMaxRedemptions =
+    maxRedemptions.trim() !== '' &&
+    Number.isInteger(parsedMaxRedemptions) &&
+    parsedMaxRedemptions > 0;
+
+  const parsedDurationMonths = Number(durationMonths);
+  const hasValidDurationMonths =
+    durationMonths.trim() !== '' &&
+    Number.isInteger(parsedDurationMonths) &&
+    parsedDurationMonths > 0;
 
   const handleSubmit = async () => {
     if (!code.trim()) {
@@ -141,12 +155,28 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
     // A bounded duration mode with a blank value would otherwise produce
     // duration_months = null AND grant_ends_at = null — a permanent,
     // open-ended discount on every org that redeems the code.
-    if (durationMode === 'months' && !durationMonths.trim()) {
-      addToast('error', 'Enter a number of months, or choose Ongoing');
+    if (durationMode === 'months' && !hasValidDurationMonths) {
+      addToast('error', 'Enter a whole number of months greater than zero, or choose Ongoing');
       return;
     }
     if (durationMode === 'date' && !grantEndsAt.trim()) {
       addToast('error', 'Choose an end date, or choose Ongoing');
+      return;
+    }
+    if (maxRedemptions.trim() !== '' && !hasValidMaxRedemptions) {
+      addToast('error', 'Enter a whole redemption limit greater than zero, or leave it blank');
+      return;
+    }
+
+    // A past date produces a code that renders "Expired" the moment it is saved
+    // and rejects every redemption — always a typo, never an intent.
+    const now = Date.now();
+    if (durationMode === 'date' && grantEndsAt.trim() && new Date(grantEndsAt).getTime() <= now) {
+      addToast('error', 'The end date must be in the future');
+      return;
+    }
+    if (redeemableUntil.trim() && new Date(redeemableUntil).getTime() <= now) {
+      addToast('error', 'The last day to redeem must be in the future');
       return;
     }
 
@@ -167,10 +197,10 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
       code: code.trim().toUpperCase(),
       description: description.trim() || null,
       customer_blurb: customerBlurb.trim() || null,
-      duration_months: durationMode === 'months' && durationMonths ? Number.parseInt(durationMonths, 10) : null,
+      duration_months: durationMode === 'months' ? parsedDurationMonths : null,
       grant_ends_at: durationMode === 'date' && grantEndsAt ? new Date(grantEndsAt).toISOString() : null,
       redeemable_until: redeemableUntil ? new Date(redeemableUntil).toISOString() : null,
-      max_redemptions: maxRedemptions.trim() ? Number.parseInt(maxRedemptions, 10) : null,
+      max_redemptions: hasValidMaxRedemptions ? parsedMaxRedemptions : null,
       rules: ruleInputs,
     };
 
@@ -249,14 +279,15 @@ export default function CreateDiscountCodeModal({ isOpen, onClose, onCreated }: 
               <PricingRuleFields
                 value={draft}
                 onChange={(next) => updateRule(index, next)}
-                disabledTargets={
-                  hasAllRule && draft.target !== 'all'
-                    ? []
-                    : [
-                        ...(otherHasCategoryRule(index) ? (['all'] as RuleTarget[]) : []),
-                        ...usedTargets(drafts, index).filter((t) => t !== 'all'),
-                      ]
-                }
+                // `hasAllRule && draft.target !== 'all'` was an arm here that
+                // could never be reached: canAddRule forbids adding a row while
+                // an all rule exists, and otherHasCategoryRule forbids
+                // switching a row to 'all' while another row is a category, so
+                // an all rule can only ever be the sole row.
+                disabledTargets={[
+                  ...(otherHasCategoryRule(index) ? (['all'] as RuleTarget[]) : []),
+                  ...usedTargets(drafts, index).filter((t) => t !== 'all'),
+                ]}
                 disabledReason="An all-products rule cannot be combined with product-specific rules."
                 disabled={saving}
               />
