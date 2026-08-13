@@ -3,17 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
-import Dropdown from '@/components/ui/Dropdown';
 import Button from '@/components/ui/Button';
 import { useToastStore } from '@/lib/stores/toast-store';
-import {
-  pricingApi,
-  type CreatePricingRuleInput,
-  type PricingCategory,
-  type PricingDiscountType,
-} from '@/lib/api-client';
-
-type Target = 'all' | PricingCategory;
+import { pricingApi, type CreatePricingRuleInput } from '@/lib/api-client';
+import PricingRuleFields, {
+  emptyRuleDraft,
+  draftToRuleInput,
+  TARGET_OPTIONS,
+  type RuleDraft,
+  type RuleTarget,
+} from '@/components/admin/PricingRuleFields';
 
 interface Props {
   isOpen: boolean;
@@ -23,23 +22,10 @@ interface Props {
   /** At least one product-specific rule is already active for this org. */
   hasCategoryRules?: boolean;
   /** Targets that already have an active rule — saving over one replaces it. */
-  activeTargets?: Target[];
+  activeTargets?: RuleTarget[];
   onClose: () => void;
   onSaved: () => void;
 }
-
-const TARGET_OPTIONS: { value: Target; label: string }[] = [
-  { value: 'all', label: 'All products (baseline)' },
-  { value: 'plan', label: 'Plan' },
-  { value: 'mailbox', label: 'Mailboxes' },
-  { value: 'domain', label: 'Domains' },
-];
-
-const DISCOUNT_TYPE_OPTIONS: { value: PricingDiscountType; label: string }[] = [
-  { value: 'percent', label: 'Percentage off' },
-  { value: 'waive', label: 'Waive (100% off)' },
-  { value: 'price_override', label: 'Price override' },
-];
 
 export default function SetPricingRuleModal({
   isOpen,
@@ -52,32 +38,21 @@ export default function SetPricingRuleModal({
 }: Props) {
   const addToast = useToastStore((s) => s.addToast);
 
-  // An all-products rule and product-specific rules are mutually exclusive.
-  // Keep every target visible but gray out the ones that would conflict, with
-  // a hover reason — so the constraint is discoverable, not hidden. The backend
-  // also rejects a conflicting rule with 409 as the source of truth.
-  const targetOptions = useMemo(
-    () =>
-      TARGET_OPTIONS.map((o) => {
-        const disabled =
-          (hasBaseline && o.value !== 'all') || (hasCategoryRules && o.value === 'all');
-        return {
-          ...o,
-          disabled,
-          title: disabled
-            ? o.value === 'all'
-              ? 'Archive the product-specific rule(s) first'
-              : 'Archive the all-products rule first'
-            : undefined,
-        };
-      }),
+  const disabledTargets = useMemo<RuleTarget[]>(
+    () => (hasBaseline ? ['plan', 'mailbox', 'domain'] : hasCategoryRules ? ['all'] : []),
     [hasBaseline, hasCategoryRules],
   );
-  const defaultTarget = (targetOptions.find((o) => !o.disabled) ?? targetOptions[0]).value;
+  const disabledReason = hasBaseline
+    ? 'Archive the all-products rule first'
+    : hasCategoryRules
+      ? 'Archive the product-specific rule(s) first'
+      : undefined;
+  const defaultTarget = useMemo<RuleTarget>(() => {
+    const first = TARGET_OPTIONS.find((o) => !disabledTargets.includes(o.value));
+    return (first ?? TARGET_OPTIONS[0]).value;
+  }, [disabledTargets]);
 
-  const [target, setTarget] = useState<Target>(defaultTarget);
-  const [discountType, setDiscountType] = useState<PricingDiscountType>('percent');
-  const [value, setValue] = useState('');
+  const [draft, setDraft] = useState<RuleDraft>(() => ({ ...emptyRuleDraft(), target: defaultTarget }));
   const [effectiveFrom, setEffectiveFrom] = useState('');
   const [effectiveUntil, setEffectiveUntil] = useState('');
   const [note, setNote] = useState('');
@@ -86,21 +61,19 @@ export default function SetPricingRuleModal({
   // Re-seed the target each time the modal opens — the valid options may have
   // changed as rules were added/archived while it was closed.
   useEffect(() => {
-    if (isOpen) setTarget(defaultTarget);
+    if (isOpen) setDraft((d) => ({ ...d, target: defaultTarget }));
   }, [isOpen, defaultTarget]);
 
   // Saving archives the active rule for this target and inserts the new one, so
   // a future start date does NOT keep the current rule running until then — it
   // ends the discount now and leaves a gap. Nothing in the form conveys that,
   // so warn; scheduling is still a legitimate thing to want, so don't block it.
-  const replacesActiveRule = activeTargets.includes(target);
+  const replacesActiveRule = activeTargets.includes(draft.target);
   const startsInFuture = effectiveFrom !== '' && new Date(effectiveFrom).getTime() > Date.now();
   const showScheduleWarning = replacesActiveRule && startsInFuture;
 
   const reset = () => {
-    setTarget(defaultTarget);
-    setDiscountType('percent');
-    setValue('');
+    setDraft({ ...emptyRuleDraft(), target: defaultTarget });
     setEffectiveFrom('');
     setEffectiveUntil('');
     setNote('');
@@ -117,31 +90,28 @@ export default function SetPricingRuleModal({
     // blank custom price reached the backend as price_override with no value
     // and came back as a raw API error. (The percent branch was only safe by
     // accident, via `!input.value_bps` catching NaN as falsy.)
-    const needsValue = discountType === 'percent' || discountType === 'price_override';
-    if (needsValue && !Number.isFinite(Number.parseFloat(value))) {
+    const needsValue = draft.discount_type === 'percent' || draft.discount_type === 'price_override';
+    const rawValue = draft.discount_type === 'percent' ? draft.percent : draft.price;
+    if (needsValue && !Number.isFinite(Number.parseFloat(rawValue))) {
       addToast(
         'error',
-        discountType === 'percent' ? 'Enter a percentage' : 'Enter a custom price',
+        draft.discount_type === 'percent' ? 'Enter a percentage' : 'Enter a custom price',
       );
       return;
     }
 
     const input: CreatePricingRuleInput = {
-      scope: target === 'all' ? 'all' : 'category',
-      category: target === 'all' ? null : target,
-      discount_type: discountType,
-      value_bps: discountType === 'percent' ? Math.round(parseFloat(value) * 100) : null,
-      value_cents: discountType === 'price_override' ? Math.round(parseFloat(value) * 100) : null,
+      ...draftToRuleInput(draft),
       effective_from: effectiveFrom ? new Date(effectiveFrom).toISOString() : undefined,
       effective_until: effectiveUntil ? new Date(effectiveUntil).toISOString() : null,
       note: note.trim() || null,
     };
 
-    if (discountType === 'percent' && (!input.value_bps || input.value_bps < 1 || input.value_bps > 10000)) {
+    if (draft.discount_type === 'percent' && (!input.value_bps || input.value_bps < 1 || input.value_bps > 10000)) {
       addToast('error', 'Enter a percentage between 0.01 and 100');
       return;
     }
-    if (discountType === 'price_override' && (input.value_cents == null || input.value_cents < 0)) {
+    if (draft.discount_type === 'price_override' && (input.value_cents == null || input.value_cents < 0)) {
       addToast('error', 'Enter a valid custom price');
       return;
     }
@@ -176,11 +146,11 @@ export default function SetPricingRuleModal({
       }
     >
       <div className="space-y-4">
-        <Dropdown
-          label="Applies to"
-          value={target}
-          options={targetOptions}
-          onChange={(v) => setTarget(v as Target)}
+        <PricingRuleFields
+          value={draft}
+          onChange={setDraft}
+          disabledTargets={disabledTargets}
+          disabledReason={disabledReason}
           disabled={saving}
         />
 
@@ -190,41 +160,6 @@ export default function SetPricingRuleModal({
               ? 'Archive the all-products rule to set product-specific pricing.'
               : 'Archive product-specific rules to set an all-products baseline.'}
           </p>
-        )}
-
-        <Dropdown
-          label="Discount type"
-          value={discountType}
-          options={DISCOUNT_TYPE_OPTIONS}
-          onChange={(v) => setDiscountType(v as PricingDiscountType)}
-          disabled={saving}
-        />
-
-        {discountType === 'percent' && (
-          <Input
-            id="pricing-rule-percentage"
-            type="number"
-            label="Percentage (%)"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            min={0}
-            max={100}
-            step={0.01}
-            disabled={saving}
-          />
-        )}
-
-        {discountType === 'price_override' && (
-          <Input
-            id="pricing-rule-custom-price"
-            type="number"
-            label="Custom price ($)"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            min={0}
-            step={0.01}
-            disabled={saving}
-          />
         )}
 
         <Input
@@ -242,7 +177,7 @@ export default function SetPricingRuleModal({
             className="rounded-md border border-orange/40 bg-orange/10 px-3 py-2 text-sm text-orange-dark dark:text-orange-light"
           >
             This replaces the existing{' '}
-            {TARGET_OPTIONS.find((o) => o.value === target)?.label.toLowerCase()} rule, and the
+            {TARGET_OPTIONS.find((o) => o.value === draft.target)?.label.toLowerCase()} rule, and the
             current discount ends immediately when you save — it will not stay active until the
             start date above. Scheduled rule changes are not supported yet.
           </p>

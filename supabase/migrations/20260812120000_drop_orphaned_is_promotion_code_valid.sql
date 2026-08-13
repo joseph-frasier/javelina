@@ -1,0 +1,37 @@
+-- Second half of the cleanup started in 20260811130000.
+--
+-- 20251202000000_add_discount_codes.sql defines TWO SECURITY DEFINER functions
+-- whose bodies name public.promotion_codes:
+--
+--   increment_promotion_code_redemption(uuid)  -- dropped by 20260811130000
+--   is_promotion_code_valid(text)              -- missed; dropped here
+--
+-- 20260805120000_discount_codes.sql drops the table. Postgres does not
+-- dependency-track plpgsql bodies, so a function whose body names a dropped
+-- relation survives the drop and fails only when called.
+--
+-- is_promotion_code_valid is the worse of the two to leave behind. The Dec 2025
+-- migration contains no GRANT or REVOKE statements at all, so the function kept
+-- Postgres's default EXECUTE grant to PUBLIC. Verified on dev and prod:
+--
+--   proacl = {=X/postgres,postgres=X/postgres,anon=X/postgres,
+--             authenticated=X/postgres,service_role=X/postgres}
+--
+-- The leading "=X/postgres" is the PUBLIC grant, and anon holds EXECUTE
+-- explicitly. That makes it reachable as POST /rest/v1/rpc/is_promotion_code_valid
+-- by an unauthenticated caller — today, and after the cutover, just broken
+-- (raising `relation "promotion_codes" does not exist`). Compare the new
+-- redeem_discount_code, which explicitly REVOKEs from PUBLIC, anon, authenticated.
+--
+-- No caller remains in either repo. The only surviving reference anywhere is
+-- javelina/lib/utils/audit.ts:79, the intentional historical audit_logs display
+-- case, which reads a stored string and never calls the function.
+--
+-- Separate migration rather than an edit to 20260811130000: that migration is
+-- ALREADY APPLIED on dev (confirmed in supabase_migrations.schema_migrations),
+-- so editing it in place would never re-run there and dev would keep the
+-- function while its migration history claimed otherwise.
+--
+-- IF EXISTS makes this safe on environments that never had the function and on
+-- any where it has already been removed.
+DROP FUNCTION IF EXISTS public.is_promotion_code_valid(text);
