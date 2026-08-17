@@ -1,18 +1,33 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { resolveBrandFromHost } from '@/lib/brand/resolve'
 
 /**
  * Middleware runs on every request before it reaches your app
  * This middleware:
- * 1. Checks for valid session cookie (set by Express backend after Auth0 login)
- * 2. Protects routes that require authentication
- * 3. Redirects unauthenticated users trying to access protected routes to root (/)
- * 4. Root (/) is accessible to all - shows login UI to unauthenticated, dashboard to authenticated
- * 5. Redirects authenticated users away from /login and /signup to root (/)
+ * 1. Resolves the brand from the request Host and stamps it as `x-brand`
+ * 2. Checks for valid session cookie (set by Express backend after Auth0 login)
+ * 3. Protects routes that require authentication
+ * 4. Redirects unauthenticated users trying to access protected routes to root (/)
+ * 5. Root (/) is accessible to all - shows login UI to unauthenticated, dashboard to authenticated
+ * 6. Redirects authenticated users away from /login and /signup to root (/)
+ *
+ * Brand resolution lives here rather than in the root layout on purpose:
+ * headers() is async and app/layout.tsx is synchronous, so reading the host
+ * there would make the root layout dynamic and opt every route out of static
+ * rendering. Stamping a request header keeps that cost confined to the
+ * segments that actually read it.
  */
 export async function middleware(request: NextRequest) {
+  // Clone before mutating: NextRequest headers are immutable.
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set(
+    'x-brand',
+    resolveBrandFromHost(request.headers.get('host')).id
+  )
+
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   })
 

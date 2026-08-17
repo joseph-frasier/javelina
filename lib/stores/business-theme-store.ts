@@ -1,12 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSettingsStore } from '@/lib/stores/settings-store';
-import {
-  darkTokens,
-  lightTokens,
-  type Tokens,
-} from '@/components/business/ui/tokens';
+import { useBrand } from '@/components/brand/BrandProvider';
+import { makeTokens, type Tokens } from '@/components/business/ui/tokens';
 
 export type BusinessThemeMode = 'light' | 'dark';
 
@@ -22,9 +19,19 @@ export function useBusinessThemeStore() {
 
 export function useBusinessTheme(): Tokens {
   const theme = useSettingsStore((s) => s.general.theme);
+  // Outside a BrandProvider this is Javelina, so existing surfaces are
+  // unaffected by the brand layer.
+  const brand = useBrand();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  // Avoid hydration flash: assume light until mounted, then sync.
-  if (!mounted) return lightTokens;
-  return theme === 'dark' ? darkTokens : lightTokens;
+
+  // Avoid hydration flash: assume light until mounted, then sync. The brand
+  // does not flash — it is resolved server-side from the request host.
+  const mode: BusinessThemeMode = !mounted
+    ? 'light'
+    : theme === 'dark'
+      ? 'dark'
+      : 'light';
+
+  return useMemo(() => makeTokens(brand.accent, mode), [brand.accent, mode]);
 }
