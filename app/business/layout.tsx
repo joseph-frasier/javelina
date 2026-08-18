@@ -1,24 +1,27 @@
-'use client';
-
 import type { ReactNode } from 'react';
-import { BusinessTopbar } from '@/components/business/dashboard/BusinessTopbar';
-import { useBusinessTheme } from '@/lib/stores/business-theme-store';
+import { getBrand } from '@/lib/brand/server';
+import { BrandProvider } from '@/components/brand/BrandProvider';
+import { BusinessShell } from '@/components/business/BusinessShell';
 
-export default function BusinessLayout({ children }: { children: ReactNode }) {
-  const t = useBusinessTheme();
+/**
+ * Server component so the brand can be resolved from the request before
+ * anything renders — no client-side host sniffing, so no flash of the wrong
+ * accent. The chrome itself lives in BusinessShell, which stays a client
+ * component because it needs the theme hook.
+ *
+ * This segment is already dynamic (auth-gated), so reading the request header
+ * here costs nothing. The root layout deliberately does NOT do this.
+ */
+export default async function BusinessLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const brand = await getBrand();
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: t.surfaceAlt,
-        color: t.text,
-        display: 'flex',
-        flexDirection: 'column',
-        colorScheme: t.bg === '#0b0d10' ? 'dark' : 'light',
-      }}
-    >
-      <BusinessTopbar />
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</div>
-    </div>
+    <BrandProvider brandId={brand.id}>
+      <BusinessShell>{children}</BusinessShell>
+    </BrandProvider>
   );
 }

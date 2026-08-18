@@ -6,19 +6,31 @@ import { usePathname } from 'next/navigation';
 import type { BusinessIntakeData } from '@/lib/stores/business-intake-store';
 import { FONT, type Tokens } from '@/components/business/ui/tokens';
 import { AnimatedNavIcon, type AnimatedNavIconName } from '@/components/business/ui/AnimatedNavIcon';
+import { useBrand } from '@/components/brand/BrandProvider';
+import { isSurfaceHidden, type SurfaceOverrides } from '@/lib/brand/surfaces';
+import type { SurfaceId } from '@/lib/brand/config';
 
 interface SideNavProps {
   t: Tokens;
   data: BusinessIntakeData;
+  /** From organizations.surface_overrides. Absent means brand defaults only. */
+  surfaceOverrides?: SurfaceOverrides | null;
 }
 
-const ITEMS: { id: string; label: string; icon: AnimatedNavIconName; segment: string | null }[] = [
-  { id: 'overview', label: 'Overview', icon: 'sparkle', segment: null },
-  { id: 'website', label: 'Website', icon: 'globe', segment: 'website' },
-  { id: 'dns', label: 'DNS', icon: 'server', segment: 'dns' },
-  { id: 'domains', label: 'Domains', icon: 'shield', segment: 'domains' },
-  { id: 'analytics', label: 'Analytics', icon: 'chart', segment: 'analytics' },
-  { id: 'billing', label: 'Billing', icon: 'credit', segment: 'billing' },
+const ITEMS: {
+  id: string;
+  label: string;
+  icon: AnimatedNavIconName;
+  segment: string | null;
+  /** Manifest key this entry is gated by. Overview is never gated. */
+  surface: SurfaceId | null;
+}[] = [
+  { id: 'overview', label: 'Overview', icon: 'sparkle', segment: null, surface: null },
+  { id: 'website', label: 'Website', icon: 'globe', segment: 'website', surface: 'website' },
+  { id: 'dns', label: 'DNS', icon: 'server', segment: 'dns', surface: 'dns' },
+  { id: 'domains', label: 'Domains', icon: 'shield', segment: 'domains', surface: 'domains' },
+  { id: 'analytics', label: 'Analytics', icon: 'chart', segment: 'analytics', surface: 'analytics' },
+  { id: 'billing', label: 'Billing', icon: 'credit', segment: 'billing', surface: 'billing' },
 ];
 
 
@@ -28,8 +40,15 @@ function isActive(pathname: string, orgId: string, segment: string | null): bool
   return pathname === `${base}/${segment}` || pathname.startsWith(`${base}/${segment}/`);
 }
 
-export function SideNav({ t, data }: SideNavProps) {
+export function SideNav({ t, data, surfaceOverrides = null }: SideNavProps) {
   const pathname = usePathname() ?? '';
+  const brand = useBrand();
+
+  // Hiding the nav entry is only half of it — the matching route guard is
+  // what actually enforces this. See app/business/[orgId]/*/layout.tsx.
+  const items = ITEMS.filter(
+    (it) => it.surface === null || !isSurfaceHidden(brand, it.surface, surfaceOverrides)
+  );
   const orgId = data.orgId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const planLabel = data.planCode === 'business_pro' ? 'Pro · monthly' : 'Starter · monthly';
@@ -89,7 +108,7 @@ export function SideNav({ t, data }: SideNavProps) {
       </div>
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {ITEMS.map((it) => {
+        {items.map((it) => {
           const on = isActive(pathname, orgId, it.segment);
           const href = it.segment === null ? `/business/${orgId}` : `/business/${orgId}/${it.segment}`;
           return (

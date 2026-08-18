@@ -9,10 +9,12 @@ import {
   useBusinessTheme,
   useBusinessThemeStore,
 } from '@/lib/stores/business-theme-store';
-import { Logo } from '@/components/ui/Logo';
+import { BrandLogo } from '@/components/brand/BrandLogo';
+import { useBrand } from '@/components/brand/BrandProvider';
 
 export function BusinessTopbar() {
   const t = useBusinessTheme();
+  const brand = useBrand();
   const { mode, toggle } = useBusinessThemeStore();
   const user = useAuthStore((s) => s.user);
   const isSuperadmin = user?.superadmin === true;
@@ -58,9 +60,9 @@ export function BusinessTopbar() {
         <Link
           href="/"
           style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
-          aria-label="Go to Javelina home"
+          aria-label={`Go to ${brand.name} home`}
         >
-          <Logo width={120} height={40} />
+          <BrandLogo width={120} height={40} />
         </Link>
         {isMock && (
           <span
@@ -91,7 +93,7 @@ export function BusinessTopbar() {
             fontWeight: 500,
           }}
         >
-          ← Back to Javelina
+          ← Back to {brand.name}
         </Link>
         <button
           type="button"

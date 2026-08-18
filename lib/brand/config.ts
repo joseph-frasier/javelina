@@ -62,7 +62,11 @@ const JAVELINA: BrandConfig = {
   name: 'Javelina',
   legalName: 'Irongrove LLC',
   hostnames: ['javelina.cloud', 'app.javelina.cloud', 'localhost:3000'],
-  logo: { light: '/logos/javelina-light.svg', dark: '/logos/javelina-dark.svg' },
+  // Real asset paths, as used by components/ui/Logo.tsx.
+  logo: {
+    light: '/JAVELINA LOGO TRANSPARENT BACKGROUND.png',
+    dark: '/JAVELINA_WHITE_BLACK_BACKGROUND-REMOVED.png',
+  },
   favicon: '/favicon.ico',
   // Lifted verbatim from the ACCENT constant this replaces, so Javelina's
   // rendered output is unchanged. Do not "tidy" these values.
@@ -93,6 +97,10 @@ const IRONGROVE: BrandConfig = {
   name: 'Irongrove',
   legalName: 'Irongrove LLC',
   hostnames: ['app.irongrove.com'],
+  // TODO(brand-assets): these files do not exist in public/ yet. Until they
+  // do, BrandLogo falls back to a text wordmark rather than a broken image.
+  // Source art is in the Irongrove brand kit (irongrove_rising_tree.svg).
+  // MUST be added before app.irongrove.com serves real customers.
   logo: { light: '/logos/irongrove-light.svg', dark: '/logos/irongrove-dark.svg' },
   favicon: '/favicon-irongrove.ico',
   // TODO(brand): 500 is the published ember. The 600/50/100/ring steps are
