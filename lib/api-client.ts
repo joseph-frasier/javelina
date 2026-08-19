@@ -464,6 +464,16 @@ export const zonesApi = {
   },
 
   /**
+   * Check whether a zone name is available (no parent/child conflict).
+   *
+   * Server-side replacement for the former browser-side read of all zone
+   * names. Returns only a boolean and the conflicting name — never a list.
+   */
+  checkNameAvailable: (name: string): Promise<{ available: boolean; conflict?: string }> => {
+    return apiClient.get(`/zones/name-available?name=${encodeURIComponent(name)}`);
+  },
+
+  /**
    * Update a zone
    */
   update: (id: string, data: { name?: string; description?: string; admin_email?: string; negative_caching_ttl?: number }) => {
