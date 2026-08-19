@@ -14,7 +14,6 @@ const mocks = vi.hoisted(() => ({
   isUsageLoading: false,
   limits: { zones: 10 },
   tier: 'starter',
-  overlapResult: { hasOverlap: false, conflictingZone: null },
   hideUpgradeLimitCta: false,
 }));
 
@@ -64,21 +63,6 @@ vi.mock('@/lib/hooks/useFeatureFlags', () => ({
   }),
 }));
 
-vi.mock('@/lib/utils/dns-validation', () => ({
-  detectZoneOverlap: (...args: unknown[]) => mocks.overlapResult,
-}));
-
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
-    from: () => ({
-      select: async () => ({
-        data: [{ name: 'existing.com' }],
-        error: null,
-      }),
-    }),
-  }),
-}));
-
 vi.mock('@/components/ui/Modal', () => ({
   Modal: ({ isOpen, title, children }: { isOpen: boolean; title: string; children: React.ReactNode }) => {
     if (!isOpen) return null;
@@ -123,7 +107,6 @@ describe('AddZoneModal', () => {
     mocks.refetchUsage.mockResolvedValue(undefined);
     mocks.limits = { zones: 10 };
     mocks.tier = 'starter';
-    mocks.overlapResult = { hasOverlap: false, conflictingZone: null };
     mocks.hideUpgradeLimitCta = false;
     mocks.createZone.mockResolvedValue({
       data: { id: 'zone-1', name: 'newzone.com' },

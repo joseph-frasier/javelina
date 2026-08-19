@@ -11,9 +11,7 @@ import { useToastStore } from '@/lib/stores/toast-store';
 import { usePlanLimits } from '@/lib/hooks/usePlanLimits';
 import { useUsageCounts } from '@/lib/hooks/useUsageCounts';
 import { useFeatureFlags } from '@/lib/hooks/useFeatureFlags';
-import { detectZoneOverlap } from '@/lib/utils/dns-validation';
-import { createClient } from '@/lib/supabase/client';
-import { subscriptionsApi } from '@/lib/api-client';
+import { subscriptionsApi, zonesApi } from '@/lib/api-client';
 
 interface AddZoneModalProps {
   isOpen: boolean;
@@ -41,7 +39,6 @@ export function AddZoneModal({
   const [negativeCachingTTL, setNegativeCachingTTL] = useState(3600);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; admin_email?: string; negative_caching_ttl?: string; general?: string }>({});
-  const [allZoneNames, setAllZoneNames] = useState<string[]>([]);
 
   const { addToast } = useToastStore();
   const { hideUpgradeLimitCta } = useFeatureFlags();
@@ -67,36 +64,6 @@ export function AddZoneModal({
   // Plan limits and usage tracking
   const { limits, tier, wouldExceedLimit } = usePlanLimits(resolvedPlanCode);
   const { usage, refetch: refetchUsage } = useUsageCounts(organizationId);
-  
-  // Fetch all zone names globally for overlap detection
-  useEffect(() => {
-    const fetchAllZones = async () => {
-      if (!isOpen) return;
-      
-      try {
-        // SECURITY DEBT: direct Supabase read of ALL orgs' zone names from the
-        // browser — only RLS prevents cross-tenant enumeration, and it silently
-        // returns nothing for Auth0 users. Must move server-side.
-        // See docs/architecture/DIRECT_SUPABASE_ACCESS_DEBT.md (issue #1).
-        const supabase = createClient();
-        // Fetch all zone names globally (across all orgs, including deleted)
-        const { data, error } = await supabase
-          .from('zones')
-          .select('name');
-        
-        if (error) {
-          console.error('Error fetching zones for validation:', error);
-          return;
-        }
-        
-        setAllZoneNames((data || []).map(z => z.name));
-      } catch (error) {
-        console.error('Error fetching zones:', error);
-      }
-    };
-    
-    fetchAllZones();
-  }, [isOpen]);
   
   // Refetch usage counts when modal opens to get fresh data
   useEffect(() => {
@@ -160,13 +127,9 @@ export function AddZoneModal({
         newErrors.name = 'Zone name must have at least 2 labels (e.g., example.com, not just "example")';
       } else if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(name)) {
         newErrors.name = 'Zone name must be a valid domain name (e.g., example.com or subdomain.example.com)';
-      } else {
-        // Check for zone overlap (hierarchical conflicts)
-        const overlapResult = detectZoneOverlap(name, allZoneNames);
-        if (overlapResult.hasOverlap) {
-          newErrors.name = `Zone conflicts with existing zone: ${overlapResult.conflictingZone}`;
-        }
       }
+      // Hierarchical overlap is checked server-side in handleSubmit via
+      // zonesApi.checkNameAvailable — the browser must not read global zone names.
     }
 
     // Validate admin email
@@ -194,6 +157,23 @@ export function AddZoneModal({
 
     setIsSubmitting(true);
     setErrors({});
+
+    // Server-side hierarchical overlap check. Advisory only: POST /zones
+    // performs the same check authoritatively, so a failure here must not
+    // block a legitimate creation.
+    const candidateName = name.trim().toLowerCase();
+    try {
+      const availability = await zonesApi.checkNameAvailable(candidateName);
+      if (!availability.available) {
+        setErrors({
+          name: `Zone conflicts with existing zone: ${availability.conflict}`,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    } catch {
+      // Non-blocking by design — the create request enforces this server-side.
+    }
 
     try {
       const result = await createZone({
