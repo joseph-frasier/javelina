@@ -63,6 +63,11 @@ vi.mock('@/lib/hooks/useFeatureFlags', () => ({
   }),
 }));
 
+vi.mock('@/lib/api-client', () => ({
+  zonesApi: { checkNameAvailable: vi.fn().mockResolvedValue({ available: true }) },
+  subscriptionsApi: { getOrgPlan: vi.fn().mockResolvedValue({ plan_code: 'starter' }) },
+}));
+
 vi.mock('@/components/ui/Modal', () => ({
   Modal: ({ isOpen, title, children }: { isOpen: boolean; title: string; children: React.ReactNode }) => {
     if (!isOpen) return null;

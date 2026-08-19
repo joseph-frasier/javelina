@@ -687,11 +687,19 @@ export function getFQDN(recordName: string, zoneName: string): string {
 /**
  * Detects if a zone name has hierarchical overlap with existing zones
  * Returns true if the new zone would be a parent or child of any existing zone
- * 
+ *
  * Examples:
  * - "acme.com" conflicts with "foo.acme.com" (parent/child)
  * - "foo.acme.com" conflicts with "acme.com" (child/parent)
  * - "bar.example.com" does NOT conflict with "foo.example.com" (siblings)
+ *
+ * @deprecated Client-side zone-overlap checking was deliberately removed
+ * (Phase 0 of the Supabase migration) because it required reading every
+ * organization's zone names into the browser — a cross-tenant enumeration
+ * risk. Use `GET /zones/name-available` (see `zonesApi.checkNameAvailable`
+ * in `@/lib/api-client`) instead, which returns only `{ available, conflict? }`
+ * from the backend. Do not re-wire this function against a client-fetched
+ * zone list.
  */
 export function detectZoneOverlap(
   zoneName: string, 

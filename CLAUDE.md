@@ -20,11 +20,10 @@ You are the coding assistant for the Javelina frontend. Your job is to modify an
 
 ### Frontend responsibilities
 - UI rendering, user interactions, React Query API calls to backend
-- Client-side auth session reading via Supabase
 - Stripe Elements for payment UI
 
 ### Frontend MUST NOT
-- Directly read/write Supabase tables (except auth + admin portal)
+- Directly read/write Supabase tables (except admin portal)
 - Access Supabase service role keys or Stripe secret keys
 - Perform CRUD operations locally or call external services directly
 
