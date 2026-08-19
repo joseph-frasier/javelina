@@ -11,7 +11,7 @@ You are the coding assistant for the Javelina frontend. Your job is to modify an
 - **State**: Zustand (client), @tanstack/react-query (server state)
 - **Animation**: GSAP
 - **Database**: Supabase (PostgreSQL); migrations live in `supabase/migrations/` in this repo
-- **Auth**: Auth0 primary (Universal Login; backend handles callback and sets a BFF session cookie). Supabase Auth is legacy (pre-Auth0 users) + the staff admin portal only. `public.profiles` is the canonical identity table — `auth.users` is deprecated. See `docs/architecture/AUTH0_SUPABASE_HYBRID_MODEL.md`.
+- **Auth**: Auth0 only (Universal Login; backend handles callback and sets a BFF session cookie). The frontend makes no Supabase Auth calls. `public.profiles` is the canonical identity table — `auth.users` is deprecated. Six backend `auth.admin.*` calls remain in `adminController`/`stripeController` and are scheduled for removal in the AWS migration. See `docs/architecture/AUTH0_SUPABASE_HYBRID_MODEL.md`.
 - **Payments**: Stripe (@stripe/stripe-js + @stripe/react-stripe-js)
 - **Backend**: Separate Express.js API (`javelina-backend`) on port 3001 (Railway in prod)
 - **Deployment**: Vercel
@@ -36,8 +36,7 @@ Frontend → Backend API → External services
 ```
 
 ### Exceptions (do NOT "fix" these)
-1. **Supabase Auth (legacy)** — Client-side auth calls (`getSession`, `signIn*`, `signOut`) for legacy users must stay in frontend. Auth0 login itself is handled by the backend (session cookie).
-2. **Admin Portal** — Staff-only pages may query Supabase directly. Do not migrate admin CRUD to backend unless explicitly asked
+1. **Admin Portal** — Staff-only pages may query Supabase directly. Do not migrate admin CRUD to backend unless explicitly asked
 
 ## Code Style
 
