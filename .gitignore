@@ -58,3 +58,14 @@ next-env.d.ts
 
 # superpowers runtime cache (plans + specs ARE tracked — see docs/superpowers/).
 .superpowers/
+
+# Uncommitted backfill plans/specs for already-shipped work — ignored so they
+# stay out of the working-tree report. New plans/specs are still tracked.
+docs/superpowers/plans/2026-05-19-customer-site-live-card.md
+docs/superpowers/plans/2026-07-21-org-custom-pricing-frontend.md
+docs/superpowers/plans/2026-07-28-frontend-performance-optimization.md
+docs/superpowers/specs/2026-05-19-customer-site-live-card-design.md
+docs/superpowers/specs/2026-06-17-domain-migration-godaddy-to-opensrs-design.md
+docs/superpowers/specs/2026-07-08-domain-lock-nameserver-ux-design.md
+docs/superpowers/specs/2026-07-15-domain-org-selection-design.md
+docs/superpowers/specs/2026-07-16-admin-partner-status-ui-design.md
